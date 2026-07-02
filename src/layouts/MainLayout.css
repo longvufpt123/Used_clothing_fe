@@ -1,0 +1,10 @@
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding-bottom: var(--spacing-xxl);
+}

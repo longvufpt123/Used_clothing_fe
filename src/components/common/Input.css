@@ -1,0 +1,71 @@
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
+.input-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-input {
+  width: 100%;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.custom-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+  background-color: var(--color-bg-tertiary);
+}
+
+.custom-input.has-icon-left {
+  padding-left: 2.5rem;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.input-error-text {
+  font-size: 0.8rem;
+  color: var(--color-danger);
+  margin-top: 2px;
+}
+
+.input-helper-text {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* Error state styles */
+.has-error .custom-input {
+  border-color: var(--color-danger);
+}
+
+.has-error .custom-input:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}

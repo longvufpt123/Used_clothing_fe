@@ -1,0 +1,62 @@
+.datepicker-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
+.datepicker-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.datepicker-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-datepicker {
+  width: 100%;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  outline: none;
+  cursor: pointer;
+}
+
+.custom-datepicker:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+  background-color: var(--color-bg-tertiary);
+}
+
+.datepicker-icon {
+  position: absolute;
+  left: 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* Custom styling for calendar icon in chrome */
+.custom-datepicker::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) sepia(50%) saturate(1000%) hue-rotate(110deg);
+}
+
+.datepicker-error-text {
+  font-size: 0.8rem;
+  color: var(--color-danger);
+}
+
+.has-error .custom-datepicker {
+  border-color: var(--color-danger);
+}

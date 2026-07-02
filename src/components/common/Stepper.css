@@ -1,0 +1,73 @@
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-md) 0;
+}
+
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  position: relative;
+  z-index: 1;
+}
+
+.step-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all var(--transition-normal);
+}
+
+.step-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-normal);
+}
+
+/* Connective lines between steps */
+.step-divider {
+  flex-grow: 1;
+  height: 2px;
+  background-color: var(--color-border);
+  margin: 0 var(--spacing-md);
+  margin-bottom: 24px; /* aligned with center of step badge */
+  transition: background-color var(--transition-normal);
+}
+
+/* Active & Completed step states styling */
+.stepper-step.active .step-badge {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
+}
+
+.stepper-step.active .step-label {
+  color: var(--color-text-primary);
+}
+
+.stepper-step.completed .step-badge {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.stepper-step.completed .step-label {
+  color: var(--color-primary);
+}
+
+.step-divider.completed {
+  background-color: var(--color-primary);
+}
