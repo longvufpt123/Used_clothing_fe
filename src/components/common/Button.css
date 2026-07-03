@@ -11,6 +11,15 @@
   outline: none;
 }
 
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

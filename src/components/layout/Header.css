@@ -1,7 +1,7 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-sticky);
   width: 100%;
   border-bottom: 1px solid var(--color-border);
 }
@@ -62,6 +62,14 @@
 }
 
 .nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-link-active {
+  color: var(--color-primary);
+}
+
+.nav-link-active::after {
   width: 100%;
 }
 

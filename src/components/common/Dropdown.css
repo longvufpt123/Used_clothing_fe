@@ -18,7 +18,7 @@
   border: 1px solid var(--color-border);
   list-style: none;
   padding: 6px 0;
-  z-index: 100;
+  z-index: var(--z-dropdown);
   box-shadow: var(--shadow-premium);
   animation: dropdown-fade-in var(--transition-fast) forwards;
 }

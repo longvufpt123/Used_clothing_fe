@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 export const Footer: React.FC = () => {
@@ -13,24 +14,29 @@ export const Footer: React.FC = () => {
           <div className="footer-col">
             <h4>Quy trình</h4>
             <ul>
-              <li><a href="/products">Tiếp nhận quyên góp</a></li>
-              <li><a href="/products">Phân loại & Xử lý</a></li>
-              <li><a href="/admin">Kho phân phối</a></li>
+              <li><Link to="/products">Tiếp nhận quyên góp</Link></li>
+              <li><Link to="/products">Phân loại & Xử lý</Link></li>
+              <li><Link to="/admin">Kho phân phối</Link></li>
             </ul>
           </div>
           <div className="footer-col">
             <h4>Hệ thống</h4>
             <ul>
-              <li><a href="/admin">Thống kê tác động</a></li>
-              <li><a href="/login">Cổng nhân viên</a></li>
-              <li><a href="/">Trang chủ</a></li>
+              <li><Link to="/admin">Thống kê tác động</Link></li>
+              <li><Link to="/login">Cổng nhân viên</Link></li>
+              <li><Link to="/">Trang chủ</Link></li>
             </ul>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
         <div className="container footer-bottom-container">
-          <p>&copy; {new Date().getFullYear()} ReThreads. Bảo lưu mọi quyền. Hệ thống Quản lý Tiếp nhận & Phân loại Quần áo Cũ.</p>
+          <p>&copy; {new Date().getFullYear()} ReThreads. Bảo lưu mọi quyền.</p>
+          <nav className="footer-legal" aria-label="Liên kết pháp lý">
+            <Link to="/privacy">Chính sách bảo mật</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms">Điều khoản sử dụng</Link>
+          </nav>
         </div>
       </div>
     </footer>

@@ -5,6 +5,7 @@ import Home from '@/pages/Home';
 import Products from '@/pages/Products';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/admin/Dashboard';
+import NotFound from '@/pages/NotFound';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -38,12 +39,12 @@ export const AppRoutes: React.FC = () => {
       {/* Back-office pages (wrapped inside their own AdminLayout inside the component) */}
       <Route path="/admin" element={<Dashboard />} />
 
-      {/* Fallback redirect */}
+      {/* Fallback 404 */}
       <Route
         path="*"
         element={
           <MainLayout>
-            <Home />
+            <NotFound />
           </MainLayout>
         }
       />
