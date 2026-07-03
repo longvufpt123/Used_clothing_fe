@@ -117,8 +117,10 @@ export const Dashboard: React.FC = () => {
   return (
     <AdminLayout role="admin">
       <div className="admin-dashboard">
-        <h2 className="dashboard-title">Bảng Tổng Quan Hoạt Động</h2>
-        <p className="dashboard-subtitle">Theo dõi lượng quần áo tiếp nhận, điều phối phân loại và bàn giao từ thiện.</p>
+        <div className="admin-page-header">
+          <h2 className="dashboard-title">Bảng Tổng Quan Hoạt Động</h2>
+          <p className="dashboard-subtitle">Theo dõi lượng quần áo tiếp nhận, điều phối phân loại và bàn giao từ thiện.</p>
+        </div>
         
         <div className="metrics-grid">
           <div className="metric-box glass">

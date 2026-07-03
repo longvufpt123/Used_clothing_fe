@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminSidebar from '@/shared/components/AdminSidebar';
+import AdminHeader from '@/shared/components/AdminHeader';
 import './AdminLayout.css';
 
 interface AdminLayoutProps {
@@ -15,11 +16,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     <div className="admin-layout-wrapper">
       <AdminSidebar role={role} />
       <div className="admin-layout-main">
-        <header className="admin-layout-header glass">
-          <div className="admin-header-content">
-            <h3>Workspace Management Panel</h3>
-          </div>
-        </header>
+        <AdminHeader />
         <main className="admin-content-area">{children}</main>
       </div>
     </div>

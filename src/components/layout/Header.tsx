@@ -1,14 +1,11 @@
 import React from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { User, Leaf, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import './Header.css';
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `nav-link${isActive ? ' nav-link-active' : ''}`;
 
   return (
     <header className="header glass">
@@ -19,9 +16,11 @@ export const Header: React.FC = () => {
         </Link>
 
         <nav className="nav-menu">
-          <NavLink to="/" end className={navLinkClass}>Trang chủ</NavLink>
-          <NavLink to="/products" className={navLinkClass}>Quyên góp & Tiếp nhận</NavLink>
-          <NavLink to="/admin" className={navLinkClass}>Báo cáo & Thống kê</NavLink>
+          <Link to="/" className="nav-link">Trang chủ</Link>
+          <Link to="/products" className="nav-link">Quyên góp</Link>
+          <Link to="/map" className="nav-link">Điểm thu gom</Link>
+          <Link to="/leaderboard" className="nav-link">Bảng vàng</Link>
+          <Link to="/admin" className="nav-link">Quản trị</Link>
         </nav>
 
         <div className="header-actions">

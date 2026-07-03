@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingBag, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Truck, ShieldCheck, Archive, Leaf, LogOut } from 'lucide-react';
 import './AdminSidebar.css';
 
 interface SidebarItem {
@@ -15,20 +15,13 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ role }) => {
   const getMenu = (): SidebarItem[] => {
-    const baseMenu = [
-      { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={18} /> },
-      { label: 'Products Management', path: '/admin/products', icon: <ShoppingBag size={18} /> },
+    return [
+      { label: 'Bảng tổng quan', path: '/admin', icon: <LayoutDashboard size={18} /> },
+      { label: 'Lịch trình thu gom', path: '/admin/schedule', icon: <Truck size={18} /> },
+      { label: 'Phân loại chi tiết', path: '/admin/classification', icon: <ShieldCheck size={18} /> },
+      { label: 'Kiểm kho từ thiện', path: '/admin/inventory', icon: <Archive size={18} /> },
+      { label: 'Chiến dịch thu gom', path: '/admin/campaigns', icon: <Leaf size={18} /> },
     ];
-
-    if (role === 'admin' || role === 'manager') {
-      baseMenu.push({ label: 'Staff Management', path: '/admin/staff', icon: <Users size={18} /> });
-    }
-
-    if (role === 'admin') {
-      baseMenu.push({ label: 'System Settings', path: '/admin/settings', icon: <Settings size={18} /> });
-    }
-
-    return baseMenu;
   };
 
   return (

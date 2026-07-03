@@ -5,7 +5,12 @@ import Home from '@/pages/Home';
 import Products from '@/pages/Products';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/admin/Dashboard';
-import NotFound from '@/pages/NotFound';
+import Map from '@/pages/Map';
+import Leaderboard from '@/pages/Leaderboard';
+import CollectionSchedule from '@/pages/admin/CollectionSchedule';
+import DetailedClassification from '@/pages/admin/DetailedClassification';
+import CharityInventory from '@/pages/admin/CharityInventory';
+import Campaigns from '@/pages/admin/Campaigns';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -28,6 +33,22 @@ export const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/map"
+        element={
+          <MainLayout>
+            <Map />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/leaderboard"
+        element={
+          <MainLayout>
+            <Leaderboard />
+          </MainLayout>
+        }
+      />
+      <Route
         path="/login"
         element={
           <MainLayout>
@@ -36,15 +57,19 @@ export const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Back-office pages (wrapped inside their own AdminLayout inside the component) */}
+      {/* Back-office pages */}
       <Route path="/admin" element={<Dashboard />} />
+      <Route path="/admin/schedule" element={<CollectionSchedule />} />
+      <Route path="/admin/classification" element={<DetailedClassification />} />
+      <Route path="/admin/inventory" element={<CharityInventory />} />
+      <Route path="/admin/campaigns" element={<Campaigns />} />
 
-      {/* Fallback 404 */}
+      {/* Fallback redirect */}
       <Route
         path="*"
         element={
           <MainLayout>
-            <NotFound />
+            <Home />
           </MainLayout>
         }
       />

@@ -14,7 +14,7 @@
 .dashboard-subtitle {
   font-size: 0.95rem;
   color: var(--color-text-secondary);
-  margin-top: calc(-1 * var(--spacing-lg));
+  margin-top: 6px;
   margin-bottom: var(--spacing-sm);
 }
 
