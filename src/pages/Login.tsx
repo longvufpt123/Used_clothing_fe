@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Leaf } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải chứa ít nhất 6 ký tự'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -17,6 +19,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -24,6 +27,10 @@ export const Login: React.FC = () => {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: 'admin@rethreads.vn',
+      password: 'password123',
+    }
   });
 
   const onSubmit = (data: LoginFormValues) => {
@@ -31,26 +38,33 @@ export const Login: React.FC = () => {
     setTimeout(() => {
       setLoading(false);
       console.log('[Login Submitted]', data);
-      toast.success('Logged in successfully (Mock API)!');
+      toast.success('Đăng nhập hệ thống quản lý thành công!');
+      // Navigate to admin dashboard
+      navigate('/admin');
     }, 1500);
   };
 
   return (
     <div className="login-page flex-center container">
       <div className="login-card glass">
-        <h2 className="login-title text-gradient">Welcome Back</h2>
-        <p className="login-subtitle">Access your eco-wardrobe</p>
+        <div className="login-header flex-center">
+          <Leaf className="login-logo-icon text-gradient" size={32} />
+          <h2>ReThreads</h2>
+        </div>
+        
+        <h3 className="login-title text-gradient">Cổng Thông Tin Nhân Viên</h3>
+        <p className="login-subtitle">Đăng nhập để quản lý phân loại và xử lý quần áo quyên góp</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="login-form">
           <Input
-            label="Email Address"
-            placeholder="name@example.com"
+            label="Tài khoản email"
+            placeholder="admin@rethreads.vn"
             error={errors.email?.message}
             {...register('email')}
           />
 
           <Input
-            label="Password"
+            label="Mật khẩu"
             type="password"
             placeholder="••••••••"
             error={errors.password?.message}
@@ -58,11 +72,17 @@ export const Login: React.FC = () => {
           />
 
           <Button type="submit" isLoading={loading} className="login-submit">
-            Sign In
+            Đăng nhập hệ thống
           </Button>
         </form>
+        
+        <div className="login-footer">
+          <p>Tài khoản dùng thử mặc định:</p>
+          <code>admin@rethreads.vn / password123</code>
+        </div>
       </div>
     </div>
   );
 };
+
 export default Login;

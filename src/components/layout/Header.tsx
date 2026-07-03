@@ -1,40 +1,38 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Sparkles, Sun, Moon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { User, Leaf, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
-import { useCartStore } from '@/store/useCartStore';
 import './Header.css';
 
 export const Header: React.FC = () => {
-  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const totalItems = useCartStore((state) => state.getTotalItems());
 
   return (
     <header className="header glass">
       <div className="container header-container">
         <Link to="/" className="logo">
-          <Sparkles className="logo-icon" />
-          <span>RE<span className="logo-highlight">WEAR</span></span>
+          <Leaf className="logo-icon text-gradient" />
+          <span>Re<span className="logo-highlight">Threads</span></span>
         </Link>
 
         <nav className="nav-menu">
-          <Link to="/" className="nav-link">Home</Link>
-          <Link to="/products" className="nav-link">Catalog</Link>
-          <Link to="/about" className="nav-link">Eco Impact</Link>
+          <Link to="/" className="nav-link">Trang chủ</Link>
+          <Link to="/products" className="nav-link">Quyên góp & Tiếp nhận</Link>
+          <Link to="/admin" className="nav-link">Báo cáo & Thống kê</Link>
         </nav>
 
         <div className="header-actions">
           <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <Link to="/login" className="action-link">
+          
+          <Link to="/admin" className="action-link" title="Bảng quản lý (Admin)">
+            <LayoutDashboard size={20} />
+          </Link>
+
+          <Link to="/login" className="action-link" title="Đăng nhập">
             <User size={20} />
           </Link>
-          <div className="cart-trigger" onClick={() => navigate('/products')}>
-            <ShoppingBag size={20} />
-            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-          </div>
         </div>
       </div>
     </header>

@@ -26,3 +26,8 @@ dist-ssr
 # Chat History Worklogs
 chat_history/
 
+# AI Agent Customizations
+.agents/
+
+skills-lock.json
+package-lock.json
