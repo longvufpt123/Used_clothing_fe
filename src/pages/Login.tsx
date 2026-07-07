@@ -228,9 +228,9 @@ export const Login: React.FC = () => {
             >
               {/* Ears */}
               <circle cx="25" cy="25" r="9" fill="var(--color-primary)" />
-              <circle cx="25" cy="25" r="4" fill="var(--color-bg-tertiary)" />
+              <circle cx="25" cy="25" r="4" fill="#a7f3d0" />
               <circle cx="75" cy="25" r="9" fill="var(--color-primary)" />
-              <circle cx="75" cy="25" r="4" fill="var(--color-bg-tertiary)" />
+              <circle cx="75" cy="25" r="4" fill="#a7f3d0" />
 
               {/* Head */}
               <circle cx="50" cy="50" r="30" fill="var(--color-primary)" />
@@ -243,22 +243,22 @@ export const Login: React.FC = () => {
               <ellipse cx="50" cy="62" rx="13" ry="9" fill="#a7f3d0" />
               
               {/* Nose */}
-              <polygon points="47,59 53,59 50,63" fill="var(--color-bg-primary)" />
+              <polygon points="47,59 53,59 50,63" fill="#0f172a" />
 
               {/* Mouth */}
-              <path d="M47,66 Q50,68 53,66" stroke="var(--color-bg-primary)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M47,66 Q50,68 53,66" stroke="#0f172a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
 
               {/* Eyes White */}
               <circle cx="38" cy="46" r="7" fill="#ffffff" />
               <circle cx="62" cy="46" r="7" fill="#ffffff" />
 
               {/* Pupils */}
-              <circle ref={leftPupilRef} className="mascot-pupil" cx="38" cy="46" r="3.5" fill="var(--color-bg-primary)" />
-              <circle ref={rightPupilRef} className="mascot-pupil" cx="62" cy="46" r="3.5" fill="var(--color-bg-primary)" />
+              <circle ref={leftPupilRef} className="mascot-pupil" cx="38" cy="46" r="3.5" fill="#0f172a" />
+              <circle ref={rightPupilRef} className="mascot-pupil" cx="62" cy="46" r="3.5" fill="#0f172a" />
 
               {/* Hands */}
-              <circle className="mascot-hand-left" cx="22" cy="80" r="8" fill="var(--color-primary-hover)" stroke="var(--color-bg-secondary)" strokeWidth="2" />
-              <circle className="mascot-hand-right" cx="78" cy="80" r="8" fill="var(--color-primary-hover)" stroke="var(--color-bg-secondary)" strokeWidth="2" />
+              <circle className="mascot-hand-left" cx="22" cy="80" r="8" fill="var(--color-primary-hover)" stroke="#ffffff" strokeWidth="2" />
+              <circle className="mascot-hand-right" cx="78" cy="80" r="8" fill="var(--color-primary-hover)" stroke="#ffffff" strokeWidth="2" />
             </svg>
           </div>
 
