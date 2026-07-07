@@ -2,26 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Leaf, User, Mail, Lock, ShieldCheck, ArrowRight, Check, Circle } from 'lucide-react';
+import { Leaf, User, Mail, Lock, ShieldCheck, ArrowRight, Check, Circle, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useToast } from '@/context/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { loginApi, registerApi } from '@/services/authService';
 import './Login.css';
 
 // Login validation schema
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
+  userName: z.string().min(1, 'Tên đăng nhập không được để trống'),
   password: z.string().min(6, 'Mật khẩu phải chứa ít nhất 6 ký tự'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+export type LoginFormValues = z.infer<typeof loginSchema>;
 
 // Register validation schema
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
+  userName: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
   email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
+  phoneNumber: z.string().min(10, 'Số điện thoại phải có ít nhất 10 số'),
+  address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
   password: z.string().min(6, 'Mật khẩu phải chứa ít nhất 6 ký tự'),
   confirmPassword: z.string().min(6, 'Mật khẩu xác nhận phải chứa ít nhất 6 ký tự'),
   agreeTerms: z.boolean().refine((val) => val === true, {
@@ -32,7 +37,7 @@ const registerSchema = z.object({
   path: ['confirmPassword'],
 });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -40,6 +45,7 @@ export const Login: React.FC = () => {
   const [focusedField, setFocusedField] = useState<'email' | 'password' | 'name' | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const mascotRef = useRef<SVGSVGElement>(null);
   const leftPupilRef = useRef<SVGCircleElement>(null);
@@ -90,8 +96,8 @@ export const Login: React.FC = () => {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@rethreads.vn',
-      password: 'password123',
+      userName: '',
+      password: '',
     },
   });
 
@@ -105,37 +111,69 @@ export const Login: React.FC = () => {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       fullName: '',
+      userName: '',
       email: '',
+      phoneNumber: '',
+      address: '',
       password: '',
       confirmPassword: '',
       agreeTerms: false,
     },
   });
 
-  const onLoginSubmit = (data: LoginFormValues) => {
+  const onLoginSubmit = async (data: LoginFormValues) => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const response = await loginApi(data);
+      login(response.token, {
+        userId: response.userId,
+        fullName: response.fullName,
+        userName: response.userName,
+        avatarUrl: response.avatarUrl,
+        role: response.role,
+      });
+      toast.success('Đăng nhập thành công!');
+      
+      // Redirect based on role
+      if (response.role === 'Manager' || response.role === 'ReceivingStaff' || response.role === 'ClassificationStaff' || response.role === 'WarehouseStaff') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } catch (error: any) {
+      console.error(error);
+      const errorMsg = error?.response?.data?.message || error?.message || 'Tài khoản hoặc mật khẩu không chính xác';
+      toast.error(errorMsg);
+    } finally {
       setLoading(false);
-      console.log('[Login Submitted]', data);
-      toast.success('Đăng nhập hệ thống quản lý thành công!');
-      navigate('/admin');
-    }, 1500);
+    }
   };
 
-  const onRegisterSubmit = (data: RegisterFormValues) => {
+  const onRegisterSubmit = async (data: RegisterFormValues) => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      console.log('[Register Submitted]', data);
+    try {
+      await registerApi({
+        fullName: data.fullName,
+        userName: data.userName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+        password: data.password,
+      });
       toast.success('Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.');
-      // Switch back to login form and pre-fill email
       setIsRegister(false);
       resetRegisterForm();
       resetLoginForm({
-        email: data.email,
+        userName: data.userName,
         password: '',
       });
-    }, 1500);
+    } catch (error: any) {
+      console.error(error);
+      const errorMsg = error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTabChange = (toRegister: boolean) => {
@@ -282,21 +320,21 @@ export const Login: React.FC = () => {
           {!isRegister ? (
             /* LOGIN FORM */
             <div className="auth-form-wrapper fade-in">
-              <h3 className="login-title text-gradient">Cổng Thông Tin Nhân Viên</h3>
+              <h3 className="login-title text-gradient">Cổng Thông Tin Hệ Thống</h3>
               <p className="login-subtitle">
-                Đăng nhập để quản lý phân loại và xử lý quần áo quyên góp
+                Đăng nhập để quản lý quyên góp, phân loại và xử lý quần áo
               </p>
 
               <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="login-form">
                 <Input
-                  label="Tài khoản email"
-                  placeholder="admin@rethreads.vn"
-                  error={loginErrors.email?.message}
-                  icon={<Mail size={18} />}
-                  {...registerLogin('email', {
+                  label="Tên đăng nhập (username)"
+                  placeholder="Nhập username"
+                  error={loginErrors.userName?.message}
+                  icon={<User size={18} />}
+                  {...registerLogin('userName', {
                     onBlur: () => setFocusedField(null),
                   })}
-                  onFocus={() => setFocusedField('email')}
+                  onFocus={() => setFocusedField('name')}
                 />
 
                 <Input
@@ -315,18 +353,13 @@ export const Login: React.FC = () => {
                   Đăng nhập hệ thống
                 </Button>
               </form>
-
-              <div className="login-footer">
-                <p>Tài khoản dùng thử mặc định:</p>
-                <code>admin@rethreads.vn / password123</code>
-              </div>
             </div>
           ) : (
             /* REGISTER FORM */
             <div className="auth-form-wrapper fade-in">
               <h3 className="login-title text-gradient">Tạo Tài Khoản Thành Viên</h3>
               <p className="login-subtitle">
-                Tham gia mạng lưới tình nguyện viên và nhân viên phân loại của ReThreads
+                Tham gia mạng lưới quyên góp và bảo vệ môi trường cùng ReThreads
               </p>
 
               <form onSubmit={handleSubmitSignUp(onRegisterSubmit)} className="login-form">
@@ -342,6 +375,17 @@ export const Login: React.FC = () => {
                 />
 
                 <Input
+                  label="Tên đăng nhập (username)"
+                  placeholder="username123"
+                  error={registerErrors.userName?.message}
+                  icon={<User size={18} />}
+                  {...registerSignUp('userName', {
+                    onBlur: () => setFocusedField(null),
+                  })}
+                  onFocus={() => setFocusedField('name')}
+                />
+
+                <Input
                   label="Địa chỉ email"
                   placeholder="example@rethreads.vn"
                   error={registerErrors.email?.message}
@@ -350,6 +394,28 @@ export const Login: React.FC = () => {
                     onBlur: () => setFocusedField(null),
                   })}
                   onFocus={() => setFocusedField('email')}
+                />
+
+                <Input
+                  label="Số điện thoại"
+                  placeholder="0901234567"
+                  error={registerErrors.phoneNumber?.message}
+                  icon={<Phone size={18} />}
+                  {...registerSignUp('phoneNumber', {
+                    onBlur: () => setFocusedField(null),
+                  })}
+                  onFocus={() => setFocusedField('name')}
+                />
+
+                <Input
+                  label="Địa chỉ"
+                  placeholder="Số nhà, tên đường, quận/huyện..."
+                  error={registerErrors.address?.message}
+                  icon={<MapPin size={18} />}
+                  {...registerSignUp('address', {
+                    onBlur: () => setFocusedField(null),
+                  })}
+                  onFocus={() => setFocusedField('name')}
                 />
 
                 <Input
