@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Leaf, Search, PlusCircle, Clock, Truck, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
+import { Leaf, Search, PlusCircle, Clock, Truck, ShieldCheck, Heart, ArrowRight, ImagePlus, X } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -18,7 +18,26 @@ interface DonationRequest {
   status: 'pending' | 'collected' | 'classifying' | 'processed' | 'distributed';
   statusText: string;
   date: string;
+  imageUrls?: string[];
 }
+
+interface UploadedImage {
+  file: File;
+  previewUrl: string;
+}
+
+interface CreateDonationPayload {
+  name: string;
+  phone: string;
+  category: string;
+  weight: string;
+  condition: string;
+  address: string;
+  notes?: string;
+  imageUrls: string[];
+}
+
+const MAX_DONATION_IMAGES = 5;
 
 const INITIAL_DONATIONS: DonationRequest[] = [
   {
@@ -72,6 +91,7 @@ export const Products: React.FC = () => {
   const [condition, setCondition] = useState('good');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  const [images, setImages] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Tracking states
@@ -99,8 +119,95 @@ export const Products: React.FC = () => {
     { value: 'mixed', label: 'Hỗn hợp (Có cả đồ từ thiện và đồ tái chế)' },
   ];
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? []);
+    const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
+
+    if (imageFiles.length !== selectedFiles.length) {
+      toast.error('Chi ho tro tai len file hinh anh.');
+    }
+
+    if (imageFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    const availableSlots = MAX_DONATION_IMAGES - images.length;
+    if (availableSlots <= 0) {
+      toast.error(`Chi duoc tai len toi da ${MAX_DONATION_IMAGES} hinh anh.`);
+      e.target.value = '';
+      return;
+    }
+
+    const acceptedFiles = imageFiles.slice(0, availableSlots);
+    if (imageFiles.length > availableSlots) {
+      toast.info(`Chi them ${availableSlots} hinh anh vi gioi han toi da la ${MAX_DONATION_IMAGES} hinh.`);
+    }
+
+    setImages(prev => [
+      ...prev,
+      ...acceptedFiles.map(file => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })),
+    ]);
+    e.target.value = '';
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => {
+      const imageToRemove = prev[index];
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.previewUrl);
+      }
+
+      return prev.filter((_, currentIndex) => currentIndex !== index);
+    });
+  };
+
+  const uploadDonationImages = async (): Promise<string[]> => {
+    if (images.length === 0) {
+      return [];
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const bucket = import.meta.env.VITE_SUPABASE_BUCKET || 'donation-images';
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Thieu cau hinh Supabase. Vui long them VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY.');
+    }
+
+    const uploadedUrls = await Promise.all(
+      images.map(async ({ file }) => {
+        const extension = file.name.split('.').pop() || 'jpg';
+        const filePath = `donations/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`;
+
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': file.type,
+            'x-upsert': 'false',
+          },
+          body: file,
+        });
+
+        if (!response.ok) {
+          throw new Error('Khong the tai hinh anh len Supabase.');
+        }
+
+        return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
+      }),
+    );
+
+    return uploadedUrls;
+  };
+
   // Handle donation registration submit
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !address) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
@@ -108,20 +215,34 @@ export const Products: React.FC = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const imageUrls = await uploadDonationImages();
       const code = `RT-2026-${Math.floor(100 + Math.random() * 900)}`;
       const selectedCategoryLabel = categoryOptions.find(o => o.value === category)?.label || 'Hỗn hợp';
       const selectedWeightLabel = weightOptions.find(o => o.value === weight)?.label || 'Dưới 5 kg';
       const selectedConditionLabel = conditionOptions.find(o => o.value === condition)?.label || 'Còn tốt';
 
-      const newRequest: DonationRequest = {
-        code,
+      const payload: CreateDonationPayload = {
         name,
         phone,
         category: selectedCategoryLabel,
         weight: selectedWeightLabel,
         condition: selectedConditionLabel,
         address,
+        notes: notes.trim() || undefined,
+        imageUrls,
+      };
+
+      const newRequest: DonationRequest = {
+        code,
+        name: payload.name,
+        phone: payload.phone,
+        category: payload.category,
+        weight: payload.weight,
+        condition: payload.condition,
+        address: payload.address,
+        imageUrls: payload.imageUrls,
         status: 'pending',
         statusText: 'Chờ điều phối viên liên hệ thu gom',
         date: new Date().toISOString().split('T')[0],
@@ -136,12 +257,17 @@ export const Products: React.FC = () => {
       setPhone('');
       setAddress('');
       setNotes('');
+      images.forEach(image => URL.revokeObjectURL(image.previewUrl));
+      setImages([]);
       
       // Switch tab to tracker and automatically search
       setActiveTab('tracker');
-      setSearchPhone(phone);
-      setSearchResults([newRequest, ...donations.filter(d => d.phone === phone)]);
-    }, 1500);
+      setSearchPhone(payload.phone);
+      setSearchResults([newRequest, ...donations.filter(d => d.phone === payload.phone)]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Dang ky quyen gop that bai.');
+      setLoading(false);
+    }
   };
 
   // Handle tracking search
@@ -262,6 +388,42 @@ export const Products: React.FC = () => {
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                 />
+              </div>
+
+              <div className="input-wrapper">
+                <label className="input-label">Hinh anh quan ao (toi da 5 hinh)</label>
+                <label className="image-upload-box" htmlFor="donation-images">
+                  <ImagePlus size={24} />
+                  <span>Chọn hình ảnh</span>
+                  <small>{images.length}/{MAX_DONATION_IMAGES} hình đã chọn</small>
+                </label>
+                <input
+                  id="donation-images"
+                  className="image-upload-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  disabled={images.length >= MAX_DONATION_IMAGES}
+                />
+
+                {images.length > 0 && (
+                  <div className="image-preview-grid">
+                    {images.map((image, index) => (
+                      <div className="image-preview-item" key={image.previewUrl}>
+                        <img src={image.previewUrl} alt={`Hinh quan ao ${index + 1}`} />
+                        <button
+                          type="button"
+                          className="remove-image-btn"
+                          onClick={() => handleRemoveImage(index)}
+                          aria-label="Xoa hinh anh"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Button type="submit" isLoading={loading} className="submit-donation-btn">
