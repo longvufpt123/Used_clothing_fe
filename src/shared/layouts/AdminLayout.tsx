@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AdminSidebar from '@/shared/components/AdminSidebar';
 import AdminHeader from '@/shared/components/AdminHeader';
 import './AdminLayout.css';
@@ -9,12 +9,13 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
-  role = 'staff',
   children,
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <div className="admin-layout-wrapper">
-      <AdminSidebar role={role} />
+    <div className={`admin-layout-wrapper ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <AdminSidebar isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(!isCollapsed)} />
       <div className="admin-layout-main">
         <AdminHeader />
         <main className="admin-content-area">{children}</main>

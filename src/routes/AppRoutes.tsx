@@ -11,6 +11,14 @@ import CollectionSchedule from '@/pages/admin/CollectionSchedule';
 import DetailedClassification from '@/pages/admin/DetailedClassification';
 import CharityInventory from '@/pages/admin/CharityInventory';
 import Campaigns from '@/pages/admin/Campaigns';
+import Users from '@/pages/admin/Users';
+
+// Manager pages
+import ManagerDashboard from '@/pages/manager/Dashboard';
+import ManagerCollectionSchedule from '@/pages/manager/CollectionSchedule';
+import ManagerCharityInventory from '@/pages/manager/CharityInventory';
+import ManagerCampaigns from '@/pages/manager/Campaigns';
+import ManagerUsers from '@/pages/manager/Users';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -59,10 +67,17 @@ export const AppRoutes: React.FC = () => {
 
       {/* Back-office pages */}
       <Route path="/admin" element={<Dashboard />} />
+      <Route path="/admin/users" element={<Users />} />
       <Route path="/admin/schedule" element={<CollectionSchedule />} />
       <Route path="/admin/classification" element={<DetailedClassification />} />
       <Route path="/admin/inventory" element={<CharityInventory />} />
       <Route path="/admin/campaigns" element={<Campaigns />} />
+
+      <Route path="/manager" element={<ManagerDashboard />} />
+      <Route path="/manager/users" element={<ManagerUsers />} />
+      <Route path="/manager/schedule" element={<ManagerCollectionSchedule />} />
+      <Route path="/manager/inventory" element={<ManagerCharityInventory />} />
+      <Route path="/manager/campaigns" element={<ManagerCampaigns />} />
 
       {/* Fallback redirect */}
       <Route

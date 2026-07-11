@@ -15,9 +15,11 @@
 }
 
 .admin-content-area {
-  padding: var(--spacing-xl);
+  padding: 16px;
   flex-grow: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Sticky Page Header for Admin Pages */

@@ -3,7 +3,7 @@ import './Table.css';
 
 interface TableColumn<T> {
   header: string;
-  accessor: keyof T | ((row: T) => React.ReactNode);
+  accessor: keyof T | ((row: T, index?: number) => React.ReactNode);
 }
 
 interface TableProps<T> {
@@ -28,7 +28,7 @@ export function Table<T>({ columns, data }: TableProps<T>) {
               {columns.map((col, colIdx) => {
                 const content =
                   typeof col.accessor === 'function'
-                    ? col.accessor(row)
+                    ? col.accessor(row, rowIdx)
                     : (row[col.accessor] as React.ReactNode);
                 return <td key={colIdx}>{content}</td>;
               })}
