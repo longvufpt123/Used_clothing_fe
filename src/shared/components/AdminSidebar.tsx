@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { LayoutDashboard, Truck, ShieldCheck, Archive, Leaf, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings } from 'lucide-react';
 import './AdminSidebar.css';
 
 interface SidebarItem {
@@ -10,38 +10,54 @@ interface SidebarItem {
 }
 
 interface AdminSidebarProps {
-  role: 'admin' | 'manager' | 'staff';
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ role }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+  const location = useLocation();
+  const isManager = location.pathname.startsWith('/manager');
+  const basePath = isManager ? '/manager' : '/admin';
+
   const getMenu = (): SidebarItem[] => {
-    return [
-      { label: 'Bảng tổng quan', path: '/admin', icon: <LayoutDashboard size={18} /> },
-      { label: 'Lịch trình thu gom', path: '/admin/schedule', icon: <Truck size={18} /> },
-      { label: 'Phân loại chi tiết', path: '/admin/classification', icon: <ShieldCheck size={18} /> },
-      { label: 'Kiểm kho từ thiện', path: '/admin/inventory', icon: <Archive size={18} /> },
-      { label: 'Chiến dịch thu gom', path: '/admin/campaigns', icon: <Leaf size={18} /> },
-    ];
+    if (isManager) {
+      return [
+        { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
+        { label: 'Cấu hình ca làm việc', path: `${basePath}/schedule`, icon: <Truck size={18} /> },
+        { label: 'Quản lý tài khoản', path: `${basePath}/users`, icon: <Users size={18} /> },
+        { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
+        { label: 'Kế hoạch lịch trình AI', path: `${basePath}/campaigns`, icon: <Leaf size={18} /> },
+      ];
+    } else {
+      return [
+        { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
+        { label: 'Cấu hình hệ thống', path: `${basePath}/campaigns`, icon: <Settings size={18} /> },
+      ];
+    }
   };
 
   return (
-    <aside className="admin-sidebar glass">
+    <aside className={`admin-sidebar glass ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <h2>Back Office</h2>
-        <span className="role-badge">{role.toUpperCase()}</span>
+        {!isCollapsed && (
+          <span className="project-title-text text-gradient">GreenThread</span>
+        )}
+        <button className="toggle-sidebar-btn" onClick={onToggleCollapse} title={isCollapsed ? "Mở rộng" : "Thu gọn"}>
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
       </div>
       <nav className="sidebar-nav">
         {getMenu().map((item, idx) => (
-          <Link key={idx} to={item.path} className="sidebar-link">
+          <Link key={idx} to={item.path} className="sidebar-link" title={isCollapsed ? item.label : undefined}>
             {item.icon}
-            <span>{item.label}</span>
+            {!isCollapsed && <span>{item.label}</span>}
           </Link>
         ))}
       </nav>
       <div className="sidebar-footer">
-        <Link to="/logout" className="sidebar-link logout-btn">
+        <Link to="/logout" className="sidebar-link logout-btn" title={isCollapsed ? "Logout" : undefined}>
           <LogOut size={18} />
-          <span>Logout</span>
+          {!isCollapsed && <span>Logout</span>}
         </Link>
       </div>
     </aside>

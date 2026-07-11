@@ -12,9 +12,9 @@
   --spacing-xxl: 3.5rem;
 
   /* Borders & Shadows */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 24px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
   --radius-full: 9999px;
 
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
