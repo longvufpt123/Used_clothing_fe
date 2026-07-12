@@ -3,19 +3,19 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-top: var(--spacing-xl);
+  margin-top: 0;
 }
 
 .pagination-btn {
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: 0px;
   cursor: pointer;
   transition: all var(--transition-fast);
   font-weight: 600;

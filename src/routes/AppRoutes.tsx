@@ -11,6 +11,33 @@ import CollectionSchedule from '@/pages/admin/CollectionSchedule';
 import DetailedClassification from '@/pages/admin/DetailedClassification';
 import CharityInventory from '@/pages/admin/CharityInventory';
 import Campaigns from '@/pages/admin/Campaigns';
+import Users from '@/pages/admin/Users';
+
+// Manager pages
+import ManagerDashboard from '@/pages/manager/Dashboard';
+import ManagerCollectionSchedule from '@/pages/manager/CollectionSchedule';
+import ManagerCharityInventory from '@/pages/manager/CharityInventory';
+import ManagerCampaigns from '@/pages/manager/Campaigns';
+import ManagerUsers from '@/pages/manager/Users';
+
+// Receiving Staff pages
+import ReceivingLayout from '@/shared/layouts/ReceivingLayout';
+import ReceivingDashboard from '@/pages/receiving/Dashboard';
+import ReceivingBatchDetail from '@/pages/receiving/BatchDetail';
+import ReceivingProcessRequest from '@/pages/receiving/ProcessRequest';
+
+// Classification Staff pages
+import StaffOpsLayout from '@/shared/layouts/StaffOpsLayout';
+import ClassificationDashboard from '@/pages/classification/Dashboard';
+import ClassifyBatch from '@/pages/classification/ClassifyBatch';
+import HandoffBatch from '@/pages/classification/HandoffBatch';
+
+// Warehouse Staff pages
+import WarehouseDashboard from '@/pages/warehouse/Dashboard';
+import ReceiveBatch from '@/pages/warehouse/ReceiveBatch';
+import StorageAlloc from '@/pages/warehouse/StorageAlloc';
+import DistributePrep from '@/pages/warehouse/DistributePrep';
+import WarehouseTracking from '@/pages/warehouse/Tracking';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -59,10 +86,111 @@ export const AppRoutes: React.FC = () => {
 
       {/* Back-office pages */}
       <Route path="/admin" element={<Dashboard />} />
+      <Route path="/admin/users" element={<Users />} />
       <Route path="/admin/schedule" element={<CollectionSchedule />} />
       <Route path="/admin/classification" element={<DetailedClassification />} />
       <Route path="/admin/inventory" element={<CharityInventory />} />
       <Route path="/admin/campaigns" element={<Campaigns />} />
+
+      <Route path="/manager" element={<ManagerDashboard />} />
+      <Route path="/manager/users" element={<ManagerUsers />} />
+      <Route path="/manager/schedule" element={<ManagerCollectionSchedule />} />
+      <Route path="/manager/inventory" element={<ManagerCharityInventory />} />
+      <Route path="/manager/campaigns" element={<ManagerCampaigns />} />
+
+      {/* Receiving Staff pages */}
+      <Route
+        path="/receiving"
+        element={
+          <ReceivingLayout>
+            <ReceivingDashboard />
+          </ReceivingLayout>
+        }
+      />
+      <Route
+        path="/receiving/batch/:id"
+        element={
+          <ReceivingLayout>
+            <ReceivingBatchDetail />
+          </ReceivingLayout>
+        }
+      />
+      <Route
+        path="/receiving/request/:id"
+        element={
+          <ReceivingLayout>
+            <ReceivingProcessRequest />
+          </ReceivingLayout>
+        }
+      />
+
+      {/* Classification Staff pages */}
+      <Route
+        path="/classification"
+        element={
+          <StaffOpsLayout homePath="/classification" roleLabel="Nhân viên Phân loại" brandSuffix="Classify">
+            <ClassificationDashboard />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/classification/classify/:batchId"
+        element={
+          <StaffOpsLayout homePath="/classification" roleLabel="Nhân viên Phân loại" brandSuffix="Classify">
+            <ClassifyBatch />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/classification/handoff/:batchId"
+        element={
+          <StaffOpsLayout homePath="/classification" roleLabel="Nhân viên Phân loại" brandSuffix="Classify">
+            <HandoffBatch />
+          </StaffOpsLayout>
+        }
+      />
+
+      {/* Warehouse Staff pages */}
+      <Route
+        path="/warehouse"
+        element={
+          <StaffOpsLayout homePath="/warehouse" roleLabel="Nhân viên Kho" brandSuffix="Warehouse">
+            <WarehouseDashboard />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/warehouse/receive/:batchId"
+        element={
+          <StaffOpsLayout homePath="/warehouse" roleLabel="Nhân viên Kho" brandSuffix="Warehouse">
+            <ReceiveBatch />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/warehouse/storage/:batchId"
+        element={
+          <StaffOpsLayout homePath="/warehouse" roleLabel="Nhân viên Kho" brandSuffix="Warehouse">
+            <StorageAlloc />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/warehouse/distribute/:requestId"
+        element={
+          <StaffOpsLayout homePath="/warehouse" roleLabel="Nhân viên Kho" brandSuffix="Warehouse">
+            <DistributePrep />
+          </StaffOpsLayout>
+        }
+      />
+      <Route
+        path="/warehouse/tracking/:trackingCode"
+        element={
+          <StaffOpsLayout homePath="/warehouse" roleLabel="Nhân viên Kho" brandSuffix="Warehouse">
+            <WarehouseTracking />
+          </StaffOpsLayout>
+        }
+      />
 
       {/* Fallback redirect */}
       <Route

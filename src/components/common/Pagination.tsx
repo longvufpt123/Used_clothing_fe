@@ -15,13 +15,11 @@ export const Pagination: React.FC<PaginationProps> = ({
 }) => {
   const getPageNumbers = () => {
     const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1; i <= Math.max(totalPages, 1); i++) {
       pages.push(i);
     }
     return pages;
   };
-
-  if (totalPages <= 1) return null;
 
   return (
     <nav className="pagination-nav" aria-label="Pagination Navigation">

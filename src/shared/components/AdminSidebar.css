@@ -8,21 +8,79 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-border);
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: 0 var(--spacing-md) var(--spacing-lg) var(--spacing-md);
   background-color: var(--color-bg-secondary);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+}
+
+.admin-sidebar.collapsed {
+  width: 64px;
+  min-width: 64px;
+  padding: 0 var(--spacing-xs) var(--spacing-lg) var(--spacing-xs);
 }
 
 .sidebar-header {
-  padding-bottom: var(--spacing-lg);
+  height: 54px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: var(--spacing-lg);
+  padding-bottom: 0;
+  margin-left: calc(-1 * var(--spacing-md));
+  margin-right: calc(-1 * var(--spacing-md));
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
+.admin-sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.header-logo-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.project-title-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-header h2 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--color-text-primary);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.toggle-sidebar-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.toggle-sidebar-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .role-badge {
@@ -55,6 +113,12 @@
   transition: all var(--transition-fast);
 }
 
+.admin-sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: var(--spacing-sm) 0;
+  gap: 0;
+}
+
 .sidebar-link:hover {
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-primary);
@@ -71,6 +135,25 @@
 
 .sidebar-footer {
   border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-md);
   margin-top: auto;
+  margin-left: calc(-1 * var(--spacing-md));
+  margin-right: calc(-1 * var(--spacing-md));
+  margin-bottom: calc(-1 * var(--spacing-lg));
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+  height: 57px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sidebar-footer .logout-btn {
+  width: 100%;
+}
+
+.admin-sidebar.collapsed .sidebar-footer {
+  margin-left: calc(-1 * var(--spacing-xs));
+  margin-right: calc(-1 * var(--spacing-xs));
+  padding-left: var(--spacing-xs);
+  padding-right: var(--spacing-xs);
 }

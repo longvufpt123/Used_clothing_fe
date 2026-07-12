@@ -28,6 +28,12 @@ chat_history/
 
 # AI Agent Customizations
 .agents/
+AGENTS.md
+.gemini/
 
 skills-lock.json
 package-lock.json
+
+# Environment variables
+.env
+
