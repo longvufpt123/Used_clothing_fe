@@ -1,4 +1,4 @@
-.my-orders-page {
+﻿.my-orders-page {
   padding-top: 40px;
   padding-bottom: 80px;
 }
@@ -88,10 +88,33 @@
   flex: 0 0 auto;
   padding: 7px 10px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
   font-size: 0.82rem;
   font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.order-status-success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.24);
+  color: var(--color-success);
+}
+
+.order-status-warning {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.26);
+  color: #b45309;
+}
+
+.order-status-danger {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.22);
+  color: var(--color-danger);
+}
+
+.order-status-info {
+  background: var(--color-primary-light);
+  border-color: rgba(16, 185, 129, 0.18);
+  color: var(--color-primary);
 }
 
 .order-meta-grid {
@@ -193,5 +216,110 @@
 
   .order-card-header {
     flex-direction: column;
+  }
+}
+.order-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.order-actions,
+.edit-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.order-actions .btn,
+.edit-form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-danger {
+  color: #dc2626;
+}
+
+.btn-danger:hover {
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+}
+
+.edit-order-form {
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.edit-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.edit-order-form .input-wrapper,
+.edit-order-form .select-wrapper {
+  margin-bottom: 0;
+}
+
+.edit-notes-label {
+  display: block;
+  margin: var(--spacing-md) 0 8px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.edit-notes-input {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: inherit;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.edit-notes-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.edit-image-note {
+  margin: var(--spacing-sm) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.edit-form-actions {
+  margin-top: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .order-header-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .edit-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-form-actions .btn,
+  .order-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
