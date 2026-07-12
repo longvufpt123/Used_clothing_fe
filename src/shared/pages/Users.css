@@ -635,13 +635,14 @@
 }
 
 .action-buttons-cell .action-btn {
-  width: 32px;
+  width: auto;
   height: 32px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  padding: 10px;
 }
 
 /* Input validation error styles */

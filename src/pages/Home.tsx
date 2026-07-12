@@ -63,10 +63,14 @@ export const Home: React.FC = () => {
           </div>
           <div className="hero-visual">
             <div className="hero-image-glow"></div>
-            <img
-              src="https://images.unsplash.com/photo-1532884968839-ef2f8c97ddaf?w=800&auto=format&fit=crop&q=80"
-              alt="Sustainable Fashion and Recycling"
+            <video
               className="hero-image"
+              src="/assets/videos/login-bg.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              aria-label="Sustainable Fashion and Recycling"
             />
           </div>
         </div>

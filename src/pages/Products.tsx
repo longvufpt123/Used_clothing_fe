@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Leaf, Search, PlusCircle, Clock, Truck, ShieldCheck, Heart, ArrowRight, ImagePlus, X } from 'lucide-react';
+﻿import React, { useEffect, useState } from 'react';
+import { Search, PlusCircle, Clock, ShieldCheck, ArrowRight, ImagePlus, X, XCircle, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -16,7 +16,7 @@ interface DonationRequest {
   weight: string;
   condition: string;
   address: string;
-  status: 'pending' | 'collected' | 'classifying' | 'processed' | 'distributed';
+  status: 'pending' | 'confirmed' | 'classifying' | 'processed' | 'distributed' | 'cancelled';
   statusText: string;
   date: string;
   imageUrls?: string[];
@@ -95,14 +95,15 @@ const getDescriptionValue = (description: string | undefined, label: string) => 
 
 const mapApiStatusToDonationStatus = (status: string): DonationRequest['status'] => {
   switch (status) {
+    case 'Cancelled':
+    case 'Reject':
+      return 'cancelled';
     case 'Confirmed':
-    case 'ReceivingStaffAssigned':
-    case 'WaitingReceivingStaff':
-      return 'collected';
+      return 'confirmed';
     case 'SendToClassification':
     case 'Classifying':
-    case 'Classified':
       return 'classifying';
+    case 'Classified':
     case 'Stored':
       return 'processed';
     default:
@@ -427,12 +428,13 @@ export const Products: React.FC = () => {
   };
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'cancelled': return <XCircle className="status-icon cancelled" size={20} />;
       case 'pending': return <Clock className="status-icon pending" size={20} />;
-      case 'collected': return <Truck className="status-icon collected" size={20} />;
+      case 'confirmed': return <CheckCircle className="status-icon confirmed" size={20} />;
       case 'classifying': return <ShieldCheck className="status-icon classifying" size={20} />;
-      case 'processed': return <Leaf className="status-icon processed" size={20} />;
-      case 'distributed': return <Heart className="status-icon distributed" size={20} />;
-      default: return <Clock className="status-icon" size={20} />;
+      case 'processed':
+      case 'distributed': return <CheckCircle className="status-icon processed" size={20} />;
+      default: return <Clock className="status-icon pending" size={20} />;
     }
   };
 
