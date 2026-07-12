@@ -33,3 +33,7 @@ AGENTS.md
 
 skills-lock.json
 package-lock.json
+
+# Environment variables
+.env
+

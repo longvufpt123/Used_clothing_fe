@@ -135,7 +135,13 @@ export const Login: React.FC = () => {
       toast.success('Đăng nhập thành công!');
       
       // Redirect based on role
-      if (response.role === 'Manager' || response.role === 'ReceivingStaff' || response.role === 'ClassificationStaff' || response.role === 'WarehouseStaff') {
+      if (response.role === 'ReceivingStaff') {
+        navigate('/receiving');
+      } else if (response.role === 'ClassificationStaff') {
+        navigate('/classification');
+      } else if (response.role === 'WarehouseStaff') {
+        navigate('/warehouse');
+      } else if (response.role === 'Manager') {
         navigate('/admin');
       } else {
         navigate('/');
