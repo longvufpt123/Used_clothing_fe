@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import './Modal.css';
 
@@ -8,6 +8,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  className?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -16,6 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   footer,
+  className = '',
 }) => {
   // Handle escape key to close
   useEffect(() => {
@@ -38,7 +40,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container glass" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-container glass ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           {title && <h3 className="modal-title">{title}</h3>}
           <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">

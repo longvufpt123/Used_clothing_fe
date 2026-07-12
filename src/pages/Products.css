@@ -1,4 +1,4 @@
-.donation-portal-page {
+﻿.donation-portal-page {
   padding-top: 40px;
   padding-bottom: 80px;
 }
@@ -337,33 +337,29 @@
 }
 
 .status-icon.pending {
-  color: #ff9f43;
-  border-color: rgba(255, 159, 67, 0.3);
-  background: rgba(255, 159, 67, 0.1);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.32);
+  background: rgba(245, 158, 11, 0.13);
 }
 
-.status-icon.collected {
-  color: #00d25b;
-  border-color: rgba(0, 210, 91, 0.3);
-  background: rgba(0, 210, 91, 0.1);
+.status-icon.cancelled {
+  color: var(--color-danger);
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.status-icon.confirmed,
+.status-icon.processed,
+.status-icon.distributed {
+  color: var(--color-success);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.12);
 }
 
 .status-icon.classifying {
   color: #3382ef;
   border-color: rgba(51, 130, 239, 0.3);
   background: rgba(51, 130, 239, 0.1);
-}
-
-.status-icon.processed {
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.status-icon.distributed {
-  color: #ea5455;
-  border-color: rgba(234, 84, 85, 0.3);
-  background: rgba(234, 84, 85, 0.1);
 }
 
 .step-label {
