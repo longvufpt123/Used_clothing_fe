@@ -7,6 +7,8 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/admin/Dashboard';
 import Map from '@/pages/Map';
 import Leaderboard from '@/pages/Leaderboard';
+import Account from '@/pages/Account';
+import MyOrders from '@/pages/MyOrders';
 import CollectionSchedule from '@/pages/admin/CollectionSchedule';
 import DetailedClassification from '@/pages/admin/DetailedClassification';
 import CharityInventory from '@/pages/admin/CharityInventory';
@@ -72,6 +74,22 @@ export const AppRoutes: React.FC = () => {
         element={
           <MainLayout>
             <Leaderboard />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <MainLayout>
+            <Account />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/my-orders"
+        element={
+          <MainLayout>
+            <MyOrders />
           </MainLayout>
         }
       />
