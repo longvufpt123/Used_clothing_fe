@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Leaf, Search, PlusCircle, Clock, Truck, ShieldCheck, Heart, ArrowRight, ImagePlus, X } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
 import { useToast } from '@/context/ToastContext';
+import apiClient from '@/services/api';
 import './Products.css';
 
 // Type definitions for Donation requests
@@ -26,19 +27,102 @@ interface UploadedImage {
   previewUrl: string;
 }
 
-interface CreateDonationPayload {
-  name: string;
-  phone: string;
-  category: string;
-  weight: string;
-  condition: string;
+interface WarehouseOption {
+  id: string;
   address: string;
-  notes?: string;
+}
+
+interface CreateDonationPayload {
+  pickupDate: string;
+  description: string;
   imageUrls: string[];
+  estimateWeight: number;
+  pickupAddress: string;
+  warehouseId: string;
+}
+
+
+interface DonorRequestSearchApiResponse {
+  id: string;
+  code: string;
+  donorName: string;
+  phoneNumber: string;
+  description?: string;
+  imageUrls?: string[];
+  estimateWeight: number;
+  actualWeight?: number | null;
+  pickupAddress: string;
+  pickupDate?: string | null;
+  warehouseId: string;
+  warehouseAddress: string;
+  status: string;
+  statusText: string;
+  createdAt?: string | null;
+}
+interface CreateDonationResponse {
+  message?: string;
+  Message?: string;
 }
 
 const MAX_DONATION_IMAGES = 5;
+const DEFAULT_PICKUP_OFFSET_DAYS = 1;
 
+const getDefaultPickupDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + DEFAULT_PICKUP_OFFSET_DAYS);
+  return date.toISOString().split('T')[0];
+};
+
+const estimateWeightByOption: Record<string, number> = {
+  'under-5': 3,
+  '5-10': 7.5,
+  '10-20': 15,
+  'over-20': 25,
+};
+
+
+const getDescriptionValue = (description: string | undefined, label: string) => {
+  if (!description) {
+    return '';
+  }
+
+  const line = description
+    .split('\n')
+    .find(item => item.toLowerCase().startsWith(label.toLowerCase()));
+
+  return line?.split(':').slice(1).join(':').trim() || '';
+};
+
+const mapApiStatusToDonationStatus = (status: string): DonationRequest['status'] => {
+  switch (status) {
+    case 'Confirmed':
+    case 'ReceivingStaffAssigned':
+    case 'WaitingReceivingStaff':
+      return 'collected';
+    case 'SendToClassification':
+    case 'Classifying':
+    case 'Classified':
+      return 'classifying';
+    case 'Stored':
+      return 'processed';
+    default:
+      return 'pending';
+  }
+};
+
+const mapSearchResultToDonationRequest = (item: DonorRequestSearchApiResponse): DonationRequest => ({
+  code: item.code,
+  name: item.donorName,
+  phone: item.phoneNumber,
+  category: getDescriptionValue(item.description, 'Loai quan ao') || 'Khac',
+  weight: getDescriptionValue(item.description, 'Khoi luong uoc luong') || `${item.estimateWeight} kg`,
+  condition: getDescriptionValue(item.description, 'Tinh trang') || 'Dang cap nhat',
+  address: item.pickupAddress,
+  status: mapApiStatusToDonationStatus(item.status),
+  statusText: item.statusText,
+  date: (item.createdAt || item.pickupDate || new Date().toISOString()).split('T')[0],
+  imageUrls: item.imageUrls,
+});
 const INITIAL_DONATIONS: DonationRequest[] = [
   {
     code: 'RT-2026-801',
@@ -80,6 +164,7 @@ const INITIAL_DONATIONS: DonationRequest[] = [
 
 export const Products: React.FC = () => {
   const toast = useToast();
+  const showToastError = toast.error;
   const [activeTab, setActiveTab] = useState<'register' | 'tracker'>('register');
   const [donations, setDonations] = useState<DonationRequest[]>(INITIAL_DONATIONS);
 
@@ -90,8 +175,12 @@ export const Products: React.FC = () => {
   const [weight, setWeight] = useState('5-10');
   const [condition, setCondition] = useState('good');
   const [address, setAddress] = useState('');
+  const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
+  const [warehouseId, setWarehouseId] = useState('');
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
+  const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Tracking states
@@ -118,6 +207,41 @@ export const Products: React.FC = () => {
     { value: 'recycle', label: 'Cũ rách, mục hỏng (Dành để tái chế dệt lại)' },
     { value: 'mixed', label: 'Hỗn hợp (Có cả đồ từ thiện và đồ tái chế)' },
   ];
+  const warehouseOptions = warehouses.map(warehouse => ({
+    value: warehouse.id,
+    label: warehouse.address,
+  }));
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadWarehouses = async () => {
+      setWarehouseLoading(true);
+      try {
+        const data = await apiClient.get<unknown, WarehouseOption[]>('/warehouses');
+        if (!isMounted) {
+          return;
+        }
+
+        setWarehouses(data);
+        setWarehouseId(prev => prev || data[0]?.id || '');
+      } catch {
+        if (isMounted) {
+          showToastError('Khong the tai danh sach kho nhan hang.');
+        }
+      } finally {
+        if (isMounted) {
+          setWarehouseLoading(false);
+        }
+      }
+    };
+
+    loadWarehouses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showToastError]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
@@ -209,7 +333,7 @@ export const Products: React.FC = () => {
   // Handle donation registration submit
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !address) {
+    if (!name || !phone || !address || !pickupDate || !warehouseId) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
       return;
     }
@@ -224,25 +348,32 @@ export const Products: React.FC = () => {
       const selectedConditionLabel = conditionOptions.find(o => o.value === condition)?.label || 'Còn tốt';
 
       const payload: CreateDonationPayload = {
+        pickupDate: new Date(`${pickupDate}T00:00:00`).toISOString(),
+        description: [
+          `Nguoi quyen gop: ${name}`,
+          `So dien thoai: ${phone}`,
+          `Loai quan ao: ${selectedCategoryLabel}`,
+          `Khoi luong uoc luong: ${selectedWeightLabel}`,
+          `Tinh trang: ${selectedConditionLabel}`,
+          notes.trim() ? `Ghi chu: ${notes.trim()}` : '',
+        ].filter(Boolean).join('\n'),
+        imageUrls,
+        estimateWeight: estimateWeightByOption[weight] ?? 0,
+        pickupAddress: address,
+        warehouseId,
+      };
+
+      const response = await apiClient.post<unknown, CreateDonationResponse>('/donor-requests', payload);
+
+      const newRequest: DonationRequest = {
+        code,
         name,
         phone,
         category: selectedCategoryLabel,
         weight: selectedWeightLabel,
         condition: selectedConditionLabel,
-        address,
-        notes: notes.trim() || undefined,
+        address: payload.pickupAddress,
         imageUrls,
-      };
-
-      const newRequest: DonationRequest = {
-        code,
-        name: payload.name,
-        phone: payload.phone,
-        category: payload.category,
-        weight: payload.weight,
-        condition: payload.condition,
-        address: payload.address,
-        imageUrls: payload.imageUrls,
         status: 'pending',
         statusText: 'Chờ điều phối viên liên hệ thu gom',
         date: new Date().toISOString().split('T')[0],
@@ -250,20 +381,20 @@ export const Products: React.FC = () => {
 
       setDonations(prev => [newRequest, ...prev]);
       setLoading(false);
-      toast.success(`Đăng ký thành công! Mã quyên góp của bạn là: ${code}`);
-      
       // Reset form
       setName('');
       setPhone('');
       setAddress('');
+      setPickupDate(getDefaultPickupDate());
       setNotes('');
       images.forEach(image => URL.revokeObjectURL(image.previewUrl));
       setImages([]);
       
       // Switch tab to tracker and automatically search
       setActiveTab('tracker');
-      setSearchPhone(payload.phone);
-      setSearchResults([newRequest, ...donations.filter(d => d.phone === payload.phone)]);
+      setSearchPhone(phone);
+      setSearchResults([newRequest, ...donations.filter(d => d.phone === phone)]);
+      toast.success(response.message || response.Message || 'Dang ky thanh cong! Ma quyen gop cua ban la: ' + code);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Dang ky quyen gop that bai.');
       setLoading(false);
@@ -271,19 +402,29 @@ export const Products: React.FC = () => {
   };
 
   // Handle tracking search
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchPhone) {
-      toast.error('Vui lòng nhập số điện thoại để tra cứu!');
+      toast.error('Vui lÃ²ng nháº­p sá»‘ Ä‘iá»‡n thoáº¡i Ä‘á»ƒ tra cá»©u!');
       return;
     }
-    const results = donations.filter(d => d.phone.trim() === searchPhone.trim());
-    setSearchResults(results);
-    if (results.length === 0) {
-      toast.info('Không tìm thấy lịch sử quyên góp cho số điện thoại này.');
+
+    setLoading(true);
+    try {
+      const apiResults = await apiClient.get<unknown, DonorRequestSearchApiResponse[]>('/donor-requests/search', {
+        params: { phoneNumber: searchPhone.trim() },
+      });
+      const results = apiResults.map(mapSearchResultToDonationRequest);
+      setSearchResults(results);
+      if (results.length === 0) {
+        toast.info('KhÃ´ng tÃ¬m tháº¥y lá»‹ch sá»­ quyÃªn gÃ³p cho sá»‘ Ä‘iá»‡n thoáº¡i nÃ y.');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Tra cuu don quyen gop that bai.');
+    } finally {
+      setLoading(false);
     }
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending': return <Clock className="status-icon pending" size={20} />;
@@ -344,7 +485,11 @@ export const Products: React.FC = () => {
                   label="Số điện thoại *"
                   placeholder="Ví dụ: 0901234567"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  type="tel"
+                  name="phoneNumber"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
                 />
               </div>
@@ -379,6 +524,25 @@ export const Products: React.FC = () => {
                 required
               />
 
+              <div className="form-row">
+                <Input
+                  label="Ngay lay hang *"
+                  type="date"
+                  value={pickupDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPickupDate(e.target.value)}
+                  required
+                />
+                <Select
+                  label="Kho tiep nhan *"
+                  options={warehouseOptions.length > 0 ? warehouseOptions : [{ value: '', label: warehouseLoading ? 'Dang tai danh sach kho...' : 'Khong co kho tiep nhan' }]}
+                  value={warehouseId}
+                  onChange={(e) => setWarehouseId(e.target.value)}
+                  disabled={warehouseLoading || warehouseOptions.length === 0}
+                  required
+                />
+              </div>
+
               <div className="input-wrapper">
                 <label className="input-label">Ghi chú thêm (không bắt buộc)</label>
                 <textarea
@@ -391,7 +555,7 @@ export const Products: React.FC = () => {
               </div>
 
               <div className="input-wrapper">
-                <label className="input-label">Hinh anh quan ao (toi da 5 hinh)</label>
+                <label className="input-label">Hình ảnh quần áo (tối đa 5 hình)</label>
                 <label className="image-upload-box" htmlFor="donation-images">
                   <ImagePlus size={24} />
                   <span>Chọn hình ảnh</span>
@@ -426,7 +590,7 @@ export const Products: React.FC = () => {
                 )}
               </div>
 
-              <Button type="submit" isLoading={loading} className="submit-donation-btn">
+              <Button type="submit" isLoading={loading} className="submit-donation-btn" disabled={warehouseLoading || warehouseOptions.length === 0}>
                 Xác nhận Quyên góp <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </Button>
             </form>
@@ -445,7 +609,7 @@ export const Products: React.FC = () => {
                   icon={<Search size={18} />}
                   className="tracker-input"
                 />
-                <Button type="submit" variant="primary">
+                <Button type="submit" variant="primary" isLoading={loading}>
                   Tìm kiếm
                 </Button>
               </form>
@@ -474,6 +638,25 @@ export const Products: React.FC = () => {
                               <div><strong>Tình trạng:</strong> {item.condition}</div>
                             </div>
                             
+                            {item.imageUrls && item.imageUrls.length > 0 && (
+                              <div className="result-images-section">
+                                <span className="result-images-title">Hình ảnh quần áo</span>
+                                <div className="result-images-grid">
+                                  {item.imageUrls.map((imageUrl, index) => (
+                                    <a
+                                      href={imageUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="result-image-link"
+                                      key={`${item.code}-${imageUrl}`}
+                                    >
+                                      <img src={imageUrl} alt={`Hinh anh don ${item.code} ${index + 1}`} loading="lazy" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             <div className="tracking-timeline-wrapper">
                               <span className="timeline-title">Hành trình Xử lý & Phân loại:</span>
                               <div className="timeline-steps">
