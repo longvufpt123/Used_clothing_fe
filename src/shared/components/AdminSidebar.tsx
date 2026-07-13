@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings } from 'lucide-react';
 import './AdminSidebar.css';
 
@@ -48,17 +48,23 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, onToggl
       </div>
       <nav className="sidebar-nav">
         {getMenu().map((item, idx) => (
-          <Link key={idx} to={item.path} className="sidebar-link" title={isCollapsed ? item.label : undefined}>
+          <NavLink
+            key={idx}
+            to={item.path}
+            end={item.path === basePath}
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            title={isCollapsed ? item.label : undefined}
+          >
             {item.icon}
             {!isCollapsed && <span>{item.label}</span>}
-          </Link>
+          </NavLink>
         ))}
       </nav>
       <div className="sidebar-footer">
-        <Link to="/logout" className="sidebar-link logout-btn" title={isCollapsed ? "Logout" : undefined}>
+        <NavLink to="/logout" className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
           <LogOut size={18} />
-          {!isCollapsed && <span>Logout</span>}
-        </Link>
+          {!isCollapsed && <span>Đăng xuất</span>}
+        </NavLink>
       </div>
     </aside>
   );

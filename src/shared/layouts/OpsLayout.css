@@ -1,0 +1,356 @@
+/* ============================================================
+   OpsLayout — fixed workflow rail + content area
+   Shared by Receiving / Warehouse / Classification consoles
+   ============================================================ */
+
+.ops-shell {
+  min-height: 100dvh;
+  display: flex;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(16, 185, 129, 0.06), transparent 60%),
+    var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* ---- Rail ---------------------------------------------------- */
+.ops-rail {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  width: 256px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ops-rail-bg);
+  border-right: 1px solid var(--ops-rail-border);
+  z-index: var(--z-sticky);
+}
+
+.ops-rail-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 20px 18px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ops-rail-border);
+  transition: background var(--transition-fast);
+}
+
+.ops-rail-brand:hover {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.ops-rail-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(150deg, var(--color-primary), var(--color-primary-hover));
+  color: #04130d;
+  box-shadow: var(--shadow-accent);
+  flex-shrink: 0;
+}
+
+.ops-rail-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.ops-rail-brand-text strong {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ops-rail-brand-text span {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+.ops-rail-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ops-rail-group {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 14px 12px 6px;
+}
+
+.ops-rail-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.ops-rail-link-icon {
+  display: flex;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.ops-rail-link-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-rail-link:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.ops-rail-link:hover .ops-rail-link-icon {
+  color: var(--color-text-secondary);
+}
+
+.ops-rail-link:active {
+  transform: scale(0.985);
+}
+
+.ops-rail-link.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 650;
+}
+
+.ops-rail-link.active .ops-rail-link-icon {
+  color: var(--color-primary);
+}
+
+/* Left indicator bar on the active item */
+.ops-rail-link.active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  background: var(--color-primary);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+.ops-rail-count {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ops-rail-link.active .ops-rail-count {
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--color-primary);
+}
+
+/* ---- Rail footer (user) ------------------------------------- */
+.ops-rail-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px;
+  border-top: 1px solid var(--ops-rail-border);
+}
+
+.ops-rail-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ops-rail-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ops-rail-user-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.ops-rail-user-text strong {
+  font-size: 0.84rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-rail-user-text span {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-rail-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ops-rail-logout:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--color-danger);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.ops-rail-logout:active {
+  transform: scale(0.94);
+}
+
+/* ---- Main column -------------------------------------------- */
+.ops-shell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ops-topbar {
+  display: none; /* desktop hides it */
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--ops-rail-bg);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.ops-topbar-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.ops-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-primary);
+}
+
+.ops-topbar-role {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.ops-shell-content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ops-content-max);
+  margin: 0 auto;
+  padding: 30px 32px 56px;
+}
+
+.ops-rail-backdrop {
+  display: none;
+}
+
+/* ---- Responsive: rail becomes a slide-in drawer ------------- */
+@media (max-width: 900px) {
+  .ops-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .ops-rail.open {
+    transform: translateX(0);
+  }
+
+  .ops-topbar {
+    display: flex;
+  }
+
+  .ops-rail-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    background: rgba(4, 8, 16, 0.6);
+    backdrop-filter: blur(2px);
+    border: none;
+  }
+
+  .ops-shell-content {
+    padding: 20px 16px 44px;
+  }
+}

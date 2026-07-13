@@ -1,9 +1,9 @@
-/* Shared styles for Classification + Warehouse ops screens */
+/* Shared styles for Classification + Warehouse + Receiving ops screens */
 
 .ops-page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   animation: opsFadeIn var(--transition-normal);
 }
 
@@ -16,6 +16,64 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ---- Page header (replaces the old marketing hero) ---------- */
+.ops-pagehead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ops-pagehead-main {
+  min-width: 0;
+}
+
+.ops-pagehead-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.ops-pagehead-kicker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+}
+
+.ops-pagehead h1 {
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.ops-pagehead p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  max-width: 60ch;
+  line-height: 1.55;
+  margin-top: 8px;
+}
+
+.ops-pagehead-aside {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .ops-hero {
@@ -50,7 +108,7 @@
 .ops-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
 }
 
 @media (min-width: 768px) {
@@ -60,27 +118,67 @@
 }
 
 .ops-stat-card {
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
+  padding: 18px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.ops-stat-card::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-primary-light), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.ops-stat-card:hover {
+  border-color: var(--color-border-strong);
+  transform: translateY(-2px);
+}
+
+.ops-stat-card:hover::after {
+  opacity: 1;
 }
 
 .ops-stat-label {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-text-secondary);
 }
 
 .ops-stat-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  line-height: 1;
+}
+
+.ops-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .ops-stat-value svg {
@@ -88,17 +186,25 @@
   flex-shrink: 0;
 }
 
+.ops-stat-foot {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
 .ops-section-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
 .ops-section-head h2 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .ops-section-head span {
@@ -111,25 +217,27 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ops-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .ops-tab:hover {
-  border-color: var(--color-primary);
+  border-color: var(--color-border-strong);
   color: var(--color-text-primary);
 }
 
@@ -138,18 +246,21 @@
 }
 
 .ops-tab.active {
-  background: var(--color-primary-light);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: var(--color-primary);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #04130d;
+  box-shadow: var(--shadow-accent);
 }
 
 .ops-tab-count {
   min-width: 20px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 6px;
   border-radius: var(--radius-full);
   background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
   font-size: 0.7rem;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -157,28 +268,34 @@
 }
 
 .ops-tab.active .ops-tab-count {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--color-primary);
+  background: rgba(4, 19, 13, 0.22);
+  color: #04130d;
 }
 
 .ops-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--spacing-md);
+  align-items: start;
 }
 
 .ops-card {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
   cursor: pointer;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border-strong);
   transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
-  border-left: 3px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
 }
 
 .ops-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 0 12px 30px rgba(8, 12, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  border-left-color: var(--color-primary);
+  box-shadow: var(--shadow-lg);
 }
 
 .ops-card:active {
@@ -187,19 +304,19 @@
 
 /* Dynamic Left Borders based on badges */
 .ops-card:has(.ops-badge.pending) {
-  border-left-color: var(--color-accent);
+  border-left-color: var(--color-info);
 }
 
 .ops-card:has(.ops-badge.sendingtowarehouse) {
-  border-left-color: var(--color-accent);
+  border-left-color: var(--color-info);
 }
 
 .ops-card:has(.ops-badge.classified) {
-  border-left-color: #f59e0b;
+  border-left-color: var(--color-warning);
 }
 
 .ops-card:has(.ops-badge.warehousereceived) {
-  border-left-color: #f59e0b;
+  border-left-color: var(--color-warning);
 }
 
 .ops-card:has(.ops-badge.stored),
@@ -243,9 +360,9 @@
 }
 
 .ops-card h3 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   margin-bottom: 10px;
   line-height: 1.35;
 }
@@ -255,8 +372,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: auto;
+  padding-top: 14px;
   border-top: 1px solid var(--color-border);
   font-size: 0.82rem;
   color: var(--color-text-secondary);
@@ -270,16 +387,25 @@
 .ops-card-action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 600;
+  gap: 5px;
+  font-weight: 650;
   color: var(--color-primary);
   font-size: 0.82rem;
+}
+
+.ops-card:hover .ops-card-action svg {
+  transform: translateX(3px);
+}
+
+.ops-card-action svg {
+  transition: transform var(--transition-fast);
 }
 
 .ops-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: 0.7rem;
   font-weight: 650;
@@ -289,16 +415,16 @@
 
 .ops-badge.pending,
 .ops-badge.sendingtowarehouse {
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(91, 157, 255, 0.12);
+  color: var(--color-info);
+  border: 1px solid rgba(91, 157, 255, 0.25);
 }
 
 .ops-badge.classified,
 .ops-badge.warehousereceived {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(245, 181, 68, 0.12);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 181, 68, 0.25);
 }
 
 .ops-badge.stored,
@@ -310,19 +436,39 @@
 }
 
 .ops-badge.shipped {
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(139, 92, 246, 0.14);
   color: #a78bfa;
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Checklist used on receive / handoff panels */
+.ops-checklist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ops-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
 }
 
 .ops-empty {
-  padding: var(--spacing-xl);
+  grid-column: 1 / -1;
+  padding: var(--spacing-xxl) var(--spacing-xl);
   border-radius: var(--radius-lg);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  border: 1px dashed var(--color-border-strong);
+  background: var(--color-bg-secondary);
 }
 
 .ops-empty svg {
@@ -390,14 +536,18 @@
 
 .ops-panel {
   padding: var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .ops-panel-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
   display: block;
 }
 

@@ -8,8 +8,8 @@ interface AdminHeaderProps {
   title?: string;
 }
 
-export const AdminHeader: React.FC<AdminHeaderProps> = ({ 
-  title = 'Workspace Management Panel' 
+export const AdminHeader: React.FC<AdminHeaderProps> = ({
+  title = 'Bảng điều khiển'
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();

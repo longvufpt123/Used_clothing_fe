@@ -92,14 +92,14 @@ export const DetailedClassification: React.FC = () => {
     <AdminLayout role="staff">
       <div className="classification-page">
         <div className="admin-page-header">
-          <h2 className="dashboard-title">Phân Loại Chi Tiết Kiện Hàng</h2>
+          <h2 className="dashboard-title">Phân loại chi tiết kiện hàng</h2>
           <p className="dashboard-subtitle">Thực hiện mở kiện, kiểm đếm số lượng chi tiết và chia tách thành kiện từ thiện hoặc thùng xé sợi tái chế dệt may.</p>
         </div>
 
         <div className="classification-grid">
           {/* Left panel: Scanner and selector */}
           <div className="scanner-section glass">
-            <h3>Trạm Quét & Mở Kiện</h3>
+            <h3>Trạm quét & mở kiện</h3>
             <p className="scanner-desc">Chọn mã kiện hàng thu gom được để tiến hành mở kiện phân loại.</p>
 
             {packages.length > 0 ? (
@@ -149,7 +149,7 @@ export const DetailedClassification: React.FC = () => {
 
           {/* Center panel: Counting workspace */}
           <div className="sorting-workspace-section glass">
-            <h3>Không Gian Phân Loại Chi Tiết</h3>
+            <h3>Không gian phân loại chi tiết</h3>
             <p className="sorting-desc">Nhập số lượng thực tế kiểm đếm được.</p>
 
             {scannedPackage ? (
@@ -235,13 +235,13 @@ export const DetailedClassification: React.FC = () => {
 
           {/* Right panel: Printer Preview */}
           <div className="printer-section glass">
-            <h3>Xem Trước Tem Mã Vạch Kho</h3>
+            <h3>Xem trước tem mã vạch kho</h3>
             <p className="printer-desc">Mã vạch sinh ra tự động dán lên thùng hàng phân loại để chuyển sang kho giặt khử khuẩn hoặc nhà máy dệt.</p>
 
             {printPreview ? (
               <div className="label-preview-card">
                 <div className="label-header">
-                  <div className="bar-code-title">Rethreads Storage Tag</div>
+                  <div className="bar-code-title">Tem kho ReThreads</div>
                   <span className="label-code">{printPreview.code}</span>
                 </div>
                 
