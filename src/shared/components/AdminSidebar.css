@@ -111,6 +111,7 @@
   font-weight: 600;
   font-size: 0.95rem;
   transition: all var(--transition-fast);
+  position: relative;
 }
 
 .admin-sidebar.collapsed .sidebar-link {
@@ -124,13 +125,48 @@
   color: var(--color-text-primary);
 }
 
+.sidebar-link:active {
+  transform: translateY(1px);
+}
+
+.sidebar-link.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+}
+
+.admin-sidebar.collapsed .sidebar-link.active::before {
+  display: none;
+}
+
 .logout-btn {
   color: var(--color-danger);
 }
 
 .logout-btn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--color-danger);
+}
+
+/* logout is not a workspace destination — never show it as active */
+.logout-btn.active {
+  background-color: transparent;
+  color: var(--color-danger);
+}
+
+.logout-btn.active::before {
+  display: none;
 }
 
 .sidebar-footer {

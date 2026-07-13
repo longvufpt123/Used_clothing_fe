@@ -3,7 +3,7 @@ import AdminLayout from '@/shared/layouts/AdminLayout';
 import Table from '@/components/common/Table';
 import Badge from '@/components/common/Badge';
 import { useToast } from '@/context/ToastContext';
-import { Send } from 'lucide-react';
+import { Send, Inbox } from 'lucide-react';
 import './CharityInventory.css';
 
 interface StockItem {
@@ -121,7 +121,7 @@ export const CharityInventory: React.FC = () => {
     <AdminLayout role="staff">
       <div className="charity-inventory-page">
         <div className="admin-page-header">
-          <h2 className="dashboard-title">Kiểm Kho Quần Áo Từ Thiện</h2>
+          <h2 className="dashboard-title">Kiểm kho quần áo từ thiện</h2>
           <p className="dashboard-subtitle">Theo dõi quần áo đã qua xử lý khử khuẩn sạch sẽ trong kho và thực hiện xuất kho bàn giao tới các chiến dịch từ thiện.</p>
         </div>
 
@@ -137,9 +137,15 @@ export const CharityInventory: React.FC = () => {
 
           {/* Distribution Orders Section */}
           <div className="campaign-dispatch-section glass">
-            <h3>Xuất Kho Chiến Dịch Từ Thiện</h3>
+            <h3>Xuất kho chiến dịch từ thiện</h3>
             <p className="dispatch-subtitle">Bàn giao các kiện hàng sạch tới các đoàn tình nguyện vùng cao.</p>
 
+            {campaigns.length === 0 ? (
+              <div className="dispatch-empty">
+                <Inbox size={36} />
+                <p>Chưa có yêu cầu xuất kho nào. Các chiến dịch cần hàng sẽ hiển thị ở đây.</p>
+              </div>
+            ) : (
             <div className="campaign-dispatch-list">
               {campaigns.map((camp) => (
                 <div key={camp.id} className={`dispatch-item glass ${camp.status}`}>
@@ -184,6 +190,7 @@ export const CharityInventory: React.FC = () => {
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
       </div>

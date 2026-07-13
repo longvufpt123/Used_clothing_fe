@@ -31,7 +31,7 @@
   width: 100%;
   padding: 10px 16px;
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-bg-primary);
   border: none;
   border-radius: var(--radius-sm);
   font-weight: 700;
@@ -42,7 +42,6 @@
   gap: 8px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
@@ -135,7 +134,7 @@
 
 .mini-cal-day-btn.selected {
   background-color: var(--color-primary) !important;
-  color: #ffffff !important;
+  color: var(--color-bg-primary) !important;
   font-weight: 700;
 }
 
@@ -155,7 +154,6 @@
 .filter-section-title {
   font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
@@ -180,7 +178,12 @@
 }
 
 .filter-checkbox-wrapper input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .custom-chk-box {
@@ -192,16 +195,22 @@
   transition: all var(--transition-fast);
 }
 
+/* Keyboard focus on the visually-hidden input lands on the custom box */
+.filter-checkbox-wrapper input:focus-visible + .custom-chk-box {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .filter-checkbox-wrapper input:checked + .custom-chk-box {
   border-color: transparent;
 }
 
-.assigned-chk { border-left-width: 4px; border-left-color: #f59e0b; }
-.filter-checkbox-wrapper input:checked + .assigned-chk { background-color: #f59e0b; }
-.picking-chk { border-left-width: 4px; border-left-color: #3b82f6; }
-.filter-checkbox-wrapper input:checked + .picking-chk { background-color: #3b82f6; }
-.completed-chk { border-left-width: 4px; border-left-color: #10b981; }
-.filter-checkbox-wrapper input:checked + .completed-chk { background-color: #10b981; }
+.assigned-chk { border-left-width: 4px; border-left-color: var(--color-warning); }
+.filter-checkbox-wrapper input:checked + .assigned-chk { background-color: var(--color-warning); }
+.picking-chk { border-left-width: 4px; border-left-color: var(--color-info); }
+.filter-checkbox-wrapper input:checked + .picking-chk { background-color: var(--color-info); }
+.completed-chk { border-left-width: 4px; border-left-color: var(--color-primary); }
+.filter-checkbox-wrapper input:checked + .completed-chk { background-color: var(--color-primary); }
 
 .custom-chk-box::after {
   content: "✓";
@@ -209,7 +218,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0);
-  color: #ffffff;
+  color: var(--color-bg-primary);
   font-size: 8px;
   font-weight: 700;
   transition: transform var(--transition-fast);
@@ -427,7 +436,6 @@
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -475,7 +483,7 @@
 }
 
 .month-day-cell.outside-month-cell {
-  background-color: rgba(248, 250, 252, 0.5);
+  background-color: var(--color-bg-secondary);
 }
 
 .day-cell-top-bar {
@@ -502,7 +510,7 @@
 
 .today-badge {
   background-color: var(--color-primary);
-  color: #ffffff !important;
+  color: var(--color-bg-primary) !important;
   font-weight: 700;
 }
 
@@ -556,8 +564,8 @@
 
 .status-assigned {
   background-color: rgba(245, 158, 11, 0.1);
-  color: #d97706;
-  border-left: 2.5px solid #f59e0b;
+  color: var(--color-warning);
+  border-left: 2.5px solid var(--color-warning);
 }
 .status-assigned:hover {
   background-color: rgba(245, 158, 11, 0.18);
@@ -565,8 +573,8 @@
 
 .status-picking {
   background-color: rgba(59, 130, 246, 0.1);
-  color: #1d4ed8;
-  border-left: 2.5px solid #3b82f6;
+  color: var(--color-info);
+  border-left: 2.5px solid var(--color-info);
 }
 .status-picking:hover {
   background-color: rgba(59, 130, 246, 0.18);
@@ -574,8 +582,8 @@
 
 .status-completed {
   background-color: rgba(16, 185, 129, 0.1);
-  color: #047857;
-  border-left: 2.5px solid #10b981;
+  color: var(--color-primary-hover);
+  border-left: 2.5px solid var(--color-primary);
 }
 .status-completed:hover {
   background-color: rgba(16, 185, 129, 0.18);
@@ -594,7 +602,7 @@
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--color-bg-elevated);
 }
 
 /* Time Grid View (Week / Day) */
@@ -736,7 +744,7 @@
   top: 20px;
   left: 0;
   width: 100%;
-  border-bottom: 1px dashed rgba(226, 232, 240, 0.6);
+  border-bottom: 1px dashed var(--color-border);
 }
 
 .time-grid-day-columns {
@@ -773,7 +781,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   z-index: 2;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .time-card-duration {
@@ -804,7 +812,7 @@
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--color-bg-elevated);
 }
 
 /* Current Time Indicator */
@@ -822,14 +830,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #ef4444;
+  background-color: var(--color-danger);
   margin-left: -4px;
 }
 
 .currentTimeIndicator-bar {
   flex: 1;
   height: 2px;
-  background-color: #ef4444;
+  background-color: var(--color-danger);
 }
 
 /* Popover backdrop */
@@ -847,10 +855,10 @@
 .popover-details-card {
   position: fixed;
   width: 420px;
-  background-color: #ffffff;
+  background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   z-index: calc(var(--z-modal) + 1);
   padding: 16px;
   display: flex;
@@ -884,7 +892,7 @@
 .popover-event-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -912,7 +920,7 @@
   align-items: center;
   gap: 10px;
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .popover-body-row.align-start {
@@ -920,7 +928,7 @@
 }
 
 .popover-body-row-sub {
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .popover-organizer-avatar {
@@ -934,7 +942,7 @@
   margin: 0;
   font-size: 0.75rem;
   line-height: 1.4;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 /* RSVP Actions Footer */
@@ -949,7 +957,7 @@
 .footer-action-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .footer-action-btns-group {
@@ -976,37 +984,37 @@
 }
 .accept-btn:hover {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-bg-primary);
 }
 
 .complete-btn {
   background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--color-primary);
 }
 .complete-btn:hover {
-  background-color: #10b981;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-bg-primary);
 }
 
 .decline-btn {
   background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-danger);
 }
 .decline-btn:hover {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--color-danger);
+  color: var(--color-bg-primary);
 }
 
 .completed-state-badge {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #10b981;
+  color: var(--color-primary);
 }
 
 /* Copilot Panel inside Popover */
 .popover-copilot-suggestions {
-  background-color: #faf5ff;
-  border: 1px solid #f3e8ff;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 10px;
   display: flex;
@@ -1018,7 +1026,7 @@
 .copilot-panel-title {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #7c3aed;
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1040,20 +1048,20 @@
 }
 
 .copilot-pill-btn {
-  background-color: #ffffff;
-  border: 1px solid #e9d5ff;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   padding: 4px 10px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #6b21a8;
+  color: var(--color-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .copilot-pill-btn:hover {
-  background-color: #f3e8ff;
-  border-color: #c084fc;
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 
 /* Month Year Picker Dropdown */
@@ -1062,10 +1070,10 @@
   top: 100%;
   left: 0;
   margin-top: 8px;
-  background-color: #ffffff;
+  background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-lg);
   padding: 12px;
   z-index: 100;
   width: 200px;

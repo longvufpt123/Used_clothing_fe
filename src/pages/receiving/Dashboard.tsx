@@ -1,44 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Play, 
-  Square, 
-  Truck, 
-  ClipboardList, 
-  CheckCircle, 
-  Scale, 
-  ArrowRight, 
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Play,
+  Square,
+  Truck,
+  ClipboardList,
+  CheckCircle,
+  Scale,
+  ArrowRight,
   Calendar,
   Layers,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import { 
-  getBatches, 
-  getRequests, 
-  getShiftActive, 
-  setShiftActive, 
-  saveBatches
+import {
+  getBatches,
+  getRequests,
+  getShiftActive,
+  setShiftActive,
+  saveBatches,
 } from '@/utils/receivingMockDb';
 import type { MockBatch, MockRequest } from '@/utils/receivingMockDb';
 import {
   getClassificationBatches,
   saveClassificationBatches,
 } from '@/utils/classificationMockDb';
+import '@/styles/ops-shared.css';
 import './Dashboard.css';
+
+type TabKey = 'receiving' | 'completed' | 'transferring';
+
+const isTab = (v: string | null): v is TabKey =>
+  v === 'receiving' || v === 'completed' || v === 'transferring';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [batches, setBatches] = useState<MockBatch[]>([]);
   const [requests, setRequests] = useState<MockRequest[]>([]);
   const [isShiftActive, setIsShiftActive] = useState(false);
-  const [activeTab, setActiveTab] = useState<'receiving' | 'completed' | 'transferring'>('receiving');
   const [isTransferringId, setIsTransferringId] = useState<string | null>(null);
 
+  const tabParam = searchParams.get('tab');
+  const activeTab: TabKey = isTab(tabParam) ? tabParam : 'receiving';
+  const setActiveTab = (t: TabKey) =>
+    setSearchParams(t === 'receiving' ? {} : { tab: t }, { replace: true });
+
   useEffect(() => {
-    // Load states from database
     setBatches(getBatches());
     setRequests(getRequests());
     setIsShiftActive(getShiftActive());
@@ -50,9 +60,8 @@ export const Dashboard: React.FC = () => {
     setIsShiftActive(nextState);
 
     if (nextState) {
-      toast.success('Bắt đầu ca làm việc thành công! Trạng thái đơn đã sẵn sàng.');
-      // Update UI to reload indicators
-      window.dispatchEvent(new Event('storage')); // trigger header update
+      toast.success('Đã bắt đầu ca làm việc. Các tuyến thu nhận sẵn sàng.');
+      window.dispatchEvent(new Event('storage'));
     } else {
       toast.info('Đã kết thúc ca làm việc.');
       window.dispatchEvent(new Event('storage'));
@@ -60,19 +69,17 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleSendToClassification = (batchId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent card click navigation
+    e.stopPropagation();
     setIsTransferringId(batchId);
 
-    // Simulate validation & sending to classification
     setTimeout(() => {
       const currentBatches = getBatches();
-      const bIndex = currentBatches.findIndex(b => b.id === batchId);
+      const bIndex = currentBatches.findIndex((b) => b.id === batchId);
       if (bIndex !== -1) {
         currentBatches[bIndex].status = 'Transferring';
         saveBatches(currentBatches);
         setBatches(currentBatches);
 
-        // Seed classification queue so staff can pick it up
         const clsBatches = getClassificationBatches();
         const src = currentBatches[bIndex];
         if (!clsBatches.some((b) => b.id === `cls-from-${src.id}`)) {
@@ -113,222 +120,229 @@ export const Dashboard: React.FC = () => {
           saveClassificationBatches(clsBatches);
         }
 
-        toast.success(`Đã bàn giao lô hàng ${currentBatches[bIndex].code} cho tổ Phân loại thành công!`);
+        toast.success(`Đã bàn giao lô ${currentBatches[bIndex].code} cho tổ Phân loại.`);
         setActiveTab('transferring');
       }
       setIsTransferringId(null);
     }, 1500);
   };
 
-  // Stats calculation
   const totalWeight = requests
-    .filter(r => r.status === 'Received' && r.actualWeight)
+    .filter((r) => r.status === 'Received' && r.actualWeight)
     .reduce((sum, r) => sum + (r.actualWeight || 0), 0);
 
-  const processedCount = requests.filter(r => r.status !== 'Pending').length;
+  const processedCount = requests.filter((r) => r.status !== 'Pending').length;
   const totalCount = requests.length;
+  const completionPct = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
-  // Filtered batches based on tab status
-  const filteredBatches = batches.filter(batch => {
+  const filteredBatches = batches.filter((batch) => {
     if (activeTab === 'receiving') return batch.status === 'Receiving';
     if (activeTab === 'completed') return batch.status === 'Completed';
     return batch.status === 'Transferring';
   });
 
-  // Calculate processed ratio for a batch
   const getBatchProgress = (batchId: string) => {
-    const batchRequests = requests.filter(r => r.batchId === batchId);
+    const batchRequests = requests.filter((r) => r.batchId === batchId);
     if (batchRequests.length === 0) return { processed: 0, total: 0, percentage: 0 };
-    const processed = batchRequests.filter(r => r.status !== 'Pending').length;
+    const processed = batchRequests.filter((r) => r.status !== 'Pending').length;
     const total = batchRequests.length;
-    return {
-      processed,
-      total,
-      percentage: Math.round((processed / total) * 100)
-    };
+    return { processed, total, percentage: Math.round((processed / total) * 100) };
   };
 
   return (
-    <div className="receiving-dashboard-page">
-      {/* Hero Welcome banner */}
-      <div className="dashboard-hero-banner glass">
-        <div className="banner-text">
-          <span className="banner-subtitle">Chào ngày làm việc mới</span>
-          <h1 className="banner-title text-gradient">Bộ phận Tiếp nhận</h1>
-          <p className="banner-desc">Thu gom quần áo quyên góp, cập nhật thông tin thực tế và bàn giao lô hàng phân loại.</p>
-        </div>
-      </div>
-
-      {/* Shift controller & statistics */}
-      <div className="dashboard-grid">
-        {/* Controller card */}
-        <div className="shift-control-card glass">
-          <div className="card-header-v2">
-            <h3>Trạng thái ca làm</h3>
-            <span className={`status-indicator ${isShiftActive ? 'active' : 'inactive'}`}>
-              {isShiftActive ? 'Trong ca làm' : 'Đang nghỉ ca'}
-            </span>
-          </div>
-
-          <p className="control-help-text">
-            Bắt đầu ca để kích hoạt các tuyến đường thu nhận và bắt đầu ghi nhận đơn quyên góp thực tế.
+    <div className="ops-page">
+      <header className="ops-pagehead">
+        <div className="ops-pagehead-main">
+          <span className="ops-pagehead-kicker">Bộ phận Tiếp nhận</span>
+          <h1>Điều phối thu gom quyên góp</h1>
+          <p>
+            Thu gom quần áo quyên góp theo tuyến, cập nhật số liệu thực tế và bàn giao
+            lô hàng cho tổ phân loại.
           </p>
-
-          <button 
-            className={`btn-shift-toggle ${isShiftActive ? 'active' : ''}`}
+        </div>
+        <div className="ops-pagehead-aside">
+          <button
+            type="button"
+            className={`rcv-shift-btn ${isShiftActive ? 'active' : ''}`}
             onClick={handleToggleShift}
           >
             {isShiftActive ? (
               <>
-                <Square size={16} fill="currentColor" /> Kết thúc Ca làm
+                <Square size={15} fill="currentColor" /> Kết thúc ca
               </>
             ) : (
               <>
-                <Play size={16} fill="currentColor" /> Bắt đầu Ca làm
+                <Play size={15} fill="currentColor" /> Bắt đầu ca
               </>
             )}
           </button>
         </div>
+      </header>
 
-        {/* Statistics board */}
-        <div className="stats-board-card glass">
-          <h3>Hiệu suất hôm nay</h3>
-          <div className="stats-row">
-            <div className="stat-item">
-              <span className="stat-label">Tổng khối lượng</span>
-              <div className="stat-value-container">
-                <Scale size={18} className="stat-icon text-gradient" />
-                <span className="stat-value">{totalWeight.toFixed(1)} kg</span>
-              </div>
-            </div>
-
-            <div className="stat-item">
-              <span className="stat-label">Tiến độ đơn</span>
-              <div className="stat-value-container">
-                <ClipboardList size={18} className="stat-icon text-gradient" />
-                <span className="stat-value">{processedCount}/{totalCount} đơn</span>
-              </div>
-            </div>
-
-            <div className="stat-item">
-              <span className="stat-label">Hoàn thành ca</span>
-              <div className="stat-value-container">
-                <CheckCircle size={18} className="stat-icon text-gradient" />
-                <span className="stat-value">
-                  {totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0}%
-                </span>
-              </div>
-            </div>
+      <div className="ops-stats">
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Trạng thái ca</span>
+          <div className="ops-stat-value" style={{ fontSize: '1.15rem' }}>
+            <span className={`rcv-shift-dot ${isShiftActive ? 'on' : ''}`} />
+            {isShiftActive ? 'Trong ca' : 'Nghỉ ca'}
           </div>
+          <span className="ops-stat-foot">
+            {isShiftActive ? 'tuyến thu nhận đang mở' : 'bấm Bắt đầu ca để mở tuyến'}
+          </span>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Tổng khối lượng</span>
+          <div className="ops-stat-value">
+            <span className="ops-stat-icon"><Scale size={18} strokeWidth={2} /></span>
+            {totalWeight.toFixed(1)}
+          </div>
+          <span className="ops-stat-foot">kg đã thực nhận</span>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Tiến độ đơn</span>
+          <div className="ops-stat-value">
+            <span className="ops-stat-icon"><ClipboardList size={18} strokeWidth={2} /></span>
+            {processedCount}/{totalCount}
+          </div>
+          <span className="ops-stat-foot">đơn đã xử lý</span>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Hoàn thành ca</span>
+          <div className="ops-stat-value">
+            <span className="ops-stat-icon"><CheckCircle size={18} strokeWidth={2} /></span>
+            {completionPct}%
+          </div>
+          <span className="ops-stat-foot">trên tổng số đơn</span>
         </div>
       </div>
 
-      {/* Batches view */}
-      <div className="batches-section">
-        <div className="section-header-row">
-          <h2>Tuyến Lô Tiếp Nhận</h2>
-          <span className="subhead-label">Danh sách theo trạng thái ca làm</span>
+      <section>
+        <div className="ops-section-head">
+          <h2>Tuyến lô tiếp nhận</h2>
+          <span>Lọc theo trạng thái thu gom</span>
         </div>
 
-        {/* Tab filters */}
-        <div className="batches-tabs">
-          <button 
-            className={`tab-btn ${activeTab === 'receiving' ? 'active' : ''}`}
+        <div className="ops-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'receiving'}
+            className={`ops-tab ${activeTab === 'receiving' ? 'active' : ''}`}
             onClick={() => setActiveTab('receiving')}
           >
-            <Truck size={14} />
+            <Truck size={15} strokeWidth={2} />
             Đang thu nhận
-            <span className="badge-count">
-              {batches.filter(b => b.status === 'Receiving').length}
+            <span className="ops-tab-count">
+              {batches.filter((b) => b.status === 'Receiving').length}
             </span>
           </button>
-          
-          <button 
-            className={`tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'completed'}
+            className={`ops-tab ${activeTab === 'completed' ? 'active' : ''}`}
             onClick={() => setActiveTab('completed')}
           >
-            <CheckCircle size={14} />
+            <CheckCircle size={15} strokeWidth={2} />
             Đã gom xong
-            <span className="badge-count">
-              {batches.filter(b => b.status === 'Completed').length}
+            <span className="ops-tab-count">
+              {batches.filter((b) => b.status === 'Completed').length}
             </span>
           </button>
-
-          <button 
-            className={`tab-btn ${activeTab === 'transferring' ? 'active' : ''}`}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'transferring'}
+            className={`ops-tab ${activeTab === 'transferring' ? 'active' : ''}`}
             onClick={() => setActiveTab('transferring')}
           >
-            <Layers size={14} />
+            <Layers size={15} strokeWidth={2} />
             Đang chuyển đi
-            <span className="badge-count">
-              {batches.filter(b => b.status === 'Transferring').length}
+            <span className="ops-tab-count">
+              {batches.filter((b) => b.status === 'Transferring').length}
             </span>
           </button>
         </div>
 
-        {/* Batches List view */}
-        <div className="batches-list">
+        <div className="ops-list">
           {filteredBatches.length === 0 ? (
-            <div className="empty-state-card glass text-center">
-              <ClipboardList size={36} className="empty-icon text-gradient" />
+            <div className="ops-empty">
+              <ClipboardList size={36} strokeWidth={1.5} />
               <h4>Không có lô tiếp nhận nào</h4>
-              <p>Không tìm thấy lô hàng nào ở phân mục này.</p>
+              <p>Không tìm thấy lô hàng nào ở mục này.</p>
             </div>
           ) : (
-            filteredBatches.map(batch => {
+            filteredBatches.map((batch) => {
               const progress = getBatchProgress(batch.id);
               const isCompleted = batch.status === 'Completed';
               const isReceiving = batch.status === 'Receiving';
+              const disabled = !isShiftActive && isReceiving;
 
               return (
-                <div 
-                  key={batch.id} 
-                  className={`batch-card glass card-hover ${!isShiftActive && isReceiving ? 'disabled' : ''}`}
+                <article
+                  key={batch.id}
+                  className={`ops-card ${disabled ? 'rcv-card-disabled' : ''}`}
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' || disabled) return;
+                    navigate(`/receiving/batch/${batch.id}`);
+                  }}
                   onClick={() => {
-                    if (!isShiftActive && isReceiving) {
+                    if (disabled) {
                       toast.warning('Vui lòng Bắt đầu ca làm trước khi xem chi tiết.');
                       return;
                     }
                     navigate(`/receiving/batch/${batch.id}`);
                   }}
                 >
-                  <div className="batch-card-header">
-                    <div className="batch-meta">
-                      <span className="batch-code">{batch.code}</span>
-                      <span className="batch-date">
-                        <Calendar size={12} /> {batch.date}
-                      </span>
+                  <div className="ops-card-top">
+                    <div>
+                      <div className="ops-card-code">{batch.code}</div>
+                      <div className="ops-card-meta">
+                        <span>
+                          <Calendar size={12} strokeWidth={2} /> {batch.date}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`badge-status ${batch.status.toLowerCase()}`}>
-                      {batch.status === 'Receiving' ? 'Đang đi gom' : batch.status === 'Completed' ? 'Đã gom xong' : 'Bàn giao phân loại'}
+                    <span
+                      className={`ops-badge ${
+                        isReceiving ? 'pending' : isCompleted ? 'classified' : 'stored'
+                      }`}
+                    >
+                      {isReceiving
+                        ? 'Đang đi gom'
+                        : isCompleted
+                        ? 'Đã gom xong'
+                        : 'Bàn giao phân loại'}
                     </span>
                   </div>
 
-                  <h3 className="batch-route">{batch.route}</h3>
+                  <h3>{batch.route}</h3>
 
-                  <div className="batch-progress-container">
-                    <div className="progress-labels">
+                  <div className="rcv-progress">
+                    <div className="rcv-progress-labels">
                       <span>Tiến độ thu gom</span>
-                      <strong>{progress.processed}/{progress.total} đơn</strong>
+                      <strong>
+                        {progress.processed}/{progress.total} đơn
+                      </strong>
                     </div>
-                    <div className="progress-bar-track">
-                      <div 
-                        className="progress-bar-fill" 
-                        style={{ width: `${progress.percentage}%` }}
-                      ></div>
+                    <div className="ops-cap-track">
+                      <div className="ops-cap-fill" style={{ width: `${progress.percentage}%` }} />
                     </div>
                   </div>
 
-                  <div className="batch-card-footer">
+                  <div className="ops-card-footer">
                     {isCompleted ? (
-                      <button 
-                        className={`btn-send-classification ${isTransferringId === batch.id ? 'loading' : ''}`}
+                      <button
+                        type="button"
+                        className="rcv-handoff-btn"
                         onClick={(e) => handleSendToClassification(batch.id, e)}
                         disabled={isTransferringId !== null}
                       >
                         {isTransferringId === batch.id ? (
                           <>
-                            <span className="spinner-small"></span> Đang chuyển giao...
+                            <span className="ops-spinner" /> Đang chuyển giao...
                           </>
                         ) : (
                           <>
@@ -337,18 +351,20 @@ export const Dashboard: React.FC = () => {
                         )}
                       </button>
                     ) : (
-                      <div className="footer-action-prompt">
-                        <span>Chi tiết lô hàng</span>
-                        <ArrowRight size={14} className="arrow-slide" />
-                      </div>
+                      <>
+                        <span>Xem đơn trong lô</span>
+                        <span className="ops-card-action">
+                          Chi tiết <ArrowRight size={14} strokeWidth={2} />
+                        </span>
+                      </>
                     )}
                   </div>
-                </div>
+                </article>
               );
             })
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

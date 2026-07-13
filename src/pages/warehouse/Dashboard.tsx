@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package,
   Archive,
@@ -10,6 +10,7 @@ import {
   Scale,
   Boxes,
   ClipboardList,
+  Warehouse,
 } from 'lucide-react';
 import {
   getDistributions,
@@ -35,12 +36,19 @@ const distStatusLabel = (s: DistributionRequest['status']) => {
   return 'Đã gửi GHN';
 };
 
+const isTab = (v: string | null): v is TabKey =>
+  v === 'inbound' || v === 'shelving' || v === 'distribute' || v === 'tracking';
+
 export const WarehouseDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<WarehouseBatch[]>([]);
   const [dists, setDists] = useState<DistributionRequest[]>([]);
   const [inv, setInv] = useState<InventoryStock | null>(null);
-  const [tab, setTab] = useState<TabKey>('inbound');
+
+  const tabParam = searchParams.get('tab');
+  const tab: TabKey = isTab(tabParam) ? tabParam : 'inbound';
+  const setTab = (t: TabKey) => setSearchParams(t === 'inbound' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
     setBatches(getWarehouseBatches());
@@ -54,47 +62,54 @@ export const WarehouseDashboard: React.FC = () => {
 
   return (
     <div className="ops-page">
-      <section className="ops-hero glass">
-        <span className="ops-hero-kicker">Bộ phận Kho</span>
-        <h1 className="text-gradient">Dashboard Quản lý Kho</h1>
-        <p>
-          Tiếp nhận lô từ phân loại, xếp kệ tồn kho, gom hàng phân phối và theo dõi vận đơn GHN.
-        </p>
-      </section>
+      <header className="ops-pagehead">
+        <div className="ops-pagehead-main">
+          <span className="ops-pagehead-kicker">Bộ phận Kho</span>
+          <h1>Trung tâm điều phối kho</h1>
+          <p>
+            Tiếp nhận lô từ tổ phân loại, xếp kệ tồn kho, gom hàng phân phối và bám sát
+            vận đơn GHN — tất cả trong một luồng.
+          </p>
+        </div>
+      </header>
 
       <div className="ops-stats">
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Chờ nhập kho</span>
           <div className="ops-stat-value">
-            <Package size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><Package size={18} strokeWidth={2} /></span>
             {inbound.length}
           </div>
+          <span className="ops-stat-foot">lô đang chờ đối chiếu</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Chờ xếp kệ</span>
           <div className="ops-stat-value">
-            <Archive size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><Archive size={18} strokeWidth={2} /></span>
             {shelving.length}
           </div>
+          <span className="ops-stat-foot">đã nhận, chưa lưu trữ</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Yêu cầu phân phối</span>
           <div className="ops-stat-value">
-            <Truck size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><Truck size={18} strokeWidth={2} /></span>
             {pendingDist.length}
           </div>
+          <span className="ops-stat-foot">chờ gom & đóng gói</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Tồn áo thun</span>
           <div className="ops-stat-value">
-            <Boxes size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><Boxes size={18} strokeWidth={2} /></span>
             {inv?.tshirts ?? 0}
           </div>
+          <span className="ops-stat-foot">món sẵn trong kho</span>
         </div>
       </div>
 
       {inv && (
-        <div className="ops-panel glass">
+        <div className="ops-panel">
           <span className="ops-panel-label">Tồn kho nhanh</span>
           <div className="ops-kv-grid">
             <div className="ops-kv inv-jackets">
@@ -120,7 +135,7 @@ export const WarehouseDashboard: React.FC = () => {
       <section>
         <div className="ops-section-head">
           <h2>Hàng đợi xử lý</h2>
-          <span>Chọn tab để mở lô hoặc yêu cầu phân phối</span>
+          <span>Chọn giai đoạn để mở lô hoặc yêu cầu phân phối</span>
         </div>
 
         <div className="ops-tabs" role="tablist">
@@ -131,7 +146,7 @@ export const WarehouseDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'inbound' ? 'active' : ''}`}
             onClick={() => setTab('inbound')}
           >
-            <Package size={14} strokeWidth={1.75} />
+            <Package size={15} strokeWidth={2} />
             Chờ nhập kho
             <span className="ops-tab-count">{inbound.length}</span>
           </button>
@@ -142,7 +157,7 @@ export const WarehouseDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'shelving' ? 'active' : ''}`}
             onClick={() => setTab('shelving')}
           >
-            <Archive size={14} strokeWidth={1.75} />
+            <Archive size={15} strokeWidth={2} />
             Chờ xếp kệ
             <span className="ops-tab-count">{shelving.length}</span>
           </button>
@@ -153,7 +168,7 @@ export const WarehouseDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'distribute' ? 'active' : ''}`}
             onClick={() => setTab('distribute')}
           >
-            <Truck size={14} strokeWidth={1.75} />
+            <Truck size={15} strokeWidth={2} />
             Yêu cầu phân phối
             <span className="ops-tab-count">{pendingDist.length}</span>
           </button>
@@ -164,7 +179,7 @@ export const WarehouseDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'tracking' ? 'active' : ''}`}
             onClick={() => setTab('tracking')}
           >
-            <MapPin size={14} strokeWidth={1.75} />
+            <MapPin size={15} strokeWidth={2} />
             Theo dõi vận đơn
             <span className="ops-tab-count">
               {dists.filter((d) => d.status === 'Shipped' || d.trackingCode).length}
@@ -175,8 +190,8 @@ export const WarehouseDashboard: React.FC = () => {
         {tab === 'inbound' && (
           <div className="ops-list">
             {inbound.length === 0 ? (
-              <div className="ops-empty glass">
-                <ClipboardList size={36} strokeWidth={1.75} />
+              <div className="ops-empty">
+                <Warehouse size={36} strokeWidth={1.5} />
                 <h4>Không có lô chờ nhập</h4>
                 <p>Lô từ tổ phân loại sẽ hiện khi họ xác nhận bàn giao.</p>
               </div>
@@ -184,7 +199,7 @@ export const WarehouseDashboard: React.FC = () => {
               inbound.map((batch) => (
                 <article
                   key={batch.id}
-                  className="ops-card glass"
+                  className="ops-card"
                   onClick={() => navigate(`/warehouse/receive/${batch.id}`)}
                   onKeyDown={(e) =>
                     e.key === 'Enter' && navigate(`/warehouse/receive/${batch.id}`)
@@ -197,10 +212,10 @@ export const WarehouseDashboard: React.FC = () => {
                       <div className="ops-card-code">{batch.code}</div>
                       <div className="ops-card-meta">
                         <span>
-                          <Calendar size={12} strokeWidth={1.75} /> {batch.receivedDate}
+                          <Calendar size={12} strokeWidth={2} /> {batch.receivedDate}
                         </span>
                         <span>
-                          <Scale size={12} strokeWidth={1.75} /> {batch.totalWeightKg} kg
+                          <Scale size={12} strokeWidth={2} /> {batch.totalWeightKg} kg
                         </span>
                       </div>
                     </div>
@@ -214,7 +229,7 @@ export const WarehouseDashboard: React.FC = () => {
                       Kiện: <strong>{batch.itemCount}</strong>
                     </span>
                     <span className="ops-card-action">
-                      Xác nhận nhận hàng <ArrowRight size={14} strokeWidth={1.75} />
+                      Xác nhận nhận hàng <ArrowRight size={14} strokeWidth={2} />
                     </span>
                   </div>
                 </article>
@@ -226,8 +241,8 @@ export const WarehouseDashboard: React.FC = () => {
         {tab === 'shelving' && (
           <div className="ops-list">
             {shelving.length === 0 ? (
-              <div className="ops-empty glass">
-                <Archive size={36} strokeWidth={1.75} />
+              <div className="ops-empty">
+                <Archive size={36} strokeWidth={1.5} />
                 <h4>Không có lô chờ xếp kệ</h4>
                 <p>Sau khi xác nhận nhận hàng vật lý, lô sẽ vào tab này.</p>
               </div>
@@ -235,7 +250,7 @@ export const WarehouseDashboard: React.FC = () => {
               shelving.map((batch) => (
                 <article
                   key={batch.id}
-                  className="ops-card glass"
+                  className="ops-card"
                   onClick={() => navigate(`/warehouse/storage/${batch.id}`)}
                   onKeyDown={(e) =>
                     e.key === 'Enter' && navigate(`/warehouse/storage/${batch.id}`)
@@ -248,10 +263,10 @@ export const WarehouseDashboard: React.FC = () => {
                       <div className="ops-card-code">{batch.code}</div>
                       <div className="ops-card-meta">
                         <span>
-                          <Calendar size={12} strokeWidth={1.75} /> {batch.receivedDate}
+                          <Calendar size={12} strokeWidth={2} /> {batch.receivedDate}
                         </span>
                         <span>
-                          <Scale size={12} strokeWidth={1.75} /> {batch.totalWeightKg} kg
+                          <Scale size={12} strokeWidth={2} /> {batch.totalWeightKg} kg
                         </span>
                       </div>
                     </div>
@@ -262,11 +277,11 @@ export const WarehouseDashboard: React.FC = () => {
                   <h3>{batch.sourceRoute}</h3>
                   <div className="ops-card-footer">
                     <span>
-                      Từ thiện: {batch.charitySummary.jackets} khoác ·{' '}
-                      {batch.charitySummary.tshirts} thun · {batch.charitySummary.pants} quần
+                      {batch.charitySummary.jackets} khoác · {batch.charitySummary.tshirts} thun ·{' '}
+                      {batch.charitySummary.pants} quần
                     </span>
                     <span className="ops-card-action">
-                      Xếp kệ <ArrowRight size={14} strokeWidth={1.75} />
+                      Xếp kệ <ArrowRight size={14} strokeWidth={2} />
                     </span>
                   </div>
                 </article>
@@ -278,8 +293,8 @@ export const WarehouseDashboard: React.FC = () => {
         {tab === 'distribute' && (
           <div className="ops-list">
             {dists.filter((d) => d.status !== 'Shipped').length === 0 ? (
-              <div className="ops-empty glass">
-                <Truck size={36} strokeWidth={1.75} />
+              <div className="ops-empty">
+                <Truck size={36} strokeWidth={1.5} />
                 <h4>Không có yêu cầu đang mở</h4>
                 <p>Yêu cầu phân phối mới từ chiến dịch sẽ hiện tại đây.</p>
               </div>
@@ -289,7 +304,7 @@ export const WarehouseDashboard: React.FC = () => {
                 .map((dist) => (
                   <article
                     key={dist.id}
-                    className="ops-card glass"
+                    className="ops-card"
                     onClick={() => {
                       if (dist.status === 'Pending') {
                         navigate(`/warehouse/distribute/${dist.id}`);
@@ -313,10 +328,10 @@ export const WarehouseDashboard: React.FC = () => {
                         <div className="ops-card-code">{dist.code}</div>
                         <div className="ops-card-meta">
                           <span>
-                            <Calendar size={12} strokeWidth={1.75} /> {dist.createdAt}
+                            <Calendar size={12} strokeWidth={2} /> {dist.createdAt}
                           </span>
                           <span>
-                            <MapPin size={12} strokeWidth={1.75} /> {dist.contactName}
+                            <MapPin size={12} strokeWidth={2} /> {dist.contactName}
                           </span>
                         </div>
                       </div>
@@ -331,7 +346,7 @@ export const WarehouseDashboard: React.FC = () => {
                       </span>
                       <span className="ops-card-action">
                         {dist.status === 'Pending' ? 'Gom & đóng gói' : 'Theo dõi GHN'}
-                        <ArrowRight size={14} strokeWidth={1.75} />
+                        <ArrowRight size={14} strokeWidth={2} />
                       </span>
                     </div>
                   </article>
@@ -343,8 +358,8 @@ export const WarehouseDashboard: React.FC = () => {
         {tab === 'tracking' && (
           <div className="ops-list">
             {dists.filter((d) => d.status === 'Shipped' || d.trackingCode).length === 0 ? (
-              <div className="ops-empty glass">
-                <ClipboardList size={36} strokeWidth={1.75} />
+              <div className="ops-empty">
+                <ClipboardList size={36} strokeWidth={1.5} />
                 <h4>Không có vận đơn nào</h4>
                 <p>Sau khi đóng gói và gửi hàng, vận đơn sẽ xuất hiện tại đây.</p>
               </div>
@@ -354,7 +369,7 @@ export const WarehouseDashboard: React.FC = () => {
                 .map((dist) => (
                   <article
                     key={dist.id}
-                    className="ops-card glass"
+                    className="ops-card"
                     onClick={() => navigate(`/warehouse/tracking/${dist.trackingCode}`)}
                     role="button"
                     tabIndex={0}
@@ -369,10 +384,10 @@ export const WarehouseDashboard: React.FC = () => {
                         <div className="ops-card-code">{dist.trackingCode || dist.code}</div>
                         <div className="ops-card-meta">
                           <span>
-                            <Calendar size={12} strokeWidth={1.75} /> {dist.createdAt}
+                            <Calendar size={12} strokeWidth={2} /> {dist.createdAt}
                           </span>
                           <span>
-                            <MapPin size={12} strokeWidth={1.75} /> {dist.contactName}
+                            <MapPin size={12} strokeWidth={2} /> {dist.contactName}
                           </span>
                         </div>
                       </div>
@@ -387,7 +402,7 @@ export const WarehouseDashboard: React.FC = () => {
                       </span>
                       <span className="ops-card-action">
                         Theo dõi vận đơn
-                        <ArrowRight size={14} strokeWidth={1.75} />
+                        <ArrowRight size={14} strokeWidth={2} />
                       </span>
                     </div>
                   </article>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Layers,
   ClipboardList,
@@ -23,10 +23,18 @@ const statusLabel = (s: ClassificationBatch['status']) => {
   return 'Đã bàn giao kho';
 };
 
+const isTab = (v: string | null): v is TabKey =>
+  v === 'pending' || v === 'classified' || v === 'sent';
+
 export const ClassificationDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<ClassificationBatch[]>([]);
-  const [tab, setTab] = useState<TabKey>('pending');
+
+  const tabParam = searchParams.get('tab');
+  const tab: TabKey = isTab(tabParam) ? tabParam : 'pending';
+  const setTab = (t: TabKey) =>
+    setSearchParams(t === 'pending' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
     setBatches(getClassificationBatches());
@@ -56,50 +64,56 @@ export const ClassificationDashboard: React.FC = () => {
 
   return (
     <div className="ops-page">
-      <section className="ops-hero glass">
-        <span className="ops-hero-kicker">Bộ phận Phân loại</span>
-        <h1 className="text-gradient">Dashboard Phân loại</h1>
-        <p>
-          Mở kiện, đếm chi tiết vật phẩm, tách từ thiện / tái chế, rồi bàn giao
-          lô sang kho.
-        </p>
-      </section>
+      <header className="ops-pagehead">
+        <div className="ops-pagehead-main">
+          <span className="ops-pagehead-kicker">Bộ phận Phân loại</span>
+          <h1>Bàn phân loại vật phẩm</h1>
+          <p>
+            Mở kiện, đếm chi tiết vật phẩm, tách phần từ thiện và tái chế, rồi bàn giao
+            lô hoàn chỉnh sang kho.
+          </p>
+        </div>
+      </header>
 
       <div className="ops-stats">
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Chờ phân loại</span>
           <div className="ops-stat-value">
-            <Package size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><Package size={18} strokeWidth={2} /></span>
             {pending.length}
           </div>
+          <span className="ops-stat-foot">lô mới từ tiếp nhận</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Đã xong</span>
           <div className="ops-stat-value">
-            <CheckCircle size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><CheckCircle size={18} strokeWidth={2} /></span>
             {classified.length}
           </div>
+          <span className="ops-stat-foot">chờ bàn giao kho</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Khối lượng lô</span>
           <div className="ops-stat-value">
-            <Scale size={18} strokeWidth={1.75} />
-            {totalWeight.toFixed(1)} kg
+            <span className="ops-stat-icon"><Scale size={18} strokeWidth={2} /></span>
+            {totalWeight.toFixed(1)}
           </div>
+          <span className="ops-stat-foot">kg đang xử lý</span>
         </div>
-        <div className="ops-stat-card glass">
+        <div className="ops-stat-card">
           <span className="ops-stat-label">Tiến độ kiện</span>
           <div className="ops-stat-value">
-            <ClipboardList size={18} strokeWidth={1.75} />
+            <span className="ops-stat-icon"><ClipboardList size={18} strokeWidth={2} /></span>
             {doneItems}/{totalItems}
           </div>
+          <span className="ops-stat-foot">kiện đã đếm xong</span>
         </div>
       </div>
 
       <section>
         <div className="ops-section-head">
           <h2>Danh sách lô hàng</h2>
-          <span>Chọn tab theo trạng thái xử lý</span>
+          <span>Lọc theo trạng thái xử lý</span>
         </div>
 
         <div className="ops-tabs" role="tablist">
@@ -110,7 +124,7 @@ export const ClassificationDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'pending' ? 'active' : ''}`}
             onClick={() => setTab('pending')}
           >
-            <Layers size={14} strokeWidth={1.75} />
+            <Layers size={15} strokeWidth={2} />
             Chờ phân loại
             <span className="ops-tab-count">{pending.length}</span>
           </button>
@@ -121,7 +135,7 @@ export const ClassificationDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'classified' ? 'active' : ''}`}
             onClick={() => setTab('classified')}
           >
-            <CheckCircle size={14} strokeWidth={1.75} />
+            <CheckCircle size={15} strokeWidth={2} />
             Đã phân loại xong
             <span className="ops-tab-count">{classified.length}</span>
           </button>
@@ -132,7 +146,7 @@ export const ClassificationDashboard: React.FC = () => {
             className={`ops-tab ${tab === 'sent' ? 'active' : ''}`}
             onClick={() => setTab('sent')}
           >
-            <Package size={14} strokeWidth={1.75} />
+            <Package size={15} strokeWidth={2} />
             Đã bàn giao
             <span className="ops-tab-count">{sent.length}</span>
           </button>
@@ -140,10 +154,10 @@ export const ClassificationDashboard: React.FC = () => {
 
         <div className="ops-list">
           {filtered.length === 0 ? (
-            <div className="ops-empty glass">
-              <ClipboardList size={36} />
-              <h4>Không có lô ở tab này</h4>
-              <p>Khi có lô mới từ tiếp nhận, chúng sẽ hiện ở tab Chờ phân loại.</p>
+            <div className="ops-empty">
+              <ClipboardList size={36} strokeWidth={1.5} />
+              <h4>Không có lô ở mục này</h4>
+              <p>Khi có lô mới từ tiếp nhận, chúng sẽ hiện ở mục Chờ phân loại.</p>
             </div>
           ) : (
             filtered.map((batch) => {
@@ -152,7 +166,7 @@ export const ClassificationDashboard: React.FC = () => {
               return (
                 <article
                   key={batch.id}
-                  className="ops-card glass"
+                  className="ops-card"
                   onClick={() => openBatch(batch)}
                   onKeyDown={(e) => e.key === 'Enter' && openBatch(batch)}
                   role={batch.status === 'SendingToWarehouse' ? 'article' : 'button'}
@@ -168,10 +182,10 @@ export const ClassificationDashboard: React.FC = () => {
                       <div className="ops-card-code">{batch.code}</div>
                       <div className="ops-card-meta">
                         <span>
-                          <Calendar size={12} strokeWidth={1.75} /> {batch.receivedDate}
+                          <Calendar size={12} strokeWidth={2} /> {batch.receivedDate}
                         </span>
                         <span>
-                          <Scale size={12} strokeWidth={1.75} /> {batch.totalWeightKg} kg
+                          <Scale size={12} strokeWidth={2} /> {batch.totalWeightKg} kg
                         </span>
                       </div>
                     </div>
@@ -192,7 +206,7 @@ export const ClassificationDashboard: React.FC = () => {
                         {batch.status === 'PendingClassification'
                           ? 'Phân loại'
                           : 'Bàn giao kho'}
-                        <ArrowRight size={14} strokeWidth={1.75} />
+                        <ArrowRight size={14} strokeWidth={2} />
                       </span>
                     )}
                   </div>

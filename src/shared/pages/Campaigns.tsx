@@ -3,7 +3,7 @@ import AdminLayout from '@/shared/layouts/AdminLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { useToast } from '@/context/ToastContext';
-import { PlusCircle, Calendar, Target } from 'lucide-react';
+import { PlusCircle, Calendar, Target, Megaphone } from 'lucide-react';
 import './Campaigns.css';
 
 interface CampaignItem {
@@ -61,26 +61,33 @@ export const Campaigns: React.FC = () => {
   };
 
   const getProgress = (collected: number, target: number) => {
+    if (!target || target <= 0) return 0;
     const pct = Math.round((collected / target) * 100);
-    return Math.min(100, pct);
+    return Math.min(100, Math.max(0, pct));
   };
 
   return (
     <AdminLayout role="admin">
       <div className="campaigns-page">
         <div className="admin-page-header">
-          <h2 className="dashboard-title">Quản Lý Chiến Dịch Thu Gom</h2>
-          <p className="dashboard-subtitle">Tạo chiến dịch từ thiện hoặc tái sinh xơ sợi bông dệt dệt mới và giám sát sản lượng thu gom.</p>
+          <h2 className="dashboard-title">Quản lý chiến dịch thu gom</h2>
+          <p className="dashboard-subtitle">Tạo chiến dịch từ thiện hoặc tái sinh xơ sợi bông dệt và giám sát sản lượng thu gom.</p>
         </div>
 
         <div className="campaigns-layout-grid">
           {/* Active Campaigns Grid */}
           <div className="campaigns-list-section">
             <h3>Chiến dịch đang hoạt động</h3>
+            {campaigns.length === 0 ? (
+              <div className="campaigns-empty">
+                <Megaphone size={40} />
+                <p>Chưa có chiến dịch nào. Tạo chiến dịch đầu tiên ở khung bên phải để bắt đầu thu gom.</p>
+              </div>
+            ) : (
             <div className="admin-campaign-grid">
               {campaigns.map((camp) => {
                 const progressPct = getProgress(camp.collectedWeight, camp.targetWeight);
-                
+
                 return (
                   <div key={camp.id} className={`admin-campaign-card glass ${camp.status}`}>
                     <div className="camp-card-header">
@@ -107,7 +114,14 @@ export const Campaigns: React.FC = () => {
                           <span>Đã thu gom: {camp.collectedWeight} kg</span>
                           <span>{progressPct}%</span>
                         </div>
-                        <div className="progress-bar-bg-camp">
+                        <div
+                          className="progress-bar-bg-camp"
+                          role="progressbar"
+                          aria-valuenow={progressPct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`Tiến độ ${camp.name}`}
+                        >
                           <div
                             className="progress-bar-fill-camp"
                             style={{ width: `${progressPct}%` }}
@@ -119,6 +133,7 @@ export const Campaigns: React.FC = () => {
                 );
               })}
             </div>
+            )}
           </div>
 
           {/* Create Campaign Sidebar */}

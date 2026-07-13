@@ -148,8 +148,12 @@
 }
 
 .counter-controls button:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-bg-elevated);
   color: var(--color-text-primary);
+}
+
+.counter-controls button:active {
+  transform: translateY(1px);
 }
 
 .counter-value {
@@ -158,6 +162,7 @@
   color: var(--color-text-primary);
   min-width: 40px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .confirm-btn {
@@ -175,43 +180,47 @@
   line-height: 1.5;
 }
 
-/* Printer Label preview styling */
+/* Printer Label preview styling — on-screen uses dark tokens; print restores paper look */
 .label-preview-card {
   padding: var(--spacing-md);
-  background: #ffffff;
-  color: #000000;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
   border-radius: var(--radius-sm);
-  border: 2px solid #000000;
+  border: 1px solid var(--color-border-strong);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .label-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  border-bottom: 2px solid #000000;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 4px;
 }
 
 .bar-code-title {
   font-weight: 800;
   font-size: 0.8rem;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
 }
 
 .label-code {
   font-weight: 900;
   font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .barcode-sim {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-sm);
+  background: #ffffff;
+  border-radius: var(--radius-sm);
 }
 
 .barcode-lines {
@@ -234,6 +243,7 @@
   font-family: monospace;
   font-size: 0.8rem;
   margin-top: 4px;
+  color: #000000;
 }
 
 .label-body {
@@ -241,34 +251,62 @@
   flex-direction: column;
   gap: 8px;
   font-size: 0.85rem;
-  border-top: 1px dashed #000000;
+  border-top: 1px dashed var(--color-border);
   padding-top: var(--spacing-sm);
 }
 
 .label-stat strong {
-  font-weight: 800;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .label-stat p {
-  color: #333333;
+  color: var(--color-text-secondary);
 }
 
 .label-date {
   font-size: 0.75rem;
-  color: #666666;
+  color: var(--color-text-muted);
   text-align: right;
   margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .print-action-btn {
   width: 100%;
-  border-color: #000000 !important;
-  color: #000000 !important;
-  background: transparent !important;
 }
 
-.print-action-btn:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
+/* When actually printing, render the label as a physical paper tag */
+@media print {
+  .label-preview-card {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+    box-shadow: none;
+  }
+  .label-header {
+    border-bottom: 2px solid #000000;
+  }
+  .bar-code-title {
+    color: #000000;
+    text-transform: uppercase;
+  }
+  .label-body {
+    border-top: 1px dashed #000000;
+  }
+  .label-stat strong,
+  .label-code {
+    color: #000000;
+  }
+  .label-stat p {
+    color: #333333;
+  }
+  .label-date {
+    color: #666666;
+  }
+  .print-action-btn {
+    display: none;
+  }
 }
 
 @media (max-width: 1200px) {
