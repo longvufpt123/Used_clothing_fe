@@ -35,16 +35,24 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.admin-campaign-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-campaign-card.completed {
-  opacity: 0.7;
+  border-style: dashed;
 }
 
 .camp-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: var(--spacing-sm);
 }
 
 .camp-card-header h4 {
@@ -58,18 +66,19 @@
 .camp-status-badge {
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .camp-status-badge.active {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--color-primary-light);
   color: var(--color-primary);
 }
 
 .camp-status-badge.completed {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .camp-card-body {
@@ -110,6 +119,7 @@
   font-size: 0.82rem;
   color: var(--color-text-secondary);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .progress-bar-bg-camp {
@@ -122,8 +132,30 @@
 
 .progress-bar-fill-camp {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background: var(--color-primary);
   border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.campaigns-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.campaigns-empty svg {
+  opacity: 0.7;
+}
+
+.campaigns-empty p {
+  max-width: 40ch;
+  font-size: 0.9rem;
 }
 
 /* Sidebar Campaign Form */

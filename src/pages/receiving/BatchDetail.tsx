@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  Search, 
-  MapPin, 
-  Phone, 
-  User, 
-  Calendar, 
+import {
+  ChevronLeft,
+  Search,
+  MapPin,
+  Phone,
+  User,
+  Calendar,
   ArrowRight,
   CheckCircle,
   XCircle,
-  AlertCircle
+  ClipboardList,
 } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
-import { 
-  getBatches, 
-  getRequests
-} from '@/utils/receivingMockDb';
+import { getBatches, getRequests } from '@/utils/receivingMockDb';
 import type { MockBatch, MockRequest } from '@/utils/receivingMockDb';
-import './BatchDetail.css';
+import '@/styles/ops-shared.css';
+import './Dashboard.css';
+
+type StatusFilter = 'all' | 'pending' | 'received' | 'rescheduled' | 'canceled';
 
 export const BatchDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,228 +29,225 @@ export const BatchDetail: React.FC = () => {
   const [batch, setBatch] = useState<MockBatch | null>(null);
   const [requests, setRequests] = useState<MockRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'received' | 'rescheduled' | 'canceled'>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   useEffect(() => {
     const allBatches = getBatches();
-    const currentBatch = allBatches.find(b => b.id === id);
+    const currentBatch = allBatches.find((b) => b.id === id);
     if (!currentBatch) {
       toast.error('Lô hàng không tồn tại.');
       navigate('/receiving');
       return;
     }
     setBatch(currentBatch);
-
-    const allRequests = getRequests();
-    const batchRequests = allRequests.filter(r => r.batchId === id);
-    setRequests(batchRequests);
+    setRequests(getRequests().filter((r) => r.batchId === id));
   }, [id, navigate, toast]);
 
   if (!batch) return null;
 
-  // Statistics calculation for the batch
   const totalCount = requests.length;
-  const processedCount = requests.filter(r => r.status !== 'Pending').length;
+  const processedCount = requests.filter((r) => r.status !== 'Pending').length;
   const progressPercent = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
-  // Filter requests by search term & status
-  const filteredRequests = requests.filter(req => {
-    const matchesSearch = 
-      req.donorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredRequests = requests.filter((req) => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      req.donorName.toLowerCase().includes(q) ||
       req.phoneNumber.includes(searchTerm) ||
-      req.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.pickupAddress.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = 
-      statusFilter === 'all' || 
-      req.status.toLowerCase() === statusFilter;
-
+      req.code.toLowerCase().includes(q) ||
+      req.pickupAddress.toLowerCase().includes(q);
+    const matchesStatus = statusFilter === 'all' || req.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const batchBadge =
+    batch.status === 'Receiving' ? 'pending' : batch.status === 'Completed' ? 'stored' : 'classified';
+  const batchBadgeText =
+    batch.status === 'Receiving'
+      ? 'Đang đi gom'
+      : batch.status === 'Completed'
+      ? 'Đã gom xong'
+      : 'Bàn giao phân loại';
+
+  const filters: { key: StatusFilter; label: string; count: number }[] = [
+    { key: 'all', label: 'Tất cả', count: requests.length },
+    { key: 'pending', label: 'Chờ xử lý', count: requests.filter((r) => r.status === 'Pending').length },
+    { key: 'received', label: 'Đã thu nhận', count: requests.filter((r) => r.status === 'Received').length },
+    {
+      key: 'rescheduled',
+      label: 'Hẹn lại',
+      count: requests.filter((r) => r.status === 'Rescheduled').length,
+    },
+    { key: 'canceled', label: 'Đã hủy', count: requests.filter((r) => r.status === 'Canceled').length },
+  ];
+
   return (
-    <div className="batch-detail-page">
-      {/* Back button & title header */}
-      <div className="page-nav-header">
-        <button className="btn-back-nav" onClick={() => navigate('/receiving')}>
-          <ChevronLeft size={16} /> Quay lại
+    <div className="ops-page">
+      <div className="ops-nav">
+        <button type="button" className="ops-back" onClick={() => navigate('/receiving')}>
+          <ChevronLeft size={16} strokeWidth={1.75} /> Quay lại
         </button>
-        <div className="batch-title-info">
+        <div className="ops-title-row">
           <h1>{batch.code}</h1>
-          <span className={`badge-status ${batch.status.toLowerCase()}`}>
-            {batch.status === 'Receiving' ? 'Đang đi gom' : batch.status === 'Completed' ? 'Đã gom xong' : 'Bàn giao phân loại'}
+          <span className={`ops-badge ${batchBadge}`}>{batchBadgeText}</span>
+        </div>
+      </div>
+
+      <div className="ops-panel glass">
+        <span className="ops-panel-label">Tuyến đường thu nhận</span>
+        <h2>{batch.route}</h2>
+        <div className="ops-card-meta" style={{ marginTop: 6 }}>
+          <span>
+            <Calendar size={12} strokeWidth={2} /> Ngày gom: {batch.date}
           </span>
         </div>
-      </div>
 
-      {/* Route Info overview card */}
-      <div className="batch-info-card glass">
-        <div className="info-main">
-          <span className="info-label">Tuyến đường thu nhận</span>
-          <h2 className="info-route">{batch.route}</h2>
-          <div className="info-meta">
-            <span><Calendar size={12} /> Ngày gom: {batch.date}</span>
+        <div className="rcv-progress" style={{ margin: '18px 0 0' }}>
+          <div className="rcv-progress-labels">
+            <span>Tiến độ xử lý đơn</span>
+            <strong>
+              {processedCount}/{totalCount} đơn · {progressPercent}%
+            </strong>
           </div>
-        </div>
-
-        <div className="info-progress">
-          <div className="progress-radial-container">
-            <svg className="radial-progress-svg" viewBox="0 0 36 36">
-              <path
-                className="radial-bg"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="radial-bar"
-                strokeDasharray={`${progressPercent}, 100`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
-            <div className="radial-progress-text">
-              <strong>{progressPercent}%</strong>
-              <span>Hoàn thành</span>
-            </div>
-          </div>
-          <div className="progress-details">
-            <span>Đã xử lý: <strong>{processedCount}/{totalCount} đơn</strong></span>
+          <div className="ops-cap-track">
+            <div className="ops-cap-fill" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       </div>
 
-      {/* Main List Management */}
-      <div className="requests-section">
-        <div className="search-filter-wrapper">
-          {/* Search Box */}
-          <div className="search-box-container">
-            <Input
-              placeholder="Tìm tên, SĐT, địa chỉ hoặc mã đơn..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              icon={<Search size={16} />}
-            />
-          </div>
-
-          {/* Status filter list */}
-          <div className="filter-pill-row">
-            <button 
-              className={`filter-pill ${statusFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setStatusFilter('all')}
-            >
-              Tất cả ({requests.length})
-            </button>
-            <button 
-              className={`filter-pill ${statusFilter === 'pending' ? 'active' : ''}`}
-              onClick={() => setStatusFilter('pending')}
-            >
-              Chờ xử lý ({requests.filter(r => r.status === 'Pending').length})
-            </button>
-            <button 
-              className={`filter-pill ${statusFilter === 'received' ? 'active' : ''}`}
-              onClick={() => setStatusFilter('received')}
-            >
-              Đã thu nhận ({requests.filter(r => r.status === 'Received').length})
-            </button>
-            <button 
-              className={`filter-pill ${statusFilter === 'rescheduled' ? 'active' : ''}`}
-              onClick={() => setStatusFilter('rescheduled')}
-            >
-              Hẹn lại ({requests.filter(r => r.status === 'Rescheduled').length})
-            </button>
-            <button 
-              className={`filter-pill ${statusFilter === 'canceled' ? 'active' : ''}`}
-              onClick={() => setStatusFilter('canceled')}
-            >
-              Đã hủy ({requests.filter(r => r.status === 'Canceled').length})
-            </button>
-          </div>
+      <section>
+        <div className="ops-section-head">
+          <h2>Đơn quyên góp trong lô</h2>
+          <span>Tìm kiếm và lọc theo trạng thái xử lý</span>
         </div>
 
-        {/* Requests List */}
-        <div className="requests-list">
+        <div style={{ maxWidth: 420, marginBottom: 'var(--spacing-md)' }}>
+          <Input
+            placeholder="Tìm tên, SĐT, địa chỉ hoặc mã đơn..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={<Search size={16} />}
+          />
+        </div>
+
+        <div className="ops-tabs" role="tablist">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === f.key}
+              className={`ops-tab ${statusFilter === f.key ? 'active' : ''}`}
+              onClick={() => setStatusFilter(f.key)}
+            >
+              {f.label}
+              <span className="ops-tab-count">{f.count}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="ops-list">
           {filteredRequests.length === 0 ? (
-            <div className="empty-state-card glass text-center">
-              <AlertCircle size={36} className="empty-icon text-gradient" />
+            <div className="ops-empty">
+              <ClipboardList size={36} strokeWidth={1.5} />
               <h4>Không tìm thấy đơn quyên góp nào</h4>
               <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
             </div>
           ) : (
-            filteredRequests.map(req => {
+            filteredRequests.map((req) => {
               const isPending = req.status === 'Pending';
               const isReceived = req.status === 'Received';
               const isRescheduled = req.status === 'Rescheduled';
-              const isCanceled = req.status === 'Canceled';
+              const badge = isPending
+                ? 'pending'
+                : isReceived
+                ? 'stored'
+                : isRescheduled
+                ? 'classified'
+                : 'canceled';
+              const badgeText = isPending
+                ? 'Chờ xử lý'
+                : isReceived
+                ? 'Đã thu gom'
+                : isRescheduled
+                ? 'Đã hẹn lại'
+                : 'Đã hủy';
 
               return (
-                <div 
-                  key={req.id} 
-                  className={`request-item-card glass ${isPending ? 'pending' : ''}`}
-                  onClick={() => {
-                    if (isPending) {
-                      navigate(`/receiving/request/${req.id}`);
-                    }
+                <article
+                  key={req.id}
+                  className={`ops-card ${isPending ? '' : 'rcv-card-disabled'}`}
+                  role={isPending ? 'button' : undefined}
+                  tabIndex={isPending ? 0 : -1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && isPending) navigate(`/receiving/request/${req.id}`);
                   }}
+                  onClick={() => {
+                    if (isPending) navigate(`/receiving/request/${req.id}`);
+                  }}
+                  style={isPending ? undefined : { cursor: 'default' }}
                 >
-                  <div className="req-card-left">
-                    <div className="req-card-header-row">
-                      <span className="req-code">{req.code}</span>
-                      <span className={`status-badge-inline ${req.status.toLowerCase()}`}>
-                        {req.status === 'Pending' ? 'Chờ xử lý' : req.status === 'Received' ? 'Đã thu gom' : req.status === 'Rescheduled' ? 'Đã hẹn lại' : 'Đã hủy'}
+                  <div className="ops-card-top">
+                    <div className="ops-card-code">{req.code}</div>
+                    <span className={`ops-badge ${badge}`}>{badgeText}</span>
+                  </div>
+
+                  <div className="rcv-donor-lines">
+                    <span>
+                      <User size={12} strokeWidth={2} /> {req.donorName}
+                    </span>
+                    <span>
+                      <Phone size={12} strokeWidth={2} /> {req.phoneNumber}
+                    </span>
+                    <span>
+                      <MapPin size={12} strokeWidth={2} /> {req.pickupAddress}
+                    </span>
+                  </div>
+
+                  <div className="rcv-material-row">
+                    <span className="rcv-material-label">Đăng ký ban đầu</span>
+                    <span className="rcv-material-tag">
+                      {req.category} · {req.weight}
+                    </span>
+                  </div>
+
+                  {isReceived && req.actualWeight && (
+                    <div className="rcv-material-row">
+                      <span className="rcv-material-label">Thực nhận</span>
+                      <span className="rcv-material-tag on">
+                        {req.actualCategory} · <strong>{req.actualWeight} kg</strong>
                       </span>
                     </div>
+                  )}
 
-                    <div className="donor-profile-details">
-                      <div className="detail-line font-bold">
-                        <User size={12} /> {req.donorName}
-                      </div>
-                      <div className="detail-line">
-                        <Phone size={12} /> {req.phoneNumber}
-                      </div>
-                      <div className="detail-line address-line">
-                        <MapPin size={12} /> {req.pickupAddress}
-                      </div>
-                    </div>
-
-                    <div className="req-materials-info">
-                      <span className="material-label">Đăng ký ban đầu:</span>
-                      <span className="material-tag">{req.category} · {req.weight}</span>
-                    </div>
-
-                    {isReceived && req.actualWeight && (
-                      <div className="req-actual-record">
-                        <span className="record-label">Thực nhận:</span>
-                        <span className="record-value">{req.actualCategory} · <strong>{req.actualWeight} kg</strong></span>
-                      </div>
+                  <div className="ops-card-footer">
+                    {isPending ? (
+                      <>
+                        <span>Nhấn để cập nhật số liệu</span>
+                        <span className="ops-card-action">
+                          Xử lý <ArrowRight size={14} strokeWidth={2} />
+                        </span>
+                      </>
+                    ) : isReceived ? (
+                      <span className="ops-card-action" style={{ color: 'var(--color-primary)' }}>
+                        <CheckCircle size={14} strokeWidth={2} /> Đã tiếp nhận
+                      </span>
+                    ) : isRescheduled ? (
+                      <span className="ops-card-action" style={{ color: 'var(--color-warning)' }}>
+                        <Calendar size={14} strokeWidth={2} /> Đã dời lịch
+                      </span>
+                    ) : (
+                      <span className="ops-card-action" style={{ color: 'var(--color-danger)' }}>
+                        <XCircle size={14} strokeWidth={2} /> Đã hủy đơn
+                      </span>
                     )}
                   </div>
-
-                  <div className="req-card-right">
-                    {isPending && (
-                      <button className="btn-process-action">
-                        Xử lý <ArrowRight size={14} />
-                      </button>
-                    )}
-                    {isReceived && (
-                      <div className="status-badge-large text-success" title="Đã tiếp nhận thành công">
-                        <CheckCircle size={24} fill="var(--color-primary-light)" />
-                      </div>
-                    )}
-                    {isRescheduled && (
-                      <div className="status-badge-large text-warning" title="Đã dời lịch thu nhận">
-                        <Calendar size={24} />
-                      </div>
-                    )}
-                    {isCanceled && (
-                      <div className="status-badge-large text-danger" title="Đã hủy đơn">
-                        <XCircle size={24} />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                </article>
               );
             })
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -11,16 +11,18 @@
   --spacing-xl: 2rem;
   --spacing-xxl: 3.5rem;
 
-  /* Borders & Shadows */
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
+  /* Borders & Shadows — layered radius scale (tighter inner, softer container) */
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-premium: 0 24px 48px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  /* Shadows tinted with the cool background hue rather than pure black */
+  --shadow-sm: 0 1px 2px rgba(4, 8, 16, 0.4);
+  --shadow-md: 0 6px 18px rgba(4, 8, 16, 0.45), 0 2px 6px rgba(4, 8, 16, 0.3);
+  --shadow-lg: 0 18px 44px rgba(4, 8, 16, 0.55), 0 6px 14px rgba(4, 8, 16, 0.35);
+  --shadow-premium: 0 28px 60px rgba(3, 6, 14, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-accent: 0 10px 30px rgba(16, 185, 129, 0.18);
 
   /* Transition */
   --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -37,48 +39,66 @@
   --z-noise: 600;
 
   /* Default Theme (Dark Mode) Colors */
-  --color-bg-primary: #080c14;
-  --color-bg-secondary: #0f1726;
-  --color-bg-tertiary: #172237;
-  
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #4b5563;
+  --color-bg-primary: #0a0e17;
+  --color-bg-secondary: #111726;
+  --color-bg-tertiary: #1a2234;
+  --color-bg-elevated: #151d2e;
 
-  --color-primary: #10b981; /* Emerald Green */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #8b98ad;
+  --color-text-muted: #5a6579;
+
+  --color-primary: #10b981; /* Emerald — the single accent */
   --color-primary-hover: #34d399;
-  --color-primary-light: rgba(16, 185, 129, 0.08);
-  
-  --color-accent: #3b82f6; /* Premium Sky Blue accent instead of Amber for high-end feel */
-  --color-accent-hover: #60a5fa;
-  
-  --color-border: #1e293b;
+  --color-primary-light: rgba(16, 185, 129, 0.1);
+
+  /* Accent kept as emerald family for consistency; blue reserved for informational states only */
+  --color-accent: #10b981;
+  --color-accent-hover: #34d399;
+  --color-info: #5b9dff;
+
+  --color-border: #212b3d;
+  --color-border-strong: #2c384f;
   --color-danger: #f87171;
+  --color-warning: #f5b544;
   --color-success: #10b981;
+
+  /* Ops sidebar surfaces */
+  --ops-rail-bg: #0c1018;
+  --ops-rail-border: #1b2333;
+  --ops-content-max: 1160px;
 }
 
 /* Light Theme Variables */
 [data-theme='light'] {
-  --color-bg-primary: #f8fafc;
+  --color-bg-primary: #f6f8fb;
   --color-bg-secondary: #ffffff;
-  --color-bg-tertiary: #f1f5f9;
-  
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-bg-tertiary: #eef2f7;
+  --color-bg-elevated: #ffffff;
 
-  --color-primary: #059669; /* Slightly darker Emerald for contrast */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #556072;
+  --color-text-muted: #8a94a6;
+
+  --color-primary: #059669;
   --color-primary-hover: #047857;
   --color-primary-light: rgba(5, 150, 105, 0.1);
-  
-  --color-accent: #2563eb; /* Royal Blue */
-  --color-accent-hover: #1d4ed8;
-  
-  --color-border: #e2e8f0;
+
+  --color-accent: #059669;
+  --color-accent-hover: #047857;
+  --color-info: #2563eb;
+
+  --color-border: #e3e8ef;
+  --color-border-strong: #cdd5e0;
   --color-danger: #dc2626;
+  --color-warning: #d97706;
   --color-success: #16a34a;
 
-  --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --ops-rail-bg: #ffffff;
+  --ops-rail-border: #e3e8ef;
+
+  --shadow-premium: 0 20px 40px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-accent: 0 10px 30px rgba(5, 150, 105, 0.15);
 }
 
 * {

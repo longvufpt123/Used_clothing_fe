@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  User, 
-  Phone, 
-  MapPin, 
-  Scale, 
-  Camera, 
-  Calendar, 
+import {
+  ChevronLeft,
+  Phone,
+  MapPin,
+  Scale,
+  Camera,
+  Calendar,
   Trash2,
   CheckCircle,
   XCircle,
   Clock,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { useToast } from '@/context/ToastContext';
-import { 
-  getRequests, 
-  updateRequestStatus
-} from '@/utils/receivingMockDb';
+import { getRequests, updateRequestStatus } from '@/utils/receivingMockDb';
 import type { MockRequest } from '@/utils/receivingMockDb';
-import './ProcessRequest.css';
+import '@/styles/ops-shared.css';
+import './Dashboard.css';
 
 export const ProcessRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +35,7 @@ export const ProcessRequest: React.FC = () => {
   const [actualCondition, setActualCondition] = useState('good');
   const [actualNotes, setActualNotes] = useState('');
   const [mockImages, setMockImages] = useState<string[]>([]);
-  
+
   // Reschedule overlay states
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState('');
@@ -54,16 +51,13 @@ export const ProcessRequest: React.FC = () => {
   const [submittedStatus, setSubmittedStatus] = useState<MockRequest['status'] | null>(null);
 
   useEffect(() => {
-    const allRequests = getRequests();
-    const currentRequest = allRequests.find(r => r.id === id);
+    const currentRequest = getRequests().find((r) => r.id === id);
     if (!currentRequest) {
       toast.error('Đơn quyên góp không tồn tại.');
       navigate('/receiving');
       return;
     }
     setRequest(currentRequest);
-
-    // Set initial category from request default if available
     setActualCategory(currentRequest.category);
   }, [id, navigate, toast]);
 
@@ -83,20 +77,16 @@ export const ProcessRequest: React.FC = () => {
   ];
 
   const handleAddMockImage = () => {
-    // Add mock photos simulating camera captures
     const mockPhotos = [
       'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&auto=format&fit=crop&q=80'
+      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&auto=format&fit=crop&q=80',
     ];
-    
     if (mockImages.length >= 3) {
       toast.warning('Tối đa đính kèm 3 hình ảnh minh họa thực nhận.');
       return;
     }
-
-    const nextPhoto = mockPhotos[mockImages.length];
-    setMockImages([...mockImages, nextPhoto]);
+    setMockImages([...mockImages, mockPhotos[mockImages.length]]);
     toast.success('Đã chụp và lưu ảnh kiện hàng.');
   };
 
@@ -104,14 +94,12 @@ export const ProcessRequest: React.FC = () => {
     setMockImages(mockImages.filter((_, idx) => idx !== index));
   };
 
-  // 1. Success Collection Submission
   const handleConfirmReceived = (e: React.FormEvent) => {
     e.preventDefault();
     if (!actualWeight || parseFloat(actualWeight) <= 0) {
       toast.error('Vui lòng nhập cân nặng thực tế hợp lệ (lớn hơn 0).');
       return;
     }
-
     setIsSubmitting(true);
     setTimeout(() => {
       updateRequestStatus(request.id, 'Received', {
@@ -119,7 +107,7 @@ export const ProcessRequest: React.FC = () => {
         actualCategory,
         actualCondition,
         actualNotes,
-        imageUrls: mockImages.length > 0 ? mockImages : request.imageUrls
+        imageUrls: mockImages.length > 0 ? mockImages : request.imageUrls,
       });
       setSubmittedStatus('Received');
       setIsSubmitted(true);
@@ -128,20 +116,16 @@ export const ProcessRequest: React.FC = () => {
     }, 1200);
   };
 
-  // 2. Reschedule Action
   const handleReschedule = () => {
     if (!rescheduleDate) {
       toast.error('Vui lòng chọn ngày hẹn lại.');
       return;
     }
-
     setIsSubmitting(true);
     setShowRescheduleModal(false);
     setTimeout(() => {
       const formattedNote = `[Hẹn lại lịch vào ngày ${rescheduleDate} lúc ${rescheduleTime}] ${actualNotes}`;
-      updateRequestStatus(request.id, 'Rescheduled', {
-        actualNotes: formattedNote
-      });
+      updateRequestStatus(request.id, 'Rescheduled', { actualNotes: formattedNote });
       setSubmittedStatus('Rescheduled');
       setIsSubmitted(true);
       setIsSubmitting(false);
@@ -149,20 +133,16 @@ export const ProcessRequest: React.FC = () => {
     }, 1200);
   };
 
-  // 3. Cancel Action
   const handleCancel = () => {
     if (!cancelReason.trim()) {
       toast.error('Vui lòng nhập lý do hủy đơn quyên góp.');
       return;
     }
-
     setIsSubmitting(true);
     setShowCancelModal(false);
     setTimeout(() => {
       const formattedNote = `[Hủy đơn. Lý do: ${cancelReason}] ${actualNotes}`;
-      updateRequestStatus(request.id, 'Canceled', {
-        actualNotes: formattedNote
-      });
+      updateRequestStatus(request.id, 'Canceled', { actualNotes: formattedNote });
       setSubmittedStatus('Canceled');
       setIsSubmitted(true);
       setIsSubmitting(false);
@@ -171,100 +151,94 @@ export const ProcessRequest: React.FC = () => {
   };
 
   return (
-    <div className="process-request-page">
-      {/* Back navigation */}
+    <div className="ops-page">
       {!isSubmitted && (
-        <button 
-          className="btn-back-nav" 
-          onClick={() => navigate(`/receiving/batch/${request.batchId}`)}
-        >
-          <ChevronLeft size={16} /> Quay lại lô {request.batchId.toUpperCase()}
-        </button>
+        <div className="ops-nav">
+          <button
+            type="button"
+            className="ops-back"
+            onClick={() => navigate(`/receiving/batch/${request.batchId}`)}
+          >
+            <ChevronLeft size={16} strokeWidth={1.75} /> Quay lại lô {request.batchId.toUpperCase()}
+          </button>
+          <div className="ops-title-row">
+            <h1>Xử lý đơn {request.code}</h1>
+            <span className="ops-badge pending">Chờ xử lý</span>
+          </div>
+        </div>
       )}
 
-      {/* Main Container workflow split */}
       {!isSubmitted ? (
-        <div className="process-workflow-layout">
-          {/* Left panel: Donor specifications */}
-          <div className="donor-profile-panel glass">
-            <h3>Thông tin người quyên góp</h3>
-            <div className="donor-meta-info">
-              <div className="meta-card">
-                <span className="meta-lbl"><User size={12} /> Người quyên góp</span>
-                <strong className="meta-val">{request.donorName}</strong>
-              </div>
-              <div className="meta-card">
-                <span className="meta-lbl"><Phone size={12} /> Số điện thoại</span>
-                <strong className="meta-val">{request.phoneNumber}</strong>
-              </div>
-              <div className="meta-card">
-                <span className="meta-lbl"><MapPin size={12} /> Địa chỉ thu nhận</span>
-                <span className="meta-val address-val">{request.pickupAddress}</span>
-              </div>
+        <div className="ops-form-grid two-col">
+          {/* Left: donor profile */}
+          <div className="ops-panel glass">
+            <span className="ops-panel-label">Thông tin người quyên góp</span>
+            <h2 style={{ marginBottom: 12 }}>{request.donorName}</h2>
+
+            <div className="rcv-donor-lines">
+              <span>
+                <Phone size={12} strokeWidth={2} /> {request.phoneNumber}
+              </span>
+              <span>
+                <MapPin size={12} strokeWidth={2} /> {request.pickupAddress}
+              </span>
             </div>
 
-            <div className="initial-estimation-box">
-              <h4>Khai báo đăng ký ban đầu</h4>
-              <div className="est-row">
-                <div className="est-pill">
-                  <span>Phân mục:</span> <strong>{request.category}</strong>
-                </div>
-                <div className="est-pill">
-                  <span>Cân nặng ước tính:</span> <strong>{request.weight}</strong>
-                </div>
-                <div className="est-pill">
-                  <span>Tình trạng:</span> <strong>{request.condition}</strong>
-                </div>
+            <span className="ops-panel-label" style={{ marginTop: 20 }}>
+              Khai báo đăng ký ban đầu
+            </span>
+            <div className="ops-kv-grid">
+              <div className="ops-kv">
+                <span>Phân mục</span>
+                <strong>{request.category}</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Cân nặng ước tính</span>
+                <strong>{request.weight}</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Tình trạng</span>
+                <strong>{request.condition}</strong>
               </div>
             </div>
           </div>
 
-          {/* Right panel: Receipt update form */}
-          <form className="receipt-form-panel glass" onSubmit={handleConfirmReceived}>
-            <h3>Cập nhật số liệu thực tế</h3>
+          {/* Right: receipt form */}
+          <form className="ops-panel glass" onSubmit={handleConfirmReceived}>
+            <span className="ops-panel-label">Cập nhật số liệu thực tế</span>
+            <h2 style={{ marginBottom: 16 }}>Biên nhận thực tế</h2>
 
-            <div className="form-grid">
-              {/* Actual weight */}
-              <div className="form-item-input">
-                <Input
-                  label="Cân nặng thực tế (kg)"
-                  type="number"
-                  step="0.1"
-                  required
-                  placeholder="Nhập số cân nặng thực đo được..."
-                  value={actualWeight}
-                  onChange={(e) => setActualWeight(e.target.value)}
-                  icon={<Scale size={16} />}
-                />
-              </div>
+            <div className="ops-form-grid">
+              <Input
+                label="Cân nặng thực tế (kg)"
+                type="number"
+                step="0.1"
+                required
+                placeholder="Nhập số cân nặng thực đo được..."
+                value={actualWeight}
+                onChange={(e) => setActualWeight(e.target.value)}
+                icon={<Scale size={16} />}
+              />
 
-              {/* Actual Category */}
-              <div className="form-item-input">
-                <Select
-                  label="Phân loại chất liệu chính thực tế"
-                  required
-                  value={actualCategory}
-                  onChange={(e) => setActualCategory(e.target.value)}
-                  options={categoryOptions}
-                />
-              </div>
+              <Select
+                label="Phân loại chất liệu chính thực tế"
+                required
+                value={actualCategory}
+                onChange={(e) => setActualCategory(e.target.value)}
+                options={categoryOptions}
+              />
 
-              {/* Actual Condition */}
-              <div className="form-item-input">
-                <Select
-                  label="Chất lượng phân bổ"
-                  required
-                  value={actualCondition}
-                  onChange={(e) => setActualCondition(e.target.value)}
-                  options={conditionOptions}
-                />
-              </div>
+              <Select
+                label="Chất lượng phân bổ"
+                required
+                value={actualCondition}
+                onChange={(e) => setActualCondition(e.target.value)}
+                options={conditionOptions}
+              />
 
-              {/* Notes */}
-              <div className="form-item-textarea">
-                <label className="textarea-label">Ghi chú tiếp nhận</label>
+              <div className="ops-field">
+                <label>Ghi chú tiếp nhận</label>
                 <textarea
-                  className="custom-textarea"
                   placeholder="Nhập ghi chú thêm về kiện hàng (ví dụ: quần áo đã sạch sẽ, đóng bao cẩn thận...)"
                   value={actualNotes}
                   onChange={(e) => setActualNotes(e.target.value)}
@@ -272,29 +246,19 @@ export const ProcessRequest: React.FC = () => {
                 />
               </div>
 
-              {/* Photo uploader */}
-              <div className="form-item-uploader">
-                <label className="uploader-label">Ảnh chụp thực nhận ({mockImages.length}/3)</label>
-                <div className="image-upload-flex">
+              <div className="ops-field">
+                <label>Ảnh chụp thực nhận ({mockImages.length}/3)</label>
+                <div className="rcv-upload-flex">
                   {mockImages.map((img, idx) => (
-                    <div key={idx} className="uploaded-image-preview">
+                    <div key={idx} className="rcv-upload-preview">
                       <img src={img} alt="Kiện hàng" />
-                      <button 
-                        type="button" 
-                        className="btn-delete-img"
-                        onClick={() => handleRemoveImage(idx)}
-                      >
+                      <button type="button" className="rcv-upload-del" onClick={() => handleRemoveImage(idx)}>
                         <Trash2 size={12} />
                       </button>
                     </div>
                   ))}
-                  
                   {mockImages.length < 3 && (
-                    <button 
-                      type="button" 
-                      className="btn-trigger-upload-camera"
-                      onClick={handleAddMockImage}
-                    >
+                    <button type="button" className="rcv-upload-add" onClick={handleAddMockImage}>
                       <Camera size={20} />
                       <span>Chụp ảnh</span>
                     </button>
@@ -303,118 +267,120 @@ export const ProcessRequest: React.FC = () => {
               </div>
             </div>
 
-            {/* Action buttons row */}
-            <div className="action-buttons-group">
-              <Button 
-                type="submit" 
-                variant="primary" 
-                isLoading={isSubmitting}
-                className="btn-action-confirm"
-              >
+            <div className="ops-actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <Button type="submit" variant="primary" isLoading={isSubmitting} className="ops-btn-block">
                 <CheckCircle size={16} /> Thu nhận thành công
               </Button>
-              
-              <div className="secondary-actions-row">
-                <button 
-                  type="button" 
-                  className="btn-action-reschedule"
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-secondary"
+                  style={{ flex: 1 }}
                   onClick={() => setShowRescheduleModal(true)}
                   disabled={isSubmitting}
                 >
                   <Calendar size={14} /> Hẹn lịch lại
                 </button>
-                <button 
-                  type="button" 
-                  className="btn-action-cancel"
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-danger"
+                  style={{ flex: 1 }}
                   onClick={() => setShowCancelModal(true)}
                   disabled={isSubmitting}
                 >
-                  <XCircle size={14} /> Hủy đơn quyên góp
+                  <XCircle size={14} /> Hủy đơn
                 </button>
               </div>
             </div>
           </form>
         </div>
       ) : (
-        /* SUCCESS SUMMARY SCREEN */
-        <div className="summary-success-view glass">
-          <div className="success-icon-wrapper">
+        /* SUCCESS SUMMARY */
+        <div className="ops-panel glass rcv-summary">
+          <div className={`rcv-summary-icon ${submittedStatus?.toLowerCase()}`}>
             {submittedStatus === 'Received' ? (
-              <CheckCircle size={48} className="text-success anim-pop" />
+              <CheckCircle size={44} />
             ) : submittedStatus === 'Rescheduled' ? (
-              <Calendar size={48} className="text-warning anim-pop" />
+              <Calendar size={44} />
             ) : (
-              <XCircle size={48} className="text-danger anim-pop" />
+              <XCircle size={44} />
             )}
           </div>
 
-          <h2 className="success-header">
-            {submittedStatus === 'Received' ? 'Tiếp nhận thành công!' : submittedStatus === 'Rescheduled' ? 'Đã hẹn lại lịch thu gom' : 'Đã hủy đơn quyên góp'}
+          <h2>
+            {submittedStatus === 'Received'
+              ? 'Tiếp nhận thành công!'
+              : submittedStatus === 'Rescheduled'
+              ? 'Đã hẹn lại lịch thu gom'
+              : 'Đã hủy đơn quyên góp'}
           </h2>
-          
-          <p className="success-message">
-            Dữ liệu đơn hàng **{request.code}** đã được cập nhật thành công lên hệ thống GreenThread.
+          <p className="rcv-summary-msg">
+            Dữ liệu đơn hàng {request.code} đã được cập nhật thành công lên hệ thống GreenThread.
           </p>
 
-          <div className="summary-data-table">
-            <div className="summary-row">
-              <span>Đơn quyên góp:</span>
+          <div className="ops-kv-grid" style={{ maxWidth: 480, margin: '0 auto', textAlign: 'left' }}>
+            <div className="ops-kv">
+              <span>Đơn quyên góp</span>
               <strong>{request.code}</strong>
             </div>
-            <div className="summary-row">
-              <span>Người gửi:</span>
+            <div className="ops-kv">
+              <span>Người gửi</span>
               <strong>{request.donorName}</strong>
             </div>
 
             {submittedStatus === 'Received' && (
               <>
-                <div className="summary-row">
-                  <span>Cân nặng thực tế:</span>
-                  <strong className="text-gradient font-bold">{actualWeight} kg</strong>
+                <div className="ops-kv">
+                  <span>Cân nặng thực tế</span>
+                  <strong>{actualWeight} kg</strong>
                 </div>
-                <div className="summary-row">
-                  <span>Chất liệu chính:</span>
+                <div className="ops-kv">
+                  <span>Chất liệu chính</span>
                   <strong>{actualCategory}</strong>
                 </div>
-                <div className="summary-row">
-                  <span>Hướng phân bổ:</span>
+                <div className="ops-kv">
+                  <span>Hướng phân bổ</span>
                   <strong>{actualCondition === 'good' ? 'Ủng hộ từ thiện' : 'Tái chế dệt sợi'}</strong>
                 </div>
               </>
             )}
-
             {submittedStatus === 'Rescheduled' && (
-              <div className="summary-row">
-                <span>Hẹn ngày lấy lại:</span>
-                <strong>{rescheduleDate} ({rescheduleTime})</strong>
+              <div className="ops-kv">
+                <span>Hẹn ngày lấy lại</span>
+                <strong>
+                  {rescheduleDate} ({rescheduleTime})
+                </strong>
               </div>
             )}
-
             {submittedStatus === 'Canceled' && (
-              <div className="summary-row">
-                <span>Lý do hủy đơn:</span>
-                <strong className="text-danger">{cancelReason}</strong>
+              <div className="ops-kv">
+                <span>Lý do hủy đơn</span>
+                <strong>{cancelReason}</strong>
               </div>
             )}
           </div>
 
-          <button 
-            className="btn-confirm-return" 
-            onClick={() => navigate(`/receiving/batch/${request.batchId}`)}
-          >
-            Quay lại Lô thu gom <ArrowRight size={14} />
-          </button>
+          <div className="ops-actions" style={{ justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="ops-btn ops-btn-primary"
+              onClick={() => navigate(`/receiving/batch/${request.batchId}`)}
+            >
+              Quay lại Lô thu gom <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Reschedule Modal Overlay */}
+      {/* Reschedule Modal */}
       {showRescheduleModal && (
-        <div className="modal-overlay-custom">
-          <div className="modal-content-custom glass anim-slide-up">
-            <h3>Chọn lịch hẹn mới</h3>
-            <p>Chọn ngày giờ thích hợp hẹn thu nhận lại kiện hàng với người dân.</p>
-            
-            <div className="modal-inputs-grid">
+        <div className="rcv-modal-overlay" onClick={() => setShowRescheduleModal(false)}>
+          <div className="ops-panel glass rcv-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Chọn lịch hẹn mới</h2>
+            <p className="rcv-summary-msg" style={{ textAlign: 'left', margin: '6px 0 16px' }}>
+              Chọn ngày giờ thích hợp hẹn thu nhận lại kiện hàng với người dân.
+            </p>
+            <div className="ops-form-grid two-col">
               <Input
                 label="Ngày hẹn lại"
                 type="date"
@@ -432,12 +398,15 @@ export const ProcessRequest: React.FC = () => {
                 icon={<Clock size={14} />}
               />
             </div>
-
-            <div className="modal-actions-row">
-              <button className="btn-modal-cancel" onClick={() => setShowRescheduleModal(false)}>
+            <div className="ops-actions">
+              <button
+                type="button"
+                className="ops-btn ops-btn-secondary"
+                onClick={() => setShowRescheduleModal(false)}
+              >
                 Hủy bỏ
               </button>
-              <button className="btn-modal-confirm success" onClick={handleReschedule}>
+              <button type="button" className="ops-btn ops-btn-primary" onClick={handleReschedule}>
                 Lưu ngày giờ mới
               </button>
             </div>
@@ -445,16 +414,16 @@ export const ProcessRequest: React.FC = () => {
         </div>
       )}
 
-      {/* Cancel Modal Overlay */}
+      {/* Cancel Modal */}
       {showCancelModal && (
-        <div className="modal-overlay-custom">
-          <div className="modal-content-custom glass anim-slide-up">
-            <h3>Hủy đơn quyên góp này</h3>
-            <p>Vui lòng ghi rõ lý do hủy đơn thu gom để báo cáo lại cho tổ điều phối.</p>
-            
-            <div className="modal-textarea-container">
+        <div className="rcv-modal-overlay" onClick={() => setShowCancelModal(false)}>
+          <div className="ops-panel glass rcv-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Hủy đơn quyên góp này</h2>
+            <p className="rcv-summary-msg" style={{ textAlign: 'left', margin: '6px 0 16px' }}>
+              Vui lòng ghi rõ lý do hủy đơn thu gom để báo cáo lại cho tổ điều phối.
+            </p>
+            <div className="ops-field">
               <textarea
-                className="custom-textarea modal-textarea"
                 placeholder="Nhập lý do hủy (ví dụ: địa chỉ không đúng, liên lạc quá 3 lần không được...)"
                 required
                 rows={3}
@@ -462,12 +431,15 @@ export const ProcessRequest: React.FC = () => {
                 onChange={(e) => setCancelReason(e.target.value)}
               />
             </div>
-
-            <div className="modal-actions-row">
-              <button className="btn-modal-cancel" onClick={() => setShowCancelModal(false)}>
+            <div className="ops-actions">
+              <button
+                type="button"
+                className="ops-btn ops-btn-secondary"
+                onClick={() => setShowCancelModal(false)}
+              >
                 Quay lại
               </button>
-              <button className="btn-modal-confirm danger" onClick={handleCancel}>
+              <button type="button" className="ops-btn ops-btn-danger" onClick={handleCancel}>
                 Xác nhận hủy đơn
               </button>
             </div>

@@ -96,12 +96,18 @@ const HOURS = Array.from({ length: 24 }).map((_, i) => {
 });
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
 ];
 
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const WEEKDAY_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEKDAY_NAMES = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+const WEEKDAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+const STATUS_LABELS: Record<'assigned' | 'picking' | 'completed', string> = {
+  assigned: 'Đã phân công',
+  picking: 'Đang thu gom',
+  completed: 'Hoàn thành',
+};
 
 type CalendarViewType = "day" | "workweek" | "week" | "month";
 
@@ -245,10 +251,10 @@ export const CollectionSchedule: React.FC = () => {
     const end = activeWeekDays[activeWeekDays.length - 1];
     
     if (start.getFullYear() !== end.getFullYear()) {
-      return `${MONTH_NAMES[start.getMonth()].substring(0, 3)} ${start.getDate()}, ${start.getFullYear()} – ${MONTH_NAMES[end.getMonth()].substring(0, 3)} ${end.getDate()}, ${end.getFullYear()}`;
+      return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
     }
     if (start.getMonth() !== end.getMonth()) {
-      return `${MONTH_NAMES[start.getMonth()].substring(0, 3)} ${start.getDate()} – ${MONTH_NAMES[end.getMonth()].substring(0, 3)} ${end.getDate()}, ${start.getFullYear()}`;
+      return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
     }
     return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`;
   };
@@ -710,7 +716,7 @@ export const CollectionSchedule: React.FC = () => {
                         
                         let dateLabel = `${date.getDate()}`;
                         if (date.getDate() === 1 || (weekIdx === 0 && dayIdx === 0)) {
-                          dateLabel = `${MONTH_NAMES[date.getMonth()].substring(0, 3)} ${date.getDate()}`;
+                          dateLabel = `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
                         }
 
                         return (
@@ -932,7 +938,7 @@ export const CollectionSchedule: React.FC = () => {
             >
               <div className="popover-card-header">
                 <div className="popover-title-info">
-                  <span className="popover-event-status-tag">{activePopoverEvent.status.toUpperCase()}</span>
+                  <span className="popover-event-status-tag">{STATUS_LABELS[activePopoverEvent.status]}</span>
                   <h3 className="popover-event-title">{activePopoverEvent.title}</h3>
                 </div>
                 <button className="popover-close-btn" onClick={() => setActivePopoverEvent(null)}>&times;</button>

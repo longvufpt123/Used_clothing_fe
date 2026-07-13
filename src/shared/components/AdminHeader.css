@@ -67,12 +67,16 @@
   gap: var(--spacing-sm);
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 0px;
+  border-radius: var(--radius-md);
   transition: background-color var(--transition-fast);
 }
 
 .header-profile-toggle:hover {
   background-color: var(--color-bg-tertiary);
+}
+
+.header-profile-toggle:active {
+  transform: translateY(1px);
 }
 
 .profile-avatar {
@@ -112,7 +116,7 @@
 }
 
 .chevron-icon.rotated {
-  transform: rotate(185deg);
+  transform: rotate(180deg);
 }
 
 /* Dropdown Menu Common Styles */
@@ -122,8 +126,8 @@
   right: 0;
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 0px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 100;
   animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -245,7 +249,7 @@
 }
 
 .dropdown-item-btn.text-danger:hover {
-  background-color: rgba(239, 68, 68, 0.08);
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 .dropdown-divider {

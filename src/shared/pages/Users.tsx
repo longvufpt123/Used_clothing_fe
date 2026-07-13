@@ -6,8 +6,10 @@ import Breadcrumbs from '@/components/common/Breadcrumbs';
 import Pagination from '@/components/common/Pagination';
 import Dropdown from '@/components/common/Dropdown';
 import Tooltip from '@/components/common/Tooltip';
+import Modal from '@/components/common/Modal';
+import { Button } from '@/components/common/Button';
 import { useToast } from '@/context/ToastContext';
-import { UserPlus, Search, Trash2, Mail, Phone, ChevronDown, Lock, Unlock, User } from 'lucide-react';
+import { UserPlus, Search, Trash2, Mail, Phone, ChevronDown, Lock, Unlock, User, UsersRound } from 'lucide-react';
 import './Users.css';
 
 interface UserItem {
@@ -49,6 +51,9 @@ export const Users: React.FC = () => {
   const [newAvatar, setNewAvatar] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
+
+  // Xác nhận xoá bằng modal trong app thay cho window.confirm
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,11 +135,15 @@ export const Users: React.FC = () => {
   };
 
   const handleDeleteUser = (id: number, name: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xoá tài khoản của ${name}?`)) {
-      setUsers(prev => prev.filter(user => user.id !== id));
-      toast.success(`Đã xoá tài khoản của ${name}`);
-      setCurrentPage(1);
-    }
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDeleteUser = () => {
+    if (!deleteTarget) return;
+    setUsers(prev => prev.filter(user => user.id !== deleteTarget.id));
+    toast.success(`Đã xoá tài khoản của ${deleteTarget.name}`);
+    setCurrentPage(1);
+    setDeleteTarget(null);
   };
 
   const filteredUsers = users.filter(user => {
@@ -414,7 +423,18 @@ export const Users: React.FC = () => {
         )}
 
         <div className="users-table-container glass">
-          <Table columns={columns} data={currentItems} />
+          {currentItems.length === 0 ? (
+            <div className="users-empty">
+              <UsersRound size={40} />
+              <p>
+                {searchTerm || roleFilter !== 'all'
+                  ? 'Không tìm thấy nhân viên nào khớp với bộ lọc. Thử từ khoá khác hoặc đặt lại vai trò.'
+                  : 'Chưa có nhân viên nào. Thêm nhân viên mới để bắt đầu.'}
+              </p>
+            </div>
+          ) : (
+            <Table columns={columns} data={currentItems} />
+          )}
         </div>
 
         {/* Pagination Controls moved below container to the bottom of the page */}
@@ -450,6 +470,22 @@ export const Users: React.FC = () => {
             />
           </div>
         )}
+
+        <Modal
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          title="Xoá tài khoản"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Huỷ bỏ</Button>
+              <Button variant="primary" className="btn-danger-confirm" onClick={confirmDeleteUser}>Xoá tài khoản</Button>
+            </>
+          }
+        >
+          <p className="delete-confirm-text">
+            Bạn có chắc chắn muốn xoá tài khoản của <strong>{deleteTarget?.name}</strong>? Thao tác này không thể hoàn tác.
+          </p>
+        </Modal>
       </div>
     </AdminLayout>
   );
