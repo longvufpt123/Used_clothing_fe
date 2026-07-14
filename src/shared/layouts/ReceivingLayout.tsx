@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Sparkles } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -17,8 +17,18 @@ export const ReceivingLayout: React.FC<ReceivingLayoutProps> = ({ children }) =>
     navigate('/login');
   };
 
-  // Get active shift status from localStorage if present
-  const isShiftActive = localStorage.getItem('receiving_shift_active') === 'true';
+  const [isShiftActive, setIsShiftActive] = useState(
+    () => localStorage.getItem('receiving_shift_active') === 'true',
+  );
+
+  useEffect(() => {
+    const syncShiftStatus = () => {
+      setIsShiftActive(localStorage.getItem('receiving_shift_active') === 'true');
+    };
+
+    window.addEventListener('storage', syncShiftStatus);
+    return () => window.removeEventListener('storage', syncShiftStatus);
+  }, []);
 
   return (
     <div className="receiving-layout">

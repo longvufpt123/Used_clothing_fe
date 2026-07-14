@@ -14,11 +14,8 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
-import { 
-  getBatches, 
-  getRequests
-} from '@/utils/receivingMockDb';
-import type { MockBatch, MockRequest } from '@/utils/receivingMockDb';
+import { receivingService } from '@/services/receivingService';
+import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
 import './BatchDetail.css';
 
 export const BatchDetail: React.FC = () => {
@@ -26,24 +23,20 @@ export const BatchDetail: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [batch, setBatch] = useState<MockBatch | null>(null);
-  const [requests, setRequests] = useState<MockRequest[]>([]);
+  const [batch, setBatch] = useState<ReceivingBatch | null>(null);
+  const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'received' | 'rescheduled' | 'canceled'>('all');
 
   useEffect(() => {
-    const allBatches = getBatches();
-    const currentBatch = allBatches.find(b => b.id === id);
-    if (!currentBatch) {
+    if (!id) return;
+    receivingService.getMyBatch(id).then((currentBatch) => {
+      setBatch(currentBatch);
+      setRequests(currentBatch.requests);
+    }).catch(() => {
       toast.error('Lô hàng không tồn tại.');
       navigate('/receiving');
-      return;
-    }
-    setBatch(currentBatch);
-
-    const allRequests = getRequests();
-    const batchRequests = allRequests.filter(r => r.batchId === id);
-    setRequests(batchRequests);
+    });
   }, [id, navigate, toast]);
 
   if (!batch) return null;
@@ -185,6 +178,10 @@ export const BatchDetail: React.FC = () => {
                   key={req.id} 
                   className={`request-item-card glass ${isPending ? 'pending' : ''}`}
                   onClick={() => {
+                    if (isPending && batch.shiftStatus !== 'InProgress') {
+                      toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý donation request.');
+                      return;
+                    }
                     if (isPending) {
                       navigate(`/receiving/request/${req.id}`);
                     }

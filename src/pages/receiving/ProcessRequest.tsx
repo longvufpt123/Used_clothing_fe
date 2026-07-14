@@ -18,11 +18,8 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { useToast } from '@/context/ToastContext';
-import { 
-  getRequests, 
-  updateRequestStatus
-} from '@/utils/receivingMockDb';
-import type { MockRequest } from '@/utils/receivingMockDb';
+import { receivingService } from '@/services/receivingService';
+import type { ReceivingRequest } from '@/services/receivingService';
 import './ProcessRequest.css';
 
 export const ProcessRequest: React.FC = () => {
@@ -30,7 +27,7 @@ export const ProcessRequest: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [request, setRequest] = useState<MockRequest | null>(null);
+  const [request, setRequest] = useState<ReceivingRequest | null>(null);
 
   // Form input states
   const [actualWeight, setActualWeight] = useState('');
@@ -51,20 +48,18 @@ export const ProcessRequest: React.FC = () => {
   // Submit states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submittedStatus, setSubmittedStatus] = useState<MockRequest['status'] | null>(null);
+  const [submittedStatus, setSubmittedStatus] = useState<ReceivingRequest['status'] | null>(null);
 
   useEffect(() => {
-    const allRequests = getRequests();
-    const currentRequest = allRequests.find(r => r.id === id);
-    if (!currentRequest) {
+    if (!id) return;
+    receivingService.findMyRequest(id).then((currentRequest) => {
+      if (!currentRequest) throw new Error('Request not found');
+      setRequest(currentRequest);
+      setActualCategory(currentRequest.category);
+    }).catch(() => {
       toast.error('Đơn quyên góp không tồn tại.');
       navigate('/receiving');
-      return;
-    }
-    setRequest(currentRequest);
-
-    // Set initial category from request default if available
-    setActualCategory(currentRequest.category);
+    });
   }, [id, navigate, toast]);
 
   if (!request) return null;
@@ -105,7 +100,7 @@ export const ProcessRequest: React.FC = () => {
   };
 
   // 1. Success Collection Submission
-  const handleConfirmReceived = (e: React.FormEvent) => {
+  const handleConfirmReceived = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!actualWeight || parseFloat(actualWeight) <= 0) {
       toast.error('Vui lòng nhập cân nặng thực tế hợp lệ (lớn hơn 0).');
@@ -113,23 +108,24 @@ export const ProcessRequest: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateRequestStatus(request.id, 'Received', {
+    try {
+      await receivingService.confirmPickup(request.batchId, request.id, {
         actualWeight: parseFloat(actualWeight),
-        actualCategory,
-        actualCondition,
-        actualNotes,
+        notes: `[${actualCategory} - ${actualCondition}] ${actualNotes}`,
         imageUrls: mockImages.length > 0 ? mockImages : request.imageUrls
       });
       setSubmittedStatus('Received');
       setIsSubmitted(true);
       setIsSubmitting(false);
       toast.success('Tiếp nhận đơn quyên góp thành công!');
-    }, 1200);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      toast.error(error?.response?.data?.message || 'Không thể xác nhận thu nhận.');
+    }
   };
 
   // 2. Reschedule Action
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (!rescheduleDate) {
       toast.error('Vui lòng chọn ngày hẹn lại.');
       return;
@@ -137,20 +133,18 @@ export const ProcessRequest: React.FC = () => {
 
     setIsSubmitting(true);
     setShowRescheduleModal(false);
-    setTimeout(() => {
+    try {
       const formattedNote = `[Hẹn lại lịch vào ngày ${rescheduleDate} lúc ${rescheduleTime}] ${actualNotes}`;
-      updateRequestStatus(request.id, 'Rescheduled', {
-        actualNotes: formattedNote
-      });
+      await receivingService.reschedule(request.batchId, request.id, `${rescheduleDate}T${rescheduleTime}:00`, formattedNote);
       setSubmittedStatus('Rescheduled');
       setIsSubmitted(true);
       setIsSubmitting(false);
       toast.info('Đã cập nhật dời lịch thu nhận đơn!');
-    }, 1200);
+    } catch (error: any) { setIsSubmitting(false); toast.error(error?.response?.data?.message || 'Không thể hẹn lại lịch thu gom.'); }
   };
 
   // 3. Cancel Action
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!cancelReason.trim()) {
       toast.error('Vui lòng nhập lý do hủy đơn quyên góp.');
       return;
@@ -158,16 +152,14 @@ export const ProcessRequest: React.FC = () => {
 
     setIsSubmitting(true);
     setShowCancelModal(false);
-    setTimeout(() => {
+    try {
       const formattedNote = `[Hủy đơn. Lý do: ${cancelReason}] ${actualNotes}`;
-      updateRequestStatus(request.id, 'Canceled', {
-        actualNotes: formattedNote
-      });
+      await receivingService.reject(request.batchId, request.id, formattedNote);
       setSubmittedStatus('Canceled');
       setIsSubmitted(true);
       setIsSubmitting(false);
       toast.warning('Đã xác nhận hủy đơn quyên góp.');
-    }, 1200);
+    } catch (error: any) { setIsSubmitting(false); toast.error(error?.response?.data?.message || 'Không thể từ chối đơn quyên góp.'); }
   };
 
   return (

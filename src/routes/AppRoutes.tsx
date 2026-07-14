@@ -27,6 +27,7 @@ import ReceivingLayout from '@/shared/layouts/ReceivingLayout';
 import ReceivingDashboard from '@/pages/receiving/Dashboard';
 import ReceivingBatchDetail from '@/pages/receiving/BatchDetail';
 import ReceivingProcessRequest from '@/pages/receiving/ProcessRequest';
+import RoleRoute from '@/routes/RoleRoute';
 
 // Classification Staff pages
 import StaffOpsLayout from '@/shared/layouts/StaffOpsLayout';
@@ -120,25 +121,31 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/receiving"
         element={
-          <ReceivingLayout>
-            <ReceivingDashboard />
-          </ReceivingLayout>
+          <RoleRoute role="ReceivingStaff">
+            <ReceivingLayout>
+              <ReceivingDashboard />
+            </ReceivingLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/receiving/batch/:id"
         element={
-          <ReceivingLayout>
-            <ReceivingBatchDetail />
-          </ReceivingLayout>
+          <RoleRoute role="ReceivingStaff">
+            <ReceivingLayout>
+              <ReceivingBatchDetail />
+            </ReceivingLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/receiving/request/:id"
         element={
-          <ReceivingLayout>
-            <ReceivingProcessRequest />
-          </ReceivingLayout>
+          <RoleRoute role="ReceivingStaff">
+            <ReceivingLayout>
+              <ReceivingProcessRequest />
+            </ReceivingLayout>
+          </RoleRoute>
         }
       />
 
