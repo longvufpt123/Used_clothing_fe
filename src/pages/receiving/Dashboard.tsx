@@ -13,14 +13,9 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import {
-  getBatches,
-  getRequests,
-  getShiftActive,
-  setShiftActive,
-  saveBatches,
-} from '@/utils/receivingMockDb';
-import type { MockBatch, MockRequest } from '@/utils/receivingMockDb';
+import { receivingService } from '@/services/receivingService';
+import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
+import { getBatches, getRequests, setShiftActive, saveBatches } from '@/utils/receivingMockDb';
 import {
   getClassificationBatches,
   saveClassificationBatches,
@@ -38,8 +33,8 @@ export const Dashboard: React.FC = () => {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [batches, setBatches] = useState<MockBatch[]>([]);
-  const [requests, setRequests] = useState<MockRequest[]>([]);
+  const [batches, setBatches] = useState<ReceivingBatch[]>([]);
+  const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [isTransferringId, setIsTransferringId] = useState<string | null>(null);
 
@@ -49,20 +44,40 @@ export const Dashboard: React.FC = () => {
     setSearchParams(t === 'receiving' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
-    setBatches(getBatches());
-    setRequests(getRequests());
-    setIsShiftActive(getShiftActive());
+    receivingService.getMyBatches().then((data) => {
+      setBatches(data);
+      setRequests(data.flatMap((batch) => batch.requests));
+      const active = data.some((batch) => batch.shiftStatus === 'InProgress');
+      setIsShiftActive(active);
+      setShiftActive(active);
+      window.dispatchEvent(new Event('storage'));
+    }).catch(() => toast.error('Không thể tải tuyến thu gom được phân công.'));
   }, []);
 
-  const handleToggleShift = () => {
+  const handleToggleShift = async () => {
     const nextState = !isShiftActive;
     setShiftActive(nextState);
     setIsShiftActive(nextState);
 
     if (nextState) {
-      toast.success('Đã bắt đầu ca làm việc. Các tuyến thu nhận sẵn sàng.');
-      window.dispatchEvent(new Event('storage'));
+      await Promise.all(
+        batches.filter((batch) => batch.shiftStatus === 'Scheduled' && (batch.status === 'Planned' || batch.status === 'Receiving'))
+          .map((batch) => receivingService.startBatch(batch.id))
+      );
+      setBatches((current) => current.map((batch) =>
+        batch.status === 'Planned' ? { ...batch, status: 'Receiving', shiftStatus: 'InProgress' } : batch
+      ));
+      toast.success('Bắt đầu ca làm việc thành công! Trạng thái đơn đã sẵn sàng.');
+      // Update UI to reload indicators
+      window.dispatchEvent(new Event('storage')); // trigger header update
     } else {
+      const shiftIds = [...new Set(
+        batches.filter((batch) => batch.shiftStatus === 'InProgress').map((batch) => batch.shiftId)
+      )];
+      await Promise.all(shiftIds.map((shiftId) => receivingService.completeShift(shiftId)));
+      setBatches((current) => current.map((batch) =>
+        shiftIds.includes(batch.shiftId) ? { ...batch, status: 'Completed', shiftStatus: 'Completed' } : batch
+      ));
       toast.info('Đã kết thúc ca làm việc.');
       window.dispatchEvent(new Event('storage'));
     }
@@ -78,7 +93,7 @@ export const Dashboard: React.FC = () => {
       if (bIndex !== -1) {
         currentBatches[bIndex].status = 'Transferring';
         saveBatches(currentBatches);
-        setBatches(currentBatches);
+        receivingService.getMyBatches().then(setBatches);
 
         const clsBatches = getClassificationBatches();
         const src = currentBatches[bIndex];
@@ -136,7 +151,7 @@ export const Dashboard: React.FC = () => {
   const completionPct = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
   const filteredBatches = batches.filter((batch) => {
-    if (activeTab === 'receiving') return batch.status === 'Receiving';
+    if (activeTab === 'receiving') return batch.status === 'Receiving' || batch.status === 'Planned';
     if (activeTab === 'completed') return batch.status === 'Completed';
     return batch.status === 'Transferring';
   });
@@ -275,7 +290,7 @@ export const Dashboard: React.FC = () => {
             filteredBatches.map((batch) => {
               const progress = getBatchProgress(batch.id);
               const isCompleted = batch.status === 'Completed';
-              const isReceiving = batch.status === 'Receiving';
+              const isReceiving = batch.status === 'Receiving' || batch.status === 'Planned';
               const disabled = !isShiftActive && isReceiving;
 
               return (

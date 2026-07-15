@@ -142,7 +142,7 @@ export const Login: React.FC = () => {
       } else if (response.role === 'WarehouseStaff') {
         navigate('/warehouse');
       } else if (response.role === 'Manager') {
-        navigate('/admin');
+        navigate('/manager');
       } else {
         navigate('/');
       }
