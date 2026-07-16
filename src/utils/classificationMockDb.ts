@@ -1,6 +1,6 @@
 /** Mock DB for ClassificationStaff pipeline */
 
-export type ClassificationBatchStatus = 'PendingClassification' | 'Classified' | 'SendingToWarehouse';
+export type ClassificationBatchStatus = 'PendingConfirmation' | 'PendingClassification' | 'Classified' | 'SendingToWarehouse';
 
 export interface ClassificationItem {
   id: string;
@@ -37,7 +37,7 @@ const DEFAULT_BATCHES: ClassificationBatch[] = [
     code: 'INTAKE-2026-C',
     sourceRoute: 'Tuyến Thủ Đức - Quận 9 (Kho tập trung)',
     receivedDate: '2026-07-11',
-    status: 'PendingClassification',
+    status: 'PendingConfirmation',
     totalWeightKg: 42.3,
     itemCount: 3,
     items: [
@@ -131,6 +131,33 @@ const DEFAULT_BATCHES: ClassificationBatch[] = [
       },
     ],
   },
+  {
+    id: 'cls-batch-4',
+    code: 'INTAKE-2026-D',
+    sourceRoute: 'Tuyến Quận 7 - Nhà Bè (Thu gom Nam Sài Gòn)',
+    receivedDate: '2026-07-15',
+    status: 'PendingConfirmation',
+    totalWeightKg: 35.5,
+    itemCount: 2,
+    items: [
+      {
+        id: 'item-8',
+        code: 'RT-2026-820',
+        donorName: 'Nguyễn Thị Minh',
+        estimatedWeightKg: 15.5,
+        estimatedCategory: 'Quần áo hè hỗn hợp',
+        status: 'pending',
+      },
+      {
+        id: 'item-9',
+        code: 'RT-2026-821',
+        donorName: 'Lê Hoàng Nam',
+        estimatedWeightKg: 20.0,
+        estimatedCategory: 'Áo khoác & Đồ jeans',
+        status: 'pending',
+      },
+    ],
+  },
 ];
 
 export const initClassificationDb = () => {
@@ -216,6 +243,20 @@ export const confirmHandoffToWarehouse = (batchId: string): boolean => {
     // ignore if warehouse not ready
   }
 
+  return true;
+};
+
+export const confirmIntakeBatch = (batchId: string): boolean => {
+  const batches = getClassificationBatches();
+  const bIndex = batches.findIndex((b) => b.id === batchId);
+  if (bIndex === -1) return false;
+  if (batches[bIndex].status !== 'PendingConfirmation') return false;
+
+  batches[bIndex] = {
+    ...batches[bIndex],
+    status: 'PendingClassification',
+  };
+  saveClassificationBatches(batches);
   return true;
 };
 

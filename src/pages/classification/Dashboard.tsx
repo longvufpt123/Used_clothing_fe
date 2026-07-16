@@ -15,16 +15,17 @@ import {
 } from '@/utils/classificationMockDb';
 import '@/styles/ops-shared.css';
 
-type TabKey = 'pending' | 'classified' | 'sent';
+type TabKey = 'pending_confirm' | 'pending' | 'classified' | 'sent';
 
 const statusLabel = (s: ClassificationBatch['status']) => {
+  if (s === 'PendingConfirmation') return 'Chờ nhận';
   if (s === 'PendingClassification') return 'Chờ phân loại';
   if (s === 'Classified') return 'Đã phân loại';
   return 'Đã bàn giao kho';
 };
 
 const isTab = (v: string | null): v is TabKey =>
-  v === 'pending' || v === 'classified' || v === 'sent';
+  v === 'pending_confirm' || v === 'pending' || v === 'classified' || v === 'sent';
 
 export const ClassificationDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -32,20 +33,27 @@ export const ClassificationDashboard: React.FC = () => {
   const [batches, setBatches] = useState<ClassificationBatch[]>([]);
 
   const tabParam = searchParams.get('tab');
-  const tab: TabKey = isTab(tabParam) ? tabParam : 'pending';
+  const tab: TabKey = isTab(tabParam) ? tabParam : 'pending_confirm';
   const setTab = (t: TabKey) =>
-    setSearchParams(t === 'pending' ? {} : { tab: t }, { replace: true });
+    setSearchParams(t === 'pending_confirm' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
     setBatches(getClassificationBatches());
   }, []);
 
+  const pendingConfirm = batches.filter((b) => b.status === 'PendingConfirmation');
   const pending = batches.filter((b) => b.status === 'PendingClassification');
   const classified = batches.filter((b) => b.status === 'Classified');
   const sent = batches.filter((b) => b.status === 'SendingToWarehouse');
 
   const filtered =
-    tab === 'pending' ? pending : tab === 'classified' ? classified : sent;
+    tab === 'pending_confirm'
+      ? pendingConfirm
+      : tab === 'pending'
+      ? pending
+      : tab === 'classified'
+      ? classified
+      : sent;
 
   const totalWeight = batches.reduce((s, b) => s + b.totalWeightKg, 0);
   const doneItems = batches.reduce(
@@ -55,7 +63,9 @@ export const ClassificationDashboard: React.FC = () => {
   const totalItems = batches.reduce((s, b) => s + b.items.length, 0);
 
   const openBatch = (batch: ClassificationBatch) => {
-    if (batch.status === 'PendingClassification') {
+    if (batch.status === 'PendingConfirmation') {
+      navigate(`/classification/confirm/${batch.id}`);
+    } else if (batch.status === 'PendingClassification') {
       navigate(`/classification/classify/${batch.id}`);
     } else if (batch.status === 'Classified') {
       navigate(`/classification/handoff/${batch.id}`);
@@ -120,11 +130,22 @@ export const ClassificationDashboard: React.FC = () => {
           <button
             type="button"
             role="tab"
+            aria-selected={tab === 'pending_confirm'}
+            className={`ops-tab ${tab === 'pending_confirm' ? 'active' : ''}`}
+            onClick={() => setTab('pending_confirm')}
+          >
+            <Layers size={15} strokeWidth={2} />
+            Chờ xác nhận
+            <span className="ops-tab-count">{pendingConfirm.length}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={tab === 'pending'}
             className={`ops-tab ${tab === 'pending' ? 'active' : ''}`}
             onClick={() => setTab('pending')}
           >
-            <Layers size={15} strokeWidth={2} />
+            <ClipboardList size={15} strokeWidth={2} />
             Chờ phân loại
             <span className="ops-tab-count">{pending.length}</span>
           </button>
@@ -203,7 +224,9 @@ export const ClassificationDashboard: React.FC = () => {
                     </span>
                     {batch.status !== 'SendingToWarehouse' && (
                       <span className="ops-card-action">
-                        {batch.status === 'PendingClassification'
+                        {batch.status === 'PendingConfirmation'
+                          ? 'Xác nhận nhận'
+                          : batch.status === 'PendingClassification'
                           ? 'Phân loại'
                           : 'Bàn giao kho'}
                         <ArrowRight size={14} strokeWidth={2} />
