@@ -90,6 +90,12 @@
   color: var(--color-primary);
 }
 
+.login-link-btn {
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
 .cart-trigger {
   position: relative;
   color: var(--color-text-secondary);
