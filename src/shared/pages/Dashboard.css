@@ -277,3 +277,340 @@
     align-items: flex-start;
   }
 }
+
+/* Premium Export Buttons & Animation styling */
+.premium-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 6px 18px;
+  border-radius: 9999px;
+  font-weight: 650;
+  font-size: 0.84rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  transition: all 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  height: 38px;
+  outline: none;
+}
+
+.premium-export-btn:hover {
+  background: var(--color-primary);
+  color: #04130d;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
+.premium-export-btn:active {
+  transform: scale(0.97);
+}
+
+.export-btn-icon-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  color: currentColor;
+}
+
+.premium-export-btn:hover .export-btn-icon-circle {
+  transform: scale(1.08) rotate(15deg);
+  background: rgba(4, 19, 13, 0.15);
+}
+
+.premium-export-btn.pdf-btn {
+  background: var(--color-primary);
+  color: #04130d;
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.premium-export-btn.pdf-btn:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+}
+
+.premium-export-btn.pdf-btn .export-btn-icon-circle {
+  background: rgba(4, 19, 13, 0.08);
+}
+
+/* Export Modal Overlay */
+.export-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modalFadeIn 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dark .export-modal-overlay {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.export-modal-card {
+  width: 90%;
+  max-width: 420px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  animation: modalSlideUp 500ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.export-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.export-modal-header h3 {
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.export-modal-type-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+}
+
+.export-modal-body {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.export-spinner-container {
+  margin-bottom: 16px;
+}
+
+.export-spinner {
+  animation: spin 1.2s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.export-step-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+  min-height: 20px;
+  font-weight: 500;
+}
+
+.export-progress-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.export-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  width: 0%;
+  border-radius: 3px;
+  transition: width 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 0 6px var(--color-primary);
+}
+
+.export-progress-percent {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* @media print Stylesheet Optimization */
+@media print {
+  /* Hide unnecessary layout components */
+  body, html, #root {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt !important;
+  }
+
+  .sidebar, 
+  .admin-sidebar, 
+  .navbar, 
+  .header,
+  .dashboard-actions,
+  .no-print,
+  .no-print-flex,
+  .footer,
+  .action-buttons-cell,
+  .inventory-filters,
+  th:last-child,
+  td:last-child {
+    display: none !important;
+  }
+
+  /* Reset main layouts wrapper */
+  .admin-layout,
+  main,
+  .admin-dashboard {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .admin-dashboard {
+    gap: 1.5cm;
+  }
+
+  /* Format printable page header */
+  .admin-page-header {
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .admin-page-header::before {
+    content: "HỆ THỐNG QUẢN LÝ DỰ ÁN VẢI DỆT VÀ QUẦN ÁO CŨ";
+    display: block;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  .dashboard-title {
+    font-size: 18pt !important;
+    color: #000 !important;
+  }
+
+  .dashboard-subtitle {
+    font-size: 10pt !important;
+    color: #555 !important;
+  }
+
+  /* Formating Metrics Cards */
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .metric-box {
+    border: 1px solid #ddd !important;
+    background: #f9f9f9 !important;
+    padding: 12px !important;
+    min-height: 100px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    page-break-inside: avoid;
+  }
+
+  .metric-value {
+    font-size: 16pt !important;
+    color: #000 !important;
+  }
+
+  /* Charts rows formatting */
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+    margin-bottom: 25px !important;
+    page-break-inside: avoid;
+  }
+
+  .chart-card {
+    border: 1px solid #ddd !important;
+    padding: 15px !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .chart-card-header h3 {
+    font-size: 10pt !important;
+    color: #000 !important;
+  }
+
+  /* Tables formatting */
+  .inventory-section {
+    border: 1px solid #ddd !important;
+    border-radius: 10px !important;
+    padding: 20px !important;
+    page-break-inside: auto;
+    background: #fff !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    font-size: 9pt !important;
+    text-align: left !important;
+  }
+
+  th {
+    background-color: #f2f2f2 !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Append approval signatures at the bottom */
+  .admin-dashboard::after {
+    content: "Người lập biểu (ký, ghi rõ họ tên)                                              Xác nhận bởi Ban Giám đốc (ký tên, đóng dấu)\n\n\n\n\n....................................................                                              ....................................................";
+    display: block;
+    margin-top: 50px;
+    font-size: 10pt;
+    white-space: pre;
+    text-align: center;
+    border-top: 1px dashed #ccc;
+    padding-top: 20px;
+    page-break-inside: avoid;
+  }
+}
+

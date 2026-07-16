@@ -1,0 +1,202 @@
+/* Style for ConfirmBatch page - Soft Structuralism & Premium aesthetics */
+
+.confirm-batch-page {
+  animation: confirmFadeIn 800ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes confirmFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.995);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Double-Bezel Container Design */
+.bezel-outer {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 6px;
+  border-radius: 2rem; /* 32px squircle */
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.02),
+              0 12px 40px -8px rgba(0, 0, 0, 0.04);
+  transition: all 700ms cubic-bezier(0.32, 0.72, 0, 1);
+  width: 100%;
+}
+
+.dark .bezel-outer {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.bezel-inner {
+  background: var(--color-bg-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  padding: 24px 28px;
+  border-radius: calc(2rem - 6px); /* Concentric inner border radius */
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .bezel-inner {
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0px rgba(255, 255, 255, 0.05);
+}
+
+/* Checklist Styling with Kinetic Micro-interactions */
+.interactive-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  user-select: none;
+  transition: all 500ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.checklist-item:hover {
+  transform: translateX(4px);
+  border-color: var(--color-border-strong);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.dark .checklist-item:hover {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.checklist-item.checked {
+  border-color: var(--color-primary);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.checkbox-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  flex-shrink: 0;
+}
+
+.checklist-item.checked .checkbox-circle {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.checklist-text {
+  font-size: 0.88rem;
+  font-weight: 550;
+  color: var(--color-text-secondary);
+  transition: color 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.checklist-item.checked .checklist-text {
+  color: var(--color-text-primary);
+}
+
+/* Button in Button (Trailing Icon Island) Pattern */
+.premium-btn-island {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 10px 10px 24px;
+  border-radius: 9999px;
+  font-weight: 650;
+  font-size: 0.92rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: var(--color-primary);
+  color: #04130d;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  transition: all 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  position: relative;
+  overflow: hidden;
+  height: 52px;
+  min-width: 240px;
+  outline: none;
+}
+
+.premium-btn-island:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  transform: scale(1.01);
+}
+
+.premium-btn-island:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.premium-btn-island:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-icon-island {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(4, 19, 13, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  color: #04130d;
+  flex-shrink: 0;
+}
+
+.premium-btn-island:hover .btn-icon-island {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(4, 19, 13, 0.2);
+}
+
+.premium-btn-island:disabled .btn-icon-island {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-muted);
+}
+
+/* Loading Simulation Styling */
+.confirm-progress-container {
+  width: 100%;
+  background: var(--color-border);
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.confirm-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  width: 0;
+  transition: width 900ms cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 0 8px var(--color-primary);
+}
