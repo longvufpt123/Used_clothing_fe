@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, PlusCircle, Clock, ShieldCheck, ArrowRight, ImagePlus, X, XCircle, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
@@ -406,7 +406,7 @@ export const Products: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchPhone) {
-      toast.error('Vui lÃ²ng nháº­p sá»‘ Ä‘iá»‡n thoáº¡i Ä‘á»ƒ tra cá»©u!');
+      toast.error('Vui lòng nhập số điện thoại để tra cứu!');
       return;
     }
 
@@ -418,10 +418,10 @@ export const Products: React.FC = () => {
       const results = apiResults.map(mapSearchResultToDonationRequest);
       setSearchResults(results);
       if (results.length === 0) {
-        toast.info('KhÃ´ng tÃ¬m tháº¥y lá»‹ch sá»­ quyÃªn gÃ³p cho sá»‘ Ä‘iá»‡n thoáº¡i nÃ y.');
+        toast.info('Không tìm thấy lịch sử quyên góp cho số điện thoại này.');
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Tra cuu don quyen gop that bai.');
+      toast.error(error instanceof Error ? error.message : 'Tra cứu đơn quyên góp thất bại.');
     } finally {
       setLoading(false);
     }
