@@ -1,4 +1,4 @@
-﻿.donation-portal-page {
+.donation-portal-page {
   padding-top: 40px;
   padding-bottom: 80px;
 }
@@ -193,6 +193,14 @@
 .tracker-input {
   flex-grow: 1;
   margin-bottom: 0;
+}
+
+.tracker-search-form button {
+  height: 47px;
+  padding-top: 0;
+  padding-bottom: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .search-results-section {

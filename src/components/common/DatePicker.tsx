@@ -16,11 +16,23 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
   const inputId = id || `date-${Math.random().toString(36).substr(2, 9)}`;
 
+  const renderLabel = (text: string) => {
+    if (text.endsWith('*')) {
+      return (
+        <>
+          {text.slice(0, -1)}
+          <span className="required-asterisk" style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}>*</span>
+        </>
+      );
+    }
+    return text;
+  };
+
   return (
     <div className={`datepicker-wrapper ${error ? 'has-error' : ''} ${className}`}>
       {label && (
         <label htmlFor={inputId} className="datepicker-label">
-          {label}
+          {renderLabel(label)}
         </label>
       )}
       <div className="datepicker-container">

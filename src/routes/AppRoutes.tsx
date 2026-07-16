@@ -8,6 +8,7 @@ import Dashboard from '@/pages/admin/Dashboard';
 import Map from '@/pages/Map';
 import Leaderboard from '@/pages/Leaderboard';
 import Account from '@/pages/Account';
+import Profile from '@/pages/Profile';
 import MyOrders from '@/pages/MyOrders';
 import CollectionSchedule from '@/pages/admin/CollectionSchedule';
 import DetailedClassification from '@/pages/admin/DetailedClassification';
@@ -84,6 +85,14 @@ export const AppRoutes: React.FC = () => {
         element={
           <MainLayout>
             <Account />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <MainLayout>
+            <Profile />
           </MainLayout>
         }
       />
