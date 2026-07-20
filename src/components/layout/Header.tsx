@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Leaf, Moon, Sun, User, LogIn } from 'lucide-react';
+import { Leaf, Moon, Sun, User, LogIn, Menu, X } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import './Header.css';
@@ -8,6 +8,9 @@ import './Header.css';
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated, user } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header className="header glass">
@@ -17,11 +20,22 @@ export const Header: React.FC = () => {
           <span>Re<span className="logo-highlight">Threads</span></span>
         </Link>
 
-        <nav className="nav-menu">
-          <NavLink to="/" end className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Trang chủ</NavLink>
-          <NavLink to="/products" className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Quyên góp</NavLink>
-          <NavLink to="/map" className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Điểm thu gom</NavLink>
-          <NavLink to="/leaderboard" className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Bảng vàng</NavLink>
+        <button
+          type="button"
+          className="header-menu-toggle"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-label={isMenuOpen ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
+          aria-expanded={isMenuOpen}
+          aria-controls="primary-navigation"
+        >
+          {isMenuOpen ? <X size={20} /> : <Menu size={22} />}
+        </button>
+
+        <nav id="primary-navigation" className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
+          <NavLink to="/" end onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Trang chủ</NavLink>
+          <NavLink to="/products" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Quyên góp</NavLink>
+          <NavLink to="/map" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Điểm thu gom</NavLink>
+          <NavLink to="/leaderboard" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Bảng vàng</NavLink>
         </nav>
 
         <div className="header-actions">

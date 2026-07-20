@@ -36,6 +36,7 @@
 .text-gradient {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -49,11 +50,17 @@
   border-color: var(--color-primary);
 }
 
+@media (max-width: 640px) {
+  .container {
+    padding-inline: var(--spacing-md);
+  }
+}
+
 /* Glassmorphism class */
 .glass {
   background: rgba(15, 23, 38, 0.65);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }

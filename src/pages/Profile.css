@@ -70,8 +70,8 @@
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
               border-color 0.6s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -588,7 +588,7 @@
     gap: 20px;
   }
 
-  .col-span-2, .col-span-1 {
+  .col-span-3, .col-span-2, .col-span-1 {
     grid-column: span 1;
   }
 
@@ -612,5 +612,38 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-container {
+    padding: 24px 0 40px;
+  }
+
+  .card-shell {
+    padding: 5px;
+    border-radius: var(--radius-lg);
+  }
+
+  .card-core {
+    padding: var(--spacing-lg);
+    border-radius: calc(var(--radius-lg) - 5px);
+  }
+
+  .profile-name {
+    font-size: 1.7rem;
+  }
+
+  .profile-badges-row {
+    flex-wrap: wrap;
+  }
+
+  .score-main-display,
+  .achievement-item {
+    gap: var(--spacing-md);
+  }
+
+  .nav-island-item {
+    padding: 12px;
   }
 }

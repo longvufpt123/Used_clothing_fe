@@ -386,3 +386,50 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 640px) {
+  .donation-portal-page {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .tabs-navigation {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .tabs-navigation .tab-btn {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  .donation-form,
+  .tracker-box {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .form-title,
+  .tracker-title {
+    font-size: 1.45rem;
+  }
+
+  .tracker-search-form,
+  .result-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tracker-search-form button {
+    width: 100%;
+  }
+
+  .image-preview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .result-images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  }
+}

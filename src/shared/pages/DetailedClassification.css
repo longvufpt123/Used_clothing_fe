@@ -318,3 +318,22 @@
     min-height: unset;
   }
 }
+
+@media (max-width: 640px) {
+  .classification-panel,
+  .scanned-info-card {
+    padding: var(--spacing-md);
+  }
+
+  .counter-item,
+  .scanned-info-card .info-row,
+  .label-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .counter-controls,
+  .label-date {
+    align-self: flex-start;
+  }
+}

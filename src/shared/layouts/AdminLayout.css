@@ -22,6 +22,10 @@
   flex-direction: column;
 }
 
+.admin-sidebar-backdrop {
+  display: none;
+}
+
 /* Sticky Page Header for Admin Pages */
 .admin-page-header {
   position: sticky;
@@ -44,4 +48,40 @@
   margin-top: 8px !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .admin-layout-wrapper,
+  .admin-layout-main {
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .admin-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    border: 0;
+    background: rgba(4, 8, 16, 0.58);
+  }
+
+  .admin-content-area {
+    min-height: calc(100dvh - 55px);
+    overflow: visible;
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-content-area {
+    padding: 12px;
+  }
+
+  .admin-page-header {
+    top: -12px;
+    padding-top: 12px;
+    margin-top: -12px;
+  }
 }

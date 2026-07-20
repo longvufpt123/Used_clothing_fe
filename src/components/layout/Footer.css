@@ -102,3 +102,24 @@
     gap: var(--spacing-xxl);
   }
 }
+
+@media (max-width: 640px) {
+  .footer {
+    padding-top: var(--spacing-xl);
+  }
+
+  .footer-links,
+  .footer-legal,
+  .footer-bottom-container {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer-links {
+    gap: var(--spacing-xl);
+  }
+
+  .footer-bottom-container {
+    text-align: left;
+  }
+}

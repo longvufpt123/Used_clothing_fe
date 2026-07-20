@@ -263,3 +263,42 @@
     max-height: 350px;
   }
 }
+
+@media (max-width: 640px) {
+  .map-page {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .map-header {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .locations-sidebar {
+    max-height: 300px;
+  }
+
+  .locations-list {
+    max-height: 230px;
+  }
+
+  .map-canvas {
+    height: 260px;
+  }
+
+  .location-item-header,
+  .detail-card-header,
+  .fill-level-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .location-detail-card {
+    padding: var(--spacing-md);
+  }
+
+  .map-overlay-tip {
+    right: var(--spacing-sm);
+    left: var(--spacing-sm);
+  }
+}

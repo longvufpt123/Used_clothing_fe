@@ -346,11 +346,28 @@
     inset: 0;
     z-index: calc(var(--z-sticky) - 1);
     background: rgba(4, 8, 16, 0.6);
+    -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     border: none;
   }
 
   .ops-shell-content {
     padding: 20px 16px 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ops-shell-content {
+    padding: 16px 12px 36px;
+  }
+
+  .ops-topbar {
+    padding-inline: 12px;
+  }
+
+  .ops-topbar-role {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

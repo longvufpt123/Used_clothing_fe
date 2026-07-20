@@ -151,3 +151,30 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .account-page {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .account-hero,
+  .account-panel {
+    padding: var(--spacing-lg);
+  }
+
+  .account-avatar {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+  }
+
+  .account-hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .profile-row,
+  .donation-score-card {
+    align-items: flex-start;
+  }
+}
