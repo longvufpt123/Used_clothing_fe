@@ -69,6 +69,7 @@
   letter-spacing: -0.01em;
   background: linear-gradient(135deg, #ffffff, #a7f3d0);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -152,8 +153,8 @@
 /* True Premium Glassmorphism */
 .login-card.glass {
   background: rgba(15, 23, 38, 0.5) !important;
-  backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
   border-radius: var(--radius-lg);
@@ -272,14 +273,15 @@
 .text-gradient {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 [data-theme='light'] .text-gradient {
   background: linear-gradient(135deg, #047857, #065f46);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .login-subtitle {
@@ -498,7 +500,7 @@
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
-    min-height: auto;
+    min-height: 0;
     border-radius: var(--radius-md);
     margin: var(--spacing-md) auto;
   }
@@ -509,5 +511,30 @@
 
   .login-form-side {
     padding: var(--spacing-xl) var(--spacing-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .login-container {
+    margin: 0;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .login-form-side {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .login-card.glass {
+    padding: var(--spacing-lg) var(--spacing-md) !important;
+  }
+
+  .mascot-wrapper {
+    height: 72px;
+  }
+
+  .strength-criteria {
+    grid-template-columns: 1fr;
   }
 }

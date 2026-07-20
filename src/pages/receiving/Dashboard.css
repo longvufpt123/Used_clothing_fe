@@ -294,6 +294,7 @@
   justify-content: center;
   padding: var(--spacing-md);
   background: rgba(8, 12, 20, 0.55);
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   animation: rcvModalFade var(--transition-fast);
 }
@@ -318,5 +319,37 @@
   .rcv-modal-overlay,
   .rcv-modal {
     animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .rcv-shift-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rcv-progress-labels,
+  .rcv-material-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rcv-material-tag {
+    text-align: left;
+  }
+
+  .rcv-upload-preview,
+  .rcv-upload-add {
+    width: 72px;
+    height: 72px;
+  }
+
+  .rcv-modal {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+  }
+
+  .rcv-summary {
+    padding: var(--spacing-xl) var(--spacing-md);
   }
 }

@@ -260,3 +260,35 @@
     border-radius: var(--radius-md);
   }
 }
+
+@media (max-width: 640px) {
+  .leaderboard-page {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .leaderboard-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 4px;
+  }
+
+  .filter-tab-btn {
+    flex: 0 0 auto;
+    padding: 9px 14px;
+    white-space: nowrap;
+  }
+
+  .podium-container {
+    min-height: 0;
+  }
+
+  .podium-column {
+    width: min(100%, 300px);
+  }
+
+  .leaderboard-table-section {
+    padding: var(--spacing-md);
+  }
+}

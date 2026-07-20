@@ -194,3 +194,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .stock-list-card,
+  .campaign-dispatch-section {
+    padding: var(--spacing-md);
+  }
+
+  .card-header-flex,
+  .dispatch-item-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .dispatch-item-header h4 {
+    max-width: none;
+  }
+}

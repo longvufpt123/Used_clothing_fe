@@ -44,6 +44,17 @@
   color: var(--color-text-primary);
 }
 
+@media (max-width: 640px) {
+  .dropdown-menu {
+    max-width: calc(100vw - 24px);
+  }
+
+  .dropdown-menu-item {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 @keyframes dropdown-fade-in {
   from {
     opacity: 0;
