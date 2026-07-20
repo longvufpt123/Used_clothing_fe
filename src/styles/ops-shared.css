@@ -58,7 +58,6 @@
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  text-wrap: balance;
 }
 
 .ops-pagehead p {
@@ -1042,6 +1041,85 @@
   .ops-spinner {
     animation: none;
     border-top-color: transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .ops-page {
+    gap: var(--spacing-md);
+  }
+
+  .ops-pagehead {
+    align-items: stretch;
+    padding-bottom: var(--spacing-md);
+  }
+
+  .ops-pagehead-aside,
+  .ops-actions {
+    width: 100%;
+  }
+
+  .ops-pagehead-aside > *,
+  .ops-actions > * {
+    flex: 1 1 100%;
+  }
+
+  .ops-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .ops-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ops-tab {
+    flex: 0 0 auto;
+  }
+
+  .ops-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ops-card,
+  .ops-panel {
+    padding: var(--spacing-md);
+  }
+
+  .ops-card-top,
+  .ops-card-footer,
+  .ops-item-row,
+  .ops-counter-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ops-card-footer,
+  .ops-item-row,
+  .ops-counter-row {
+    gap: 8px;
+  }
+
+  .ops-card-action,
+  .ops-stepper {
+    align-self: flex-start;
+  }
+
+  .ops-badge {
+    white-space: normal;
+  }
+
+  .ops-empty {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .ops-title-row {
+    align-items: flex-start;
+  }
+
+  .ops-success-banner {
+    padding: var(--spacing-md);
   }
 }
 

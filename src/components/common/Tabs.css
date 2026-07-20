@@ -9,6 +9,23 @@
   margin-bottom: var(--spacing-md);
 }
 
+@media (max-width: 640px) {
+  .tabs-header {
+    overflow-x: auto;
+    gap: var(--spacing-md);
+  }
+
+  .tabs-header::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.92rem;
+  }
+}
+
 .tab-btn {
   background: none;
   border: none;

@@ -13,6 +13,22 @@
   font-size: 0.95rem;
 }
 
+@media (max-width: 640px) {
+  .table-responsive {
+    border-radius: var(--radius-md);
+  }
+
+  .custom-table {
+    min-width: 640px;
+    font-size: 0.875rem;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
 .custom-table th {
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-primary);

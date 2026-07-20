@@ -196,3 +196,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .campaign-form-section,
+  .campaign-list-section {
+    padding: var(--spacing-md);
+  }
+
+  .admin-campaign-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .camp-card-header,
+  .meta-line {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .camp-card-header h4 {
+    max-width: none;
+  }
+}

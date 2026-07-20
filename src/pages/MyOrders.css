@@ -323,3 +323,32 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 640px) {
+  .my-orders-page {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .my-orders-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .my-orders-toolbar,
+  .order-card,
+  .edit-order-form {
+    padding: var(--spacing-md);
+  }
+
+  .orders-empty {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .order-images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  }
+
+  .order-address {
+    align-items: flex-start;
+  }
+}

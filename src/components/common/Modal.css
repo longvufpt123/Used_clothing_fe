@@ -75,6 +75,34 @@
   background-color: white;
 }
 
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-container {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--spacing-md);
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal-footer .btn,
+  .modal-footer button {
+    width: 100%;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

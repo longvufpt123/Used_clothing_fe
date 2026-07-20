@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Bell, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import './AdminHeader.css';
 
 interface AdminHeaderProps {
   title?: string;
+  onOpenMobileMenu?: () => void;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
-  title = 'Bảng điều khiển'
+  title = 'Bảng điều khiển',
+  onOpenMobileMenu,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,6 +44,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   return (
     <header className="admin-layout-header glass">
       <div className="admin-header-left">
+        <button type="button" className="admin-mobile-menu-button" onClick={onOpenMobileMenu} aria-label="Mở menu quản trị">
+          <Menu size={20} />
+        </button>
         <h3>{title}</h3>
       </div>
       

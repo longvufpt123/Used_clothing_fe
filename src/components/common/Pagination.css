@@ -36,6 +36,18 @@
   gap: var(--spacing-xs);
 }
 
+@media (max-width: 640px) {
+  .pagination-nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .pagination-numbers {
+    flex: 0 0 auto;
+  }
+}
+
 .pagination-btn.active {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
