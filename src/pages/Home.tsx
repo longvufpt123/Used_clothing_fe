@@ -1,172 +1,162 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Leaf, ShieldCheck, Sparkles, RefreshCw } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  MapPin,
+  PackageCheck,
+  Recycle,
+  ShieldCheck,
+  Shirt,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import './Home.css';
 
-// Mock data representing charity and recycling campaigns
-const LATEST_CAMPAIGNS = [
+const PROCESS_STEPS = [
   {
-    id: 1,
-    title: 'Áo ấm mùa đông - Hà Giang 2026',
-    description: 'Quyên góp áo khoác, đồ len ấm hỗ trợ trẻ em và các hộ gia đình khó khăn vùng cao biên giới.',
-    status: 'Đã hoàn thành' as const,
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop&q=80',
-    tag: 'Từ thiện',
+    title: 'Gửi yêu cầu',
+    detail: 'Chọn đồ muốn quyên góp, điểm tiếp nhận hoặc thời gian phù hợp để bàn giao.',
+    icon: PackageCheck,
   },
   {
-    id: 2,
-    title: 'Dự án Sợi Tái Sinh ReThreads',
-    description: 'Thu gom denim và kaki cotton quá cũ để xé sợi dệt lại, giảm thiểu chôn lấp rác thải dệt may.',
-    status: 'Đang tiến hành' as const,
-    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&auto=format&fit=crop&q=80',
-    tag: 'Tái chế',
+    title: 'Kiểm tra và phân loại',
+    detail: 'Mỗi đợt tiếp nhận được đánh giá theo tình trạng sử dụng và chất liệu.',
+    icon: ShieldCheck,
   },
   {
-    id: 3,
-    title: 'Đồng phục trẻ em - Mái ấm Tình thương',
-    description: 'Tiếp nhận quần áo học sinh cấp 1, cấp 2 để xử lý khử khuẩn và gửi tặng các mái ấm cơ nhỡ.',
-    status: 'Đang tiến hành' as const,
-    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&auto=format&fit=crop&q=80',
-    tag: 'Từ thiện',
+    title: 'Đi đến đúng nơi cần thiết',
+    detail: 'Đồ còn dùng tốt được chuẩn bị để trao tặng. Vật liệu không còn phù hợp được chuyển sang tái chế.',
+    icon: Recycle,
   },
-];
+] as const;
+
+const DONATION_GUIDE = [
+  'Quần áo khô, sạch và không có vật sắc nhọn bên trong.',
+  'Giày dép, chăn mỏng và phụ kiện còn nguyên vẹn được tiếp nhận cùng quần áo.',
+  'Đồ rách hoặc quá cũ vẫn hữu ích nếu được tách riêng cho mục đích tái chế.',
+] as const;
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="container hero-container">
-          <div className="hero-content">
-            <span className="hero-tag">
-              <Leaf size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> 
-              Green & Sustainable Impact
-            </span>
-            <h1 className="hero-title">
-              Quyên góp quần áo cũ, <br />
-              trao tặng <span className="text-gradient">sự hy vọng.</span>
-            </h1>
-            <p className="hero-subtitle">
-              Chung tay bảo vệ tài nguyên môi trường thông qua quy trình tiếp nhận chuyên nghiệp, giặt sấy khử khuẩn y tế và phân phối từ thiện hoặc xé sợi tái chế khép kín.
+      <section className="home-hero" aria-labelledby="home-title">
+        <div className="container home-hero-grid">
+          <div className="home-hero-copy">
+            <p className="home-kicker">Quyên góp có định hướng</p>
+            <h1 id="home-title">Quần áo cũ vẫn có thể đi tiếp.</h1>
+            <p className="home-lead">
+              Gửi đồ còn dùng tốt đến nơi cần thiết, hoặc đưa vật liệu đã cũ vào đúng chu trình tái chế.
             </p>
-            <div className="hero-actions-row">
+            <div className="home-actions">
               <Button size="lg" onClick={() => navigate('/products')}>
-                Quyên góp Ngay <ArrowRight size={18} />
+                Tạo yêu cầu quyên góp <ArrowRight size={18} aria-hidden="true" />
               </Button>
-              <Button variant="secondary" size="lg" onClick={() => navigate('/admin')}>
-                Báo cáo Tác động
+              <Button variant="outline" size="lg" onClick={() => navigate('/map')}>
+                <MapPin size={18} aria-hidden="true" /> Tìm điểm thu gom
               </Button>
             </div>
+            <p className="home-action-note">Bạn chọn cách bàn giao. Hệ thống hướng dẫn phần còn lại.</p>
           </div>
-          <div className="hero-visual">
-            <div className="hero-image-glow"></div>
+
+          <figure className="home-hero-media">
             <video
-              className="hero-image"
+              className="home-process-video"
               src="/assets/videos/login-bg.mp4"
               autoPlay
               loop
               muted
               playsInline
-              aria-label="Sustainable Fashion and Recycling"
+              aria-label="Quy trình xử lý quần áo để tái sử dụng và tái chế"
             />
-          </div>
+            <figcaption>Phân loại đúng từ đầu giúp mỗi món đồ có cơ hội phù hợp hơn.</figcaption>
+          </figure>
         </div>
       </section>
 
-      {/* 4-Step Processing Cycle */}
-      <section className="workflow-section container">
-        <div className="section-title-wrapper">
-          <span className="section-subtitle">Quy trình Khép kín</span>
-          <h2>Chu trình Phân loại & Xử lý</h2>
-        </div>
-        
-        <div className="features">
-          <div className="feature-card glass">
-            <div className="step-badge">01</div>
-            <Leaf className="feature-icon text-gradient" />
-            <h3>Tiếp nhận quyên góp</h3>
-            <p>Người dân đăng ký quyên góp qua cổng trực tuyến. Điều phối viên xác nhận và thu gom tại nhà hoặc bưu cục.</p>
+      <section className="home-paths" aria-labelledby="paths-title">
+        <div className="container">
+          <div className="home-section-heading">
+            <p className="home-kicker">Không phải mọi món đồ đều có cùng điểm đến</p>
+            <h2 id="paths-title">Hai hướng xử lý, một mục tiêu: hạn chế lãng phí.</h2>
           </div>
-          <div className="feature-card glass">
-            <div className="step-badge">02</div>
-            <ShieldCheck className="feature-icon text-gradient" />
-            <h3>Kiểm tra & Phân loại</h3>
-            <p>Đồ được kiểm tra chất liệu: cotton, jean, poly. Phân chia làm 2 nhánh: đồ tái sử dụng (Từ thiện) và sợi tái chế (Tái chế).</p>
-          </div>
-          <div className="feature-card glass">
-            <div className="step-badge">03</div>
-            <Sparkles className="feature-icon text-gradient" />
-            <h3>Khử trùng & Giặt sạch</h3>
-            <p>Quần áo từ thiện được đưa qua dây chuyền giặt là sấy nhiệt độ cao và khử khuẩn bằng ô-zôn y tế để đảm bảo vệ sinh tối đa.</p>
-          </div>
-          <div className="feature-card glass">
-            <div className="step-badge">04</div>
-            <RefreshCw className="feature-icon text-gradient" />
-            <h3>Trao tặng hoặc Tái chế</h3>
-            <p>Quần áo đạt chuẩn được đóng gói gửi các quỹ từ thiện. Quần áo mục/rách được chuyển sang nhà máy xé tơi sợi dệt lại dệt thảm, bao bì.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* System Statistics Board */}
-      <section className="stats-dashboard container">
-        <div className="glass stats-wrapper">
-          <div className="stat-item">
-            <span className="stat-label">Tổng khối lượng nhận</span>
-            <span className="stat-number text-gradient">8.450 kg</span>
-            <span className="stat-desc">Quần áo cũ thu gom từ tháng 1/2026</span>
-          </div>
-          <div className="stat-item border-left">
-            <span className="stat-label">Phân phối từ thiện</span>
-            <span className="stat-number text-gradient">4.120 kg</span>
-            <span className="stat-desc">Đã xử lý sạch và gửi tặng vùng cao</span>
-          </div>
-          <div className="stat-item border-left">
-            <span className="stat-label">Xé sợi dệt tái chế</span>
-            <span className="stat-number text-gradient">3.890 kg</span>
-            <span className="stat-desc">Tách sợi dệt thảm & đệm công nghiệp</span>
-          </div>
-          <div className="stat-item border-left">
-            <span className="stat-label">Giảm phát thải CO2</span>
-            <span className="stat-number text-gradient">12.5 tấn</span>
-            <span className="stat-desc">Tương đương trồng 570 cây xanh</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Campaigns Section */}
-      <section className="featured container">
-        <div className="section-header">
-          <div>
-            <span className="section-subtitle">Dự án cộng đồng</span>
-            <h2>Chiến dịch đang triển khai</h2>
-          </div>
-          <Button variant="ghost" onClick={() => navigate('/products')}>
-            Xem lịch trình <ArrowRight size={16} />
-          </Button>
-        </div>
-        <div className="campaign-grid">
-          {LATEST_CAMPAIGNS.map((camp) => (
-            <div key={camp.id} className="campaign-card glass card-hover">
-              <div className="campaign-img-wrapper">
-                <img src={camp.image} alt={camp.title} className="campaign-img" />
-                <span className={`campaign-tag ${camp.tag === 'Từ thiện' ? 'charity' : 'recycle'}`}>
-                  {camp.tag}
-                </span>
+          <div className="home-path-grid">
+            <article className="home-path-card home-path-reuse">
+              <Shirt size={32} strokeWidth={1.5} aria-hidden="true" />
+              <div>
+                <h3>Còn sử dụng tốt</h3>
+                <p>
+                  Được kiểm tra, làm sạch và chuẩn bị cho các hoạt động trao tặng phù hợp.
+                </p>
               </div>
-              <div className="campaign-info">
-                <h3>{camp.title}</h3>
-                <p>{camp.description}</p>
-                <div className="campaign-footer">
-                  <span className={`status-dot ${camp.status === 'Đã hoàn thành' ? 'completed' : 'active'}`}></span>
-                  <span className="status-text">{camp.status}</span>
+            </article>
+            <article className="home-path-card home-path-recycle">
+              <Recycle size={32} strokeWidth={1.5} aria-hidden="true" />
+              <div>
+                <h3>Đã cũ hoặc hư hỏng</h3>
+                <p>
+                  Được tách theo chất liệu để định hướng vào luồng tái chế thay vì bị bỏ đi.
+                </p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-ledger" aria-labelledby="ledger-title">
+        <div className="container home-ledger-layout">
+          <div className="home-ledger-intro">
+            <p className="home-kicker">Từ yêu cầu đến bàn giao</p>
+            <h2 id="ledger-title">Theo dõi từng bước từ lúc gửi yêu cầu đến khi bàn giao.</h2>
+            <p>
+              ReThreads ghi nhận các bước tiếp nhận, phân loại và điều hướng đồ vào luồng xử lý phù hợp.
+            </p>
+          </div>
+
+          <ol className="home-process-list">
+            {PROCESS_STEPS.map(({ title, detail, icon: Icon }, index) => (
+              <li key={title} className="home-process-step">
+                <span className="home-process-index">0{index + 1}</span>
+                <Icon className="home-process-icon" size={24} strokeWidth={1.5} aria-hidden="true" />
+                <div>
+                  <h3>{title}</h3>
+                  <p>{detail}</p>
                 </div>
-              </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="home-guide" aria-labelledby="guide-title">
+        <div className="container home-guide-layout">
+          <div className="home-guide-copy">
+            <p className="home-kicker">Chuẩn bị trước khi gửi</p>
+            <h2 id="guide-title">Một vài lưu ý nhỏ giúp việc phân loại nhanh và chính xác hơn.</h2>
+          </div>
+          <ul className="home-guide-list">
+            {DONATION_GUIDE.map((item) => (
+              <li key={item}>
+                <Check size={18} strokeWidth={2} aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="home-closing" aria-labelledby="closing-title">
+        <div className="container home-closing-inner">
+          <Sparkles size={28} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2 id="closing-title">Bắt đầu từ một túi đồ bạn không còn dùng.</h2>
+            <p>Chọn cách bàn giao phù hợp và gửi yêu cầu khi bạn đã sẵn sàng.</p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/products')}>
+            Bắt đầu quyên góp <ArrowRight size={18} aria-hidden="true" />
+          </Button>
         </div>
       </section>
     </div>
