@@ -110,9 +110,9 @@ export const ConfirmBatch: React.FC = () => {
           <ChevronLeft size={16} strokeWidth={1.5} /> Quay lại
         </button>
         <div className="ops-title-row">
-          <h1>Xác nhận Intake Batch</h1>
+          <h1>Xác nhận lô tiếp nhận</h1>
           <span className={`ops-badge ${confirmed ? 'done' : 'pending'}`}>
-            {confirmed ? 'Đã nhận' : 'Chờ xác nhận từ Receiving'}
+            {confirmed ? 'Đã nhận' : 'Chờ xác nhận từ bộ phận tiếp nhận'}
           </span>
         </div>
       </div>
@@ -297,7 +297,7 @@ export const ConfirmBatch: React.FC = () => {
       {/* Package Items Manifest */}
       <div className="bezel-outer" style={{ marginTop: '24px' }}>
         <div className="bezel-inner">
-          <span className="ops-panel-label">Danh sách kiện ước tính từ Receiving</span>
+          <span className="ops-panel-label">Danh sách kiện ước tính từ bộ phận tiếp nhận</span>
           <div className="ops-item-list" style={{ marginTop: '12px' }}>
             {batch.items.map((item) => (
               <div

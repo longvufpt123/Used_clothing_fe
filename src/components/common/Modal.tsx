@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div className={`modal-container glass ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           {title && <h3 className="modal-title">{title}</h3>}
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
+          <button className="modal-close-btn" onClick={onClose} aria-label="Đóng hộp thoại">
             <X size={20} />
           </button>
         </div>

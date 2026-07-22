@@ -66,7 +66,7 @@ export const HandoffBatch: React.FC = () => {
         return;
       }
       setDone(true);
-      toast.success(`Đã bàn giao ${batch.code} vào kho. Trạng thái: SendingToWarehouse.`);
+      toast.success(`Đã bàn giao ${batch.code} vào kho. Trạng thái: Đang chuyển đến kho.`);
     }, 900);
   };
 
@@ -90,8 +90,8 @@ export const HandoffBatch: React.FC = () => {
           <div>
             <strong>Bàn giao thành công</strong>
             <p>
-              Lô {batch.code} đã chuyển trạng thái SendingToWarehouse. Kho sẽ thấy lô ở tab
-              Chờ nhập kho.
+Lô {batch.code} đang được chuyển đến kho. Kho sẽ thấy lô ở tab
+               Chờ nhập kho.
             </p>
           </div>
         </div>

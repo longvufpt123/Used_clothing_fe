@@ -57,7 +57,7 @@ const DEFAULT_REQUESTS: MockRequest[] = [
     donorName: 'Nguyễn Thị Mai', 
     phoneNumber: '0909876543', 
     pickupAddress: '12 Đường Lê Lợi, Quận 1, TP. HCM', 
-    category: 'Quần jeans / Quần dài', 
+    category: 'Quần denim / Quần dài', 
     weight: '5-10 kg', 
     condition: 'Còn tốt, giặt sạch', 
     status: 'Pending', 

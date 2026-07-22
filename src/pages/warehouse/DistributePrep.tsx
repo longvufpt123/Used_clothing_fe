@@ -93,7 +93,7 @@ export const DistributePrep: React.FC = () => {
             <strong>Vận đơn GHN đã tạo</strong>
             <p>
               Mã theo dõi: <strong style={{ color: 'var(--color-text-primary)' }}>{trackingCode}</strong>.
-              Trạng thái đơn: Prepared / Shipped.
+              Trạng thái đơn: Đã chuẩn bị / Đã gửi hàng.
             </p>
           </div>
         </div>

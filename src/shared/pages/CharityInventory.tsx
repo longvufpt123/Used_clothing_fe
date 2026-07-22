@@ -9,7 +9,7 @@ import './CharityInventory.css';
 interface StockItem {
   id: number;
   name: string;
-  category: 'Outerwear' | 'Pants' | 'Shirts' | 'Mixed';
+  category: 'Áo khoác' | 'Quần dài' | 'Áo sơ mi/áo thun' | 'Hỗn hợp';
   ageGroup: string;
   quantity: number;
   status: 'good' | 'low' | 'empty';
@@ -24,10 +24,10 @@ interface DistributionCampaign {
 }
 
 const INITIAL_STOCK: StockItem[] = [
-  { id: 1, name: 'Áo khoác ấm dày Trẻ em Nam', category: 'Outerwear', ageGroup: '6-10 tuổi', quantity: 45, status: 'good' },
-  { id: 2, name: 'Áo phao mùa đông Trẻ em Nữ', category: 'Outerwear', ageGroup: '11-15 tuổi', quantity: 8, status: 'low' },
-  { id: 3, name: 'Quần dài kaki Người lớn Nam', category: 'Pants', ageGroup: 'Người lớn', quantity: 120, status: 'good' },
-  { id: 4, name: 'Áo sơ mi/Áo thun trẻ em', category: 'Shirts', ageGroup: '3-5 tuổi', quantity: 0, status: 'empty' },
+  { id: 1, name: 'Áo khoác ấm dày Trẻ em Nam', category: 'Áo khoác', ageGroup: '6-10 tuổi', quantity: 45, status: 'good' },
+  { id: 2, name: 'Áo phao mùa đông Trẻ em Nữ', category: 'Áo khoác', ageGroup: '11-15 tuổi', quantity: 8, status: 'low' },
+  { id: 3, name: 'Quần dài kaki Người lớn Nam', category: 'Quần dài', ageGroup: 'Người lớn', quantity: 120, status: 'good' },
+  { id: 4, name: 'Áo sơ mi/Áo thun trẻ em', category: 'Áo sơ mi/áo thun', ageGroup: '3-5 tuổi', quantity: 0, status: 'empty' },
 ];
 
 const INITIAL_CAMPAIGNS: DistributionCampaign[] = [
