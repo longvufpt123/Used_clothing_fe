@@ -191,14 +191,14 @@ export const Products: React.FC = () => {
   const categoryOptions = [
     { value: 'outerwear', label: 'Áo khoác / Đồ ấm mùa đông' },
     { value: 'shirts', label: 'Áo thun / Áo sơ mi dệt kim' },
-    { value: 'pants', label: 'Quần jeans / Quần dài / Kaki' },
+    { value: 'pants', label: 'Quần denim / Quần dài / kaki' },
     { value: 'kids', label: 'Quần áo trẻ em' },
     { value: 'mixed', label: 'Hỗn hợp / Khác' },
   ];
 
   const weightOptions = [
     { value: 'under-5', label: 'Dưới 5 kg (Túi nhỏ)' },
-    { value: '5-10', label: 'Từ 5 - 10 kg (Thùng carton vừa)' },
+    { value: '5-10', label: 'Từ 5 - 10 kg (Thùng giấy vừa)' },
     { value: '10-20', label: 'Từ 10 - 20 kg (Bao tải lớn)' },
     { value: 'over-20', label: 'Trên 20 kg (Nhiều bao tải)' },
   ];
@@ -549,7 +549,7 @@ export const Products: React.FC = () => {
                 <label className="input-label">Ghi chú thêm (không bắt buộc)</label>
                 <textarea
                   className="custom-textarea"
-                  placeholder="Ví dụ: Đồ đông gói trong 2 thùng carton, chỉ rảnh lấy vào ngày cuối tuần..."
+                  placeholder="Ví dụ: Đồ đông gói trong 2 thùng giấy, chỉ rảnh lấy vào ngày cuối tuần..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}

@@ -2,8 +2,8 @@
 export const adminService = {
   fetchStaffList: async () => {
     return [
-      { id: 1, name: 'John Doe', role: 'manager', email: 'john@rewear.com' },
-      { id: 2, name: 'Jane Smith', role: 'staff', email: 'jane@rewear.com' },
+      { id: 1, name: 'Nguyễn Văn An', role: 'manager', email: 'an.nv@rethreads.vn' },
+      { id: 2, name: 'Trần Thị Bình', role: 'staff', email: 'binh.tt@rethreads.vn' },
     ];
   },
   updateProductStock: async (productId: number, quantity: number) => {

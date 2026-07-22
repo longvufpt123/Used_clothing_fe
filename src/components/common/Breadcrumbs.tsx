@@ -14,7 +14,7 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
   return (
-    <nav className="breadcrumbs" aria-label="Breadcrumb">
+    <nav className="breadcrumbs" aria-label="Đường dẫn điều hướng">
       <ol className="breadcrumbs-list">
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;

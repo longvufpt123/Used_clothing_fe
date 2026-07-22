@@ -84,7 +84,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="header-control-wrapper" ref={userMenuRef}>
           <div className="header-profile-toggle" onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="profile-avatar">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Avatar" />
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Ảnh đại diện" />
             </div>
             <div className="profile-info">
               <span className="profile-name">{user?.fullName || 'Trần Văn Hoàng'}</span>

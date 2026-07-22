@@ -109,7 +109,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
             <Leaf size={20} strokeWidth={2.25} />
           </span>
           <span className="ops-rail-brand-text">
-            <strong>GreenThread</strong>
+            <strong>ReThreads</strong>
             <span>{roleLabel}</span>
           </span>
         </div>
@@ -118,7 +118,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
 
         <div className="ops-rail-footer">
           <div className="ops-rail-user">
-            <span className="ops-rail-avatar">{initials || 'GT'}</span>
+            <span className="ops-rail-avatar">{initials || 'RT'}</span>
             <span className="ops-rail-user-text">
               <strong>{user?.fullName || roleLabel}</strong>
               <span>{user?.userName ? '@' + user.userName : roleLabel}</span>
@@ -158,7 +158,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
             {drawerOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="ops-topbar-brand">
-            <Leaf size={16} strokeWidth={2.25} /> GreenThread
+            <Leaf size={16} strokeWidth={2.25} /> ReThreads
             <span className="ops-topbar-role">{roleLabel}</span>
           </span>
         </header>

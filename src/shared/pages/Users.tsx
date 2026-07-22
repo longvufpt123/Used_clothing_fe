@@ -266,9 +266,9 @@ export const Users: React.FC = () => {
   ];
 
   const getRoleLabel = (r: typeof newRole) => {
-    if (r === 'admin') return 'Quản trị viên (Admin)';
-    if (r === 'manager') return 'Điều phối viên (Manager)';
-    return 'Nhân viên kho (Staff)';
+    if (r === 'admin') return 'Quản trị viên';
+    if (r === 'manager') return 'Điều phối viên';
+    return 'Nhân viên kho';
   };
 
   const getFilterRoleLabel = (filterVal: string) => {
@@ -329,7 +329,7 @@ export const Users: React.FC = () => {
                 <div className="form-left-col">
                   <div className="avatar-picker-container">
                     {newAvatar ? (
-                      <img src={newAvatar} alt="Preview Avatar" className="avatar-picker-preview" />
+                      <img src={newAvatar} alt="Xem trước ảnh đại diện" className="avatar-picker-preview" />
                     ) : (
                       <div className="avatar-picker-placeholder">
                         <User size={36} className="placeholder-icon" />
@@ -406,8 +406,8 @@ export const Users: React.FC = () => {
                         </div>
                       }
                       items={[
-                        { label: 'Nhân viên kho (Staff)', onClick: () => setNewRole('staff') },
-                        { label: 'Điều phối viên (Manager)', onClick: () => setNewRole('manager') },
+                        { label: 'Nhân viên kho', onClick: () => setNewRole('staff') },
+                        { label: 'Điều phối viên', onClick: () => setNewRole('manager') },
                       ]}
                     />
                   </div>
