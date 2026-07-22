@@ -11,6 +11,7 @@
   cursor: pointer;
   font-size: 0.92rem;
   line-height: 1.4;
+  -webkit-user-select: none;
   user-select: none;
   gap: var(--spacing-sm);
   color: var(--color-text-secondary);
