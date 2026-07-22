@@ -31,7 +31,7 @@ interface DonationInventory {
 const INITIAL_INVENTORY: DonationInventory[] = [
   { id: 1, code: 'RT-2026-804', name: 'Trần Văn Hoàng', category: 'Áo khoác gió & Đồ nỉ', weight: '12 kg', status: 'pending' },
   { id: 2, code: 'RT-2026-803', name: 'Trần Minh Cường', category: 'Áo phông & Sơ mi', weight: '5 kg', status: 'charity' },
-  { id: 3, code: 'RT-2026-802', name: 'Lê Thị Bình', category: 'Quần jeans cũ rách', weight: '20 kg', status: 'recycle' },
+  { id: 3, code: 'RT-2026-802', name: 'Lê Thị Bình', category: 'Quần denim cũ rách', weight: '20 kg', status: 'recycle' },
   { id: 4, code: 'RT-2026-801', name: 'Nguyễn Văn An', category: 'Áo khoác phao dày', weight: '8 kg', status: 'distributed' },
 ];
 
@@ -425,7 +425,7 @@ export const Dashboard: React.FC = () => {
             <div className="export-modal-card">
               <div className="export-modal-header">
                 <h3>Đang kết xuất dữ liệu</h3>
-                <span className="export-modal-type-badge">{exportType === 'excel' ? 'EXCEL (CSV)' : 'PDF DOCUMENT'}</span>
+                <span className="export-modal-type-badge">{exportType === 'excel' ? 'EXCEL (CSV)' : 'TÀI LIỆU PDF'}</span>
               </div>
               <div className="export-modal-body">
                 <div className="export-spinner-container">

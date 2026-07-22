@@ -333,8 +333,8 @@ export const Login: React.FC = () => {
 
               <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="login-form">
                 <Input
-                  label="Tên đăng nhập (username)"
-                  placeholder="Nhập username"
+                  label="Tên đăng nhập"
+                  placeholder="Nhập tên đăng nhập"
                   error={loginErrors.userName?.message}
                   icon={<User size={18} />}
                   {...registerLogin('userName', {
@@ -381,8 +381,8 @@ export const Login: React.FC = () => {
                 />
 
                 <Input
-                  label="Tên đăng nhập (username)"
-                  placeholder="username123"
+                  label="Tên đăng nhập"
+                  placeholder="tendangnhap123"
                   error={registerErrors.userName?.message}
                   icon={<User size={18} />}
                   {...registerSignUp('userName', {

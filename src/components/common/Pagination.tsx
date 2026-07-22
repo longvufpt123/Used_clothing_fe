@@ -22,12 +22,12 @@ export const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <nav className="pagination-nav" aria-label="Pagination Navigation">
+    <nav className="pagination-nav" aria-label="Điều hướng phân trang">
       <button
         className="pagination-btn"
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        aria-label="Previous Page"
+        aria-label="Trang trước"
       >
         <ChevronLeft size={16} />
       </button>
@@ -48,7 +48,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         className="pagination-btn"
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        aria-label="Next Page"
+        aria-label="Trang sau"
       >
         <ChevronRight size={16} />
       </button>

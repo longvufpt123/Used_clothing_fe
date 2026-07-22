@@ -166,9 +166,9 @@ export const WarehouseTracking: React.FC = () => {
             <button
               type="button"
               className="ops-btn ops-btn-secondary ops-btn-block"
-              onClick={() => toast.info('Mock: mở trang GHN partner (demo).')}
+              onClick={() => toast.info('Bản mô phỏng: mở trang đối tác GHN.')}
             >
-              <Truck size={16} strokeWidth={1.75} /> Mở GHN (demo)
+              <Truck size={16} strokeWidth={1.75} /> Mở GHN (bản mô phỏng)
             </button>
           </div>
         </div>
