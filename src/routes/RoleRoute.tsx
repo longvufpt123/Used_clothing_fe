@@ -25,8 +25,9 @@ export default function RoleRoute({ role, children }: RoleRouteProps) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (user.role !== role) {
-    return <Navigate to={homeByRole[user.role] ?? '/'} replace />;
+  const currentRole = user.role.trim();
+  if (currentRole !== role) {
+    return <Navigate to={homeByRole[currentRole] ?? '/'} replace />;
   }
 
   return children;

@@ -1,27 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Layers, CheckCircle, PackageCheck } from 'lucide-react';
+import { LayoutDashboard, Layers, CheckCircle, Boxes } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
-import { getClassificationBatches } from '@/utils/classificationMockDb';
+import { classificationService } from '@/services/classificationService';
 
 /** Classification console frame: classify → hand off to warehouse. */
 export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [counts, setCounts] = useState({ pending: 0, classified: 0, sent: 0 });
+  const location = useLocation();
+  const [counts, setCounts] = useState({ pending: 0, classified: 0, grouped: 0 });
 
   useEffect(() => {
-    const refresh = () => {
-      const batches = getClassificationBatches();
+    const refresh = async () => {
+      try {
+      const [batches, groupedBatches] = await Promise.all([
+        classificationService.getBatches(),
+        classificationService.getGroupedBatches(),
+      ]);
       setCounts({
-        pending: batches.filter((b) => b.status === 'PendingClassification').length,
+        pending: batches.filter((b) => b.status === 'PendingConfirmation' || b.status === 'PendingClassification' || b.status === 'Classifying').length,
         classified: batches.filter((b) => b.status === 'Classified').length,
-        sent: batches.filter((b) => b.status === 'SendingToWarehouse').length,
+        grouped: groupedBatches.length,
       });
+      } catch { /* Keep the last counts during a temporary API failure. */ }
     };
     refresh();
-    window.addEventListener('storage', refresh);
-    return () => window.removeEventListener('storage', refresh);
-  }, []);
+    const intervalId = window.setInterval(refresh, 10_000);
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [location.pathname, location.search]);
 
   const nav: OpsNavItem[] = [
     { to: '/classification', label: 'Tổng quan', icon: LayoutDashboard },
@@ -33,8 +47,8 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({
       matchPrefixes: ['/classification/classify'],
       groupLabel: 'Quy trình',
     },
-    { to: '/classification?tab=classified', label: 'Chờ bàn giao', icon: CheckCircle, count: counts.classified, matchPrefixes: ['/classification/handoff'] },
-    { to: '/classification?tab=sent', label: 'Đã bàn giao kho', icon: PackageCheck, count: counts.sent },
+    { to: '/classification?tab=classified', label: 'Đã phân loại', icon: CheckCircle, count: counts.classified, matchPrefixes: ['/classification/batches'] },
+    { to: '/classification/groups', label: 'Batch đã gom nhóm', icon: Boxes, count: counts.grouped, matchPrefixes: ['/classification/groups'] },
   ];
 
   return (

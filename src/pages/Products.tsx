@@ -67,10 +67,17 @@ interface CreateDonationResponse {
 const MAX_DONATION_IMAGES = 5;
 const DEFAULT_PICKUP_OFFSET_DAYS = 1;
 
+const toLocalDateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const getDefaultPickupDate = () => {
   const date = new Date();
   date.setDate(date.getDate() + DEFAULT_PICKUP_OFFSET_DAYS);
-  return date.toISOString().split('T')[0];
+  return toLocalDateInputValue(date);
 };
 
 const estimateWeightByOption: Record<string, number> = {
@@ -349,7 +356,7 @@ export const Products: React.FC = () => {
       const selectedConditionLabel = conditionOptions.find(o => o.value === condition)?.label || 'Còn tốt';
 
       const payload: CreateDonationPayload = {
-        pickupDate: new Date(`${pickupDate}T00:00:00`).toISOString(),
+        pickupDate: `${pickupDate}T00:00:00`,
         description: [
           `Nguoi quyen gop: ${name}`,
           `So dien thoai: ${phone}`,
@@ -531,7 +538,7 @@ export const Products: React.FC = () => {
                   label="Ngay lay hang *"
                   type="date"
                   value={pickupDate}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={toLocalDateInputValue(new Date())}
                   onChange={(e) => setPickupDate(e.target.value)}
                   required
                 />

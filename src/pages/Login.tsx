@@ -130,21 +130,22 @@ export const Login: React.FC = () => {
         fullName: response.fullName,
         userName: response.userName,
         avatarUrl: response.avatarUrl,
-        role: response.role,
+        role: response.role.trim(),
       });
       toast.success('Đăng nhập thành công!');
       
       // Redirect based on role
-      if (response.role === 'ReceivingStaff') {
-        navigate('/receiving');
-      } else if (response.role === 'ClassificationStaff') {
-        navigate('/classification');
-      } else if (response.role === 'WarehouseStaff') {
-        navigate('/warehouse');
-      } else if (response.role === 'Manager') {
-        navigate('/manager');
+      const role = response.role.trim();
+      if (role === 'ReceivingStaff') {
+        navigate('/receiving', { replace: true });
+      } else if (role === 'ClassificationStaff') {
+        navigate('/classification', { replace: true });
+      } else if (role === 'WarehouseStaff') {
+        navigate('/warehouse', { replace: true });
+      } else if (role === 'Manager') {
+        navigate('/manager', { replace: true });
       } else {
-        navigate('/');
+        navigate('/', { replace: true });
       }
     } catch (error: any) {
       console.error(error);
