@@ -11,6 +11,10 @@ import {
   Calendar,
   Layers,
   Sparkles,
+  Users,
+  Clock3,
+  MapPin,
+  Phone,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
@@ -106,6 +110,23 @@ export const Dashboard: React.FC = () => {
   const totalCount = requests.length;
   const completionPct = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
+  const assignedTeams = Array.from(
+    new Map(
+      batches.map((batch) => [
+        `${batch.shiftId}-${batch.teamName}`,
+        {
+          teamName: batch.teamName,
+          shiftName: batch.shiftName,
+          shiftDate: batch.date,
+          startTime: batch.startTime,
+          endTime: batch.endTime,
+          warehouseAddress: batch.warehouseAddress,
+          members: batch.teamMembers,
+        },
+      ])
+    ).values()
+  );
+
   const filteredBatches = batches.filter((batch) => {
     if (activeTab === 'receiving') return batch.status === 'Receiving' || batch.status === 'Planned';
     if (activeTab === 'completed') return batch.status === 'Completed';
@@ -186,6 +207,78 @@ export const Dashboard: React.FC = () => {
           <span className="ops-stat-foot">trên tổng số đơn</span>
         </div>
       </div>
+
+      <section className="rcv-team-section" aria-labelledby="receiving-team-title">
+        <div className="ops-section-head">
+          <div>
+            <span className="rcv-section-kicker">Phân công hiện tại</span>
+            <h2 id="receiving-team-title">Thông tin team của tôi</h2>
+          </div>
+          <span>{assignedTeams.length} team / ca được phân công</span>
+        </div>
+
+        {assignedTeams.length === 0 ? (
+          <div className="rcv-team-empty">
+            <Users size={28} strokeWidth={1.6} />
+            <div>
+              <strong>Chưa có thông tin team</strong>
+              <p>Manager cần tạo team, thêm thành viên và phân công Intake Batch cho team.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="rcv-team-grid">
+            {assignedTeams.map((team) => (
+              <article
+                className="rcv-team-card"
+                key={`${team.shiftName}-${team.teamName}-${team.shiftDate}`}
+              >
+                <div className="rcv-team-card-head">
+                  <span className="rcv-team-icon"><Users size={21} /></span>
+                  <div>
+                    <span>Receiving team</span>
+                    <h3>{team.teamName || 'Chưa đặt tên team'}</h3>
+                  </div>
+                  <span className="rcv-member-count">{team.members.length} thành viên</span>
+                </div>
+
+                <div className="rcv-team-assignment">
+                  <span><Calendar size={15} /> {team.shiftName || 'Ca được phân công'} · {team.shiftDate}</span>
+                  <span>
+                    <Clock3 size={15} />
+                    {team.startTime?.slice(0, 5) || '--:--'}–{team.endTime?.slice(0, 5) || '--:--'}
+                  </span>
+                  <span><MapPin size={15} /> {team.warehouseAddress || 'Chưa có địa chỉ kho'}</span>
+                </div>
+
+                <div className="rcv-team-members">
+                  {team.members.map((member, index) => (
+                    <div className="rcv-team-member" key={member.id}>
+                      <span className="rcv-member-avatar">
+                        {member.fullName
+                          .split(/\s+/)
+                          .filter(Boolean)
+                          .slice(-2)
+                          .map((part) => part[0])
+                          .join('')
+                          .toUpperCase()}
+                      </span>
+                      <div>
+                        <strong>{member.fullName}</strong>
+                        <a href={`tel:${member.phoneNumber}`}>
+                          <Phone size={13} /> {member.phoneNumber || 'Chưa có số điện thoại'}
+                        </a>
+                      </div>
+                      <span className="rcv-member-role">
+                        Thành viên {index + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section>
         <div className="ops-section-head">
@@ -290,6 +383,11 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   <h3>{batch.route}</h3>
+                  <div className="rcv-team-summary">
+                    <Users size={15} />
+                    <strong>{batch.teamName || 'Receiving team'}</strong>
+                    <span>{batch.teamMembers.map(member => `${member.fullName} (${member.phoneNumber})`).join(' · ')}</span>
+                  </div>
 
                   <div className="rcv-progress">
                     <div className="rcv-progress-labels">

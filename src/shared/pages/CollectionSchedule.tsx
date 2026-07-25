@@ -18,6 +18,7 @@ import {
   PlusCircle
 } from 'lucide-react';
 import './CollectionSchedule.css';
+import DispatchPanel from '@/pages/manager/DispatchPanel';
 
 interface CalendarEvent {
   id: number;
@@ -427,6 +428,7 @@ export const CollectionSchedule: React.FC = () => {
   return (
     <AdminLayout role="manager">
       <div className="collection-schedule-page">
+        <DispatchPanel />
 
         {/* Calendar layout */}
         <div className="calendar-layout-container">

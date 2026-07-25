@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
+  ChevronRight,
   Search,
   MapPin,
   Phone,
@@ -11,6 +12,7 @@ import {
   CheckCircle,
   XCircle,
   ClipboardList,
+  Users,
 } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
@@ -18,6 +20,7 @@ import { receivingService } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
+import RouteMap from './RouteMap';
 
 type StatusFilter = 'all' | 'pending' | 'received' | 'rescheduled' | 'canceled';
 
@@ -30,6 +33,8 @@ export const BatchDetail: React.FC = () => {
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 3;
 
   useEffect(() => {
     if (!id) return;
@@ -41,6 +46,10 @@ export const BatchDetail: React.FC = () => {
       navigate('/receiving');
     });
   }, [id, navigate, toast]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   if (!batch) return null;
 
@@ -58,6 +67,9 @@ export const BatchDetail: React.FC = () => {
     const matchesStatus = statusFilter === 'all' || req.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const pagedRequests = filteredRequests.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const batchBadge =
     batch.status === 'Receiving' ? 'pending' : batch.status === 'Completed' ? 'stored' : 'classified';
@@ -114,6 +126,21 @@ export const BatchDetail: React.FC = () => {
         </div>
       </div>
 
+      <section className="ops-panel glass">
+        <div className="ops-section-head">
+          <div>
+            <h2>Bản đồ tuyến thu nhận</h2>
+            <span>Xuất phát từ kho và sắp xếp các điểm nhận gần nhất</span>
+          </div>
+        </div>
+        <div className="rcv-team-summary" style={{ marginBottom: 14 }}>
+          <Users size={16} />
+          <strong>{batch.teamName || 'Receiving team'}</strong>
+          <span>{batch.teamMembers.map(member => `${member.fullName} (${member.phoneNumber})`).join(' · ')}</span>
+        </div>
+        <RouteMap batch={batch} />
+      </section>
+
       <section>
         <div className="ops-section-head">
           <h2>Đơn quyên góp trong lô</h2>
@@ -153,7 +180,7 @@ export const BatchDetail: React.FC = () => {
               <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
             </div>
           ) : (
-            filteredRequests.map((req) => {
+            pagedRequests.map((req) => {
               const isPending = req.status === 'Pending';
               const isReceived = req.status === 'Received';
               const isRescheduled = req.status === 'Rescheduled';
@@ -258,6 +285,27 @@ export const BatchDetail: React.FC = () => {
             })
           )}
         </div>
+
+        {filteredRequests.length > pageSize && (
+          <nav className="rcv-pagination" aria-label="Phân trang đơn quyên góp">
+            <button type="button" disabled={safePage === 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))}>
+              <ChevronLeft size={15} /> Trước
+            </button>
+            <div className="rcv-page-numbers">
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                <button key={page} type="button" className={page === safePage ? 'active' : ''}
+                  aria-current={page === safePage ? 'page' : undefined} onClick={() => setCurrentPage(page)}>
+                  {page}
+                </button>
+              ))}
+            </div>
+            <span>Trang {safePage}/{totalPages} · {filteredRequests.length} đơn</span>
+            <button type="button" disabled={safePage === totalPages}
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}>
+              Sau <ChevronRight size={15} />
+            </button>
+          </nav>
+        )}
       </section>
     </div>
   );

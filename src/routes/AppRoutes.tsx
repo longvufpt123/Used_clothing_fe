@@ -22,12 +22,14 @@ import ManagerCollectionSchedule from '@/pages/manager/CollectionSchedule';
 import ManagerCharityInventory from '@/pages/manager/CharityInventory';
 import ManagerCampaigns from '@/pages/manager/Campaigns';
 import ManagerUsers from '@/pages/manager/Users';
+import ManagerCategories from '@/pages/manager/Categories';
 
 // Receiving Staff pages
 import ReceivingShell from '@/shared/layouts/ReceivingShell';
 import ReceivingDashboard from '@/pages/receiving/Dashboard';
 import ReceivingBatchDetail from '@/pages/receiving/BatchDetail';
 import ReceivingProcessRequest from '@/pages/receiving/ProcessRequest';
+import ReceivingTeam from '@/pages/receiving/Team';
 import RoleRoute from '@/routes/RoleRoute';
 
 // Classification Staff pages
@@ -46,6 +48,7 @@ import ReceiveBatch from '@/pages/warehouse/ReceiveBatch';
 import StorageAlloc from '@/pages/warehouse/StorageAlloc';
 import WarehouseInventoryPage from '@/pages/warehouse/Inventory';
 import WarehouseTransactions from '@/pages/warehouse/Transactions';
+import WarehouseAreas from '@/pages/warehouse/WarehouseAreas';
 import DistributePrep from '@/pages/warehouse/DistributePrep';
 import WarehouseTracking from '@/pages/warehouse/Tracking';
 
@@ -131,6 +134,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/manager/schedule" element={<ManagerCollectionSchedule />} />
       <Route path="/manager/inventory" element={<ManagerCharityInventory />} />
       <Route path="/manager/campaigns" element={<ManagerCampaigns />} />
+      <Route path="/manager/categories" element={<RoleRoute role="Manager"><ManagerCategories /></RoleRoute>} />
 
       {/* Receiving Staff pages */}
       <Route
@@ -197,6 +201,16 @@ export const AppRoutes: React.FC = () => {
           </RoleRoute>
         }
       />
+      <Route
+        path="/receiving/team"
+        element={
+          <RoleRoute role="ReceivingStaff">
+            <ReceivingShell>
+              <ReceivingTeam />
+            </ReceivingShell>
+          </RoleRoute>
+        }
+      />
       <Route path="/classification/groups" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatches /></ClassificationShell></RoleRoute>} />
       <Route path="/classification/groups/:groupId" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatchDetail /></ClassificationShell></RoleRoute>} />
 
@@ -227,6 +241,7 @@ export const AppRoutes: React.FC = () => {
       />
       <Route path="/warehouse/inventory" element={<WarehouseShell><WarehouseInventoryPage /></WarehouseShell>} />
       <Route path="/warehouse/transactions" element={<WarehouseShell><WarehouseTransactions /></WarehouseShell>} />
+      <Route path="/warehouse/areas" element={<WarehouseShell><WarehouseAreas /></WarehouseShell>} />
       <Route
         path="/warehouse/distribute/:requestId"
         element={

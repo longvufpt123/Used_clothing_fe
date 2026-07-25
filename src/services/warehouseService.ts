@@ -3,7 +3,21 @@ import type { ClassifiedItem } from './classificationService';
 
 export interface WarehouseDashboard {
   pendingReceipt:number; awaitingPutaway:number; storedBatches:number;
-  availableQuantity:number; availableWeightKg:number; capacityUsedPercent:number;
+  availableQuantity:number; inventorySkuCount:number; availableWeightKg:number; capacityUsedPercent:number;
+}
+export interface WarehouseLocationLayout {
+  id:string; locationCode:string; aisleCode:string; rackCode:string; shelfCode:string; binCode:string;
+  preferredGarmentGroup?:string; preferredProcessingDirection?:string; capacityKg:number;
+  currentWeightKg:number; status:string; inventoryCount:number; itemQuantity:number;
+}
+export interface WarehouseAreaLayout {
+  id:string; areaName:string; description?:string; capacityKg:number; currentWeightKg:number;
+  groups:{id:string;groupName:string;description?:string;capacityKg:number;currentWeightKg:number}[];
+  locations:WarehouseLocationLayout[];
+}
+export interface WarehouseLayout {
+  warehouseId:string; warehouseName:string; address:string; capacityKg:number;
+  currentWeightKg:number; areas:WarehouseAreaLayout[];
 }
 export interface WarehouseBatch {
   id:string; batchCode:string; classificationDate:string; fabricType:string; garmentGroup:string;
@@ -38,6 +52,7 @@ export interface WarehouseTransaction {
 
 export const warehouseService = {
   dashboard: () => apiClient.get<unknown,WarehouseDashboard>('/warehouse-operations/dashboard'),
+  layout: () => apiClient.get<unknown,WarehouseLayout>('/warehouse-operations/layout'),
   inboundBatches: () => apiClient.get<unknown,WarehouseBatch[]>('/warehouse-operations/inbound-batches'),
   getBatch: (id:string) => apiClient.get<unknown,WarehouseBatch>(`/warehouse-operations/batches/${id}`),
   confirmReceipt: (id:string,data:{actualWeightKg:number;actualItemCount:number;sealIntact:boolean;discrepancyNotes?:string}) =>
