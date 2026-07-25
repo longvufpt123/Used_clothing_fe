@@ -15,15 +15,13 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
-import { getBatches, getRequests, setShiftActive, saveBatches } from '@/utils/receivingMockDb';
-import {
-  getClassificationBatches,
-  saveClassificationBatches,
-} from '@/utils/classificationMockDb';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
 
 type TabKey = 'receiving' | 'completed' | 'transferring';
+
+const setShiftActive = (active: boolean) =>
+  localStorage.setItem('receiving_shift_active', String(active));
 
 const isTab = (v: string | null): v is TabKey =>
   v === 'receiving' || v === 'completed' || v === 'transferring';
@@ -83,63 +81,21 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSendToClassification = (batchId: string, e: React.MouseEvent) => {
+  const handleSendToClassification = async (batchId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setIsTransferringId(batchId);
-
-    setTimeout(() => {
-      const currentBatches = getBatches();
-      const bIndex = currentBatches.findIndex((b) => b.id === batchId);
-      if (bIndex !== -1) {
-        currentBatches[bIndex].status = 'Transferring';
-        saveBatches(currentBatches);
-        receivingService.getMyBatches().then(setBatches);
-
-        const clsBatches = getClassificationBatches();
-        const src = currentBatches[bIndex];
-        if (!clsBatches.some((b) => b.id === `cls-from-${src.id}`)) {
-          const batchRequests = getRequests().filter(
-            (r) => r.batchId === src.id && r.status === 'Received'
-          );
-          const items =
-            batchRequests.length > 0
-              ? batchRequests.map((r, i) => ({
-                  id: `item-from-${r.id}-${i}`,
-                  code: r.code,
-                  donorName: r.donorName,
-                  estimatedWeightKg: r.actualWeight || 5,
-                  estimatedCategory: r.actualCategory || r.category || 'Hỗn hợp',
-                  status: 'pending' as const,
-                }))
-              : [
-                  {
-                    id: `item-from-${src.id}-0`,
-                    code: `${src.code}-01`,
-                    donorName: 'Kiện tổng hợp',
-                    estimatedWeightKg: 10,
-                    estimatedCategory: 'Hỗn hợp',
-                    status: 'pending' as const,
-                  },
-                ];
-          clsBatches.unshift({
-            id: `cls-from-${src.id}`,
-            code: src.code,
-            sourceRoute: src.route,
-            receivedDate: src.date,
-            status: 'PendingClassification',
-            totalWeightKg:
-              batchRequests.reduce((s, r) => s + (r.actualWeight || 0), 0) || 10,
-            itemCount: items.length,
-            items,
-          });
-          saveClassificationBatches(clsBatches);
-        }
-
-        toast.success(`Đã bàn giao lô ${currentBatches[bIndex].code} cho tổ Phân loại.`);
-        setActiveTab('transferring');
-      }
+    try {
+      await receivingService.sendToClassification(batchId);
+      const data = await receivingService.getMyBatches();
+      setBatches(data);
+      setRequests(data.flatMap((batch) => batch.requests));
+      toast.success('Đã gửi Intake Batch sang bộ phận Phân loại.');
+      setActiveTab('transferring');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể gửi Intake Batch.');
+    } finally {
       setIsTransferringId(null);
-    }, 1500);
+    }
   };
 
   const totalWeight = requests
@@ -153,7 +109,7 @@ export const Dashboard: React.FC = () => {
   const filteredBatches = batches.filter((batch) => {
     if (activeTab === 'receiving') return batch.status === 'Receiving' || batch.status === 'Planned';
     if (activeTab === 'completed') return batch.status === 'Completed';
-    return batch.status === 'Transferring';
+    return batch.status === 'SentToClassification';
   });
 
   const getBatchProgress = (batchId: string) => {
@@ -248,7 +204,7 @@ export const Dashboard: React.FC = () => {
             <Truck size={15} strokeWidth={2} />
             Đang thu nhận
             <span className="ops-tab-count">
-              {batches.filter((b) => b.status === 'Receiving').length}
+              {batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned').length}
             </span>
           </button>
           <button
@@ -274,7 +230,7 @@ export const Dashboard: React.FC = () => {
             <Layers size={15} strokeWidth={2} />
             Đang chuyển đi
             <span className="ops-tab-count">
-              {batches.filter((b) => b.status === 'Transferring').length}
+              {batches.filter((b) => b.status === 'SentToClassification').length}
             </span>
           </button>
         </div>

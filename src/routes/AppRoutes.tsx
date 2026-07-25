@@ -34,8 +34,10 @@ import RoleRoute from '@/routes/RoleRoute';
 import ClassificationShell from '@/shared/layouts/ClassificationShell';
 import ClassificationDashboard from '@/pages/classification/Dashboard';
 import ClassifyBatch from '@/pages/classification/ClassifyBatch';
-import HandoffBatch from '@/pages/classification/HandoffBatch';
 import ConfirmBatch from '@/pages/classification/ConfirmBatch';
+import ClassifiedBatchDetail from '@/pages/classification/ClassifiedBatchDetail';
+import GroupedBatches from '@/pages/classification/GroupedBatches';
+import GroupedBatchDetail from '@/pages/classification/GroupedBatchDetail';
 
 // Warehouse Staff pages
 import WarehouseShell from '@/shared/layouts/WarehouseShell';
@@ -164,35 +166,37 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/classification"
         element={
-          <ClassificationShell>
-            <ClassificationDashboard />
-          </ClassificationShell>
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell><ClassificationDashboard /></ClassificationShell>
+          </RoleRoute>
         }
       />
       <Route
         path="/classification/classify/:batchId"
         element={
-          <ClassificationShell>
-            <ClassifyBatch />
-          </ClassificationShell>
-        }
-      />
-      <Route
-        path="/classification/handoff/:batchId"
-        element={
-          <ClassificationShell>
-            <HandoffBatch />
-          </ClassificationShell>
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell><ClassifyBatch /></ClassificationShell>
+          </RoleRoute>
         }
       />
       <Route
         path="/classification/confirm/:batchId"
         element={
-          <ClassificationShell>
-            <ConfirmBatch />
-          </ClassificationShell>
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell><ConfirmBatch /></ClassificationShell>
+          </RoleRoute>
         }
       />
+      <Route
+        path="/classification/batches/:batchId"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell><ClassifiedBatchDetail /></ClassificationShell>
+          </RoleRoute>
+        }
+      />
+      <Route path="/classification/groups" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatches /></ClassificationShell></RoleRoute>} />
+      <Route path="/classification/groups/:groupId" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatchDetail /></ClassificationShell></RoleRoute>} />
 
       {/* Warehouse Staff pages */}
       <Route

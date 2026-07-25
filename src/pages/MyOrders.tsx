@@ -102,15 +102,20 @@ const formatDate = (value?: string | null) => {
     return 'Chưa cập nhật';
   }
 
-  return new Date(value).toLocaleDateString('vi-VN');
+  const [year, month, day] = value.slice(0, 10).split('-');
+  return year && month && day ? `${Number(day)}/${Number(month)}/${year}` : 'Chưa cập nhật';
 };
 
 const toDateInputValue = (value?: string | null) => {
   if (!value) {
-    return new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
-  return new Date(value).toISOString().split('T')[0];
+  return value.slice(0, 10);
 };
 
 const canModifyOrder = (status: string) => {
@@ -224,7 +229,7 @@ export const MyOrders: React.FC = () => {
     const selectedConditionLabel = conditionOptions.find(option => option.value === editForm.condition)?.label || 'Còn tốt, lành lặn (Dùng làm từ thiện)';
 
     const payload: UpdateDonationPayload = {
-      pickupDate: new Date(`${editForm.pickupDate}T00:00:00`).toISOString(),
+      pickupDate: `${editForm.pickupDate}T00:00:00`,
       description: [
         `Nguoi quyen gop: ${order.donorName}`,
         `So dien thoai: ${order.phoneNumber}`,
