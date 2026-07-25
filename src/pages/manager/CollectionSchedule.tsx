@@ -1,2 +1,2 @@
-import CollectionSchedule from '@/shared/pages/CollectionSchedule';
-export default CollectionSchedule;
+import { Navigate } from 'react-router-dom';
+export default function CollectionSchedule(){ return <Navigate to="/manager/shifts" replace/>; }

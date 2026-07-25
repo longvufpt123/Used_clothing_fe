@@ -19,6 +19,8 @@ import Users from '@/pages/admin/Users';
 // Manager pages
 import ManagerDashboard from '@/pages/manager/Dashboard';
 import ManagerCollectionSchedule from '@/pages/manager/CollectionSchedule';
+import ManagerShiftCalendar from '@/pages/manager/ShiftCalendar';
+import ManagerDispatchOperations from '@/pages/manager/DispatchOperations';
 import ManagerCharityInventory from '@/pages/manager/CharityInventory';
 import ManagerCampaigns from '@/pages/manager/Campaigns';
 import ManagerUsers from '@/pages/manager/Users';
@@ -132,6 +134,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/manager" element={<ManagerDashboard />} />
       <Route path="/manager/users" element={<ManagerUsers />} />
       <Route path="/manager/schedule" element={<ManagerCollectionSchedule />} />
+      <Route path="/manager/shifts" element={<RoleRoute role="Manager"><ManagerShiftCalendar /></RoleRoute>} />
+      <Route path="/manager/dispatch" element={<RoleRoute role="Manager"><ManagerDispatchOperations /></RoleRoute>} />
       <Route path="/manager/inventory" element={<ManagerCharityInventory />} />
       <Route path="/manager/campaigns" element={<ManagerCampaigns />} />
       <Route path="/manager/categories" element={<RoleRoute role="Manager"><ManagerCategories /></RoleRoute>} />

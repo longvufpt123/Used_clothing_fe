@@ -25,7 +25,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
     if (isManager) {
       return [
         { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
-        { label: 'Cấu hình ca làm việc', path: `${basePath}/schedule`, icon: <Truck size={18} /> },
+        { label: 'Ca làm việc', path: `${basePath}/shifts`, icon: <Truck size={18} /> },
+        { label: 'Điều phối tiếp nhận', path: `${basePath}/dispatch`, icon: <Users size={18} /> },
         { label: 'Quản lý tài khoản', path: `${basePath}/users`, icon: <Users size={18} /> },
         { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
         { label: 'Danh mục phân loại', path: `${basePath}/categories`, icon: <Tags size={18} /> },
