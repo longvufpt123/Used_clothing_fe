@@ -20,4 +20,5 @@ export const classificationService = {
   completeBatch: (id:string) => apiClient.post(`/classification-operations/batches/${id}/complete`),
   getGroupedBatches: (date?:string) => apiClient.get<unknown,GroupedClassifiedBatch[]>('/classification-operations/grouped-batches',{params:{date}}),
   getGroupedBatch: (id:string) => apiClient.get<unknown,GroupedClassifiedBatchDetail>(`/classification-operations/grouped-batches/${id}`),
+  sendGroupedBatchToWarehouse: (id:string) => apiClient.post(`/classification-operations/grouped-batches/${id}/send-to-warehouse`),
 };

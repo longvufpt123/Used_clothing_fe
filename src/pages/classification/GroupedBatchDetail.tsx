@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarClock, ChevronLeft, ImageOff, Package, X } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ImageOff, Package, Send, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -21,6 +21,7 @@ export default function GroupedBatchDetail() {
   const toast = useToast();
   const [group, setGroup] = useState<GroupedClassifiedBatchDetail | null>(null);
   const [selectedItem, setSelectedItem] = useState<ClassifiedItem | null>(null);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!groupId) return;
@@ -45,10 +46,23 @@ export default function GroupedBatchDetail() {
 
   if (!group) return <div className="ops-page">Đang tải...</div>;
 
+  const sendToWarehouse = async () => {
+    setSending(true);
+    try {
+      await classificationService.sendGroupedBatchToWarehouse(group.id);
+      setGroup(current => current ? { ...current, status: 'PendingWarehouseReceipt' } : current);
+      toast.success(`Đã bàn giao ${group.batchCode} sang bộ phận Kho.`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể bàn giao batch sang kho.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return <div className="ops-page">
     <div className="ops-nav">
       <button className="ops-back" onClick={() => nav('/classification/groups')}><ChevronLeft size={16} /> Quay lại</button>
-      <div className="ops-title-row"><h1>{group.batchCode}</h1><span className="ops-badge classified">Nhãn {group.conditionGrade}</span></div>
+      <div className="ops-title-row"><h1>{group.batchCode}</h1><span className="ops-badge classified">{group.status === 'Open' ? `Nhãn ${group.conditionGrade}` : 'Đã gửi kho'}</span></div>
     </div>
 
     <section className="ops-panel glass">
@@ -62,6 +76,12 @@ export default function GroupedBatchDetail() {
         ].map(([key, value]) => <div className="ops-kv" key={key}><span>{key}</span><strong>{value}</strong></div>)}
       </div>
     </section>
+
+    <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>
+      <button className="ops-btn ops-btn-primary" type="button" disabled={group.status !== 'Open' || sending} onClick={sendToWarehouse}>
+        <Send size={16} /> {sending ? 'Đang bàn giao...' : group.status === 'Open' ? 'Bàn giao sang Kho' : 'Đã bàn giao sang Kho'}
+      </button>
+    </div>
 
     <section style={{ marginTop: 20 }}>
       <div className="ops-section-head"><h2>Item trong batch</h2><span>{group.items.length} item</span></div>

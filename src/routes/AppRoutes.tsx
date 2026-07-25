@@ -44,6 +44,8 @@ import WarehouseShell from '@/shared/layouts/WarehouseShell';
 import WarehouseDashboard from '@/pages/warehouse/Dashboard';
 import ReceiveBatch from '@/pages/warehouse/ReceiveBatch';
 import StorageAlloc from '@/pages/warehouse/StorageAlloc';
+import WarehouseInventoryPage from '@/pages/warehouse/Inventory';
+import WarehouseTransactions from '@/pages/warehouse/Transactions';
 import DistributePrep from '@/pages/warehouse/DistributePrep';
 import WarehouseTracking from '@/pages/warehouse/Tracking';
 
@@ -223,6 +225,8 @@ export const AppRoutes: React.FC = () => {
           </WarehouseShell>
         }
       />
+      <Route path="/warehouse/inventory" element={<WarehouseShell><WarehouseInventoryPage /></WarehouseShell>} />
+      <Route path="/warehouse/transactions" element={<WarehouseShell><WarehouseTransactions /></WarehouseShell>} />
       <Route
         path="/warehouse/distribute/:requestId"
         element={
