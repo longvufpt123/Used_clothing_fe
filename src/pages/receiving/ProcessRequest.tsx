@@ -53,7 +53,7 @@ export const ProcessRequest: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     receivingService.findMyRequest(id).then((currentRequest) => {
-      if (!currentRequest) throw new Error('Request not found');
+      if (!currentRequest) throw new Error('Không tìm thấy yêu cầu');
       setRequest(currentRequest);
       setActualCategory(currentRequest.category);
     }).catch(() => {
@@ -67,7 +67,7 @@ export const ProcessRequest: React.FC = () => {
   const categoryOptions = [
     { value: 'Áo khoác / Đồ ấm mùa đông', label: 'Áo khoác / Đồ ấm mùa đông' },
     { value: 'Áo thun / Áo sơ mi dệt kim', label: 'Áo thun / Áo sơ mi dệt kim' },
-    { value: 'Quần jeans / Quần dài / Kaki', label: 'Quần jeans / Quần dài / Kaki' },
+    { value: 'Quần denim / Quần dài / kaki', label: 'Quần denim / Quần dài / kaki' },
     { value: 'Quần áo trẻ em', label: 'Quần áo trẻ em' },
     { value: 'Hỗn hợp / Khác', label: 'Hỗn hợp / Khác' },
   ];
@@ -320,7 +320,7 @@ export const ProcessRequest: React.FC = () => {
               : 'Đã hủy đơn quyên góp'}
           </h2>
           <p className="rcv-summary-msg">
-            Dữ liệu đơn hàng {request.code} đã được cập nhật thành công lên hệ thống GreenThread.
+            Dữ liệu đơn hàng {request.code} đã được cập nhật thành công lên hệ thống ReThreads.
           </p>
 
           <div className="ops-kv-grid" style={{ maxWidth: 480, margin: '0 auto', textAlign: 'left' }}>

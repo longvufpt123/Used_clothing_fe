@@ -37,7 +37,7 @@ export function Table<T>({ columns, data }: TableProps<T>) {
           {data.length === 0 && (
             <tr>
               <td colSpan={columns.length} className="table-empty">
-                No data available
+                Không có dữ liệu
               </td>
             </tr>
           )}

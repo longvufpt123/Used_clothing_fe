@@ -96,12 +96,12 @@ const DEFAULT_BATCHES: WarehouseBatch[] = [
 ];
 
 const DEFAULT_SHELVES: ShelfSlot[] = [
-  { id: 'shelf-a1', label: 'A-01 · Từ thiện', zone: 'Zone A', capacityKg: 80, usedKg: 12, occupied: false },
-  { id: 'shelf-a2', label: 'A-02 · Từ thiện', zone: 'Zone A', capacityKg: 80, usedKg: 40, occupied: true },
-  { id: 'shelf-a3', label: 'A-03 · Từ thiện', zone: 'Zone A', capacityKg: 80, usedKg: 0, occupied: false },
-  { id: 'shelf-b1', label: 'B-01 · Tái chế', zone: 'Zone B', capacityKg: 120, usedKg: 55, occupied: false },
-  { id: 'shelf-b2', label: 'B-02 · Tái chế', zone: 'Zone B', capacityKg: 120, usedKg: 0, occupied: false },
-  { id: 'shelf-c1', label: 'C-01 · Trẻ em', zone: 'Zone C', capacityKg: 60, usedKg: 8, occupied: false },
+  { id: 'shelf-a1', label: 'A-01 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 12, occupied: false },
+  { id: 'shelf-a2', label: 'A-02 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 40, occupied: true },
+  { id: 'shelf-a3', label: 'A-03 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 0, occupied: false },
+  { id: 'shelf-b1', label: 'B-01 · Tái chế', zone: 'Khu B', capacityKg: 120, usedKg: 55, occupied: false },
+  { id: 'shelf-b2', label: 'B-02 · Tái chế', zone: 'Khu B', capacityKg: 120, usedKg: 0, occupied: false },
+  { id: 'shelf-c1', label: 'C-01 · Trẻ em', zone: 'Khu C', capacityKg: 60, usedKg: 8, occupied: false },
 ];
 
 const DEFAULT_DIST: DistributionRequest[] = [

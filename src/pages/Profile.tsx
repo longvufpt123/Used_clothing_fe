@@ -57,7 +57,7 @@ export const Profile: React.FC = () => {
                   {user?.role || 'Thành viên'}
                 </span>
                 <h1 className="profile-name">{displayName}</h1>
-                <p className="profile-username">@{user?.userName || 'username'}</p>
+                <p className="profile-username">@{user?.userName || 'thanhvien'}</p>
                 <div className="profile-badges-row">
                   <span className="badge-pill mini-badge">
                     <CheckCircle2 size={12} className="text-primary" />
@@ -76,7 +76,7 @@ export const Profile: React.FC = () => {
         {/* Card 2: Donation Score Card */}
         <div className="bento-card col-span-1 card-shell card-fade-up delay-2">
           <div className="card-core score-bento-card">
-            <span className="eyebrow-tag">Eco Impact</span>
+            <span className="eyebrow-tag">Tác động xanh</span>
             <h3>Điểm đóng góp</h3>
             
             <div className="score-main-display">

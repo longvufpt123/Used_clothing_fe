@@ -48,7 +48,7 @@ export const ReceiveBatch: React.FC = () => {
       }
       setDone(true);
       setBatch({ ...batch, status: 'WarehouseReceived', physicalReceivedAt: new Date().toISOString() });
-      toast.success('Đã xác nhận nhận hàng vật lý. Trạng thái: WarehouseReceived.');
+      toast.success('Đã xác nhận nhận hàng vật lý. Trạng thái: Đã nhận tại kho.');
     }, 800);
   };
 

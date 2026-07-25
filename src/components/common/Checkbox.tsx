@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import './Checkbox.css';
 
 interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -24,7 +25,9 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           className="custom-checkbox"
           {...props}
         />
-        <span className="checkbox-checkmark"></span>
+        <span className="checkbox-checkmark">
+          <Check className="checkbox-icon" size={13} strokeWidth={3} />
+        </span>
         {label && <span className="checkbox-text">{label}</span>}
       </label>
       {error && <span className="checkbox-error-text">{error}</span>}
@@ -32,3 +35,4 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   );
 };
 export default Checkbox;
+

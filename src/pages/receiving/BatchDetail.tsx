@@ -181,7 +181,7 @@ export const BatchDetail: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && isPending) {
                       if (batch.shiftStatus !== 'InProgress') {
-                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý donation request.');
+                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
                         return;
                       }
                       navigate(`/receiving/request/${req.id}`);
@@ -190,7 +190,7 @@ export const BatchDetail: React.FC = () => {
                   onClick={() => {
                     if (isPending) {
                       if (batch.shiftStatus !== 'InProgress') {
-                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý donation request.');
+                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
                         return;
                       }
                       navigate(`/receiving/request/${req.id}`);

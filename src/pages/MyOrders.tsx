@@ -56,14 +56,14 @@ interface UpdateDonationPayload {
 const categoryOptions = [
   { value: 'outerwear', label: 'Áo khoác / Đồ ấm mùa đông' },
   { value: 'shirts', label: 'Áo thun / Áo sơ mi dệt kim' },
-  { value: 'pants', label: 'Quần jeans / Quần dài / Kaki' },
+  { value: 'pants', label: 'Quần denim / Quần dài / kaki' },
   { value: 'kids', label: 'Quần áo trẻ em' },
   { value: 'mixed', label: 'Hỗn hợp / Khác' },
 ];
 
 const weightOptions = [
   { value: 'under-5', label: 'Dưới 5 kg (Túi nhỏ)' },
-  { value: '5-10', label: 'Từ 5 - 10 kg (Thùng carton vừa)' },
+  { value: '5-10', label: 'Từ 5 - 10 kg (Thùng giấy vừa)' },
   { value: '10-20', label: 'Từ 10 - 20 kg (Bao tải lớn)' },
   { value: 'over-20', label: 'Trên 20 kg (Nhiều bao tải)' },
 ];

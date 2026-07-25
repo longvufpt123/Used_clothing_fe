@@ -39,7 +39,7 @@ export const Header: React.FC = () => {
         </nav>
 
         <div className="header-actions">
-          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme">
+          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Chuyển đổi giao diện">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 

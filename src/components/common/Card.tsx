@@ -1,12 +1,21 @@
 import React from 'react';
 import './Card.css';
 
+type ProductCondition = 'Mới nguyên' | 'Như mới' | 'Tốt' | 'Khá';
+
+const CONDITION_CLASS_NAMES: Record<ProductCondition, string> = {
+  'Mới nguyên': 'brand-new',
+  'Như mới': 'like-new',
+  'Tốt': 'good',
+  'Khá': 'fair',
+};
+
 interface CardProps {
   title: string;
   price: string;
   image: string;
   category?: string;
-  condition?: 'Brand New' | 'Like New' | 'Good' | 'Fair';
+  condition?: ProductCondition;
   onClick?: () => void;
 }
 
@@ -23,9 +32,9 @@ export const Card: React.FC<CardProps> = ({
       <div className="card-image-wrapper">
         <img src={image} alt={title} className="card-image" loading="lazy" />
         {condition && (
-          <span className={`badge badge-${condition.toLowerCase().replace(' ', '-')}`}>
-            {condition}
-          </span>
+<span className={`badge badge-${CONDITION_CLASS_NAMES[condition]}`}>
+             {condition}
+           </span>
         )}
       </div>
       <div className="card-content">
@@ -33,7 +42,7 @@ export const Card: React.FC<CardProps> = ({
         <h3 className="card-title">{title}</h3>
         <div className="card-footer">
           <span className="card-price">{price}</span>
-          <button className="card-action-btn">View Details</button>
+          <button className="card-action-btn">Xem chi tiết</button>
         </div>
       </div>
     </div>

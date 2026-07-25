@@ -36,8 +36,8 @@ interface CalendarEvent {
 const INITIAL_EVENTS: CalendarEvent[] = [
   { 
     id: 1,
-    date: new Date(2026, 6, 6), 
-    time: "08:15 AM", 
+    date: new Date(2026, 6, 6),
+    time: "08:15 SA",
     durationMinutes: 90,
     title: "Ca Sáng - Tuyến Quận 3 (Hoàng)",
     location: "789 CMT8, Quận 3, TP. HCM",
@@ -49,8 +49,8 @@ const INITIAL_EVENTS: CalendarEvent[] = [
   },
   { 
     id: 2,
-    date: new Date(2026, 6, 7), 
-    time: "10:30 AM", 
+    date: new Date(2026, 6, 7),
+    time: "10:30 SA",
     durationMinutes: 120,
     title: "Ca Trưa - Gom Quận 1 (Hoàng)",
     location: "12 Lê Văn Sỹ, Quận 1, TP. HCM",
@@ -62,8 +62,8 @@ const INITIAL_EVENTS: CalendarEvent[] = [
   },
   { 
     id: 3,
-    date: new Date(2026, 6, 9), 
-    time: "02:00 PM", 
+    date: new Date(2026, 6, 9),
+    time: "02:00 CH",
     durationMinutes: 60,
     title: "Ca Chiều - Gom Bình Thạnh (Tấn)",
     location: "345 Điện Biên Phủ, TP. HCM",
@@ -75,8 +75,8 @@ const INITIAL_EVENTS: CalendarEvent[] = [
   },
   { 
     id: 4,
-    date: new Date(2026, 6, 10), 
-    time: "09:00 AM", 
+    date: new Date(2026, 6, 10),
+    time: "09:00 SA",
     durationMinutes: 90,
     title: "Ca Sáng - Gom Tân Bình (Tấn)",
     location: "Phòng 402, Chung cư Bàu Cát, Tân Bình",
@@ -89,10 +89,10 @@ const INITIAL_EVENTS: CalendarEvent[] = [
 ];
 
 const HOURS = Array.from({ length: 24 }).map((_, i) => {
-  if (i === 0) return "12 AM";
-  if (i < 12) return `${i} AM`;
-  if (i === 12) return "12 PM";
-  return `${i - 12} PM`;
+  if (i === 0) return "12 SA";
+  if (i < 12) return `${i} SA`;
+  if (i === 12) return "12 CH";
+  return `${i - 12} CH`;
 });
 
 const MONTH_NAMES = [
@@ -245,18 +245,18 @@ export const CollectionSchedule: React.FC = () => {
       return `${MONTH_NAMES[month]} ${year}`;
     }
     if (currentView === "day") {
-      return `${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`;
+      return `Ngày ${selectedDate.getDate()} ${MONTH_NAMES[selectedDate.getMonth()]} năm ${selectedDate.getFullYear()}`;
     }
     const start = activeWeekDays[0];
     const end = activeWeekDays[activeWeekDays.length - 1];
     
     if (start.getFullYear() !== end.getFullYear()) {
-      return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+      return `Từ ngày ${start.getDate()} ${MONTH_NAMES[start.getMonth()]} năm ${start.getFullYear()} đến ngày ${end.getDate()} ${MONTH_NAMES[end.getMonth()]} năm ${end.getFullYear()}`;
     }
     if (start.getMonth() !== end.getMonth()) {
-      return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
+      return `Từ ngày ${start.getDate()} ${MONTH_NAMES[start.getMonth()]} đến ngày ${end.getDate()} ${MONTH_NAMES[end.getMonth()]} năm ${start.getFullYear()}`;
     }
-    return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`;
+    return `Từ ngày ${start.getDate()} đến ngày ${end.getDate()} ${MONTH_NAMES[start.getMonth()]} năm ${start.getFullYear()}`;
   };
 
   // Navigations
@@ -316,7 +316,7 @@ export const CollectionSchedule: React.FC = () => {
         id: Date.now(),
         title: inlineAddTitle.trim(),
         date: date,
-        time: "09:00 AM",
+        time: "09:00 SA",
         durationMinutes: 60,
         status: 'assigned',
         organizer: "Hà Thu",
@@ -333,7 +333,7 @@ export const CollectionSchedule: React.FC = () => {
     if (inlineAddTitle.trim()) {
       const hour24 = Math.floor(minutes / 60);
       const min = minutes % 60;
-      const ampm = hour24 >= 12 ? "PM" : "AM";
+      const ampm = hour24 >= 12 ? "CH" : "SA";
       const displayHour = hour24 % 12 === 0 ? 12 : hour24 % 12;
       const minStr = min < 10 ? `0${min}` : min;
       const timeStr = `${displayHour < 10 ? '0' + displayHour : displayHour}:${minStr} ${ampm}`;
@@ -367,13 +367,13 @@ export const CollectionSchedule: React.FC = () => {
   };
 
   const parseEventTime = (timeStr: string) => {
-    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    const match = timeStr.match(/(\d+):(\d+)\s*(SA|CH)/i);
     if (!match) return { hour: 8, minute: 0, totalMinutes: 480 };
     let hour = parseInt(match[1]);
     const minute = parseInt(match[2]);
-    const ampm = match[3].toUpperCase();
-    if (ampm === "PM" && hour < 12) hour += 12;
-    if (ampm === "AM" && hour === 12) hour = 0;
+    const period = match[3].toUpperCase();
+    if (period === "CH" && hour < 12) hour += 12;
+    if (period === "SA" && hour === 12) hour = 0;
     return { hour, minute, totalMinutes: hour * 60 + minute };
   };
 
@@ -809,7 +809,7 @@ export const CollectionSchedule: React.FC = () => {
                             <button className="time-header-quick-add" onClick={(e) => {
                               e.stopPropagation();
                               setInlineAddWeekDate(date);
-                              setInlineAddWeekMinutes(480); // Default 8:00 AM
+                              setInlineAddWeekMinutes(480); // Mặc định 08:00 SA
                               setInlineAddTitle("");
                             }}>
                               <Plus size={12} />

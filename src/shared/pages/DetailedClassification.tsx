@@ -188,7 +188,7 @@ export const DetailedClassification: React.FC = () => {
                   </div>
 
                   <div className="counter-item">
-                    <span>Quần jeans / Quần kaki:</span>
+                    <span>Quần denim / Quần kaki:</span>
                     <div className="counter-controls">
                       <button type="button" onClick={() => setCharityPants(v => Math.max(0, v - 1))}>
                         <Minus size={14} />
