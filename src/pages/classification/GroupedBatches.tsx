@@ -1,0 +1,15 @@
+import { useEffect, useState } from 'react';
+import { ArrowRight, Boxes, CalendarDays, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/context/ToastContext';
+import { classificationService, type GroupedClassifiedBatch } from '@/services/classificationService';
+import '@/styles/ops-shared.css';
+
+export default function GroupedBatches(){
+ const today=new Date().toISOString().slice(0,10); const [date,setDate]=useState(today); const [groups,setGroups]=useState<GroupedClassifiedBatch[]>([]); const [loading,setLoading]=useState(true); const nav=useNavigate(); const toast=useToast();
+ useEffect(()=>{setLoading(true);classificationService.getGroupedBatches(date).then(setGroups).catch(()=>toast.error('Không tải được Classified Batch.')).finally(()=>setLoading(false));},[date,toast]);
+ return <div className="ops-page"><header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">Batch tổng hợp theo thuộc tính</span><h1>Classified Batch trong ngày</h1><p>Các item giống hoàn toàn về nhãn, loại, size, giới tính, vải, đối tượng và hướng xử lý được gom chung.</p></div></header>
+ <section className="ops-panel glass"><div className="ops-field"><label htmlFor="groupDate">Ngày phân loại</label><input id="groupDate" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div></section>
+ <div className="ops-stats"><div className="ops-stat-card"><span className="ops-stat-label">Số batch nhóm</span><div className="ops-stat-value"><Boxes size={18}/>{groups.length}</div></div><div className="ops-stat-card"><span className="ops-stat-label">Tổng item</span><div className="ops-stat-value"><Package size={18}/>{groups.reduce((s,g)=>s+g.totalItem,0)}</div></div><div className="ops-stat-card"><span className="ops-stat-label">Ngày</span><div className="ops-stat-value"><CalendarDays size={18}/>{new Date(`${date}T00:00:00`).toLocaleDateString('vi-VN')}</div></div></div>
+ <section><div className="ops-section-head"><h2>Danh sách nhóm</h2><span>{loading?'Đang tải...':`${groups.length} batch`}</span></div><div className="ops-list">{groups.map(g=><article key={g.id} className="ops-card" role="button" tabIndex={0} onClick={()=>nav(`/classification/groups/${g.id}`)}><div className="ops-card-top"><div className="ops-card-code">{g.batchCode}</div><span className={`ops-badge ${g.conditionGrade==='A'?'done':g.conditionGrade==='B'?'pending':'classified'}`}>Nhãn {g.conditionGrade}</span></div><h3>{g.clothingType} · {g.fabricType}</h3><div className="ops-card-meta"><span>{g.gender}</span><span>{g.targetUser}</span><span>Size {g.size}</span><span>{g.processingDirection}</span></div><div className="ops-card-footer"><span><strong>{g.totalItem}</strong> item</span><span className="ops-card-action">Xem chi tiết <ArrowRight size={14}/></span></div></article>)}{!loading&&!groups.length&&<div className="ops-empty"><Boxes size={36}/><h4>Chưa có batch nhóm trong ngày này</h4><p>Batch sẽ tự tạo khi Classification Staff lưu item đầu tiên.</p></div>}</div></section></div>;
+}

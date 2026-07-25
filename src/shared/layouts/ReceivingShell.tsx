@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Truck, CheckCircle, Layers } from 'lucide-react';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
-import { getBatches } from '@/utils/receivingMockDb';
+import { receivingService } from '@/services/receivingService';
 
 /**
- * Receiving console frame. Reads the receiving mock DB so the workflow rail
- * shows live batch counts for each stage.
+ * Receiving console frame. Counts are loaded from the receiving API.
  */
 export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -13,17 +12,17 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({
   const [counts, setCounts] = useState({ receiving: 0, completed: 0, transferring: 0 });
 
   useEffect(() => {
-    const refresh = () => {
-      const batches = getBatches();
+    const refresh = async () => {
+      try {
+      const batches = await receivingService.getMyBatches();
       setCounts({
-        receiving: batches.filter((b) => b.status === 'Receiving').length,
+        receiving: batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned').length,
         completed: batches.filter((b) => b.status === 'Completed').length,
-        transferring: batches.filter((b) => b.status === 'Transferring').length,
+        transferring: batches.filter((b) => b.status === 'SentToClassification').length,
       });
+      } catch { setCounts({ receiving: 0, completed: 0, transferring: 0 }); }
     };
     refresh();
-    window.addEventListener('storage', refresh);
-    return () => window.removeEventListener('storage', refresh);
   }, []);
 
   const nav: OpsNavItem[] = [
