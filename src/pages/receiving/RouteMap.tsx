@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import type { ReceivingBatch } from '@/services/receivingService';
 import 'leaflet/dist/leaflet.css';
 import './RouteMap.css';
 
+export type RouteMapData = {
+  warehouseAddress:string;
+  requests:{id:string;donorName:string;pickupAddress:string;deliveryMethod:string}[];
+};
 type Point = { lat:number; lon:number; address:string; label:string; requestId?:string };
 const marker = (text:string,color:string) => L.divIcon({
   className:'route-number-icon',
@@ -51,9 +54,10 @@ async function geocode(address:string,fallback?:{lat:number;lon:number}):Promise
   throw new Error(`Không tìm thấy tọa độ: ${address}`);
 }
 
-export default function RouteMap({batch}:{batch:ReceivingBatch}){
+export default function RouteMap({batch,autoBuild=false}:{batch:RouteMapData;autoBuild?:boolean}){
   const [points,setPoints]=useState<Point[]>([]),[route,setRoute]=useState<[number,number][]>([]);
   const [loading,setLoading]=useState(false),[error,setError]=useState('');
+  const autoStarted=useRef(false);
   const build=async()=>{
     setLoading(true);setError('');
     try{
@@ -78,7 +82,12 @@ export default function RouteMap({batch}:{batch:ReceivingBatch}){
       if(skipped.length)setError(`Bỏ qua ${skipped.length} địa chỉ chưa xác định được tọa độ.`);
     }catch(e:any){setError(e.message||'Không thể tạo tuyến bản đồ.');}finally{setLoading(false);}
   };
-  if(!points.length)return <div className="route-map-launch"><button onClick={build} disabled={loading}>{loading?'Đang tìm tọa độ...':'Mở bản đồ & xếp tuyến gần nhất'}</button>{error&&<p>{error}</p>}</div>;
+  useEffect(()=>{
+    if(autoBuild&&!autoStarted.current){autoStarted.current=true;void build();}
+  },[autoBuild]);
+  if(!points.length)return <div className="route-map-launch">{autoBuild
+    ?<>{loading&&<span>Đang tìm tọa độ và tối ưu tuyến đường...</span>}{error&&<><p>{error}</p><button onClick={build}>Thử lại</button></>}</>
+    :<><button onClick={build} disabled={loading}>{loading?'Đang tìm tọa độ...':'Mở bản đồ & xếp tuyến gần nhất'}</button>{error&&<p>{error}</p>}</>}</div>;
   const bounds=L.latLngBounds(points.map(p=>[p.lat,p.lon]));
   return <div className="route-map-wrap">
     <div className="route-order"><b>Thứ tự đề xuất:</b> {points.map((p,i)=><span key={`${p.address}-${i}`}>{i}. {p.label}</span>)}</div>

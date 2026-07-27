@@ -3,13 +3,14 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 const homeByRole: Record<string, string> = {
+  Admin: '/admin',
   ReceivingStaff: '/receiving',
   ClassificationStaff: '/classification',
   WarehouseStaff: '/warehouse',
   Manager: '/manager',
   Donor: '/',
-  CharityOrganization: '/',
-  RecyclingOrganization: '/',
+  CharityOrganization: '/login',
+  RecyclingOrganization: '/login',
 };
 
 interface RoleRouteProps {
@@ -31,4 +32,10 @@ export default function RoleRoute({ role, children }: RoleRouteProps) {
   }
 
   return children;
+}
+
+export function RoleHomeRedirect() {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+  return <Navigate to={homeByRole[user.role.trim()] ?? '/login'} replace />;
 }

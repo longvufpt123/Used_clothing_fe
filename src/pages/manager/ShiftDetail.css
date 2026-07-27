@@ -247,14 +247,86 @@
 
 .teams-detail-actions {
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+.teams-detail-actions .ops-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teams-shift-edit-form {
+  display: grid;
+  gap: 13px;
+  padding-top: 18px;
+}
+
+.teams-shift-time-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.teams-edit-note {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-text-muted);
+  font-size: .72rem;
+}
+
+.teams-danger-btn {
+  margin-right: auto;
+  border-color: rgba(239, 68, 68, .45);
+  color: #ef4444;
+  background: transparent;
+}
+
+.teams-danger-solid {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.teams-delete-confirm {
+  display: grid;
+  gap: 7px;
+  margin-top: 15px;
+  padding: 13px;
+  border: 1px solid rgba(239, 68, 68, .42);
+  border-radius: 10px;
+  background: rgba(239, 68, 68, .08);
+}
+
+.teams-delete-confirm strong {
+  color: #ef4444;
+  font-size: .84rem;
+}
+
+.teams-delete-confirm > span {
+  color: var(--color-text-secondary);
+  font-size: .72rem;
+}
+
+.teams-delete-confirm > div {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 5px;
 }
 
 @media (max-width: 650px) {
   .teams-detail-summary,
   .teams-detail-members,
-  .teams-detail-batch-grid {
+  .teams-detail-batch-grid,
+  .teams-shift-time-fields {
     grid-template-columns: 1fr;
+  }
+
+  .teams-detail-actions {
+    flex-wrap: wrap;
   }
 }
