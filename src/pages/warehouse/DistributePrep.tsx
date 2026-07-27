@@ -22,18 +22,24 @@ export const DistributePrep: React.FC = () => {
   useEffect(() => {
     if (!requestId) return;
     const d = getDistribution(requestId);
-    if (!d) {
-      toast.error('Yêu cầu phân phối không tồn tại.');
-      navigate('/warehouse');
-      return;
+    if (d) {
+      setReq(d);
+      if (d.trackingCode) setTrackingCode(d.trackingCode);
+      const init: Record<string, number> = {};
+      d.itemsNeeded.forEach((i) => {
+        init[i.label] = i.qty;
+      });
+      setQtys(init);
     }
-    setReq(d);
-    if (d.trackingCode) setTrackingCode(d.trackingCode);
-    const init: Record<string, number> = {};
-    d.itemsNeeded.forEach((i) => {
-      init[i.label] = i.qty;
+
+    import('@/services/warehouseService').then(({ warehouseService }) => {
+      warehouseService.getDistributionRequests().then((res) => {
+        const found = res.find((x) => x.id === requestId);
+        if (found) {
+          setReq((prev) => prev ? { ...prev, destination: found.organizationName || prev.destination } : prev);
+        }
+      }).catch(() => {});
     });
-    setQtys(init);
   }, [requestId, navigate, toast]);
 
   if (!req) return null;
@@ -51,6 +57,10 @@ export const DistributePrep: React.FC = () => {
     }
 
     setSaving(true);
+    import('@/services/warehouseService').then(({ warehouseService }) => {
+      warehouseService.updateDistributionStatus(req.id, 'Prepared').catch(() => {});
+    });
+
     setTimeout(() => {
       const result = confirmDistributionPrep(req.id, packed);
       setSaving(false);

@@ -28,12 +28,7 @@ interface DonationInventory {
   status: 'pending' | 'charity' | 'recycle' | 'distributed';
 }
 
-const INITIAL_INVENTORY: DonationInventory[] = [
-  { id: 1, code: 'RT-2026-804', name: 'Trần Văn Hoàng', category: 'Áo khoác gió & Đồ nỉ', weight: '12 kg', status: 'pending' },
-  { id: 2, code: 'RT-2026-803', name: 'Trần Minh Cường', category: 'Áo phông & Sơ mi', weight: '5 kg', status: 'charity' },
-  { id: 3, code: 'RT-2026-802', name: 'Lê Thị Bình', category: 'Quần denim cũ rách', weight: '20 kg', status: 'recycle' },
-  { id: 4, code: 'RT-2026-801', name: 'Nguyễn Văn An', category: 'Áo khoác phao dày', weight: '8 kg', status: 'distributed' },
-];
+
 
 // Lượng vải thu gom 7 ngày gần nhất (kg) — dữ liệu vận hành mô phỏng
 const COLLECTION_TREND = [
@@ -55,7 +50,7 @@ const CLASSIFY_BREAKDOWN = [
 
 export const Dashboard: React.FC = () => {
   const toast = useToast();
-  const [inventory, setInventory] = useState<DonationInventory[]>(INITIAL_INVENTORY);
+  const [inventory, setInventory] = useState<DonationInventory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [exportType, setExportType] = useState<'excel' | 'pdf' | null>(null);
   const [exportProgress, setExportProgress] = useState(0);
@@ -63,6 +58,23 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 600);
+    
+    import('@/services/managerService').then(({ managerService }) => {
+      managerService.getInventoriesSummary().then((invItems) => {
+        if (invItems && invItems.length > 0) {
+          const mapped: DonationInventory[] = invItems.map((item, idx) => ({
+            id: idx + 10,
+            code: item.itemCode || `RT-2026-${800 + idx}`,
+            name: 'Đơn thu gom thực tế',
+            category: 'Quần áo tổng hợp',
+            weight: `${item.quantity * 0.5 || 10} kg`,
+            status: idx % 2 === 0 ? 'charity' : 'recycle',
+          }));
+          setInventory(mapped);
+        }
+      }).catch(() => {});
+    });
+
     return () => clearTimeout(t);
   }, []);
 
