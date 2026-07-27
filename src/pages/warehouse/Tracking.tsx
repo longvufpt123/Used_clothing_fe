@@ -17,12 +17,16 @@ export const WarehouseTracking: React.FC = () => {
   useEffect(() => {
     if (!trackingCode) return;
     const d = getDistributionByTracking(trackingCode);
-    if (!d) {
-      toast.error('Không tìm thấy vận đơn.');
-      navigate('/warehouse');
-      return;
-    }
-    setDist(d);
+    if (d) setDist(d);
+
+    import('@/services/warehouseService').then(({ warehouseService }) => {
+      warehouseService.getDistributionRequests().then((res) => {
+        const found = res.find((x) => x.code === trackingCode || x.id === trackingCode);
+        if (found) {
+          setDist((prev) => prev ? { ...prev, destination: found.organizationName || prev.destination } : prev);
+        }
+      }).catch(() => {});
+    });
   }, [trackingCode, navigate, toast]);
 
   if (!dist) return null;

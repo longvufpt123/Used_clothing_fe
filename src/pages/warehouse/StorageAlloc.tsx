@@ -24,24 +24,27 @@ export const StorageAlloc: React.FC = () => {
   useEffect(() => {
     if (!batchId) return;
     const b = getWarehouseBatch(batchId);
-    if (!b) {
-      toast.error('Lô hàng không tồn tại.');
-      navigate('/warehouse');
-      return;
-    }
-    if (b.status === 'Stored') {
-      setDone(true);
+    if (b) {
+      if (b.status === 'Stored') setDone(true);
       setBatch(b);
-      setShelves(getShelves());
-      return;
     }
-    if (b.status !== 'WarehouseReceived') {
-      toast.warning('Chỉ xếp kệ lô đã nhận vật lý.');
-      navigate('/warehouse');
-      return;
-    }
-    setBatch(b);
     setShelves(getShelves());
+
+    import('@/services/warehouseService').then(({ warehouseService }) => {
+      warehouseService.getAreas().then((apiAreas) => {
+        if (apiAreas && apiAreas.length > 0) {
+          const mappedShelves: ShelfSlot[] = apiAreas.map((a) => ({
+            id: a.id,
+            label: a.code || a.areaName,
+            zone: a.areaName || 'Khu A',
+            capacityKg: a.capacity || 200,
+            usedKg: a.occupied || 0,
+            occupied: (a.occupied || 0) >= (a.capacity || 200),
+          }));
+          setShelves(mappedShelves);
+        }
+      }).catch(() => {});
+    });
   }, [batchId, navigate, toast]);
 
   if (!batch) return null;
@@ -52,19 +55,27 @@ export const StorageAlloc: React.FC = () => {
       return;
     }
     setSaving(true);
-    setTimeout(() => {
-      const ok = allocateShelf(batch.id, selected);
-      setSaving(false);
-      if (!ok) {
-        toast.error('Không đủ chỗ trên kệ hoặc lô không hợp lệ.');
-        return;
-      }
-      const refreshed = getWarehouseBatch(batch.id);
-      if (refreshed) setBatch(refreshed);
-      setShelves(getShelves());
-      setDone(true);
-      toast.success('Lưu trữ thành công. Tồn kho đã được cập nhật.');
-    }, 700);
+    
+    import('@/services/warehouseService').then(({ warehouseService }) => {
+      warehouseService.allocateInventory({
+        areaId: selected,
+        classifiedItemId: batch.id,
+        quantity: batch.itemCount || 1,
+      }).then(() => {
+        toast.success('Lưu trữ thành công vào API backend.');
+      }).catch(() => {})
+      .finally(() => {
+        const ok = allocateShelf(batch.id, selected);
+        setSaving(false);
+        if (ok) {
+          const refreshed = getWarehouseBatch(batch.id);
+          if (refreshed) setBatch(refreshed);
+          setShelves(getShelves());
+          setDone(true);
+          toast.success('Lưu trữ thành công. Tồn kho đã được cập nhật.');
+        }
+      });
+    });
   };
 
   return (

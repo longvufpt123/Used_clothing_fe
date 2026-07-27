@@ -53,10 +53,31 @@ const LOCATIONS: DropOffLocation[] = [
 ];
 
 export const Map: React.FC = () => {
+  const [locations, setLocations] = useState<DropOffLocation[]>(LOCATIONS);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoc, setSelectedLoc] = useState<DropOffLocation>(LOCATIONS[0]);
 
-  const filteredLocations = LOCATIONS.filter((loc) =>
+  React.useEffect(() => {
+    import('@/services/api').then(({ default: apiClient }) => {
+      apiClient.get<unknown, any[]>('/warehouses').then((data) => {
+        if (data && data.length > 0) {
+          const mapped: DropOffLocation[] = data.map((w, idx) => ({
+            id: idx + 10,
+            name: w.name || w.warehouseName || `Kho / Điểm gom ${w.code || idx + 1}`,
+            address: w.address || w.location || 'TP. Hồ Chí Minh',
+            hours: '08:00 - 20:00 (Cả tuần)',
+            fillLevel: 30 + (idx * 15) % 60,
+            status: 'available',
+            coordinates: { x: 100 + (idx * 90) % 400, y: 100 + (idx * 60) % 250 },
+          }));
+          setLocations(mapped);
+          setSelectedLoc(mapped[0]);
+        }
+      }).catch(() => {});
+    });
+  }, []);
+
+  const filteredLocations = locations.filter((loc) =>
     loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     loc.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
