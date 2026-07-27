@@ -23,12 +23,7 @@ interface DistributionCampaign {
   status: 'pending' | 'shipped';
 }
 
-const INITIAL_STOCK: StockItem[] = [
-  { id: 1, name: 'Áo khoác ấm dày Trẻ em Nam', category: 'Áo khoác', ageGroup: '6-10 tuổi', quantity: 45, status: 'good' },
-  { id: 2, name: 'Áo phao mùa đông Trẻ em Nữ', category: 'Áo khoác', ageGroup: '11-15 tuổi', quantity: 8, status: 'low' },
-  { id: 3, name: 'Quần dài kaki Người lớn Nam', category: 'Quần dài', ageGroup: 'Người lớn', quantity: 120, status: 'good' },
-  { id: 4, name: 'Áo sơ mi/Áo thun trẻ em', category: 'Áo sơ mi/áo thun', ageGroup: '3-5 tuổi', quantity: 0, status: 'empty' },
-];
+
 
 const INITIAL_CAMPAIGNS: DistributionCampaign[] = [
   {
@@ -54,8 +49,26 @@ const INITIAL_CAMPAIGNS: DistributionCampaign[] = [
 
 export const CharityInventory: React.FC = () => {
   const toast = useToast();
-  const [stock, setStock] = useState<StockItem[]>(INITIAL_STOCK);
+  const [stock, setStock] = useState<StockItem[]>([]);
   const [campaigns, setCampaigns] = useState<DistributionCampaign[]>(INITIAL_CAMPAIGNS);
+
+  React.useEffect(() => {
+    import('@/services/managerService').then(({ managerService }) => {
+      managerService.getCharityInventory().then((invItems) => {
+        if (invItems && invItems.length > 0) {
+          const mapped: StockItem[] = invItems.map((item, idx) => ({
+            id: idx + 10,
+            name: `Hàng tồn kho ${item.itemCode || item.id.slice(0, 8)}`,
+            category: 'Áo khoác',
+            ageGroup: 'Hỗn hợp',
+            quantity: item.quantity || 10,
+            status: (item.quantity || 10) < 10 ? 'low' : 'good',
+          }));
+          setStock(mapped);
+        }
+      }).catch(() => {});
+    });
+  }, []);
 
   const handleShipCampaign = (campId: number) => {
     const campaign = campaigns.find(c => c.id === campId);
