@@ -23,6 +23,23 @@ const PENDING_PACKAGES: PackageToClassify[] = [
 export const DetailedClassification: React.FC = () => {
   const toast = useToast();
   const [packages, setPackages] = useState<PackageToClassify[]>(PENDING_PACKAGES);
+
+  React.useEffect(() => {
+    import('@/services/managerService').then(({ managerService }) => {
+      managerService.getDetailedClassification().then((batches) => {
+        if (batches && batches.length > 0) {
+          const mapped: PackageToClassify[] = batches.map((b) => ({
+            code: b.batchCode || b.id.slice(0, 8),
+            donorName: b.garmentGroup || 'Đợt phân loại',
+            weight: `${(b.totalItem || 10) * 0.5} kg`,
+            estCategory: `${b.clothingType || 'Quần áo'} (${b.conditionGrade || 'Loại A'})`,
+            status: b.status === 'Completed' ? 'completed' : 'pending',
+          }));
+          setPackages(mapped);
+        }
+      }).catch(() => {});
+    });
+  }, []);
   const [selectedCode, setSelectedCode] = useState(packages[0]?.code || '');
   const [isScanning, setIsScanning] = useState(false);
   const [scannedPackage, setScannedPackage] = useState<PackageToClassify | null>(null);

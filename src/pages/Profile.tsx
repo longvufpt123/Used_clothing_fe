@@ -8,9 +8,18 @@ export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
+
+    import('@/services/api').then(({ default: apiClient }) => {
+      apiClient.get<unknown, any[]>('/profiles').then((res) => {
+        if (res && res.length > 0) {
+          setProfileData(res[0]);
+        }
+      }).catch(() => {});
+    });
   }, []);
 
   // Temporarily disabled auth block for UI preview
@@ -18,12 +27,12 @@ export const Profile: React.FC = () => {
   //   return <Navigate to="/login" replace />;
   // }
 
-  const displayName = user?.fullName || user?.userName || 'Thành viên ReThreads';
+  const displayName = profileData?.fullName || user?.fullName || user?.userName || 'Thành viên ReThreads';
   const initials = displayName
     .split(' ')
     .filter(Boolean)
     .slice(-2)
-    .map(part => part[0])
+    .map((part: string) => part[0])
     .join('')
     .toUpperCase();
 

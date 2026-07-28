@@ -23,18 +23,30 @@ interface UserItem {
   avatarUrl?: string;
 }
 
-const INITIAL_USERS: UserItem[] = [
-  { id: 1, name: 'Nguyễn Văn Hoàng', email: 'hoang.tv@usedclothing.vn', phone: '0912345678', role: 'admin', status: 'active', joinedDate: '2026-01-10', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80' },
-  { id: 2, name: 'Lê Thị Thu Hà', email: 'ha.ltt@usedclothing.vn', phone: '0987654321', role: 'manager', status: 'active', joinedDate: '2026-02-15' },
-  { id: 3, name: 'Phạm Minh Đức', email: 'duc.pm@usedclothing.vn', phone: '0901234567', role: 'staff', status: 'active', joinedDate: '2026-03-20' },
-  { id: 4, name: 'Đỗ Hoàng Anh', email: 'anh.dh@usedclothing.vn', phone: '0934567890', role: 'staff', status: 'inactive', joinedDate: '2026-04-05' },
-  { id: 5, name: 'Ngô Quốc Bảo', email: 'bao.nq@usedclothing.vn', phone: '0976543210', role: 'staff', status: 'active', joinedDate: '2026-04-12' },
-  { id: 6, name: 'Vũ Minh Tuấn', email: 'tuan.vm@usedclothing.vn', phone: '0945678123', role: 'manager', status: 'active', joinedDate: '2026-05-01' },
-];
+
 
 export const Users: React.FC = () => {
   const toast = useToast();
-  const [users, setUsers] = useState<UserItem[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<UserItem[]>([]);
+
+  React.useEffect(() => {
+    import('@/services/managerService').then(({ managerService }) => {
+      managerService.getProfiles().then((profiles) => {
+        if (profiles && profiles.length > 0) {
+          const mapped: UserItem[] = profiles.map((p, idx) => ({
+            id: idx + 10,
+            name: p.fullName || 'Người dùng',
+            email: p.email || 'user@example.com',
+            phone: p.phoneNumber || '0900000000',
+            role: p.role?.toLowerCase() === 'manager' ? 'manager' : p.role?.toLowerCase() === 'admin' ? 'admin' : 'staff',
+            status: p.status === 'Inactive' ? 'inactive' : 'active',
+            joinedDate: p.createdAt ? p.createdAt.slice(0, 10) : '2026-01-01',
+          }));
+          setUsers(mapped);
+        }
+      }).catch(() => {});
+    });
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   

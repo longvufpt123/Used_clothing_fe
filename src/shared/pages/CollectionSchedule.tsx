@@ -34,60 +34,7 @@ interface CalendarEvent {
   weight?: string;
 }
 
-const INITIAL_EVENTS: CalendarEvent[] = [
-  { 
-    id: 1,
-    date: new Date(2026, 6, 6),
-    time: "08:15 SA",
-    durationMinutes: 90,
-    title: "Ca Sáng - Tuyến Quận 3 (Hoàng)",
-    location: "789 CMT8, Quận 3, TP. HCM",
-    organizer: "Hà Thu",
-    description: "Đơn thu gom RT-2026-803. Người gửi: Trần Minh Cường. Liên hệ: 0912345678. Gom quần áo trẻ em cũ.",
-    status: 'assigned',
-    driver: 'Nguyễn Văn Hoàng',
-    weight: 'Dưới 5 kg'
-  },
-  { 
-    id: 2,
-    date: new Date(2026, 6, 7),
-    time: "10:30 SA",
-    durationMinutes: 120,
-    title: "Ca Trưa - Gom Quận 1 (Hoàng)",
-    location: "12 Lê Văn Sỹ, Quận 1, TP. HCM",
-    organizer: "Hà Thu",
-    description: "Đơn thu gom RT-2026-805. Người gửi: Nguyễn Bích Phương. Liên hệ: 0933445566. Gom kiện hàng nặng.",
-    status: 'picking',
-    driver: 'Nguyễn Văn Hoàng',
-    weight: '10-20 kg'
-  },
-  { 
-    id: 3,
-    date: new Date(2026, 6, 9),
-    time: "02:00 CH",
-    durationMinutes: 60,
-    title: "Ca Chiều - Gom Bình Thạnh (Tấn)",
-    location: "345 Điện Biên Phủ, TP. HCM",
-    organizer: "Hà Thu",
-    description: "Đơn thu gom RT-2026-806. Người gửi: Đặng Tuấn Anh. Liên hệ: 0909887766. Gom quần áo nam thu đông.",
-    status: 'completed',
-    driver: 'Trần Minh Tấn',
-    weight: '5-10 kg'
-  },
-  { 
-    id: 4,
-    date: new Date(2026, 6, 10),
-    time: "09:00 SA",
-    durationMinutes: 90,
-    title: "Ca Sáng - Gom Tân Bình (Tấn)",
-    location: "Phòng 402, Chung cư Bàu Cát, Tân Bình",
-    organizer: "Hà Thu",
-    description: "Nhận gom quần áo ấm quyên góp vùng cao. SĐT: 0945678123.",
-    status: 'assigned',
-    driver: 'Trần Minh Tấn',
-    weight: '10-20 kg'
-  }
-];
+
 
 const HOURS = Array.from({ length: 24 }).map((_, i) => {
   if (i === 0) return "12 SA";
@@ -121,7 +68,27 @@ export const CollectionSchedule: React.FC = () => {
   const [currentView, setCurrentView] = useState<CalendarViewType>("month");
   
   // Events state
-  const [events, setEvents] = useState<CalendarEvent[]>(INITIAL_EVENTS);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  useEffect(() => {
+    import('@/services/managerService').then(({ managerService }) => {
+      managerService.getShifts().then((apiShifts) => {
+        if (apiShifts && apiShifts.length > 0) {
+          const mapped: CalendarEvent[] = apiShifts.map((s, idx) => ({
+            id: idx + 100,
+            date: new Date(s.date || Date.now()),
+            time: '08:00 SA',
+            durationMinutes: 120,
+            title: s.shiftName || 'Ca thu gom',
+            location: 'Tuyến thu gom chính',
+            organizer: 'Ban Quản lý',
+            status: s.status === 'Completed' ? 'completed' : s.status === 'InProgress' ? 'picking' : 'assigned',
+          }));
+          setEvents(mapped);
+        }
+      }).catch(() => {});
+    });
+  }, []);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const [pickerViewMode, setPickerViewMode] = useState<'month' | 'year'>('month');
   const [pickerActiveYear, setPickerActiveYear] = useState<number>(2026);
