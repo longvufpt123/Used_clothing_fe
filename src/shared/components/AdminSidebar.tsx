@@ -1,5 +1,6 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags } from 'lucide-react';
 import './AdminSidebar.css';
 
@@ -18,6 +19,8 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const isManager = location.pathname.startsWith('/manager');
   const basePath = isManager ? '/manager' : '/admin';
 
@@ -67,10 +70,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
         ))}
       </nav>
       <div className="sidebar-footer">
-        <NavLink to="/logout" onClick={onCloseMobile} className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
+        <button type="button" onClick={()=>{logout();onCloseMobile();navigate('/login',{replace:true})}} className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
           <LogOut size={18} />
           <span>Đăng xuất</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   );

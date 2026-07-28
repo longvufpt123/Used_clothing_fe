@@ -15,10 +15,16 @@ import {
   Clock3,
   MapPin,
   Phone,
+  Search,
+  Warehouse,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  PackageOpen,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
-import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
+import type { ReceivingBatch, ReceivingRequest, WarehouseDropOffBoard, WarehouseDropOffItem } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
 
@@ -39,6 +45,15 @@ export const Dashboard: React.FC = () => {
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [isTransferringId, setIsTransferringId] = useState<string | null>(null);
+  const [dropOffBoard,setDropOffBoard]=useState<WarehouseDropOffBoard>({dutyContexts:[],requests:[]});
+  const [dropOffSearch,setDropOffSearch]=useState('');
+  const [dropOffDate,setDropOffDate]=useState('');
+  const [dropOffShiftFilter,setDropOffShiftFilter]=useState('');
+  const [dropOffPage,setDropOffPage]=useState(1);
+  const [receivingDropOff,setReceivingDropOff]=useState<WarehouseDropOffItem|null>(null);
+  const [dropOffForm,setDropOffForm]=useState({actualWeight:1,notes:''});
+  const [savingDropOff,setSavingDropOff]=useState(false);
+  const dropOffPageSize=6;
 
   const tabParam = searchParams.get('tab');
   const activeTab: TabKey = isTab(tabParam) ? tabParam : 'receiving';
@@ -46,8 +61,9 @@ export const Dashboard: React.FC = () => {
     setSearchParams(t === 'receiving' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
-    receivingService.getMyBatches().then((data) => {
+    Promise.all([receivingService.getMyBatches(),receivingService.getMyWarehouseDropOffs()]).then(([data,dropOffData]) => {
       setBatches(data);
+      setDropOffBoard(dropOffData);
       setRequests(data.flatMap((batch) => batch.requests));
       const active = data.some((batch) => batch.shiftStatus === 'InProgress');
       setIsShiftActive(active);
@@ -56,20 +72,35 @@ export const Dashboard: React.FC = () => {
     }).catch(() => toast.error('Không thể tải tuyến thu gom được phân công.'));
   }, []);
 
+  const reloadDropOffs=async()=>setDropOffBoard(await receivingService.getMyWarehouseDropOffs());
+
   const handleToggleShift = async () => {
     const nextState = !isShiftActive;
     setShiftActive(nextState);
     setIsShiftActive(nextState);
 
     if (nextState) {
+      const now=new Date();
+      const localDate=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+      const currentTime=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const scheduledToday=batches.filter(batch=>batch.shiftStatus==='Scheduled'
+        && batch.date.slice(0,10)===localDate
+        && (batch.status==='Planned'||batch.status==='Receiving'));
+      const targetShiftId=(scheduledToday.find(batch=>batch.startTime.slice(0,5)<=currentTime
+        && currentTime<=batch.endTime.slice(0,5))||scheduledToday[0])?.shiftId;
+      if(!targetShiftId){
+        setShiftActive(false);setIsShiftActive(false);
+        return toast.warning('Không có ca làm được phân công cho hôm nay.');
+      }
       await Promise.all(
-        batches.filter((batch) => batch.shiftStatus === 'Scheduled' && (batch.status === 'Planned' || batch.status === 'Receiving'))
+        scheduledToday.filter(batch=>batch.shiftId===targetShiftId)
           .map((batch) => receivingService.startBatch(batch.id))
       );
       setBatches((current) => current.map((batch) =>
-        batch.status === 'Planned' ? { ...batch, status: 'Receiving', shiftStatus: 'InProgress' } : batch
+        batch.shiftId===targetShiftId&&batch.status === 'Planned' ? { ...batch, status: 'Receiving', shiftStatus: 'InProgress' } : batch
       ));
       toast.success('Bắt đầu ca làm việc thành công! Trạng thái đơn đã sẵn sàng.');
+      await reloadDropOffs();
       // Update UI to reload indicators
       window.dispatchEvent(new Event('storage')); // trigger header update
     } else {
@@ -81,6 +112,7 @@ export const Dashboard: React.FC = () => {
         shiftIds.includes(batch.shiftId) ? { ...batch, status: 'Completed', shiftStatus: 'Completed' } : batch
       ));
       toast.info('Đã kết thúc ca làm việc.');
+      await reloadDropOffs();
       window.dispatchEvent(new Event('storage'));
     }
   };
@@ -126,6 +158,36 @@ export const Dashboard: React.FC = () => {
       ])
     ).values()
   );
+
+  const dropOffDates=Array.from(new Set(dropOffBoard.dutyContexts.map(x=>x.shiftDate.slice(0,10)))).sort();
+  const normalizedDropOffSearch=dropOffSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const filteredDropOffs=dropOffBoard.requests.filter(request=>{
+    const contexts=dropOffBoard.dutyContexts.filter(context=>context.warehouseId===request.warehouseId
+      && context.shiftDate.slice(0,10)===request.expectedDate.slice(0,10));
+    const text=`${request.code} ${request.contactName} ${request.phoneNumber} ${request.description}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return (!dropOffDate||request.expectedDate.slice(0,10)===dropOffDate)
+      && (!dropOffShiftFilter||contexts.some(x=>x.shiftStatus===dropOffShiftFilter))
+      && (!normalizedDropOffSearch||text.includes(normalizedDropOffSearch));
+  });
+  const dropOffPages=Math.max(1,Math.ceil(filteredDropOffs.length/dropOffPageSize));
+  const pagedDropOffs=filteredDropOffs.slice((dropOffPage-1)*dropOffPageSize,dropOffPage*dropOffPageSize);
+  useEffect(()=>setDropOffPage(1),[dropOffSearch,dropOffDate,dropOffShiftFilter]);
+  useEffect(()=>{if(dropOffPage>dropOffPages)setDropOffPage(dropOffPages)},[dropOffPage,dropOffPages]);
+  const canReceiveDropOff=(request:WarehouseDropOffItem)=>dropOffBoard.dutyContexts.some(context=>
+    context.warehouseId===request.warehouseId
+    && context.shiftDate.slice(0,10)===request.expectedDate.slice(0,10)
+    && context.shiftStatus==='InProgress');
+  const confirmDropOff=async()=>{
+    if(!receivingDropOff||dropOffForm.actualWeight<=0)return toast.warning('Khối lượng thực nhận phải lớn hơn 0.');
+    setSavingDropOff(true);
+    try{
+      await receivingService.confirmWarehouseDropOff(receivingDropOff.id,dropOffForm);
+      toast.success('Đã tiếp nhận đơn tại kho và thêm vào Intake Batch của ca hiện tại.');
+      setReceivingDropOff(null);await reloadDropOffs();
+      const data=await receivingService.getMyBatches();setBatches(data);setRequests(data.flatMap(batch=>batch.requests));
+    }catch(error:any){toast.error(error?.response?.data?.message||'Không thể xác nhận nhận hàng tại kho.');}
+    finally{setSavingDropOff(false)}
+  };
 
   const filteredBatches = batches.filter((batch) => {
     if (activeTab === 'receiving') return batch.status === 'Receiving' || batch.status === 'Planned';
@@ -279,6 +341,30 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
       </section>
+
+      {dropOffBoard.dutyContexts.length>0&&<section className="rcv-dropoff-section">
+        <div className="ops-section-head">
+          <div><span className="rcv-section-kicker">Tiếp nhận trực tiếp</span><h2>Đơn dự kiến mang đến kho</h2></div>
+          <span>{filteredDropOffs.length}/{dropOffBoard.requests.length} đơn đang chờ</span>
+        </div>
+        <div className="rcv-dropoff-duty">
+          {dropOffBoard.dutyContexts.map(context=><span className={context.shiftStatus==='InProgress'?'active':''} key={context.teamId}><Warehouse size={15}/><b>{context.teamName}</b><small>{context.shiftName} · {context.startTime.slice(0,5)}–{context.endTime.slice(0,5)} · {context.shiftStatus==='InProgress'?'Đang trực':'Chưa bắt đầu'}</small></span>)}
+        </div>
+        <div className="rcv-dropoff-filters">
+          <div><Search size={16}/><input value={dropOffSearch} onChange={e=>setDropOffSearch(e.target.value)} placeholder="Tìm mã đơn, tên, SĐT, mô tả..."/></div>
+          <select value={dropOffDate} onChange={e=>setDropOffDate(e.target.value)}><option value="">Tất cả ngày</option>{dropOffDates.map(date=><option value={date} key={date}>{new Date(`${date}T00:00:00`).toLocaleDateString('vi-VN')}</option>)}</select>
+          <select value={dropOffShiftFilter} onChange={e=>setDropOffShiftFilter(e.target.value)}><option value="">Tất cả trạng thái ca</option><option value="InProgress">Ca đang trực</option><option value="Scheduled">Ca chưa bắt đầu</option></select>
+          {(dropOffSearch||dropOffDate||dropOffShiftFilter)&&<button onClick={()=>{setDropOffSearch('');setDropOffDate('');setDropOffShiftFilter('')}}><X size={14}/>Xóa lọc</button>}
+        </div>
+        <div className="rcv-dropoff-grid">{pagedDropOffs.map(request=>{const enabled=canReceiveDropOff(request);return <article className="rcv-dropoff-card" key={request.id}>
+          <header><div><span>{request.code}</span><h3>{request.contactName}</h3></div><b>Chờ donor đến</b></header>
+          <p><Phone size={14}/>{request.phoneNumber}</p>
+          <p><PackageOpen size={14}/>{request.description||'Quần áo quyên góp'} · dự kiến {request.estimateWeight} kg</p>
+          <p><Calendar size={14}/>Ngày dự kiến: {new Date(request.expectedDate).toLocaleDateString('vi-VN')}</p>
+          <button disabled={!enabled} onClick={()=>{setReceivingDropOff(request);setDropOffForm({actualWeight:request.estimateWeight||1,notes:''})}}><PackageOpen size={15}/>{enabled?'Xác nhận donor đã đến':'Bắt đầu ca trực để tiếp nhận'}</button>
+        </article>})}{!pagedDropOffs.length&&<div className="ops-empty"><PackageOpen size={32}/><h4>Không có đơn chờ phù hợp</h4></div>}</div>
+        {dropOffPages>1&&<nav className="rcv-dropoff-pagination"><button disabled={dropOffPage===1} onClick={()=>setDropOffPage(x=>x-1)}><ChevronLeft size={15}/>Trước</button><span>Trang {dropOffPage}/{dropOffPages}</span><button disabled={dropOffPage===dropOffPages} onClick={()=>setDropOffPage(x=>x+1)}>Sau<ChevronRight size={15}/></button></nav>}
+      </section>}
 
       <section>
         <div className="ops-section-head">
@@ -434,6 +520,10 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       </section>
+      {receivingDropOff&&<div className="rcv-dropoff-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!savingDropOff)setReceivingDropOff(null)}}><section className="rcv-dropoff-modal">
+        <header><div><span>TIẾP NHẬN TẠI KHO</span><h2>{receivingDropOff.code}</h2><p>{receivingDropOff.contactName} · {receivingDropOff.phoneNumber}</p></div><button onClick={()=>setReceivingDropOff(null)}><X/></button></header>
+        <div className="rcv-dropoff-form"><label>Khối lượng thực nhận (kg)<input type="number" min=".1" step=".1" value={dropOffForm.actualWeight} onChange={e=>setDropOffForm({...dropOffForm,actualWeight:Number(e.target.value)})}/></label><label>Ghi chú tiếp nhận<textarea value={dropOffForm.notes} onChange={e=>setDropOffForm({...dropOffForm,notes:e.target.value})} placeholder="Tình trạng bao bì, sai lệch khối lượng..."/></label><div><button onClick={()=>setReceivingDropOff(null)}>Hủy</button><button disabled={savingDropOff||dropOffForm.actualWeight<=0} onClick={confirmDropOff}>{savingDropOff?'Đang xác nhận...':'Xác nhận đã nhận hàng'}</button></div></div>
+      </section></div>}
     </div>
   );
 };

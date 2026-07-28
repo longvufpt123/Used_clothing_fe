@@ -7,19 +7,33 @@ export interface ReceivingBatch { id:string; code:string; route:string; date:str
 interface ApiRequest { id:string; batchId:string; code:string; donorName:string; phoneNumber:string; pickupAddress:string; deliveryMethod:string; description:string; estimateWeight:number; actualWeight?:number|null; pickupDate?:string; status:string; notes?:string; imageUrls?:string[]; }
 interface ApiBatch { id:string; code:string; route:string; date:string; shiftId:string; shiftName:string; shiftStatus:string; startTime:string; endTime:string; teamName:string; warehouseAddress:string; teamMembers:TeamMember[]; status:ReceivingBatch['status']; requests:ApiRequest[]; }
 export interface DispatchRequest { id:string; code:string; contactName:string; phoneNumber:string; deliveryMethod:string; address:string; scheduledDate?:string; warehouseId:string; warehouseName:string; }
-export interface DispatchTeam { id:string; teamName:string; shiftId:string; shiftName:string; shiftDate:string; shiftTime:string; warehouseId:string; members:TeamMember[]; }
+export interface DispatchTeam { id:string; teamName:string; teamType:string; shiftId:string; shiftName:string; shiftDate:string; shiftTime:string; warehouseId:string; members:TeamMember[]; }
 export interface DispatchBoard { requests:DispatchRequest[]; teams:DispatchTeam[]; }
+export interface WarehouseDutyContext {
+  teamId:string; teamName:string; shiftId:string; shiftName:string; shiftDate:string;
+  startTime:string; endTime:string; shiftStatus:string; warehouseId:string;
+  warehouseName:string; warehouseAddress:string; intakeBatchId?:string|null;
+}
+export interface WarehouseDropOffItem {
+  id:string; warehouseId:string; code:string; contactName:string; phoneNumber:string;
+  address:string; expectedDate:string; description:string; estimateWeight:number;
+  status:string; imageUrls?:string[];
+}
+export interface WarehouseDropOffBoard {
+  dutyContexts:WarehouseDutyContext[]; requests:WarehouseDropOffItem[];
+}
 export interface ManagerWarehouseOption { id:string; name:string; address:string; }
 export interface ManagerStaffOption { id:string; fullName:string; userName:string; phoneNumber:string; warehouseId?:string|null; }
-export interface ManagerAssignedRequest { id:string; code:string; contactName:string; phoneNumber:string; address:string; pickupDate?:string|null; status:string; routeOrder:number; }
+export interface ManagerAssignedRequest { id:string; code:string; contactName:string; phoneNumber:string; address:string; pickupDate?:string|null; deliveryMethod:string; status:string; routeOrder:number; }
 export interface ManagerTeamOverview {
-  id:string; teamName:string; members:TeamMember[];
+  id:string; teamName:string; teamType:string; members:TeamMember[];
   intakeBatchId?:string|null; intakeBatchCode?:string|null; intakeBatchStatus?:string|null;
   intakeBatchRoute?:string|null; intakeBatchWeight:number; requests:ManagerAssignedRequest[];
 }
 export interface ManagerShiftOverview {
   id:string; warehouseId:string; warehouseName:string; shiftName:string; shiftDate:string;
   startTime:string; endTime:string; status:string; teams:ManagerTeamOverview[]; assignedRequests:number;
+  pendingDropOffRequests:number;
   /** @deprecated Legacy single-team fields; use teams. */
   team?:ManagerTeamOverview|null;
   intakeBatchId?:string|null; intakeBatchCode?:string|null; intakeBatchStatus?:string|null;
@@ -43,6 +57,8 @@ export const receivingService = {
   completeBatch:(id:string)=>apiClient.post(`/receiving-operations/my-batches/${id}/complete`),
   sendToClassification:(id:string)=>apiClient.post(`/receiving-operations/my-batches/${id}/send-to-classification`),
   confirmPickup:(batchId:string,requestId:string,data:{actualWeight:number;notes?:string;imageUrls?:string[]})=>apiClient.post(`/receiving-operations/my-batches/${batchId}/requests/${requestId}/confirm`,data),
+  getMyWarehouseDropOffs:()=>apiClient.get<unknown,WarehouseDropOffBoard>('/receiving-operations/my-warehouse-dropoffs'),
+  confirmWarehouseDropOff:(requestId:string,data:{actualWeight:number;notes?:string;imageUrls?:string[]})=>apiClient.post(`/receiving-operations/my-warehouse-dropoffs/${requestId}/confirm`,data),
   reschedule:(batchId:string,requestId:string,pickupDate:string,reason?:string)=>apiClient.post(`/receiving-operations/my-batches/${batchId}/requests/${requestId}/reschedule`,{pickupDate,reason}),
   reject:(batchId:string,requestId:string,reason:string)=>apiClient.post(`/receiving-operations/my-batches/${batchId}/requests/${requestId}/reject`,{reason}),
   getDispatchBoard:()=>apiClient.get<unknown,DispatchBoard>('/receiving-operations/dispatch-board'),
@@ -52,7 +68,7 @@ export const receivingService = {
   generateYearShifts:(warehouseId:string,year:number,holidayDates:string[])=>apiClient.post<unknown,GenerateYearShiftsResult>('/receiving-operations/year-shifts',{warehouseId,year,holidayDates}),
   updateShift:(shiftId:string,data:{warehouseId:string;shiftName:string;shiftDate:string;startTime:string;endTime:string})=>apiClient.put(`/receiving-operations/manager-shifts/${shiftId}`,data),
   deleteShift:(shiftId:string)=>apiClient.delete(`/receiving-operations/manager-shifts/${shiftId}`),
-  createTeam:(shiftId:string,teamName:string,staffIds:string[])=>apiClient.post('/receiving-operations/teams',{shiftId,teamName,staffIds}),
+  createTeam:(shiftId:string,teamName:string,staffIds:string[],teamType='ReceivingPickup')=>apiClient.post('/receiving-operations/teams',{shiftId,teamName,staffIds,teamType}),
   updateTeam:(teamId:string,teamName:string,staffIds:string[])=>apiClient.put(`/receiving-operations/teams/${teamId}`,{teamName,staffIds}),
   deleteTeam:(teamId:string)=>apiClient.delete(`/receiving-operations/teams/${teamId}`),
   planShift:(shiftId:string,teamId:string)=>apiClient.post<unknown,{plannedRequests:number}>('/receiving-operations/plan',{shiftId,teamId}),

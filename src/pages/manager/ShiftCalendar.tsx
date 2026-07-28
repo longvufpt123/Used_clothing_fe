@@ -65,7 +65,7 @@ export default function ShiftCalendar(){
         <div className="teams-weekdays">{['CN','T2','T3','T4','T5','T6','T7'].map(x=><span key={x}>{x}</span>)}</div>
         <div className="teams-days">{days.map(day=>{const key=iso(day);const shifts=byDate.get(key)||[];const outside=day.getMonth()!==month.getMonth();const weekend=day.getDay()===0||day.getDay()===6;return <button key={key} className={`${outside?'outside ':''}${weekend?'weekend ':''}${selected===key?'selected ':''}${key===iso(new Date())?'current ':''}`} onClick={()=>setSelected(key)}>
           <span className="teams-day-number">{day.getDate()}</span>
-          <div className="teams-day-events">{shifts.slice(0,2).map(x=><span className={x.status} key={x.id} onClick={event=>{event.stopPropagation();setSelected(key);openDetail(x);}}><i/>{x.startTime.slice(0,5)} {x.shiftName}</span>)}{shifts.length>2&&<small>+{shifts.length-2} ca</small>}</div>
+          <div className="teams-day-events">{shifts.slice(0,2).map(x=><span className={x.status} key={x.id} title={`${x.startTime.slice(0,5)}–${x.endTime.slice(0,5)} ${x.shiftName}`} onClick={event=>{event.stopPropagation();setSelected(key);openDetail(x);}}><i/>{x.startTime.slice(0,5)}–{x.endTime.slice(0,5)} {x.shiftName}</span>)}{shifts.length>2&&<small>+{shifts.length-2} ca</small>}</div>
         </button>})}</div>
       </section>
       <aside className="teams-agenda">
@@ -84,8 +84,6 @@ export default function ShiftCalendar(){
       <div className="teams-detail-head"><div><span>{editing?'CHỈNH SỬA CA LÀM VIỆC':'CHI TIẾT CA LÀM VIỆC'}</span><h2 id="shift-detail-title">{editing?'Cập nhật thông tin ca':detailShift.shiftName}</h2><p>{new Date(detailShift.shiftDate).toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})}</p></div><button onClick={closeDetail}>×</button></div>
       {editing?<div className="teams-shift-edit-form">
         <div className="ops-field"><label>Tên ca</label><input value={editForm.shiftName} onChange={e=>setEditForm({...editForm,shiftName:e.target.value})}/></div>
-        <div className="ops-field"><label>Kho phụ trách</label><select value={editForm.warehouseId} onChange={e=>setEditForm({...editForm,warehouseId:e.target.value})}>{setup.warehouses.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></div>
-        <div className="ops-field"><label>Ngày làm việc</label><input type="date" value={editForm.shiftDate} onChange={e=>setEditForm({...editForm,shiftDate:e.target.value})}/></div>
         <div className="teams-shift-time-fields"><div className="ops-field"><label>Bắt đầu</label><input type="time" value={editForm.startTime} onChange={e=>setEditForm({...editForm,startTime:e.target.value})}/></div><div className="ops-field"><label>Kết thúc</label><input type="time" value={editForm.endTime} onChange={e=>setEditForm({...editForm,endTime:e.target.value})}/></div></div>
         <div className="teams-edit-note">Chỉ ca đang ở trạng thái Đã lên lịch mới có thể chỉnh sửa.</div>
       </div>:<>

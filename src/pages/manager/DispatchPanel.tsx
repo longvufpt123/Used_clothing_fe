@@ -64,7 +64,10 @@ export default function DispatchPanel() {
       {board.requests.length === 0 ? <div className="dispatch-empty"><PackageCheck /> Tất cả đơn đã được phân công.</div> : filtered.length===0?<div className="dispatch-empty"><Search/> Không tìm thấy đơn phù hợp bộ lọc.</div>:
         <><div className="dispatch-grid">{paged.map(request => {
           const teams = board.teams.filter(t => t.warehouseId === request.warehouseId
-            && !!request.scheduledDate && t.shiftDate.slice(0,10) === request.scheduledDate.slice(0,10));
+            && !!request.scheduledDate && t.shiftDate.slice(0,10) === request.scheduledDate.slice(0,10)
+            && (request.deliveryMethod==='DonorDropOff'
+              ? t.teamType==='ReceivingWarehouse'
+              : t.teamType!=='ReceivingWarehouse'));
           const selected = teamMap.get(selectedTeams[request.id]);
           return <article className="dispatch-card" key={request.id}>
             <div className="dispatch-card-top">
@@ -75,17 +78,26 @@ export default function DispatchPanel() {
             </div>
             <h3>{request.contactName} · {request.phoneNumber}</h3>
             <p><MapPin size={14}/>{request.address}</p>
+            <div className="dispatch-warehouse-destination">
+              <Warehouse size={14}/>
+              <span>Kho tiếp nhận</span>
+              <strong>{request.warehouseName}</strong>
+            </div>
             <small><CalendarDays size={13}/> Ngày hẹn: {request.scheduledDate?new Date(request.scheduledDate).toLocaleDateString('vi-VN'):'Chưa có'}</small>
-            <select value={selectedTeams[request.id] || ''} onChange={e => setSelectedTeams(v => ({...v,[request.id]:e.target.value}))}>
-              <option value="">Chọn receiving team cùng kho</option>
-              {teams.map(team => <option value={team.id} key={team.id}>
-                {team.teamName} · {team.shiftName} · {new Date(team.shiftDate).toLocaleDateString('vi-VN')}
-              </option>)}
-            </select>
-            {selected && <small><Users size={13}/> {selected.members.map(x => x.fullName).join(' & ')} · {selected.shiftTime}</small>}
-            <button onClick={() => assign(request.id)} disabled={loadingId === request.id || teams.length === 0}>
-              <Truck size={15}/>{loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
-            </button>
+            {request.deliveryMethod==='DonorDropOff'?<div className="dispatch-dropoff-policy"><Warehouse size={15}/><strong>Không cần phân công trước</strong></div>:<>
+              <select value={selectedTeams[request.id] || ''} onChange={e => setSelectedTeams(v => ({...v,[request.id]:e.target.value}))}>
+                <option value="">Chọn receiving team cùng kho</option>
+                {teams.map(team => <option value={team.id} key={team.id}>
+                  {team.teamName} · {team.shiftName} · {new Date(team.shiftDate).toLocaleDateString('vi-VN')}
+                </option>)}
+              </select>
+              <small className={`dispatch-team-summary${selected?'':' empty'}`} aria-hidden={!selected}>
+                {selected&&<><Users size={13}/> {selected.members.map(x => x.fullName).join(' & ')} · {selected.shiftTime}</>}
+              </small>
+              <button onClick={() => assign(request.id)} disabled={loadingId === request.id || teams.length === 0}>
+                <Truck size={15}/>{loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
+              </button>
+            </>}
           </article>;
         })}</div>{totalPages>1&&<nav className="dispatch-pagination" aria-label="Phân trang đơn chờ phân công"><button onClick={()=>setPage(x=>Math.max(1,x-1))} disabled={page===1}><ChevronLeft size={16}/> Trước</button>{pageItems(page,totalPages).map(value=>typeof value==='number'?<button className={value===page?'active':''} onClick={()=>setPage(value)} key={value}>{value}</button>:<span key={value}>…</span>)}<button onClick={()=>setPage(x=>Math.min(totalPages,x+1))} disabled={page===totalPages}>Sau <ChevronRight size={16}/></button></nav>}</>}
     </section>
