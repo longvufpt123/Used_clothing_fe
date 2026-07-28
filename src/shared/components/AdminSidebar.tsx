@@ -1,6 +1,7 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings, X } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags } from 'lucide-react';
 import './AdminSidebar.css';
 
 interface SidebarItem {
@@ -18,6 +19,8 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const isManager = location.pathname.startsWith('/manager');
   const basePath = isManager ? '/manager' : '/admin';
 
@@ -25,9 +28,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
     if (isManager) {
       return [
         { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
-        { label: 'Cấu hình ca làm việc', path: `${basePath}/schedule`, icon: <Truck size={18} /> },
+        { label: 'Ca làm việc', path: `${basePath}/shifts`, icon: <Truck size={18} /> },
+        { label: 'Điều phối tiếp nhận', path: `${basePath}/dispatch`, icon: <Users size={18} /> },
         { label: 'Quản lý tài khoản', path: `${basePath}/users`, icon: <Users size={18} /> },
         { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
+        { label: 'Danh mục phân loại', path: `${basePath}/categories`, icon: <Tags size={18} /> },
         { label: 'Kế hoạch lịch trình AI', path: `${basePath}/campaigns`, icon: <Leaf size={18} /> },
       ];
     } else {
@@ -65,10 +70,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
         ))}
       </nav>
       <div className="sidebar-footer">
-        <NavLink to="/logout" onClick={onCloseMobile} className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
+        <button type="button" onClick={()=>{logout();onCloseMobile();navigate('/login',{replace:true})}} className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
           <LogOut size={18} />
           <span>Đăng xuất</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   );

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Bell, Menu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import './AdminHeader.css';
 
@@ -13,20 +12,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   title = 'Bảng điều khiển',
   onOpenMobileMenu,
 }) => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
@@ -80,9 +73,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           )}
         </div>
 
-        {/* Custom User Dropdown */}
-        <div className="header-control-wrapper" ref={userMenuRef}>
-          <div className="header-profile-toggle" onClick={() => setShowUserMenu(!showUserMenu)}>
+        <div className="header-control-wrapper">
+          <div className="header-profile-toggle admin-profile-static">
             <div className="profile-avatar">
               <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Ảnh đại diện" />
             </div>
@@ -92,31 +84,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 {user?.role === 'Admin' ? 'Quản trị viên' : user?.role === 'Manager' ? 'Điều phối viên' : 'Nhân viên'}
               </span>
             </div>
-            <ChevronDown size={14} className={`chevron-icon ${showUserMenu ? 'rotated' : ''}`} />
           </div>
-
-          {showUserMenu && (
-            <div className="header-dropdown profile-dropdown glass">
-              <div className="dropdown-user-header">
-                <span className="user-email">{user?.userName || 'hoang.tv@usedclothing.vn'}</span>
-              </div>
-              <div className="dropdown-list">
-                <button className="dropdown-item-btn" onClick={() => { setShowUserMenu(false); navigate('/admin/profile'); }}>
-                  <User size={16} />
-                  <span>Trang cá nhân</span>
-                </button>
-                <button className="dropdown-item-btn" onClick={() => { setShowUserMenu(false); navigate('/admin/settings'); }}>
-                  <Settings size={16} />
-                  <span>Cài đặt hệ thống</span>
-                </button>
-                <div className="dropdown-divider"></div>
-                <button className="dropdown-item-btn text-danger" onClick={() => { setShowUserMenu(false); navigate('/logout'); }}>
-                  <LogOut size={16} />
-                  <span>Đăng xuất</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </header>

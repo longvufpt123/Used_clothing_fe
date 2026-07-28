@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Leaf, Shield, CheckCircle2, ChevronRight, Award, History, MapPin, Compass } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Leaf, Shield, CheckCircle2, ChevronRight, Award, History, MapPin, Compass, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import './Profile.css';
 
 export const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
 
@@ -34,6 +35,11 @@ export const Profile: React.FC = () => {
     .map((part: string) => part[0])
     .join('')
     .toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className={`profile-container container ${mounted ? 'is-mounted' : ''}`}>
@@ -67,7 +73,7 @@ export const Profile: React.FC = () => {
                 </span>
                 <h1 className="profile-name">{displayName}</h1>
                 <p className="profile-username">@{user?.userName || 'thanhvien'}</p>
-                <div className="profile-badges-row">
+              <div className="profile-badges-row">
                   <span className="badge-pill mini-badge">
                     <CheckCircle2 size={12} className="text-primary" />
                     Đã xác minh
@@ -77,6 +83,10 @@ export const Profile: React.FC = () => {
                     Hạng Bạc
                   </span>
                 </div>
+                <button type="button" className="btn-logout-pill" onClick={handleLogout}>
+                  <span className="btn-icon-circle"><LogOut size={15} /></span>
+                  Đăng xuất
+                </button>
               </div>
             </div>
           </div>

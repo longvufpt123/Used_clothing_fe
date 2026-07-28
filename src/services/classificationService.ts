@@ -5,8 +5,9 @@ export interface ClassifiedItem { id:string; itemCode:string; fabricType:string;
 export interface ClassificationBatchDetail extends ClassificationBatchSummary { items:ClassifiedItem[]; }
 export interface ConditionOption { id:string; text:string; grade:'A'|'B'|'C'; }
 export interface ConditionQuestion { id:string; text:string; displayOrder:number; options:ConditionOption[]; }
-export interface ClassificationCatalog { fabricTypes:string[]; clothingTypes:Record<string,string[]>; genders:string[]; targetUsers:string[]; sizes:string[]; conditionQuestions:ConditionQuestion[]; }
-export interface ClassifyItemPayload { fabricType:string; garmentGroup:string; clothingType:string; gender:string; targetUser:string; size:string; imageUrls:string[]; notes?:string; answers:{questionId:string;answerId:string}[]; }
+export interface CategoryOption { id:string; code:string; name:string; parentId?:string|null; sortOrder:number; }
+export interface ClassificationCatalog { fabricTypes:CategoryOption[]; garmentGroups:CategoryOption[]; clothingTypes:CategoryOption[]; genders:CategoryOption[]; targetUsers:CategoryOption[]; sizes:CategoryOption[]; conditionGrades:CategoryOption[]; conditionQuestions:ConditionQuestion[]; }
+export interface ClassifyItemPayload { fabricTypeId:string; garmentGroupId:string; clothingTypeId:string; genderId:string; targetUserId:string; sizeId:string; imageUrls:string[]; notes?:string; answers:{questionId:string;answerId:string}[]; }
 export interface GroupedClassifiedBatch { id:string; batchCode:string; classificationDate:string; fabricType:string; garmentGroup:string; clothingType:string; gender:string; targetUser:string; size:string; conditionGrade:'A'|'B'|'C'; processingDirection:string; totalItem:number; status:string; }
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch { items:ClassifiedItem[]; }
 
@@ -20,4 +21,5 @@ export const classificationService = {
   completeBatch: (id:string) => apiClient.post(`/classification-operations/batches/${id}/complete`),
   getGroupedBatches: (date?:string) => apiClient.get<unknown,GroupedClassifiedBatch[]>('/classification-operations/grouped-batches',{params:{date}}),
   getGroupedBatch: (id:string) => apiClient.get<unknown,GroupedClassifiedBatchDetail>(`/classification-operations/grouped-batches/${id}`),
+  sendGroupedBatchToWarehouse: (id:string) => apiClient.post(`/classification-operations/grouped-batches/${id}/send-to-warehouse`),
 };

@@ -1,50 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, PackagePlus, Archive, Truck, MapPin } from 'lucide-react';
+import { Archive, Boxes, Building2, ClipboardList, LayoutDashboard, PackagePlus } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
-import { getWarehouseBatches, getDistributions } from '@/utils/warehouseMockDb';
+import { warehouseService } from '@/services/warehouseService';
 
-/** Warehouse console frame with a workflow rail: receive → shelve → distribute → track. */
-export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [counts, setCounts] = useState({ inbound: 0, shelving: 0, distribute: 0, tracking: 0 });
-
-  useEffect(() => {
-    const refresh = () => {
-      const batches = getWarehouseBatches();
-      const dists = getDistributions();
-      setCounts({
-        inbound: batches.filter((b) => b.status === 'SendingToWarehouse').length,
-        shelving: batches.filter((b) => b.status === 'WarehouseReceived').length,
-        distribute: dists.filter((d) => d.status === 'Pending').length,
-        tracking: dists.filter((d) => d.status === 'Shipped' || d.trackingCode).length,
-      });
-    };
-    refresh();
-    window.addEventListener('storage', refresh);
-    return () => window.removeEventListener('storage', refresh);
-  }, []);
-
-  const nav: OpsNavItem[] = [
-    { to: '/warehouse', label: 'Tổng quan', icon: LayoutDashboard },
-    {
-      to: '/warehouse?tab=inbound',
-      label: 'Chờ nhập kho',
-      icon: PackagePlus,
-      count: counts.inbound,
-      matchPrefixes: ['/warehouse/receive'],
-      groupLabel: 'Quy trình',
-    },
-    { to: '/warehouse?tab=shelving', label: 'Xếp kệ tồn kho', icon: Archive, count: counts.shelving, matchPrefixes: ['/warehouse/storage'] },
-    { to: '/warehouse?tab=distribute', label: 'Gom & phân phối', icon: Truck, count: counts.distribute, matchPrefixes: ['/warehouse/distribute'] },
-    { to: '/warehouse?tab=tracking', label: 'Theo dõi vận đơn', icon: MapPin, count: counts.tracking, matchPrefixes: ['/warehouse/tracking'] },
-  ];
-
-  return (
-    <OpsLayout homePath="/warehouse" roleLabel="Bộ phận Kho" nav={nav}>
-      {children}
-    </OpsLayout>
-  );
+export const WarehouseShell: React.FC<{children:React.ReactNode}> = ({children}) => {
+ const location=useLocation();const [counts,setCounts]=useState({inbound:0,putaway:0,inventory:0});
+ useEffect(()=>{const refresh=()=>warehouseService.dashboard().then(x=>setCounts({inbound:x.pendingReceipt,putaway:x.awaitingPutaway,inventory:x.inventorySkuCount})).catch(()=>{});refresh();const id=window.setInterval(refresh,10000);return()=>window.clearInterval(id);},[location.pathname]);
+ const nav:OpsNavItem[]=[
+  {to:'/warehouse',label:'Tổng quan',icon:LayoutDashboard},
+  {to:'/warehouse?tab=inbound',label:'Chờ nhập kho',icon:PackagePlus,count:counts.inbound,matchPrefixes:['/warehouse/receive'],groupLabel:'Vận hành'},
+  {to:'/warehouse?tab=putaway',label:'Chờ xếp vị trí',icon:Archive,count:counts.putaway,matchPrefixes:['/warehouse/storage']},
+  {to:'/warehouse/inventory',label:'Tồn kho & vị trí',icon:Boxes,count:counts.inventory,matchPrefixes:['/warehouse/inventory']},
+  {to:'/warehouse/areas',label:'Khu vực kho',icon:Building2,matchPrefixes:['/warehouse/areas']},
+  {to:'/warehouse/transactions',label:'Sổ giao dịch',icon:ClipboardList,matchPrefixes:['/warehouse/transactions']},
+ ];
+ return <OpsLayout homePath="/warehouse" roleLabel="Bộ phận Kho" nav={nav}>{children}</OpsLayout>;
 };
-
 export default WarehouseShell;

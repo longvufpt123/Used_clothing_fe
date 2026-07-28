@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Truck, CheckCircle, Layers } from 'lucide-react';
+import { Truck, CheckCircle, Layers, Users } from 'lucide-react';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
 import { receivingService } from '@/services/receivingService';
 
@@ -9,7 +9,7 @@ import { receivingService } from '@/services/receivingService';
 export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [counts, setCounts] = useState({ receiving: 0, completed: 0, transferring: 0 });
+  const [counts, setCounts] = useState({ receiving: 0, completed: 0, transferring: 0, teams: 0 });
 
   useEffect(() => {
     const refresh = async () => {
@@ -19,8 +19,9 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({
         receiving: batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned').length,
         completed: batches.filter((b) => b.status === 'Completed').length,
         transferring: batches.filter((b) => b.status === 'SentToClassification').length,
+        teams: new Set(batches.map((b) => `${b.shiftId}-${b.teamName}`)).size,
       });
-      } catch { setCounts({ receiving: 0, completed: 0, transferring: 0 }); }
+      } catch { setCounts({ receiving: 0, completed: 0, transferring: 0, teams: 0 }); }
     };
     refresh();
   }, []);
@@ -35,6 +36,13 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({
     },
     { to: '/receiving?tab=completed', label: 'Đã gom xong', icon: CheckCircle, count: counts.completed },
     { to: '/receiving?tab=transferring', label: 'Đang chuyển đi', icon: Layers, count: counts.transferring },
+    {
+      to: '/receiving/team',
+      label: 'Team của tôi',
+      icon: Users,
+      count: counts.teams,
+      groupLabel: 'NHÂN SỰ',
+    },
   ];
 
   return (
