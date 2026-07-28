@@ -39,6 +39,9 @@ interface CreateDonationPayload {
   estimateWeight: number;
   pickupAddress: string;
   warehouseId: string;
+  contactName: string;
+  contactPhoneNumber: string;
+  deliveryMethod: 'StaffPickup' | 'DonorDropOff';
 }
 
 
@@ -57,6 +60,7 @@ interface DonorRequestSearchApiResponse {
   warehouseAddress: string;
   status: string;
   statusText: string;
+  deliveryMethod: string;
   createdAt?: string | null;
 }
 interface CreateDonationResponse {
@@ -183,6 +187,7 @@ export const Products: React.FC = () => {
   const [weight, setWeight] = useState('5-10');
   const [condition, setCondition] = useState('good');
   const [address, setAddress] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<'StaffPickup' | 'DonorDropOff'>('StaffPickup');
   const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
   const [warehouseId, setWarehouseId] = useState('');
   const [notes, setNotes] = useState('');
@@ -341,7 +346,8 @@ export const Products: React.FC = () => {
   // Handle donation registration submit
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !address || !pickupDate || !warehouseId) {
+    if (!name || !phone || !warehouseId ||
+        (deliveryMethod === 'StaffPickup' && (!address || !pickupDate))) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
       return;
     }
@@ -367,8 +373,11 @@ export const Products: React.FC = () => {
         ].filter(Boolean).join('\n'),
         imageUrls,
         estimateWeight: estimateWeightByOption[weight] ?? 0,
-        pickupAddress: address,
+        pickupAddress: deliveryMethod === 'StaffPickup' ? address : '',
         warehouseId,
+        contactName: name.trim(),
+        contactPhoneNumber: phone.trim(),
+        deliveryMethod,
       };
 
       const response = await apiClient.post<unknown, CreateDonationResponse>('/donor-requests', payload);
@@ -380,10 +389,14 @@ export const Products: React.FC = () => {
         category: selectedCategoryLabel,
         weight: selectedWeightLabel,
         condition: selectedConditionLabel,
-        address: payload.pickupAddress,
+        address: deliveryMethod === 'StaffPickup'
+          ? payload.pickupAddress
+          : warehouses.find(x => x.id === warehouseId)?.address || 'Kho tiếp nhận đã chọn',
         imageUrls,
         status: 'pending',
-        statusText: 'Chờ điều phối viên liên hệ thu gom',
+        statusText: deliveryMethod === 'StaffPickup'
+          ? 'Chờ điều phối viên liên hệ thu gom'
+          : 'Chờ người quyên góp mang hàng đến kho',
         date: new Date().toISOString().split('T')[0],
       };
 
@@ -393,6 +406,7 @@ export const Products: React.FC = () => {
       setName('');
       setPhone('');
       setAddress('');
+      setDeliveryMethod('StaffPickup');
       setPickupDate(getDefaultPickupDate());
       setNotes('');
       images.forEach(image => URL.revokeObjectURL(image.previewUrl));
@@ -525,17 +539,36 @@ export const Products: React.FC = () => {
                 onChange={(e) => setCondition(e.target.value)}
               />
 
-              <Input
-                label="Địa chỉ lấy hàng *"
-                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
+              <Select
+                label="Phương thức giao quần áo *"
+                options={[
+                  { value: 'StaffPickup', label: 'Nhân viên tiếp nhận đến lấy tại địa chỉ của tôi' },
+                  { value: 'DonorDropOff', label: 'Tôi sẽ tự mang quần áo đến kho' },
+                ]}
+                value={deliveryMethod}
+                onChange={(e) => setDeliveryMethod(e.target.value as 'StaffPickup' | 'DonorDropOff')}
               />
+
+              {deliveryMethod === 'StaffPickup' ? (
+                <Input
+                  label="Địa chỉ lấy hàng *"
+                  placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
+              ) : (
+                <div className="input-wrapper">
+                  <label className="input-label">Địa chỉ gửi hàng</label>
+                  <div className="custom-input" style={{ padding: '12px 14px' }}>
+                    {warehouses.find(x => x.id === warehouseId)?.address || 'Vui lòng chọn kho tiếp nhận bên dưới'}
+                  </div>
+                </div>
+              )}
 
               <div className="form-row">
                 <Input
-                  label="Ngay lay hang *"
+                  label={deliveryMethod === 'StaffPickup' ? 'Ngày lấy hàng *' : 'Ngày dự kiến mang đến kho'}
                   type="date"
                   value={pickupDate}
                   min={toLocalDateInputValue(new Date())}

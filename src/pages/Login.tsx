@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { useToast } from '@/context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { loginApi, registerApi } from '@/services/authService';
+import { loginApi, registerApi, resendVerificationApi, verifyRegistrationApi } from '@/services/authService';
 import './Login.css';
 
 // Login validation schema
@@ -23,11 +23,14 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 // Register validation schema
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
-  userName: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
+  userName: z.string().regex(/^[A-Za-z0-9._]{3,30}$/, 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm hoặc gạch dưới'),
   email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
-  phoneNumber: z.string().min(10, 'Số điện thoại phải có ít nhất 10 số'),
+  phoneNumber: z.string().regex(/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/, 'Số điện thoại Việt Nam không hợp lệ'),
+  verificationChannel: z.enum(['Email', 'Sms']),
   address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
-  password: z.string().min(6, 'Mật khẩu phải chứa ít nhất 6 ký tự'),
+  password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+    .regex(/[A-Z]/, 'Mật khẩu cần chữ hoa').regex(/\d/, 'Mật khẩu cần chữ số')
+    .regex(/[^A-Za-z0-9]/, 'Mật khẩu cần ký tự đặc biệt'),
   confirmPassword: z.string().min(6, 'Mật khẩu xác nhận phải chứa ít nhất 6 ký tự'),
   agreeTerms: z.boolean().refine((val) => val === true, {
     message: 'Bạn phải đồng ý với Điều khoản dịch vụ và Chính sách bảo mật',
@@ -42,6 +45,9 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 export const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verification, setVerification] = useState<{ userId: string; channel: 'Email' | 'Sms' } | null>(null);
+  const [emailCode, setEmailCode] = useState('');
+  const [smsCode, setSmsCode] = useState('');
   const [focusedField, setFocusedField] = useState<'email' | 'password' | 'name' | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -92,7 +98,6 @@ export const Login: React.FC = () => {
     register: registerLogin,
     handleSubmit: handleSubmitLogin,
     formState: { errors: loginErrors },
-    reset: resetLoginForm,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -114,6 +119,7 @@ export const Login: React.FC = () => {
       userName: '',
       email: '',
       phoneNumber: '',
+      verificationChannel: 'Email',
       address: '',
       password: '',
       confirmPassword: '',
@@ -159,27 +165,53 @@ export const Login: React.FC = () => {
   const onRegisterSubmit = async (data: RegisterFormValues) => {
     setLoading(true);
     try {
-      await registerApi({
+      const result = await registerApi({
         fullName: data.fullName,
         userName: data.userName,
         email: data.email,
         phoneNumber: data.phoneNumber,
+        verificationChannel: data.verificationChannel,
         address: data.address,
         password: data.password,
       });
-      toast.success('Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.');
-      setIsRegister(false);
-      resetRegisterForm();
-      resetLoginForm({
-        userName: data.userName,
-        password: '',
-      });
+      setVerification({ userId: result.userId, channel: data.verificationChannel });
+      toast.success(data.verificationChannel === 'Email'
+        ? 'Đã gửi mã xác nhận qua email.'
+        : 'Đã gửi mã xác nhận qua SMS.');
     } catch (error: any) {
       console.error(error);
       const errorMsg = error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
       toast.error(errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyChannel = async (channel: 'Email' | 'Sms') => {
+    if (!verification) return;
+    setLoading(true);
+    try {
+      const code = channel === 'Email' ? emailCode : smsCode;
+      const result = await verifyRegistrationApi(verification.userId, channel, code);
+      toast.success(result.message);
+      if (result.accountActivated) {
+        resetRegisterForm();
+        setVerification(null);
+        setIsRegister(false);
+        toast.success('Tài khoản đã kích hoạt. Bạn có thể đăng nhập.');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Mã xác nhận không hợp lệ.');
+    } finally { setLoading(false); }
+  };
+
+  const resendCode = async (channel: 'Email' | 'Sms') => {
+    if (!verification) return;
+    try {
+      await resendVerificationApi(verification.userId, channel);
+      toast.success(`Đã gửi lại mã ${channel === 'Email' ? 'email' : 'SMS'}.`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể gửi lại mã.');
     }
   };
 
@@ -324,7 +356,34 @@ export const Login: React.FC = () => {
             </button>
           </div>
 
-          {!isRegister ? (
+          {verification ? (
+            <div className="auth-form-wrapper fade-in">
+              <h3 className="login-title text-gradient">Xác nhận tài khoản</h3>
+              <p className="login-subtitle">
+                Nhập mã OTP 6 số đã gửi qua {verification.channel === 'Email' ? 'email' : 'SMS'}.
+                Mã có hiệu lực 5 phút.
+              </p>
+              <div className="login-form">
+                <Input label={`Mã xác nhận ${verification.channel === 'Email' ? 'email' : 'SMS'}`}
+                  placeholder="000000"
+                  value={verification.channel === 'Email' ? emailCode : smsCode}
+                  maxLength={6}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    verification.channel === 'Email' ? setEmailCode(value) : setSmsCode(value);
+                  }}
+                  icon={verification.channel === 'Email' ? <Mail size={18} /> : <Phone size={18} />} />
+                <Button type="button" isLoading={loading}
+                  disabled={(verification.channel === 'Email' ? emailCode : smsCode).length !== 6}
+                  onClick={() => verifyChannel(verification.channel)}>
+                  Xác nhận tài khoản
+                </Button>
+                <button type="button" className="auth-tab" onClick={() => resendCode(verification.channel)}>
+                  Gửi lại mã
+                </button>
+              </div>
+            </div>
+          ) : !isRegister ? (
             /* LOGIN FORM */
             <div className="auth-form-wrapper fade-in">
               <h3 className="login-title text-gradient">Cổng Thông Tin Hệ Thống</h3>
@@ -413,6 +472,16 @@ export const Login: React.FC = () => {
                   })}
                   onFocus={() => setFocusedField('name')}
                 />
+
+                <div>
+                  <div style={{ marginBottom: 8, fontWeight: 600 }}>Phương thức xác nhận tài khoản</div>
+                  <label style={{ marginRight: 20 }}>
+                    <input type="radio" value="Email" {...registerSignUp('verificationChannel')} /> Email
+                  </label>
+                  <label>
+                    <input type="radio" value="Sms" {...registerSignUp('verificationChannel')} /> SMS
+                  </label>
+                </div>
 
                 <Input
                   label="Địa chỉ"
