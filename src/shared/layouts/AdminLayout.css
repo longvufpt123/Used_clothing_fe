@@ -26,6 +26,27 @@
   display: none;
 }
 
+/* Back-office pages created before the shared theme tokens still contain a
+   handful of dark-only surfaces. Keep them aligned with the active theme. */
+[data-theme='light'] .admin-layout-wrapper .dashboard-filter-field select,
+[data-theme='light'] .admin-layout-wrapper .dashboard-filter-field input,
+[data-theme='light'] .admin-layout-wrapper .manager-account-filters,
+[data-theme='light'] .admin-layout-wrapper .manager-account-filters > div,
+[data-theme='light'] .admin-layout-wrapper .manager-account-table,
+[data-theme='light'] .admin-layout-wrapper .manager-account-pagination select,
+[data-theme='light'] .admin-layout-wrapper .manager-account-pagination button,
+[data-theme='light'] .admin-layout-wrapper .manager-account-modal > form,
+[data-theme='light'] .admin-layout-wrapper .delete-account-dialog,
+[data-theme='light'] .admin-layout-wrapper .account-form-grid input,
+[data-theme='light'] .admin-layout-wrapper .account-form-grid select {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+[data-theme='light'] .admin-layout-wrapper .account-table-head {
+  background: var(--color-bg-tertiary);
+}
+
 /* Sticky Page Header for Admin Pages */
 .admin-page-header {
   position: sticky;

@@ -10,6 +10,7 @@ export interface ClassificationCatalog { fabricTypes:CategoryOption[]; garmentGr
 export interface ClassifyItemPayload { fabricTypeId:string; garmentGroupId:string; clothingTypeId:string; genderId:string; targetUserId:string; sizeId:string; imageUrls:string[]; notes?:string; answers:{questionId:string;answerId:string}[]; }
 export interface GroupedClassifiedBatch { id:string; batchCode:string; classificationDate:string; fabricType:string; garmentGroup:string; clothingType:string; gender:string; targetUser:string; size:string; conditionGrade:'A'|'B'|'C'; processingDirection:string; totalItem:number; status:string; }
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch { items:ClassifiedItem[]; }
+export interface BulkWarehouseHandoffResult { sent:number; skipped:number; }
 
 export const classificationService = {
   getBatches: () => apiClient.get<unknown,ClassificationBatchSummary[]>('/classification-operations/batches'),
@@ -22,4 +23,9 @@ export const classificationService = {
   getGroupedBatches: (date?:string) => apiClient.get<unknown,GroupedClassifiedBatch[]>('/classification-operations/grouped-batches',{params:{date}}),
   getGroupedBatch: (id:string) => apiClient.get<unknown,GroupedClassifiedBatchDetail>(`/classification-operations/grouped-batches/${id}`),
   sendGroupedBatchToWarehouse: (id:string) => apiClient.post(`/classification-operations/grouped-batches/${id}/send-to-warehouse`),
+  sendGroupedBatchesToWarehouse: (ids:string[]) =>
+    apiClient.post<unknown,BulkWarehouseHandoffResult>(
+      '/classification-operations/grouped-batches/send-to-warehouse',
+      { groupedBatchIds: ids },
+    ),
 };

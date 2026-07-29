@@ -104,6 +104,8 @@ export const warehouseService = {
   putaway: (id:string,data:{locationId:string;notes?:string}) =>
     apiClient.post(`/warehouse-operations/batches/${id}/putaway`,data),
   inventory: (search?:string,warehouseId?:string) => apiClient.get<unknown,WarehouseInventory[]>('/warehouse-operations/inventory',{params:{search,warehouseId}}),
+  locationInventory: (locationId:string) =>
+    apiClient.get<unknown,WarehouseInventory[]>(`/warehouse-operations/locations/${locationId}/inventory`),
   transactions: (type?:string,warehouseId?:string) => apiClient.get<unknown,WarehouseTransaction[]>('/warehouse-operations/transactions',{params:{type,warehouseId}}),
   issue: (id:string,data:{quantity:number;weightKg:number;reason:string;referenceType?:string;referenceId?:string;notes?:string}) =>
     apiClient.post(`/warehouse-operations/inventory/${id}/issue`,data),

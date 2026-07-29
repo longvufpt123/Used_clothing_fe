@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Boxes, Building2, ChevronDown, ChevronRight, Layers3, MapPin, Package } from 'lucide-react';
+import { Boxes, Building2, ChevronDown, ChevronRight, Layers3, MapPin, Package, Scale, Search } from 'lucide-react';
 import { warehouseService } from '@/services/warehouseService';
-import type { WarehouseLayout } from '@/services/warehouseService';
+import type { WarehouseInventory, WarehouseLayout, WarehouseLocationLayout } from '@/services/warehouseService';
 import { useToast } from '@/context/ToastContext';
+import { Modal } from '@/components/common/Modal';
+import Pagination from '@/components/common/Pagination';
 import '@/styles/ops-shared.css';
 import './WarehouseAreas.css';
 
@@ -11,11 +13,28 @@ const percent=(current:number,capacity:number)=>capacity>0?Math.min(100,Math.rou
 export default function WarehouseAreas(){
   const toast=useToast();const [layout,setLayout]=useState<WarehouseLayout|null>(null);
   const [expanded,setExpanded]=useState<Record<string,boolean>>({});
+  const [selectedLocation,setSelectedLocation]=useState<WarehouseLocationLayout|null>(null);
+  const [locationInventory,setLocationInventory]=useState<WarehouseInventory[]>([]);
+  const [loadingInventory,setLoadingInventory]=useState(false);
+  const [search,setSearch]=useState('');
+  const [modalSearch,setModalSearch]=useState('');const [modalPage,setModalPage]=useState(1);
+  const pageSize=6;
   useEffect(()=>{warehouseService.layout().then(data=>{setLayout(data);setExpanded(Object.fromEntries(data.areas.map((a,i)=>[a.id,i===0])));})
     .catch(()=>toast.error('Không thể tải sơ đồ khu vực kho.'));},[]);
   const totals=useMemo(()=>({locations:layout?.areas.reduce((s,a)=>s+a.locations.length,0)||0,
     occupied:layout?.areas.reduce((s,a)=>s+a.locations.filter(l=>l.currentWeightKg>0).length,0)||0,
     items:layout?.areas.reduce((s,a)=>s+a.locations.reduce((n,l)=>n+l.itemQuantity,0),0)||0}),[layout]);
+  const filteredLocations=useMemo(()=>{if(!layout)return[];const q=search.trim().toLowerCase();return layout.areas.flatMap(area=>area.locations.map(location=>({area,location}))).filter(({area,location})=>!q||[area.areaName,location.locationCode,location.aisleCode,location.rackCode,location.shelfCode,location.binCode,location.preferredGarmentGroup,location.preferredProcessingDirection,location.status].some(value=>String(value||'').toLowerCase().includes(q)));},[layout,search]);
+  const filteredLocationIds=new Set(filteredLocations.map(x=>x.location.id));
+  const filteredModalInventory=useMemo(()=>{const q=modalSearch.trim().toLowerCase();return !q?locationInventory:locationInventory.filter(item=>[item.batchCode,item.sku,item.clothingType,item.fabricType,item.conditionGrade,item.gender,item.targetUser,item.size,item.processingDirection].some(value=>String(value||'').toLowerCase().includes(q)));},[locationInventory,modalSearch]);
+  const modalPages=Math.max(1,Math.ceil(filteredModalInventory.length/pageSize));const pagedModalInventory=filteredModalInventory.slice((modalPage-1)*pageSize,modalPage*pageSize);
+  useEffect(()=>setModalPage(1),[modalSearch,selectedLocation]);useEffect(()=>{if(modalPage>modalPages)setModalPage(modalPages);},[modalPage,modalPages]);
+  const openLocation=async(location:WarehouseLocationLayout)=>{
+    setSelectedLocation(location);setLocationInventory([]);setModalSearch('');setLoadingInventory(true);
+    try{setLocationInventory(await warehouseService.locationInventory(location.id));}
+    catch{toast.error('Không thể tải danh sách batch trong vị trí này.');}
+    finally{setLoadingInventory(false);}
+  };
   if(!layout)return <div className="ops-page">Đang tải sơ đồ kho...</div>;
   return <div className="ops-page">
     <header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">Sơ đồ lưu trữ</span>
@@ -27,7 +46,8 @@ export default function WarehouseAreas(){
       <div className="ops-stat-card"><span className="ops-stat-label">Sử dụng sức chứa</span><div className="ops-stat-value">{percent(layout.currentWeightKg,layout.capacityKg)}%</div><span className="ops-stat-foot">{layout.currentWeightKg.toFixed(1)} / {layout.capacityKg.toFixed(1)} kg</span></div>
     </div>
     <section><div className="ops-section-head"><h2>Các khu vực trong kho</h2><span>Chọn khu vực để xem hàng, kệ, tầng và ô</span></div>
-      <div className="warehouse-area-list">{layout.areas.map(area=>{const used=percent(area.currentWeightKg,area.capacityKg),open=expanded[area.id];
+      <div className="ops-list-toolbar"><label className="ops-list-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm khu vực, mã vị trí, hàng, kệ, hướng xử lý..."/></label><span className="ops-list-result">{filteredLocations.length} vị trí</span></div>
+      <div className="warehouse-area-list">{layout.areas.map(area=>{const used=percent(area.currentWeightKg,area.capacityKg),open=expanded[area.id];const visibleLocations=area.locations.filter(location=>filteredLocationIds.has(location.id));if(!visibleLocations.length)return null;
         return <article className="warehouse-area" key={area.id}>
           <button className="warehouse-area-head" onClick={()=>setExpanded(x=>({...x,[area.id]:!open}))}>
             <span className="warehouse-area-icon"><Layers3/></span><span className="warehouse-area-title"><b>{area.areaName}</b><small>{area.description||'Khu vực lưu trữ'}</small></span>
@@ -37,16 +57,31 @@ export default function WarehouseAreas(){
           <div className="warehouse-cap-track"><span style={{width:`${used}%`}}/></div>
           {open&&<div className="warehouse-area-body">
             {area.groups.length>0&&<div className="warehouse-groups">{area.groups.map(group=><span key={group.id}>{group.groupName}<small>{group.currentWeightKg.toFixed(1)}/{group.capacityKg.toFixed(1)} kg</small></span>)}</div>}
-            <div className="warehouse-location-grid">{area.locations.map(location=>{const load=percent(location.currentWeightKg,location.capacityKg);
-              return <div className={`warehouse-location ${location.status.toLowerCase()} ${load>=90?'full':''}`} key={location.id}>
+            <div className="warehouse-location-grid">{visibleLocations.map(location=>{const load=percent(location.currentWeightKg,location.capacityKg);
+              return <button type="button" className={`warehouse-location ${location.status.toLowerCase()} ${load>=90?'full':''}`} key={location.id} onClick={()=>void openLocation(location)}>
                 <div><b>{location.locationCode}</b><span>{location.status}</span></div>
                 <p>Hàng {location.aisleCode} · Kệ {location.rackCode} · Tầng {location.shelfCode} · Ô {location.binCode}</p>
                 <div className="warehouse-location-tags"><span>{location.preferredGarmentGroup||'Đa loại'}</span><span>{location.preferredProcessingDirection||'Linh hoạt'}</span></div>
                 <div className="warehouse-location-meter"><span style={{width:`${load}%`}}/></div>
                 <small>{location.currentWeightKg.toFixed(1)}/{location.capacityKg.toFixed(1)} kg · {location.inventoryCount} SKU · {location.itemQuantity} item</small>
-              </div>})}</div>
+              </button>})}</div>
           </div>}
-        </article>})}</div>
+        </article>})}{!filteredLocations.length&&<div className="ops-empty"><MapPin size={34}/><h4>Không có vị trí phù hợp</h4></div>}</div>
     </section>
+    <Modal isOpen={!!selectedLocation} onClose={()=>setSelectedLocation(null)}
+      title={selectedLocation?`Hàng lưu tại ${selectedLocation.locationCode}`:''} className="warehouse-location-modal">
+      {selectedLocation&&<div className="warehouse-location-summary">
+        <span><Scale size={16}/><b>{selectedLocation.currentWeightKg.toFixed(1)} kg</b> / {selectedLocation.capacityKg.toFixed(1)} kg</span>
+        <span><Package size={16}/><b>{selectedLocation.itemQuantity} item</b> · {selectedLocation.inventoryCount} SKU</span>
+      </div>}
+      {!loadingInventory&&locationInventory.length>0&&<div className="ops-list-toolbar"><label className="ops-list-search"><Search size={16}/><input value={modalSearch} onChange={e=>setModalSearch(e.target.value)} placeholder="Tìm batch, SKU, loại đồ..."/></label><span className="ops-list-result">{filteredModalInventory.length} batch</span></div>}
+      {loadingInventory?<div className="ops-empty"><span className="ops-spinner"/><h4>Đang tải hàng trong vị trí...</h4></div>:
+      filteredModalInventory.length?<><div className="warehouse-location-batches">{pagedModalInventory.map(item=><article key={item.id}>
+        <header><div><span>CLASSIFIED BATCH</span><strong>{item.batchCode}</strong></div><b>Nhãn {item.conditionGrade}</b></header>
+        <h4>{item.clothingType} · {item.fabricType}</h4>
+        <p>{item.gender} · {item.targetUser} · Size {item.size} · {item.processingDirection}</p>
+        <div><span><Package size={14}/>{item.quantity} item</span><span><Scale size={14}/>{item.totalWeightKg.toFixed(1)} kg</span><span>{item.sku}</span></div>
+      </article>)}</div>{filteredModalInventory.length>pageSize&&<div className="ops-list-pagination"><Pagination currentPage={modalPage} totalPages={modalPages} onPageChange={setModalPage}/></div>}</>:<div className="ops-empty"><Boxes size={34}/><h4>{locationInventory.length?'Không tìm thấy batch':'Vị trí đang trống'}</h4><p>{locationInventory.length?'Thử thay đổi từ khóa tìm kiếm.':'Chưa có Classified Batch nào được xếp vào vị trí này.'}</p></div>}
+    </Modal>
   </div>;
 }

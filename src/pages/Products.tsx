@@ -3,6 +3,7 @@ import { Search, PlusCircle, Clock, ShieldCheck, ArrowRight, ImagePlus, X, XCirc
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
+import AddressSearchMap from '@/components/common/AddressSearchMap';
 import { useToast } from '@/context/ToastContext';
 import apiClient from '@/services/api';
 import './Products.css';
@@ -550,11 +551,9 @@ export const Products: React.FC = () => {
               />
 
               {deliveryMethod === 'StaffPickup' ? (
-                <Input
-                  label="Địa chỉ lấy hàng *"
-                  placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                <AddressSearchMap
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={setAddress}
                   required
                 />
               ) : (

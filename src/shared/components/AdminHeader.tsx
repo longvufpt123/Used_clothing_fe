@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './AdminHeader.css';
 
 interface AdminHeaderProps {
@@ -13,6 +15,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onOpenMobileMenu,
 }) => {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const profilePath = location.pathname.startsWith('/manager') ? '/manager/profile' : '/admin/profile';
   const [showNotifications, setShowNotifications] = useState(false);
   
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -44,6 +50,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       </div>
       
       <div className="admin-header-right">
+        <button
+          type="button"
+          className="header-icon-btn admin-theme-toggle"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+          aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+        >
+          {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+        </button>
         {/* Notifications Icon with Dropdown */}
         <div className="header-control-wrapper" ref={notificationRef}>
           <button 
@@ -74,9 +89,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         </div>
 
         <div className="header-control-wrapper">
-          <div className="header-profile-toggle admin-profile-static">
+          <button type="button" className="header-profile-toggle admin-profile-button" onClick={() => navigate(profilePath)} title="Xem hồ sơ cá nhân">
             <div className="profile-avatar">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Ảnh đại diện" />
+              {user?.avatarUrl
+                ? <img src={user.avatarUrl} alt="Ảnh đại diện" />
+                : <span className="admin-avatar-fallback">{(user?.fullName || 'Manager').split(/\s+/).slice(-2).map(part=>part[0]).join('').toUpperCase()}</span>}
             </div>
             <div className="profile-info">
               <span className="profile-name">{user?.fullName || 'Trần Văn Hoàng'}</span>
@@ -84,7 +101,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 {user?.role === 'Admin' ? 'Quản trị viên' : user?.role === 'Manager' ? 'Điều phối viên' : 'Nhân viên'}
               </span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </header>

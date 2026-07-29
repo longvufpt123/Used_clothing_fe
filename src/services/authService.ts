@@ -17,6 +17,23 @@ export interface VerificationResponse {
   accountActivated: boolean;
   message: string;
 }
+export interface CurrentUserProfile {
+  id: string;
+  fullName: string;
+  userName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  role: string;
+  status: string;
+  avatarUrl: string | null;
+  warehouseId: string | null;
+  warehouseName: string | null;
+  warehouseAddress: string | null;
+  emailConfirmed: boolean;
+  phoneNumberConfirmed: boolean;
+  createAt: string | null;
+}
 
 export const loginApi = async (data: { userName: string; password: string }): Promise<AuthResponse> => {
   return apiClient.post<any, AuthResponse>('/auth/login', data);
@@ -41,3 +58,6 @@ export const verifyRegistrationApi = (
 
 export const resendVerificationApi = (userId: string, channel: 'Email' | 'Sms'): Promise<void> =>
   apiClient.post('/auth/resend-verification', { userId, channel });
+
+export const getCurrentUserProfileApi = (): Promise<CurrentUserProfile> =>
+  apiClient.get<unknown, CurrentUserProfile>('/auth/me');

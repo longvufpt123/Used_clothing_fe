@@ -46,10 +46,10 @@ interface DashboardData {
 
 const COLORS = ['#10c995', '#4598f7', '#ffb44a', '#8b7cf6', '#ef6b73'];
 const tooltipStyle = {
-  background: '#111c2d',
-  border: '1px solid #29384e',
+  background: 'var(--color-bg-elevated)',
+  border: '1px solid var(--color-border)',
   borderRadius: 10,
-  color: '#f8fafc',
+  color: 'var(--color-text-primary)',
 };
 
 const EmptyChart = () => (

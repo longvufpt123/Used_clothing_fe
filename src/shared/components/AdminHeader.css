@@ -92,12 +92,15 @@
   transition: background-color var(--transition-fast);
 }
 
-.admin-layout-header .header-profile-toggle.admin-profile-static {
-  cursor: default;
+.admin-layout-header .header-profile-toggle.admin-profile-button {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
-.admin-layout-header .header-profile-toggle.admin-profile-static:hover {
-  background: rgba(15, 23, 42, 0.42);
+.admin-layout-header .header-profile-toggle.admin-profile-button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .admin-layout-header .profile-avatar {
@@ -115,6 +118,30 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.admin-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.admin-theme-toggle {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+[data-theme='light'] .admin-layout-header .header-profile-toggle {
+  background: var(--color-bg-primary);
+}
+
+[data-theme='light'] .admin-layout-header .profile-avatar {
+  box-shadow: 0 0 0 2px rgba(255,255,255,.85);
 }
 
 .admin-layout-header .profile-info {

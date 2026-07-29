@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Layers, CheckCircle, Boxes } from 'lucide-react';
+import { LayoutDashboard, Layers, CheckCircle, Boxes, Send } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
 import { classificationService } from '@/services/classificationService';
@@ -9,7 +9,12 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const location = useLocation();
-  const [counts, setCounts] = useState({ pending: 0, classified: 0, grouped: 0 });
+  const [counts, setCounts] = useState({
+    pending: 0,
+    classified: 0,
+    grouped: 0,
+    sentToWarehouse: 0,
+  });
 
   useEffect(() => {
     const refresh = async () => {
@@ -21,7 +26,8 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({
       setCounts({
         pending: batches.filter((b) => b.status === 'PendingConfirmation' || b.status === 'PendingClassification' || b.status === 'Classifying').length,
         classified: batches.filter((b) => b.status === 'Classified').length,
-        grouped: groupedBatches.length,
+        grouped: groupedBatches.filter((batch) => batch.status === 'Open').length,
+        sentToWarehouse: groupedBatches.filter((batch) => batch.status !== 'Open').length,
       });
       } catch { /* Keep the last counts during a temporary API failure. */ }
     };
@@ -49,6 +55,7 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({
     },
     { to: '/classification?tab=classified', label: 'Đã phân loại', icon: CheckCircle, count: counts.classified, matchPrefixes: ['/classification/batches'] },
     { to: '/classification/groups', label: 'Batch đã gom nhóm', icon: Boxes, count: counts.grouped, matchPrefixes: ['/classification/groups'] },
+    { to: '/classification/warehouse-handoffs', label: 'Đã gửi sang kho', icon: Send, count: counts.sentToWarehouse },
   ];
 
   return (
