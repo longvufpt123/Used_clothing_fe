@@ -55,6 +55,8 @@ import WarehouseTransactions from '@/pages/warehouse/Transactions';
 import WarehouseAreas from '@/pages/warehouse/WarehouseAreas';
 import DistributePrep from '@/pages/warehouse/DistributePrep';
 import WarehouseTracking from '@/pages/warehouse/Tracking';
+import DistributionPortal from '@/pages/distribution/DistributionPortal';
+import OrganizationShell from '@/shared/layouts/OrganizationShell';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -131,6 +133,10 @@ export const AppRoutes: React.FC = () => {
       <Route path="/manager/campaigns" element={<RoleRoute role="Manager"><ManagerCampaigns /></RoleRoute>} />
       <Route path="/manager/categories" element={<RoleRoute role="Manager"><ManagerCategories /></RoleRoute>} />
       <Route path="/manager/profile" element={<RoleRoute role="Manager"><AdminLayout><StaffProfile /></AdminLayout></RoleRoute>} />
+      <Route path="/manager/distributions" element={<RoleRoute role="Manager"><AdminLayout><DistributionPortal mode="manager" /></AdminLayout></RoleRoute>} />
+      <Route path="/organization/distributions" element={<RoleRoute role="CharityOrganization"><OrganizationShell><DistributionPortal mode="organization" /></OrganizationShell></RoleRoute>} />
+      <Route path="/organization/distributions/:requestId" element={<RoleRoute role="CharityOrganization"><OrganizationShell><DistributionPortal mode="organization" /></OrganizationShell></RoleRoute>} />
+      <Route path="/organization/profile" element={<RoleRoute role="CharityOrganization"><OrganizationShell><StaffProfile /></OrganizationShell></RoleRoute>} />
 
       {/* Receiving Staff pages */}
       <Route
@@ -258,6 +264,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/warehouse/transactions" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><WarehouseTransactions /></WarehouseShell></RoleRoute>} />
       <Route path="/warehouse/areas" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><WarehouseAreas /></WarehouseShell></RoleRoute>} />
       <Route path="/warehouse/profile" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><StaffProfile /></WarehouseShell></RoleRoute>} />
+      <Route path="/warehouse/distributions" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><DistributionPortal mode="warehouse" /></WarehouseShell></RoleRoute>} />
       <Route
         path="/warehouse/distribute/:requestId"
         element={

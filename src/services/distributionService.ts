@@ -1,0 +1,11 @@
+import apiClient from './api';
+export interface CatalogItem{inventoryId:string;classifiedBatchId:string;batchCode:string;sku:string;clothingType:string;fabricType:string;gender:string;targetUser:string;size:string;grade:string;availableQuantity:number;availableWeight:number;items:{itemCode:string;clothingType:string;fabricType:string;gender:string;targetUser:string;size:string;imageUrls:string[];notes?:string}[]}
+export interface DistributionRequest{id:string;code:string;organizationName:string;warehouseName:string;recipientName:string;recipientPhone:string;toAddress:string;status:string;notes?:string;rejectReason?:string;requestedAt:string;issueSlipCode?:string;warehouseIssuedAt?:string;issuedBy?:string;ghnOrderCode?:string;ghnStatus?:string;ghnUpdatedAt?:string;items:{id:string;inventoryId:string;batchCode:string;sku:string;clothingType:string;fabricType:string;gender:string;targetUser:string;size:string;requestedQuantity:number;approvedQuantity:number;issuedQuantity:number;requestedWeight:number;issuedWeight:number}[];shipmentHistory:{status:string;description?:string;source:string;occurredAt:string}[]}
+export const distributionService={
+ catalog:(warehouseId?:string)=>apiClient.get<unknown,{warehouses:{id:string;warehouseName:string;address:string}[];items:CatalogItem[]}>(`/distribution-operations/catalog${warehouseId?`?warehouseId=${warehouseId}`:''}`),
+ create:(body:unknown)=>apiClient.post('/distribution-operations',body), mine:()=>apiClient.get<unknown,DistributionRequest[]>('/distribution-operations/mine'),
+ update:(id:string,body:unknown)=>apiClient.put(`/distribution-operations/${id}`,body), remove:(id:string)=>apiClient.delete(`/distribution-operations/${id}`),
+ manager:()=>apiClient.get<unknown,DistributionRequest[]>('/distribution-operations/manager'), approve:(id:string,approved:boolean,notes?:string)=>apiClient.patch(`/distribution-operations/${id}/approval`,{approved,notes}),
+ warehouse:()=>apiClient.get<unknown,DistributionRequest[]>('/distribution-operations/warehouse'),issue:(id:string,notes?:string)=>apiClient.post(`/distribution-operations/${id}/issue`,{notes}),
+ ghn:(id:string,body:unknown)=>apiClient.post(`/distribution-operations/${id}/ghn`,body),refresh:(id:string)=>apiClient.post(`/distribution-operations/${id}/ghn/refresh`),
+};

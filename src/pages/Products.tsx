@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, PlusCircle, Clock, ShieldCheck, ArrowRight, ImagePlus, X, XCircle, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -67,10 +68,12 @@ interface DonorRequestSearchApiResponse {
 interface CreateDonationResponse {
   message?: string;
   Message?: string;
+  requestId?: string;
+  RequestId?: string;
 }
 
 const MAX_DONATION_IMAGES = 5;
-const DEFAULT_PICKUP_OFFSET_DAYS = 1;
+const PICKUP_CUTOFF_MINUTES = 11 * 60;
 
 const toLocalDateInputValue = (date: Date) => {
   const year = date.getFullYear();
@@ -79,11 +82,19 @@ const toLocalDateInputValue = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const getDefaultPickupDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + DEFAULT_PICKUP_OFFSET_DAYS);
+const getVietnamNow = () =>
+  new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+
+const getEarliestPickupDate = () => {
+  const date = getVietnamNow();
+  const currentMinutes = date.getHours() * 60 + date.getMinutes();
+  if (currentMinutes >= PICKUP_CUTOFF_MINUTES) {
+    date.setDate(date.getDate() + 1);
+  }
   return toLocalDateInputValue(date);
 };
+
+const getDefaultPickupDate = getEarliestPickupDate;
 
 const estimateWeightByOption: Record<string, number> = {
   'under-5': 3,
@@ -176,10 +187,11 @@ const INITIAL_DONATIONS: DonationRequest[] = [
 ];
 
 export const Products: React.FC = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const showToastError = toast.error;
   const [activeTab, setActiveTab] = useState<'register' | 'tracker'>('register');
-  const [donations, setDonations] = useState<DonationRequest[]>(INITIAL_DONATIONS);
+  const [, setDonations] = useState<DonationRequest[]>(INITIAL_DONATIONS);
 
   // Form states
   const [name, setName] = useState('');
@@ -413,11 +425,9 @@ export const Products: React.FC = () => {
       images.forEach(image => URL.revokeObjectURL(image.previewUrl));
       setImages([]);
       
-      // Switch tab to tracker and automatically search
-      setActiveTab('tracker');
-      setSearchPhone(phone);
-      setSearchResults([newRequest, ...donations.filter(d => d.phone === phone)]);
       toast.success(response.message || response.Message || 'Dang ky thanh cong! Ma quyen gop cua ban la: ' + code);
+      const createdRequestId = response.requestId || response.RequestId;
+      navigate(createdRequestId ? `/my-orders?created=${createdRequestId}` : '/my-orders');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Dang ky quyen gop that bai.');
       setLoading(false);
@@ -481,11 +491,11 @@ export const Products: React.FC = () => {
           Đăng ký quyên góp mới
         </button>
         <button
-          className={`tab-btn glass ${activeTab === 'tracker' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tracker')}
+          className="tab-btn glass"
+          onClick={() => navigate('/my-orders')}
         >
           <Search size={18} style={{ marginRight: '6px' }} />
-          Tra cứu & Theo dõi đơn
+          Đơn của tôi
         </button>
       </div>
 
@@ -570,12 +580,12 @@ export const Products: React.FC = () => {
                   label={deliveryMethod === 'StaffPickup' ? 'Ngày lấy hàng *' : 'Ngày dự kiến mang đến kho'}
                   type="date"
                   value={pickupDate}
-                  min={toLocalDateInputValue(new Date())}
+                  min={getEarliestPickupDate()}
                   onChange={(e) => setPickupDate(e.target.value)}
                   required
                 />
                 <Select
-                  label="Kho tiep nhan *"
+                  label="Kho tiếp nhận *"
                   options={warehouseOptions.length > 0 ? warehouseOptions : [{ value: '', label: warehouseLoading ? 'Dang tai danh sach kho...' : 'Khong co kho tiep nhan' }]}
                   value={warehouseId}
                   onChange={(e) => setWarehouseId(e.target.value)}

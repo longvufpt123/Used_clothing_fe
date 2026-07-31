@@ -84,6 +84,103 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
+/* Shared popup surfaces. Keep every dialog readable when switching themes,
+   including feature-specific modals that do not use the common Modal. */
+:is(
+  .ops-modal,
+  .rcv-modal,
+  .rcv-dropoff-modal,
+  .product-modal,
+  .delete-request-modal,
+  .export-modal-card,
+  .manager-team-modal,
+  .manager-route-modal,
+  .manager-year-modal,
+  .teams-year-modal,
+  .teams-shift-detail,
+  .warehouse-layout-editor,
+  .order-detail-modal,
+  .modal-content-900
+) {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+:is(
+  .ops-modal,
+  .rcv-modal,
+  .rcv-dropoff-modal,
+  .product-modal,
+  .delete-request-modal,
+  .export-modal-card,
+  .manager-team-modal,
+  .manager-route-modal,
+  .manager-year-modal,
+  .teams-year-modal,
+  .teams-shift-detail,
+  .warehouse-layout-editor,
+  .order-detail-modal,
+  .modal-content-900
+) :is(h1, h2, h3, h4, strong, label) {
+  color: var(--color-text-primary);
+}
+
+:is(
+  .ops-modal,
+  .rcv-modal,
+  .rcv-dropoff-modal,
+  .product-modal,
+  .delete-request-modal,
+  .manager-team-modal,
+  .manager-route-modal,
+  .manager-year-modal,
+  .teams-year-modal,
+  .teams-shift-detail,
+  .warehouse-layout-editor,
+  .order-detail-modal,
+  .modal-content-900
+) :is(input, select, textarea) {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+:is(
+  .modal-overlay,
+  .ops-modal-overlay,
+  .rcv-modal-overlay,
+  .rcv-dropoff-modal-backdrop,
+  .product-modal-backdrop,
+  .manager-modal-backdrop,
+  .order-detail-overlay,
+  .export-modal-overlay
+) {
+  z-index: var(--z-modal);
+}
+
+[data-theme='light'] :is(
+  .modal-overlay,
+  .ops-modal-overlay,
+  .rcv-modal-overlay,
+  .rcv-dropoff-modal-backdrop,
+  .product-modal-backdrop,
+  .manager-modal-backdrop,
+  .order-detail-overlay,
+  .export-modal-overlay
+) {
+  background-color: rgba(15, 23, 42, 0.48);
+}
+
+/* Keep native date/time controls readable in both themes. */
+:root:not([data-theme='light']) input:is([type='date'], [type='datetime-local'], [type='time']) {
+  color-scheme: dark;
+}
+
+[data-theme='light'] input:is([type='date'], [type='datetime-local'], [type='time']) {
+  color-scheme: light;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminSidebar from '@/shared/components/AdminSidebar';
-import AdminHeader from '@/shared/components/AdminHeader';
+import { Menu } from 'lucide-react';
 import './AdminLayout.css';
 
 interface AdminLayoutProps {
@@ -31,7 +31,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         />
       )}
       <div className="admin-layout-main">
-        <AdminHeader onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
+        <button type="button" className="admin-floating-menu" onClick={() => setIsMobileMenuOpen(true)} aria-label="Mở menu quản trị"><Menu size={20}/></button>
         <main className="admin-content-area">{children}</main>
       </div>
     </div>

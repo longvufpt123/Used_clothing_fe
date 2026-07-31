@@ -1233,3 +1233,44 @@
 .ops-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}.ops-list-search{display:flex;min-width:min(420px,100%);align-items:center;gap:9px;padding:0 13px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-secondary)}.ops-list-search svg{flex:0 0 auto;color:var(--color-text-muted)}.ops-list-search input{width:100%;min-height:42px;border:0;outline:0;background:transparent;color:var(--color-text-primary)}.ops-list-search input::placeholder{color:var(--color-text-muted)}.ops-list-result{font-size:.78rem;color:var(--color-text-muted);white-space:nowrap}.ops-list-pagination{display:flex;justify-content:center;margin-top:20px}.ops-list-pagination .pagination-nav{margin:0}
 @media(max-width:650px){.ops-list-toolbar{align-items:stretch;flex-direction:column}.ops-list-search{min-width:0}.ops-list-result{white-space:normal}}
 
+/* Warehouse transaction cards: compact summaries; full audit data lives in the detail modal. */
+.ops-transaction-list { align-items: stretch; }
+.ops-transaction-card { min-height: 245px; height: 100%; }
+.ops-transaction-card:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.ops-transaction-heading { min-width: 0; }
+.ops-transaction-heading .ops-card-code { overflow-wrap: anywhere; }
+.ops-transaction-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:18px 0 14px; }
+.ops-transaction-summary > div { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:2px 8px; min-width:0; padding:12px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-bg-primary); }
+.ops-transaction-summary svg { grid-row:1 / span 2; color:var(--color-primary); }
+.ops-transaction-summary span { color:var(--color-text-muted); font-size:.72rem; }
+.ops-transaction-summary strong { color:var(--color-text-primary); font-size:.92rem; }
+.ops-transaction-note { display:-webkit-box; overflow:hidden; margin:0 0 12px; color:var(--color-text-secondary); font-size:.82rem; line-height:1.45; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.ops-transaction-modal { width:min(920px,100%); }
+.ops-transaction-modal-badge { margin-bottom:18px; }
+.ops-transaction-lines { display:grid; gap:14px; }
+.ops-transaction-line { padding:16px; border:1px solid var(--color-border); border-radius:14px; background:var(--color-bg-secondary); }
+.ops-transaction-line-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.ops-transaction-line-head span { color:var(--color-text-muted); font-size:.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.ops-transaction-line-head strong { color:var(--color-primary); overflow-wrap:anywhere; text-align:right; }
+.ops-transaction-location strong { overflow-wrap:anywhere; }
+.ops-transaction-line-note { margin:12px 0 0; color:var(--color-text-secondary); }
+
+@media(max-width:720px){
+  .ops-transaction-summary { grid-template-columns:1fr; }
+  .ops-transaction-card { min-height:0; }
+  .ops-transaction-line-head { flex-direction:column; }
+  .ops-transaction-line-head strong { text-align:left; }
+}
+
+.ops-provenance{display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;margin-top:12px;padding:11px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-secondary)}.ops-provenance>strong{padding-top:4px;color:var(--color-text-secondary);font-size:.72rem}.ops-provenance>div{display:flex;gap:6px;flex-wrap:wrap}.ops-provenance span{padding:4px 7px;border:1px solid color-mix(in srgb,var(--color-primary) 30%,var(--color-border));border-radius:7px;background:var(--color-primary-light);color:var(--color-primary);font-family:monospace;font-size:.69rem;font-weight:800}
+
+/* Keep warehouse inventory cards aligned regardless of wrapped codes or labels. */
+.ops-inventory-card{display:flex;min-height:100%;flex-direction:column}
+.ops-inventory-card .ops-card-top{min-height:76px;align-items:flex-start}
+.ops-inventory-card>h3{display:-webkit-box;min-height:48px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.ops-inventory-card .ops-kv-grid{flex:1;align-content:start}
+.ops-inventory-card .ops-kv{min-width:0}
+.ops-inventory-card .ops-kv strong{overflow-wrap:anywhere}
+.ops-inventory-card .ops-actions{margin-top:auto;padding-top:16px}
+.ops-inventory-card .ops-actions .ops-btn{flex:1 1 0;justify-content:center}
+

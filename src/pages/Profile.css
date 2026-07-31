@@ -255,6 +255,7 @@
 
 /* Nested CTA - Logout Button in Button */
 .btn-logout-pill {
+  margin-top: 10px;
   position: relative;
   display: flex;
   align-items: center;

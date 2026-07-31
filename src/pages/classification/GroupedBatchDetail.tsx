@@ -75,6 +75,7 @@ export default function GroupedBatchDetail() {
           ['Hướng xử lý', directionLabel[group.processingDirection] || group.processingDirection], ['Tổng item', String(group.totalItem)],
         ].map(([key, value]) => <div className="ops-kv" key={key}><span>{key}</span><strong>{value}</strong></div>)}
       </div>
+      <div className="ops-provenance"><strong>Nguồn Donation Request</strong><div>{group.donationRequestCodes.map(code=><span key={code}>{code}</span>)}</div></div>
     </section>
 
     <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>

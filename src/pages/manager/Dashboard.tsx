@@ -211,9 +211,9 @@ export default function ManagerDashboard() {
                         <stop offset="100%" stopColor="#10c995" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#26364c" vertical={false} />
-                    <XAxis dataKey="day" tickLine={false} axisLine={false} stroke="#8fa0b8" fontSize={12} />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="#8fa0b8" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                    <XAxis dataKey="day" tickLine={false} axisLine={false} stroke="var(--color-text-secondary)" fontSize={12} />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="var(--color-text-secondary)" fontSize={12} />
                     <Tooltip contentStyle={tooltipStyle} />
                     <Area type="monotone" name="Donation Request" dataKey="donationRequests" stroke="#10c995" strokeWidth={2} fill="url(#requestGradient)" />
                     <Area type="monotone" name="Batch nhập kho" dataKey="inboundBatches" stroke="#4598f7" strokeWidth={2} fill="transparent" />
@@ -255,9 +255,9 @@ function ChartCard({ title, subtitle, data = [] }: { title: string; subtitle: st
         {!hasData ? <EmptyChart /> : (
           <ResponsiveContainer width="100%" height={205}>
             <BarChart data={data} margin={{ top: 12, right: 6, left: -24, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#26364c" vertical={false} />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="#8fa0b8" fontSize={11} interval={0} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="#8fa0b8" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--color-text-secondary)" fontSize={11} interval={0} />
+              <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="var(--color-text-secondary)" fontSize={11} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value}`, 'Số lượng']} />
               <Bar dataKey="count" radius={[7, 7, 0, 0]} maxBarSize={52}>
                 {data.map((item, index) => <Cell key={item.key} fill={COLORS[index % COLORS.length]} />)}

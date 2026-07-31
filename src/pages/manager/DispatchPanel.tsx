@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight, FilterX, MapPin, PackageCheck, Search, Truck, Users, Warehouse } from 'lucide-react';
 import { receivingService } from '@/services/receivingService';
 import type { DispatchBoard } from '@/services/receivingService';
 import { useToast } from '@/context/ToastContext';
+import { vietnamDateKeyFromUtc } from '@/utils/dateTime';
 import './DispatchPanel.css';
 
 const normalize=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -15,6 +17,7 @@ const pageItems=(page:number,total:number):(number|string)[]=>{
 
 export default function DispatchPanel() {
   const toast = useToast();
+  const [searchParams] = useSearchParams();
   const [board, setBoard] = useState<DispatchBoard>({ requests: [], teams: [] });
   const [selectedTeams, setSelectedTeams] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId] = useState<string>();
@@ -23,10 +26,26 @@ export default function DispatchPanel() {
   const [methodFilter,setMethodFilter]=useState('');
   const [search,setSearch]=useState('');
   const [page,setPage]=useState(1);
+  const [focusedRequestId,setFocusedRequestId]=useState<string>();
   const pageSize=8;
   const load = () => receivingService.getDispatchBoard().then(setBoard)
     .catch(() => toast.error('Không thể tải dữ liệu điều phối.'));
   useEffect(() => { void load(); }, []);
+
+  useEffect(()=>{
+    const requestId=searchParams.get('requestId');
+    if(!requestId||!board.requests.length)return;
+    const request=board.requests.find(x=>x.id===requestId);
+    if(!request)return;
+    setWarehouseFilter(request.warehouseId);
+    setDateFilter(request.scheduledDate?.slice(0,10)||'');
+    setMethodFilter(request.deliveryMethod);
+    setSearch(request.code);
+    setPage(1);
+    setFocusedRequestId(requestId);
+    const timer=window.setTimeout(()=>setFocusedRequestId(undefined),4000);
+    return()=>window.clearTimeout(timer);
+  },[board.requests,searchParams]);
 
   const teamMap = useMemo(() => new Map(board.teams.map(t => [t.id, t])), [board.teams]);
   const warehouses=useMemo(()=>Array.from(new Map(board.requests.map(x=>[x.warehouseId,x.warehouseName])).entries()).map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name)),[board.requests]);
@@ -65,11 +84,13 @@ export default function DispatchPanel() {
         <><div className="dispatch-grid">{paged.map(request => {
           const teams = board.teams.filter(t => t.warehouseId === request.warehouseId
             && !!request.scheduledDate && t.shiftDate.slice(0,10) === request.scheduledDate.slice(0,10)
+            && !(vietnamDateKeyFromUtc(request.createdAt) === request.scheduledDate.slice(0,10)
+              && Number(t.shiftTime.slice(0,2)) < 12)
             && (request.deliveryMethod==='DonorDropOff'
               ? t.teamType==='ReceivingWarehouse'
               : t.teamType!=='ReceivingWarehouse'));
           const selected = teamMap.get(selectedTeams[request.id]);
-          return <article className="dispatch-card" key={request.id}>
+          return <article className={`dispatch-card${focusedRequestId===request.id?' notification-focus':''}`} key={request.id}>
             <div className="dispatch-card-top">
               <b>{request.code}</b>
               <span className={request.deliveryMethod === 'DonorDropOff' ? 'dropoff' : 'pickup'}>

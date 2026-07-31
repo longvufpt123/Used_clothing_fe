@@ -160,11 +160,6 @@ export const StaffProfile: React.FC = () => {
             <span>Email</span>
             <strong>{profile.emailConfirmed ? 'Đã xác minh' : 'Chưa xác minh'}</strong>
           </div>
-          <div className={profile.phoneNumberConfirmed ? 'verified' : ''}>
-            <CheckCircle2 size={20} />
-            <span>Số điện thoại</span>
-            <strong>{profile.phoneNumberConfirmed ? 'Đã xác minh' : 'Chưa xác minh'}</strong>
-          </div>
         </div>
       </section>
     </div>

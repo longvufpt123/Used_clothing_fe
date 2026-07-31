@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Boxes, Building2, ChevronDown, ChevronRight, Layers3, MapPin, Package, Scale, Search } from 'lucide-react';
+import { Boxes, Building2, ChevronDown, ChevronRight, ImageOff, Layers3, MapPin, Package, Scale, Search, ShoppingBag, X } from 'lucide-react';
 import { warehouseService } from '@/services/warehouseService';
-import type { WarehouseInventory, WarehouseLayout, WarehouseLocationLayout } from '@/services/warehouseService';
+import type { WarehouseBatch, WarehouseInventory, WarehouseLayout, WarehouseLocationLayout } from '@/services/warehouseService';
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/common/Modal';
 import Pagination from '@/components/common/Pagination';
 import '@/styles/ops-shared.css';
+import '@/pages/distribution/ProductCatalogModal.css';
 import './WarehouseAreas.css';
 
 const percent=(current:number,capacity:number)=>capacity>0?Math.min(100,Math.round(current/capacity*100)):0;
@@ -18,7 +19,9 @@ export default function WarehouseAreas(){
   const [loadingInventory,setLoadingInventory]=useState(false);
   const [search,setSearch]=useState('');
   const [modalSearch,setModalSearch]=useState('');const [modalPage,setModalPage]=useState(1);
+  const [activeBatch,setActiveBatch]=useState<WarehouseBatch|null>(null);const [loadingBatch,setLoadingBatch]=useState(false);const [itemPage,setItemPage]=useState(1);
   const pageSize=6;
+  const itemPageSize=6;
   useEffect(()=>{warehouseService.layout().then(data=>{setLayout(data);setExpanded(Object.fromEntries(data.areas.map((a,i)=>[a.id,i===0])));})
     .catch(()=>toast.error('Không thể tải sơ đồ khu vực kho.'));},[]);
   const totals=useMemo(()=>({locations:layout?.areas.reduce((s,a)=>s+a.locations.length,0)||0,
@@ -35,6 +38,14 @@ export default function WarehouseAreas(){
     catch{toast.error('Không thể tải danh sách batch trong vị trí này.');}
     finally{setLoadingInventory(false);}
   };
+  const openBatch=async(item:WarehouseInventory)=>{
+    setLoadingBatch(true);setItemPage(1);
+    try{setActiveBatch(await warehouseService.getBatch(item.classifiedBatchId));}
+    catch{toast.error('Không thể tải chi tiết item trong Classified Batch này.');}
+    finally{setLoadingBatch(false);}
+  };
+  const itemPages=Math.max(1,Math.ceil((activeBatch?.items.length||0)/itemPageSize));
+  const pagedItems=activeBatch?.items.slice((itemPage-1)*itemPageSize,itemPage*itemPageSize)||[];
   if(!layout)return <div className="ops-page">Đang tải sơ đồ kho...</div>;
   return <div className="ops-page">
     <header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">Sơ đồ lưu trữ</span>
@@ -76,12 +87,20 @@ export default function WarehouseAreas(){
       </div>}
       {!loadingInventory&&locationInventory.length>0&&<div className="ops-list-toolbar"><label className="ops-list-search"><Search size={16}/><input value={modalSearch} onChange={e=>setModalSearch(e.target.value)} placeholder="Tìm batch, SKU, loại đồ..."/></label><span className="ops-list-result">{filteredModalInventory.length} batch</span></div>}
       {loadingInventory?<div className="ops-empty"><span className="ops-spinner"/><h4>Đang tải hàng trong vị trí...</h4></div>:
-      filteredModalInventory.length?<><div className="warehouse-location-batches">{pagedModalInventory.map(item=><article key={item.id}>
+      filteredModalInventory.length?<><div className="warehouse-location-batches">{pagedModalInventory.map(item=><button type="button" key={item.id} onClick={()=>void openBatch(item)}>
         <header><div><span>CLASSIFIED BATCH</span><strong>{item.batchCode}</strong></div><b>Nhãn {item.conditionGrade}</b></header>
         <h4>{item.clothingType} · {item.fabricType}</h4>
         <p>{item.gender} · {item.targetUser} · Size {item.size} · {item.processingDirection}</p>
-        <div><span><Package size={14}/>{item.quantity} item</span><span><Scale size={14}/>{item.totalWeightKg.toFixed(1)} kg</span><span>{item.sku}</span></div>
-      </article>)}</div>{filteredModalInventory.length>pageSize&&<div className="ops-list-pagination"><Pagination currentPage={modalPage} totalPages={modalPages} onPageChange={setModalPage}/></div>}</>:<div className="ops-empty"><Boxes size={34}/><h4>{locationInventory.length?'Không tìm thấy batch':'Vị trí đang trống'}</h4><p>{locationInventory.length?'Thử thay đổi từ khóa tìm kiếm.':'Chưa có Classified Batch nào được xếp vào vị trí này.'}</p></div>}
+        <div className="warehouse-batch-compact-footer"><span><Package size={14}/>{item.quantity} item</span><span><Scale size={14}/>{item.totalWeightKg.toFixed(1)} kg</span><small>Xem sản phẩm</small></div>
+      </button>)}</div>{filteredModalInventory.length>pageSize&&<div className="ops-list-pagination"><Pagination currentPage={modalPage} totalPages={modalPages} onPageChange={setModalPage}/></div>}</>:<div className="ops-empty"><Boxes size={34}/><h4>{locationInventory.length?'Không tìm thấy batch':'Vị trí đang trống'}</h4><p>{locationInventory.length?'Thử thay đổi từ khóa tìm kiếm.':'Chưa có Classified Batch nào được xếp vào vị trí này.'}</p></div>}
     </Modal>
+    {loadingBatch&&<div className="product-modal-backdrop"><div className="warehouse-product-loading"><span className="ops-spinner"/><b>Đang tải sản phẩm...</b></div></div>}
+    {activeBatch&&<div className="product-modal-backdrop" onMouseDown={()=>setActiveBatch(null)}><section className="product-modal warehouse-product-modal" role="dialog" aria-modal="true" onMouseDown={event=>event.stopPropagation()}>
+      <header><div><span>DANH SÁCH SẢN PHẨM</span><h2>{activeBatch.clothingType} · {activeBatch.fabricType}</h2><p>{activeBatch.batchCode} · Nhãn {activeBatch.conditionGrade}</p></div><button type="button" aria-label="Đóng" onClick={()=>setActiveBatch(null)}><X/></button></header>
+      <div className="product-modal-summary"><span><ShoppingBag/>{activeBatch.items.length} sản phẩm</span><span>{activeBatch.gender}</span><span>{activeBatch.targetUser}</span><span>Size {activeBatch.size}</span><span>{activeBatch.processingDirection}</span></div>
+      <div className="product-grid">{pagedItems.map(item=><article className="product-tile" key={item.id}><div className="product-image">{item.imageUrls?.[0]?<img src={item.imageUrls[0]} alt={`${item.clothingType} ${item.itemCode}`}/>:<div><ImageOff/><span>Chưa có ảnh</span></div>}<span className="product-grade">Nhãn {item.conditionGrade}</span></div><div className="product-info"><small>{item.itemCode}</small><h3>{item.clothingType}</h3><p>{item.fabricType}</p><div><span>{item.gender}</span><span>{item.targetUser}</span><span>Size {item.size}</span></div>{item.notes&&<em>{item.notes}</em>}</div></article>)}</div>
+      {activeBatch.items.length>itemPageSize&&<div className="warehouse-product-pagination"><span>Hiển thị {(itemPage-1)*itemPageSize+1}–{Math.min(itemPage*itemPageSize,activeBatch.items.length)} / {activeBatch.items.length} sản phẩm</span><Pagination currentPage={itemPage} totalPages={itemPages} onPageChange={setItemPage}/></div>}
+      <footer><div><b>{activeBatch.items.length}</b><span> sản phẩm trong batch</span></div><div><button type="button" className="secondary" onClick={()=>setActiveBatch(null)}>Đóng</button></div></footer>
+    </section></div>}
   </div>;
 }

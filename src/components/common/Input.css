@@ -40,6 +40,32 @@
   padding-left: 2.5rem;
 }
 
+.custom-input.has-date-icon {
+  padding-right: 2.75rem;
+}
+
+.custom-input.has-date-icon::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+.input-date-icon {
+  position: absolute;
+  right: 0.875rem;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.input-date-icon:hover {
+  color: var(--color-primary);
+}
+
 .input-icon-left {
   position: absolute;
   left: 0.875rem;
