@@ -22,6 +22,7 @@ import {
   type DistributionRequest,
 } from "@/services/distributionService";
 import { useToast } from "@/context/ToastContext";
+import ghnAdministrative from "@/ghnAdministrative.json";
 import "./DistributionPortal.css";
 import "./ProductCatalogModal.css";
 
@@ -58,10 +59,15 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const [ghnSubmitting, setGhnSubmitting] = useState(false);
   const [ghnErrors, setGhnErrors] = useState<Record<string, string>>({});
   const [ghnForm, setGhnForm] = useState({
+    provinceId: "",
+    provinceName: "",
     paymentTypeId: "1",
+    serviceTypeId: "2",
     requiredNote: "KHONGCHOXEMHANG",
     toDistrictId: "",
+    districtName: "",
     toWardCode: "",
+    wardName: "",
   });
   const [form, setForm] = useState({
     recipientName: "",
@@ -290,24 +296,35 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const openGhnForm = (request: DistributionRequest) => {
     setGhnTarget(request);
     setGhnErrors({});
-    setGhnForm({ paymentTypeId: "1", requiredNote: "KHONGCHOXEMHANG", toDistrictId: "", toWardCode: "" });
+    setGhnForm({ provinceId: "", provinceName: "", paymentTypeId: "1", serviceTypeId: "2", requiredNote: "KHONGCHOXEMHANG", toDistrictId: "", districtName: "", toWardCode: "", wardName: "" });
   };
+
+  const ghnDistricts = useMemo(
+    () => ghnAdministrative.districts.filter((district) => String(district.provinceId) === ghnForm.provinceId),
+    [ghnForm.provinceId],
+  );
+  const ghnWards = useMemo(
+    () => ghnAdministrative.wards.filter((ward) => String(ward.districtId) === ghnForm.toDistrictId),
+    [ghnForm.toDistrictId],
+  );
 
   const createGhnShipment = async () => {
     if (!ghnTarget) return;
     const errors: Record<string, string> = {};
     const districtId = Number(ghnForm.toDistrictId);
+    if (!ghnForm.provinceId) errors.provinceId = "Vui lòng chọn tỉnh/thành phố trong danh sách.";
     if (!ghnForm.toDistrictId.trim() || !Number.isInteger(districtId) || districtId <= 0)
-      errors.toDistrictId = "Vui lòng nhập mã quận/huyện GHN hợp lệ.";
-    if (!ghnForm.toWardCode.trim()) errors.toWardCode = "Vui lòng nhập mã phường/xã GHN.";
+      errors.toDistrictId = "Vui lòng chọn quận/huyện trong danh sách.";
+    if (!ghnForm.toWardCode.trim()) errors.toWardCode = "Vui lòng chọn phường/xã trong danh sách.";
     if (!ghnForm.paymentTypeId) errors.paymentTypeId = "Vui lòng chọn bên thanh toán phí.";
+    if (!ghnForm.serviceTypeId) errors.serviceTypeId = "Vui lòng chọn loại dịch vụ GHN.";
     if (!ghnForm.requiredNote) errors.requiredNote = "Vui lòng chọn yêu cầu giao hàng.";
     setGhnErrors(errors);
     if (Object.keys(errors).length) return;
     try {
       setGhnSubmitting(true);
       await distributionService.ghn(ghnTarget.id, {
-        paymentTypeId: Number(ghnForm.paymentTypeId), requiredNote: ghnForm.requiredNote,
+        paymentTypeId: Number(ghnForm.paymentTypeId), serviceTypeId: Number(ghnForm.serviceTypeId), requiredNote: ghnForm.requiredNote,
         toDistrictId: districtId, toWardCode: ghnForm.toWardCode.trim(),
       });
       toast.success("Đã tạo vận đơn GHN.");
@@ -615,14 +632,37 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <div className="wide"><span>Địa chỉ giao hàng</span><strong>{ghnTarget.toAddress}</strong></div>
             </div>
             <form onSubmit={(event) => { event.preventDefault(); createGhnShipment(); }}>
-              <label className={ghnErrors.toDistrictId ? "invalid" : ""}>
-                <span>Mã quận/huyện GHN <b>*</b></span>
-                <input type="number" min="1" value={ghnForm.toDistrictId} onChange={(event) => { setGhnForm((current) => ({ ...current, toDistrictId: event.target.value })); setGhnErrors((current) => ({ ...current, toDistrictId: "" })); }} placeholder="Ví dụ: 3695" />
+              <label className={`ghn-admin-field ${ghnErrors.provinceId ? "invalid" : ""}`}>
+                <span>Tỉnh/thành phố <b>*</b></span>
+                <div><Search /><input list="ghn-provinces" value={ghnForm.provinceName} onChange={(event) => {
+                  const value = event.target.value;
+                  const province = ghnAdministrative.provinces.find((item) => `${item.name} — ${item.id}` === value);
+                  setGhnForm((current) => ({ ...current, provinceName: value, provinceId: province ? String(province.id) : "", districtName: "", toDistrictId: "", wardName: "", toWardCode: "" }));
+                  setGhnErrors((current) => ({ ...current, provinceId: "", toDistrictId: "", toWardCode: "" }));
+                }} placeholder="Tìm tỉnh/thành phố..." autoComplete="off" /></div>
+                <datalist id="ghn-provinces">{ghnAdministrative.provinces.map((item) => <option key={item.id} value={`${item.name} — ${item.id}`} />)}</datalist>
+                {ghnErrors.provinceId && <small>{ghnErrors.provinceId}</small>}
+              </label>
+              <label className={`ghn-admin-field ${ghnErrors.toDistrictId ? "invalid" : ""}`}>
+                <span>Quận/huyện <b>*</b></span>
+                <div><Search /><input list="ghn-districts" disabled={!ghnForm.provinceId} value={ghnForm.districtName} onChange={(event) => {
+                  const value = event.target.value;
+                  const district = ghnDistricts.find((item) => `${item.name} — ${item.id}` === value);
+                  setGhnForm((current) => ({ ...current, districtName: value, toDistrictId: district ? String(district.id) : "", wardName: "", toWardCode: "" }));
+                  setGhnErrors((current) => ({ ...current, toDistrictId: "", toWardCode: "" }));
+                }} placeholder={ghnForm.provinceId ? "Tìm quận/huyện..." : "Chọn tỉnh/thành phố trước"} autoComplete="off" /></div>
+                <datalist id="ghn-districts">{ghnDistricts.map((item) => <option key={item.id} value={`${item.name} — ${item.id}`} />)}</datalist>
                 {ghnErrors.toDistrictId && <small>{ghnErrors.toDistrictId}</small>}
               </label>
-              <label className={ghnErrors.toWardCode ? "invalid" : ""}>
-                <span>Mã phường/xã GHN <b>*</b></span>
-                <input value={ghnForm.toWardCode} onChange={(event) => { setGhnForm((current) => ({ ...current, toWardCode: event.target.value })); setGhnErrors((current) => ({ ...current, toWardCode: "" })); }} placeholder="Ví dụ: 90737" />
+              <label className={`ghn-admin-field ${ghnErrors.toWardCode ? "invalid" : ""}`}>
+                <span>Phường/xã <b>*</b></span>
+                <div><Search /><input list="ghn-wards" disabled={!ghnForm.toDistrictId} value={ghnForm.wardName} onChange={(event) => {
+                  const value = event.target.value;
+                  const ward = ghnWards.find((item) => `${item.name} — ${item.code}` === value);
+                  setGhnForm((current) => ({ ...current, wardName: value, toWardCode: ward?.code || "" }));
+                  setGhnErrors((current) => ({ ...current, toWardCode: "" }));
+                }} placeholder={ghnForm.toDistrictId ? "Tìm phường/xã..." : "Chọn quận/huyện trước"} autoComplete="off" /></div>
+                <datalist id="ghn-wards">{ghnWards.map((item) => <option key={`${item.districtId}-${item.code}`} value={`${item.name} — ${item.code}`} />)}</datalist>
                 {ghnErrors.toWardCode && <small>{ghnErrors.toWardCode}</small>}
               </label>
               <label className={ghnErrors.paymentTypeId ? "invalid" : ""}>
@@ -630,6 +670,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <select value={ghnForm.paymentTypeId} onChange={(event) => setGhnForm((current) => ({ ...current, paymentTypeId: event.target.value }))}>
                   <option value="1">Bên gửi thanh toán</option><option value="2">Bên nhận thanh toán</option>
                 </select>
+              </label>
+              <label className={ghnErrors.serviceTypeId ? "invalid" : ""}>
+                <span>Loại dịch vụ GHN <b>*</b></span>
+                <select value={ghnForm.serviceTypeId} onChange={(event) => setGhnForm((current) => ({ ...current, serviceTypeId: event.target.value }))}>
+                  <option value="2">Giao hàng tiêu chuẩn</option>
+                  <option value="5">Hàng nặng</option>
+                </select>
+                {ghnErrors.serviceTypeId && <small>{ghnErrors.serviceTypeId}</small>}
               </label>
               <label className={ghnErrors.requiredNote ? "invalid" : ""}>
                 <span>Yêu cầu khi giao hàng <b>*</b></span>
