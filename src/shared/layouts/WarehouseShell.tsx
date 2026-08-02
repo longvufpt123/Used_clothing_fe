@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Archive, Boxes, Building2, ClipboardList, LayoutDashboard, PackagePlus } from 'lucide-react';
+import { Archive, Boxes, Building2, ClipboardList, LayoutDashboard, PackagePlus, HandHeart } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
 import { warehouseService } from '@/services/warehouseService';
@@ -14,6 +14,7 @@ export const WarehouseShell: React.FC<{children:React.ReactNode}> = ({children})
   {to:'/warehouse/inventory',label:'Tồn kho & vị trí',icon:Boxes,count:counts.inventory,matchPrefixes:['/warehouse/inventory']},
   {to:'/warehouse/areas',label:'Khu vực kho',icon:Building2,matchPrefixes:['/warehouse/areas']},
   {to:'/warehouse/transactions',label:'Sổ giao dịch',icon:ClipboardList,matchPrefixes:['/warehouse/transactions']},
+  {to:'/warehouse/distributions',label:'Xuất kho từ thiện',icon:HandHeart,matchPrefixes:['/warehouse/distributions','/warehouse/tracking']},
  ];
  return <OpsLayout homePath="/warehouse" roleLabel="Bộ phận Kho" nav={nav}>{children}</OpsLayout>;
 };

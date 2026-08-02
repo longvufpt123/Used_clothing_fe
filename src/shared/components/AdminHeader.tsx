@@ -1,7 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import React from 'react';
+import { Menu, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './AdminHeader.css';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 interface AdminHeaderProps {
   title?: string;
@@ -13,26 +16,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onOpenMobileMenu,
 }) => {
   const { user } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
-  
-  const notificationRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const notifications = [
-    { id: 1, text: 'Đơn hàng mới tiếp nhận từ kho Quận 7', time: '5 phút trước', read: false },
-    { id: 2, text: 'Chiến dịch xanh dệt tái chế đạt mốc 1000kg', time: '1 giờ trước', read: false },
-    { id: 3, text: 'Lịch thu gom hôm nay đã được cập nhật', time: '2 giờ trước', read: true }
-  ];
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const profilePath = location.pathname.startsWith('/manager') ? '/manager/profile' : '/admin/profile';
 
   return (
     <header className="admin-layout-header glass">
@@ -44,39 +31,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       </div>
       
       <div className="admin-header-right">
-        {/* Notifications Icon with Dropdown */}
-        <div className="header-control-wrapper" ref={notificationRef}>
-          <button 
-            className={`header-icon-btn ${showNotifications ? 'active' : ''}`} 
-            onClick={() => setShowNotifications(!showNotifications)}
-            title="Thông báo"
-          >
-            <Bell size={20} />
-            <span className="notification-badge"></span>
-          </button>
-          
-          {showNotifications && (
-            <div className="header-dropdown notification-dropdown glass">
-              <div className="dropdown-header">
-                <h4>Thông báo mới</h4>
-                <button className="mark-read-btn">Đọc tất cả</button>
-              </div>
-              <div className="dropdown-list">
-                {notifications.map((noti) => (
-                  <div key={noti.id} className={`dropdown-item ${noti.read ? 'read' : 'unread'}`}>
-                    <p className="noti-text">{noti.text}</p>
-                    <span className="noti-time">{noti.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          className="header-icon-btn admin-theme-toggle"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+          aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+        >
+          {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+        </button>
+        <NotificationBell />
 
         <div className="header-control-wrapper">
-          <div className="header-profile-toggle admin-profile-static">
+          <button type="button" className="header-profile-toggle admin-profile-button" onClick={() => navigate(profilePath)} title="Xem hồ sơ cá nhân">
             <div className="profile-avatar">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Ảnh đại diện" />
+              {user?.avatarUrl
+                ? <img src={user.avatarUrl} alt="Ảnh đại diện" />
+                : <span className="admin-avatar-fallback">{(user?.fullName || 'Manager').split(/\s+/).slice(-2).map(part=>part[0]).join('').toUpperCase()}</span>}
             </div>
             <div className="profile-info">
               <span className="profile-name">{user?.fullName || 'Trần Văn Hoàng'}</span>
@@ -84,7 +55,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 {user?.role === 'Admin' ? 'Quản trị viên' : user?.role === 'Manager' ? 'Điều phối viên' : 'Nhân viên'}
               </span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </header>

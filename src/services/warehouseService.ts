@@ -24,7 +24,7 @@ export interface WarehouseBatch {
   clothingType:string; gender:string; targetUser:string; size:string; conditionGrade:'A'|'B'|'C';
   processingDirection:string; expectedItemCount:number; expectedWeightKg:number; status:string;
   sentAt?:string; receivedAt?:string; receivedWeightKg?:number; receivedItemCount?:number;
-  receiptNotes?:string; items:ClassifiedItem[];
+  receiptNotes?:string; donationRequestCodes:string[]; items:ClassifiedItem[];
 }
 export interface StorageLocation {
   id:string; locationCode:string; areaName:string; aisleCode:string; rackCode:string;
@@ -37,12 +37,12 @@ export interface WarehouseInventory {
   fabricType:string; garmentGroup:string; clothingType:string; gender:string; targetUser:string; size:string;
   conditionGrade:'A'|'B'|'C'; processingDirection:string; quantity:number; reservedQuantity:number;
   availableQuantity:number; totalWeightKg:number; reservedWeightKg:number; availableWeightKg:number;
-  status:string; storedAt?:string;
+  status:string; storedAt?:string; donationRequestCodes:string[];
 }
 export interface TransactionItem {
   id:string; inventoryId:string; sku:string; classifiedBatchCode?:string; quantity:number; weightKg:number;
   quantityBefore:number; quantityAfter:number; weightBefore:number; weightAfter:number;
-  sourceLocationCode?:string; destinationLocationCode?:string; notes?:string;
+  sourceLocationCode?:string; destinationLocationCode?:string; notes?:string; donationRequestCodes:string[];
 }
 export interface WarehouseTransaction {
   id:string; transactionCode:string; transactionType:'RECEIPT'|'PUTAWAY'|'MOVE'|'OUT'|string;
@@ -52,6 +52,7 @@ export interface WarehouseTransaction {
 export interface WarehouseClassifiedBatchTrace {
   id:string;batchCode:string;status:string;clothingType:string;conditionGrade:string;
   processingDirection:string;itemCount:number;weightKg:number;inventorySku?:string;locationCode?:string;
+  donationRequestCodes:string[];
 }
 export interface WarehouseIntakeTrace {
   id:string;batchCode:string;intakeDate:string;status:string;routeName?:string;
@@ -104,6 +105,8 @@ export const warehouseService = {
   putaway: (id:string,data:{locationId:string;notes?:string}) =>
     apiClient.post(`/warehouse-operations/batches/${id}/putaway`,data),
   inventory: (search?:string,warehouseId?:string) => apiClient.get<unknown,WarehouseInventory[]>('/warehouse-operations/inventory',{params:{search,warehouseId}}),
+  locationInventory: (locationId:string) =>
+    apiClient.get<unknown,WarehouseInventory[]>(`/warehouse-operations/locations/${locationId}/inventory`),
   transactions: (type?:string,warehouseId?:string) => apiClient.get<unknown,WarehouseTransaction[]>('/warehouse-operations/transactions',{params:{type,warehouseId}}),
   issue: (id:string,data:{quantity:number;weightKg:number;reason:string;referenceType?:string;referenceId?:string;notes?:string}) =>
     apiClient.post(`/warehouse-operations/inventory/${id}/issue`,data),

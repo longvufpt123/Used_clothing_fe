@@ -6,7 +6,7 @@ export interface ReceivingRequest { id:string; batchId:string; code:string; dono
 export interface ReceivingBatch { id:string; code:string; route:string; date:string; shiftId:string; shiftName:string; shiftStatus:string; startTime:string; endTime:string; teamName:string; warehouseAddress:string; teamMembers:TeamMember[]; status:'Planned'|'Receiving'|'Completed'|'SentToClassification'; requests:ReceivingRequest[]; }
 interface ApiRequest { id:string; batchId:string; code:string; donorName:string; phoneNumber:string; pickupAddress:string; deliveryMethod:string; description:string; estimateWeight:number; actualWeight?:number|null; pickupDate?:string; status:string; notes?:string; imageUrls?:string[]; }
 interface ApiBatch { id:string; code:string; route:string; date:string; shiftId:string; shiftName:string; shiftStatus:string; startTime:string; endTime:string; teamName:string; warehouseAddress:string; teamMembers:TeamMember[]; status:ReceivingBatch['status']; requests:ApiRequest[]; }
-export interface DispatchRequest { id:string; code:string; contactName:string; phoneNumber:string; deliveryMethod:string; address:string; scheduledDate?:string; warehouseId:string; warehouseName:string; }
+export interface DispatchRequest { id:string; code:string; contactName:string; phoneNumber:string; deliveryMethod:string; address:string; scheduledDate?:string; warehouseId:string; warehouseName:string; createdAt?:string; }
 export interface DispatchTeam { id:string; teamName:string; teamType:string; shiftId:string; shiftName:string; shiftDate:string; shiftTime:string; warehouseId:string; members:TeamMember[]; }
 export interface DispatchBoard { requests:DispatchRequest[]; teams:DispatchTeam[]; }
 export interface WarehouseDutyContext {
