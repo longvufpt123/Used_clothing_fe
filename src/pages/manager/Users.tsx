@@ -80,6 +80,10 @@ export default function ManagerUsers() {
   };
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (![form.fullName, form.userName, form.email, form.phoneNumber, form.roleId, form.address].every(value => value?.trim())) {
+      toast.error('Vui lòng nhập đầy đủ tất cả trường bắt buộc.'); return;
+    }
+    if (editing === 'create' && !form.password?.trim()) { toast.error('Vui lòng nhập mật khẩu ban đầu.'); return; }
     if (needsWarehouse && !form.warehouseId) { toast.error('Vui lòng chọn kho làm việc.'); return; }
     setSaving(true);
     try {
@@ -161,15 +165,15 @@ export default function ManagerUsers() {
         {editing && <div className="manager-account-modal"><form onSubmit={save}>
           <header><div><span>{editing === 'create' ? 'TẠO TÀI KHOẢN' : 'CHỈNH SỬA TÀI KHOẢN'}</span><h2>{editing === 'create' ? 'Thông tin tài khoản mới' : editing.fullName}</h2></div><button type="button" onClick={() => setEditing(null)}>×</button></header>
           <div className="account-form-grid">
-            <label>Họ và tên<input required minLength={2} value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} /></label>
-            <label>Username<input required minLength={4} value={form.userName} onChange={e => setForm({ ...form, userName: e.target.value })} /></label>
-            <label>Email<input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
-            <label>Số điện thoại<input required pattern="0[0-9]{9}" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
-            <label>Vai trò<select required value={form.roleId} onChange={e => setForm({ ...form, roleId: e.target.value, warehouseId: null })}>{roles.map(x => <option key={x.id} value={x.id}>{roleLabels[x.name] ?? x.name}</option>)}</select></label>
-            {needsWarehouse && <label>Kho làm việc<select required value={form.warehouseId ?? ''} onChange={e => setForm({ ...form, warehouseId: e.target.value || null })}><option value="">Chọn kho</option>{warehouses.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}
-            <label className="wide">Địa chỉ<input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
-            {editing === 'create' ? <label className="wide">Mật khẩu ban đầu<input required type="password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Ít nhất 8 ký tự, chữ hoa, số và ký tự đặc biệt" /></label> :
-              <><label>Trạng thái<select value={form.userStatus} onChange={e => setForm({ ...form, userStatus: e.target.value })}><option value="Active">Đang hoạt động</option><option value="Inactive">Tạm ngưng</option></select></label><label>Mật khẩu mới (không bắt buộc)<input type="password" minLength={8} value={form.newPassword ?? ''} onChange={e => setForm({ ...form, newPassword: e.target.value })} /></label></>}
+            <label><span>Họ và tên <b>*</b></span><input required minLength={2} value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} /></label>
+            <label><span>Username <b>*</b></span><input required minLength={4} value={form.userName} onChange={e => setForm({ ...form, userName: e.target.value })} /></label>
+            <label><span>Email <b>*</b></span><input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
+            <label><span>Số điện thoại <b>*</b></span><input required pattern="0[0-9]{9}" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
+            <label><span>Vai trò <b>*</b></span><select required value={form.roleId} onChange={e => setForm({ ...form, roleId: e.target.value, warehouseId: null })}>{roles.map(x => <option key={x.id} value={x.id}>{roleLabels[x.name] ?? x.name}</option>)}</select></label>
+            {needsWarehouse && <label><span>Kho làm việc <b>*</b></span><select required value={form.warehouseId ?? ''} onChange={e => setForm({ ...form, warehouseId: e.target.value || null })}><option value="">Chọn kho</option>{warehouses.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}
+            <label className="wide"><span>Địa chỉ <b>*</b></span><input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
+            {editing === 'create' ? <label className="wide"><span>Mật khẩu ban đầu <b>*</b></span><input required type="password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Ít nhất 8 ký tự, chữ hoa, số và ký tự đặc biệt" /></label> :
+              <><label><span>Trạng thái <b>*</b></span><select required value={form.userStatus} onChange={e => setForm({ ...form, userStatus: e.target.value })}><option value="Active">Đang hoạt động</option><option value="Inactive">Tạm ngưng</option></select></label><label><span>Mật khẩu mới <small>(không bắt buộc)</small></span><input type="password" minLength={8} value={form.newPassword ?? ''} onChange={e => setForm({ ...form, newPassword: e.target.value })} /></label></>}
           </div>
           <footer><button type="button" onClick={() => setEditing(null)}>Hủy</button><button disabled={saving} type="submit">{saving ? 'Đang lưu...' : 'Lưu tài khoản'}</button></footer>
         </form></div>}

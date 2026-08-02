@@ -25,6 +25,7 @@ import ManagerCharityInventory from '@/pages/manager/CharityInventory';
 import ManagerCampaigns from '@/pages/manager/Campaigns';
 import ManagerUsers from '@/pages/manager/Users';
 import ManagerCategories from '@/pages/manager/Categories';
+import ManagerConditionCriteria from '@/pages/manager/ConditionCriteria';
 import AdminLayout from '@/shared/layouts/AdminLayout';
 
 // Receiving Staff pages
@@ -132,6 +133,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/manager/inventory" element={<RoleRoute role="Manager"><ManagerCharityInventory /></RoleRoute>} />
       <Route path="/manager/campaigns" element={<RoleRoute role="Manager"><ManagerCampaigns /></RoleRoute>} />
       <Route path="/manager/categories" element={<RoleRoute role="Manager"><ManagerCategories /></RoleRoute>} />
+      <Route path="/manager/condition-criteria" element={<RoleRoute role="Manager"><ManagerConditionCriteria /></RoleRoute>} />
       <Route path="/manager/profile" element={<RoleRoute role="Manager"><AdminLayout><StaffProfile /></AdminLayout></RoleRoute>} />
       <Route path="/manager/distributions" element={<RoleRoute role="Manager"><AdminLayout><DistributionPortal mode="manager" /></AdminLayout></RoleRoute>} />
       <Route path="/organization/distributions" element={<RoleRoute role="CharityOrganization"><OrganizationShell><DistributionPortal mode="organization" /></OrganizationShell></RoleRoute>} />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags, HandHeart, Moon, Sun, UserRound } from 'lucide-react';
+import { LayoutDashboard, Truck, Archive, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags, HandHeart, Moon, Sun, UserRound, ClipboardCheck } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import './AdminSidebar.css';
@@ -37,7 +37,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
         { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
         { label: 'Yêu cầu phân phối', path: `${basePath}/distributions`, icon: <HandHeart size={18} /> },
         { label: 'Danh mục phân loại', path: `${basePath}/categories`, icon: <Tags size={18} /> },
-        { label: 'Kế hoạch lịch trình AI', path: `${basePath}/campaigns`, icon: <Leaf size={18} /> },
+        { label: 'Tiêu chí đánh giá', path: `${basePath}/condition-criteria`, icon: <ClipboardCheck size={18} /> },
       ];
     } else {
       return [
