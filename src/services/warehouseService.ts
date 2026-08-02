@@ -79,6 +79,7 @@ export interface ApiDistributionRequest {
 }
 
 export const warehouseService = {
+  // Warehouse master data is managed by Manager accounts.
   createWarehouse: (data:{warehouseName:string;address:string;phoneNumber?:string;email?:string;description?:string;totalCapacityKg:number}) =>
     apiClient.post<unknown,{id:string}>('/warehouse-operations/warehouses',data),
   dashboard: (warehouseId?:string) => apiClient.get<unknown,WarehouseDashboard>('/warehouse-operations/dashboard',{params:{warehouseId}}),
