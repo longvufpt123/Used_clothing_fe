@@ -113,7 +113,7 @@ export default function ReceivingOperations(){
     <header className="ops-pagehead"><div className="ops-pagehead-main">
       <span className="ops-pagehead-kicker">Manager Operations</span>
       <h1>Ca làm, team và điều phối tiếp nhận</h1>
-      <p>Chuẩn bị nguồn lực và phân công Donation Request mà không cần seed dữ liệu vận hành.</p>
+      <p>Chuẩn bị nguồn lực và phân công Donation Request.</p>
     </div><button className="ops-btn ops-btn-secondary" onClick={load} disabled={loading}><RefreshCw size={16}/> Làm mới</button></header>
 
     <div className="ops-stats">
