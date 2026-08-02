@@ -192,13 +192,21 @@ export default function ManagerWarehouseControl(){
   };
 
   const createWarehouse=async()=>{
-    if(!warehouseForm.warehouseName.trim()||!warehouseForm.address.trim()||warehouseForm.totalCapacityKg<=0){
-      toast.warning('Tên kho, địa chỉ và tổng sức chứa là bắt buộc.');return;
+    const warehouseName=warehouseForm.warehouseName.trim();
+    const address=warehouseForm.address.trim();
+    if(warehouseName.length<3||warehouseName.length>150){
+      toast.warning('Tên kho phải có từ 3 đến 150 ký tự.');return;
+    }
+    if(address.length<10||address.length>500){
+      toast.warning('Địa chỉ kho phải là địa chỉ đầy đủ, có từ 10 đến 500 ký tự.');return;
+    }
+    if(warehouseForm.totalCapacityKg<=0||warehouseForm.totalCapacityKg>10000000){
+      toast.warning('Tổng sức chứa phải lớn hơn 0 và không vượt quá 10.000.000 kg.');return;
     }
     setSavingWarehouse(true);
     try{
       const result=await warehouseService.createWarehouse({
-        warehouseName:warehouseForm.warehouseName.trim(),address:warehouseForm.address.trim(),
+        warehouseName,address,
         phoneNumber:warehouseForm.phoneNumber.trim()||undefined,email:warehouseForm.email.trim()||undefined,
         description:warehouseForm.description.trim()||undefined,totalCapacityKg:warehouseForm.totalCapacityKg,
       });
@@ -206,7 +214,10 @@ export default function ManagerWarehouseControl(){
       setWarehouseEditorOpen(false);
       setWarehouseForm({warehouseName:'',address:'',phoneNumber:'',email:'',description:'',totalCapacityKg:15000});
       toast.success('Đã tạo kho mới và chuyển sang cấu hình kho.');
-    }catch(e:any){toast.error(e?.response?.data?.message||'Không thể tạo kho.');}
+    }catch(e:any){
+      console.error('Create warehouse failed:',e);
+      toast.error(e?.response?.data?.message||e?.response?.data?.title||e?.message||'Không thể tạo kho.');
+    }
     finally{setSavingWarehouse(false);}
   };
 
