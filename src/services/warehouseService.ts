@@ -79,6 +79,8 @@ export interface ApiDistributionRequest {
 }
 
 export const warehouseService = {
+  createWarehouse: (data:{warehouseName:string;address:string;phoneNumber?:string;email?:string;description?:string;totalCapacityKg:number}) =>
+    apiClient.post<unknown,{id:string}>('/warehouse-operations/warehouses',data),
   dashboard: (warehouseId?:string) => apiClient.get<unknown,WarehouseDashboard>('/warehouse-operations/dashboard',{params:{warehouseId}}),
   layout: (warehouseId?:string) => apiClient.get<unknown,WarehouseLayout>('/warehouse-operations/layout',{params:{warehouseId}}),
   inboundBatches: (warehouseId?:string) => apiClient.get<unknown,WarehouseBatch[]>('/warehouse-operations/inbound-batches',{params:{warehouseId}}),

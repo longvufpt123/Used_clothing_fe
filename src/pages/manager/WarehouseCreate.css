@@ -1,0 +1,38 @@
+.warehouse-head-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.warehouse-create-modal {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.warehouse-create-modal > header p {
+  max-width: 520px;
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+.warehouse-create-modal textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .warehouse-head-actions {
+    width: 100%;
+  }
+
+  .warehouse-head-actions .ops-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .warehouse-create-modal {
+    max-height: calc(100vh - 20px);
+  }
+}
