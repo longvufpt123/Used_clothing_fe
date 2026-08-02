@@ -55,6 +55,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const [deleteTarget, setDeleteTarget] = useState<DistributionRequest | null>(
     null,
   );
+  const [detailRequest, setDetailRequest] = useState<DistributionRequest | null>(null);
   const [ghnTarget, setGhnTarget] = useState<DistributionRequest | null>(null);
   const [ghnSubmitting, setGhnSubmitting] = useState(false);
   const [ghnErrors, setGhnErrors] = useState<Record<string, string>>({});
@@ -514,7 +515,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         </div>
         {!pagedRequests.length&&<div className="distribution-request-empty"><Search/>Không tìm thấy yêu cầu phù hợp bộ lọc.</div>}
         {pagedRequests.map((r) => (
-          <article key={r.id}>
+          <article key={r.id} className="distribution-request-summary" onClick={() => setDetailRequest(r)} tabIndex={0} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") setDetailRequest(r); }}>
             <div className="request-title">
               <div>
                 <b>{r.code}</b>
@@ -527,97 +528,28 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             <p>
               {r.recipientName} · {r.recipientPhone} · {r.toAddress}
             </p>
-            <div className="request-lines">
-              {r.items.map((item) => (
-                <div key={item.id}>
-                  <PackageCheck />
-                  <span>
-                    <b>{item.batchCode}</b>
-                    <small>
-                      {item.clothingType} · {item.gender} · Size {item.size}
-                    </small>
-                  </span>
-                  <strong>
-                    {item.issuedQuantity ||
-                      item.approvedQuantity ||
-                      item.requestedQuantity}{" "}
-                    item · {item.issuedWeight || item.requestedWeight} kg
-                  </strong>
-                </div>
-              ))}
-            </div>
-            {r.issueSlipCode && (
-              <div className="issue-slip">
-                <b>Phiếu xuất: {r.issueSlipCode}</b>
-                <span>
-                  Xuất lúc{" "}
-                  {r.warehouseIssuedAt &&
-                    new Date(r.warehouseIssuedAt).toLocaleString("vi-VN")}
-                </span>
-              </div>
-            )}
-            {r.ghnOrderCode && (
-              <div className="ghn-state">
-                <Truck />
-                <b>{r.ghnOrderCode}</b>
-                <span>{r.ghnStatus}</span>
-              </div>
-            )}
-            <div className="request-actions">
-              {mode === "organization" && r.status === "PendingManagerApproval" && <>
-                <button onClick={() => startEdit(r)}><Pencil /> Chỉnh sửa</button>
-                <button className="danger" onClick={() => setDeleteTarget(r)}><Trash2 /> Xóa</button>
-              </>}
-              {mode === "manager" && r.status === "PendingManagerApproval" && (
-                <>
-                  <button onClick={() => action(r.id, "approve")}>
-                    <Check /> Duyệt
-                  </button>
-                  <button
-                    className="danger"
-                    onClick={() => action(r.id, "reject")}
-                  >
-                    <X /> Từ chối
-                  </button>
-                </>
-              )}
-              {mode === "warehouse" &&
-                r.status === "ApprovedAwaitingWarehouse" && (
-                  <button onClick={() => action(r.id, "issue")}>
-                    <PackageCheck /> Lập phiếu xuất
-                  </button>
-                )}
-              {mode === "warehouse" && r.status === "ReadyForGhn" && (
-                <button onClick={() => openGhnForm(r)}>
-                  <Truck /> Tạo vận đơn GHN
-                </button>
-              )}
-              {r.ghnOrderCode && (
-                <button onClick={() => action(r.id, "refresh")}>
-                  <RefreshCw /> Đồng bộ GHN
-                </button>
-              )}
-            </div>
-            {r.shipmentHistory?.length > 0 && (
-              <div className="shipment-timeline">
-                {r.shipmentHistory.map((h, i) => (
-                  <div key={i}>
-                    <i />
-                    <span>
-                      <b>{h.status}</b>
-                      <small>
-                        {new Date(h.occurredAt).toLocaleString("vi-VN")} ·{" "}
-                        {h.description}
-                      </small>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="request-summary-meta"><span>{r.items.length} batch</span>{r.issueSlipCode && <span>Đã lập phiếu xuất</span>}{r.ghnOrderCode && <span>GHN: {r.ghnStatus}</span>}</div>
+            <b className="request-summary-link">Xem chi tiết →</b>
           </article>
         ))}
         {requestPageCount>1&&<nav className="catalog-pagination distribution-request-pagination" aria-label="Phân trang yêu cầu phân phối"><span>Hiển thị {(requestPage-1)*requestPageSize+1}–{Math.min(requestPage*requestPageSize,filteredRequests.length)} trong {filteredRequests.length} yêu cầu</span><div><button disabled={requestPage===1} onClick={()=>setRequestPage(page=>page-1)}><ChevronLeft/></button>{Array.from({length:requestPageCount},(_,index)=>index+1).map(page=><button key={page} className={page===requestPage?'active':''} onClick={()=>setRequestPage(page)}>{page}</button>)}<button disabled={requestPage===requestPageCount} onClick={()=>setRequestPage(page=>page+1)}><ChevronRight/></button></div></nav>}
       </section>}
+      {detailRequest && <div className="product-modal-backdrop" onMouseDown={() => setDetailRequest(null)}><section className="distribution-detail-modal" role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()}>
+        <header><div><b>{detailRequest.code}</b><h2>{detailRequest.organizationName} → {detailRequest.warehouseName}</h2><p>{detailRequest.recipientName} · {detailRequest.recipientPhone} · {detailRequest.toAddress}</p></div><button aria-label="Đóng" onClick={() => setDetailRequest(null)}><X /></button></header>
+        <span className="distribution-detail-status">{detailRequest.status}</span>
+        <div className="request-lines">{detailRequest.items.map(item => <div key={item.id}><PackageCheck/><span><b>{item.batchCode}</b><small>{item.clothingType} · {item.gender} · Size {item.size}</small></span><strong>{item.issuedQuantity || item.approvedQuantity || item.requestedQuantity} item · {item.issuedWeight || item.requestedWeight} kg</strong></div>)}</div>
+        {detailRequest.issueSlipCode && <div className="issue-slip"><b>Phiếu xuất: {detailRequest.issueSlipCode}</b><span>Xuất lúc {detailRequest.warehouseIssuedAt && new Date(detailRequest.warehouseIssuedAt).toLocaleString("vi-VN")}</span></div>}
+        {detailRequest.ghnOrderCode && <div className="ghn-state"><Truck/><b>{detailRequest.ghnOrderCode}</b><span>{detailRequest.ghnStatus}</span></div>}
+        {detailRequest.shipmentHistory?.length > 0 && <div className="shipment-timeline">{detailRequest.shipmentHistory.map((h,i)=><div key={i}><i/><span><b>{h.status}</b><small>{new Date(h.occurredAt).toLocaleString("vi-VN")} · {h.description}</small></span></div>)}</div>}
+        <div className="request-actions">
+          {mode === "organization" && detailRequest.status === "PendingManagerApproval" && <><button onClick={() => { setDetailRequest(null); startEdit(detailRequest); }}><Pencil/> Chỉnh sửa</button><button className="danger" onClick={() => { setDetailRequest(null); setDeleteTarget(detailRequest); }}><Trash2/> Xóa</button></>}
+          {mode === "manager" && detailRequest.status === "PendingManagerApproval" && <><button onClick={() => action(detailRequest.id,"approve")}><Check/> Duyệt</button><button className="danger" onClick={() => action(detailRequest.id,"reject")}><X/> Từ chối</button></>}
+          {mode === "warehouse" && detailRequest.status === "ApprovedAwaitingWarehouse" && <button onClick={() => action(detailRequest.id,"issue")}><PackageCheck/> Lập phiếu xuất</button>}
+          {mode === "warehouse" && detailRequest.status === "ReadyForGhn" && <button onClick={() => { setDetailRequest(null); openGhnForm(detailRequest); }}><Truck/> Tạo vận đơn GHN</button>}
+          {detailRequest.ghnOrderCode && <button onClick={() => action(detailRequest.id,"refresh")}><RefreshCw/> Đồng bộ GHN</button>}
+          <button className="secondary" onClick={() => setDetailRequest(null)}>Đóng</button>
+        </div>
+      </section></div>}
       {deleteTarget && <div className="product-modal-backdrop" onMouseDown={() => setDeleteTarget(null)}><section className="delete-request-modal" role="alertdialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}><span><Trash2 /></span><h2>Xóa yêu cầu {deleteTarget.code}?</h2><p>Yêu cầu sẽ biến mất khỏi danh sách và Manager không thể duyệt yêu cầu này.</p><div><button onClick={() => setDeleteTarget(null)}>Giữ lại</button><button className="danger" onClick={deleteRequest}><Trash2 /> Xóa yêu cầu</button></div></section></div>}
       {ghnTarget && (
         <div className="product-modal-backdrop" onMouseDown={() => !ghnSubmitting && setGhnTarget(null)}>
