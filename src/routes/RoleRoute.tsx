@@ -9,7 +9,7 @@ const homeByRole: Record<string, string> = {
   WarehouseStaff: '/warehouse',
   Manager: '/manager',
   Donor: '/',
-  CharityOrganization: '/login',
+  CharityOrganization: '/organization/distributions',
   RecyclingOrganization: '/login',
 };
 

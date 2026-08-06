@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Leaf, Moon, Sun, User, LogIn, Menu, X } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import './Header.css';
 
 export const Header: React.FC = () => {
@@ -44,13 +45,13 @@ export const Header: React.FC = () => {
           </button>
 
           {isAuthenticated ? (
-            <Link to="/profile" className="action-link user-menu-trigger" title="Hồ sơ cá nhân">
+            <><NotificationBell /><Link to="/profile" className="action-link user-menu-trigger" title="Hồ sơ cá nhân">
               {user?.avatarUrl ? (
                 <img className="user-avatar" src={user.avatarUrl} alt={user.fullName || user.userName} />
               ) : (
                 <User size={20} />
               )}
-            </Link>
+            </Link></>
           ) : (
             <Link to="/login" className="action-link login-link-btn" title="Đăng nhập">
               <LogIn size={18} />

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Menu, X, Leaf } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, X, Leaf, Moon, Sun, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import './OpsLayout.css';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 export interface OpsNavItem {
   /** Route this item links to */
@@ -28,9 +30,29 @@ interface OpsLayoutProps {
   nav: OpsNavItem[];
 }
 
-const isActive = (item: OpsNavItem, pathname: string, homePath: string) => {
-  if (item.to === homePath) return pathname === homePath;
-  if (pathname === item.to || pathname.startsWith(item.to + '/')) return true;
+const isActive = (
+  item: OpsNavItem,
+  pathname: string,
+  search: string,
+  homePath: string
+) => {
+  const [itemPath, itemQuery = ''] = item.to.split('?');
+  const itemParams = new URLSearchParams(itemQuery);
+  const currentParams = new URLSearchParams(search);
+
+  if (itemParams.size > 0) {
+    return (
+      pathname === itemPath &&
+      Array.from(itemParams.entries()).every(
+        ([key, value]) => currentParams.get(key) === value
+      )
+    );
+  }
+
+  if (item.to === homePath) {
+    return pathname === homePath && !currentParams.has('tab');
+  }
+  if (pathname === itemPath || pathname.startsWith(itemPath + '/')) return true;
   return (item.matchPrefixes || []).some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   );
@@ -45,17 +67,25 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('ops-sidebar-collapsed') === 'true');
+  const toggleCollapsed = () => setCollapsed((value) => {
+    const next = !value;
+    localStorage.setItem('ops-sidebar-collapsed', String(next));
+    return next;
+  });
 
   // Close the mobile drawer whenever the route changes
   useEffect(() => {
     setDrawerOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+  const profilePath = `${homePath}/profile`;
 
   const initials = (user?.fullName || roleLabel)
     .split(' ')
@@ -66,7 +96,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
 
   const renderNav = () =>
     nav.map((item) => {
-      const active = isActive(item, location.pathname, homePath);
+      const active = isActive(item, location.pathname, location.search, homePath);
       const Icon = item.icon;
       return (
         <React.Fragment key={item.to}>
@@ -78,6 +108,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
             className={`ops-rail-link ${active ? 'active' : ''}`}
             onClick={() => navigate(item.to)}
             aria-current={active ? 'page' : undefined}
+            title={collapsed ? item.label : undefined}
           >
             <span className="ops-rail-link-icon">
               <Icon size={18} strokeWidth={2} />
@@ -95,7 +126,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
     <div className="ops-shell">
       {/* Fixed workflow rail (desktop) + slide-in drawer (mobile) */}
       <aside
-        className={`ops-rail ${drawerOpen ? 'open' : ''}`}
+        className={`ops-rail ${drawerOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}
         aria-label="Điều hướng quy trình"
       >
         <div
@@ -112,18 +143,42 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
             <strong>ReThreads</strong>
             <span>{roleLabel}</span>
           </span>
+          <button type="button" className="ops-rail-collapse" onClick={(event) => { event.stopPropagation(); toggleCollapsed(); }} title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'} aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}>
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
         </div>
 
         <nav className="ops-rail-nav">{renderNav()}</nav>
 
         <div className="ops-rail-footer">
-          <div className="ops-rail-user">
+          <div className="ops-rail-tools">
+            <NotificationBell />
+            <button type="button" className="ops-rail-action" onClick={toggleTheme} title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} aria-label="Chuyển đổi giao diện">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
+            <button type="button" className="ops-rail-action" onClick={() => navigate(profilePath)} title="Xem hồ sơ cá nhân" aria-label="Xem hồ sơ cá nhân"><UserRound size={18}/></button>
+            <button type="button" className="ops-rail-logout" onClick={handleLogout} title="Đăng xuất" aria-label="Đăng xuất"><LogOut size={18} strokeWidth={2}/></button>
+          </div>
+          <NotificationBell />
+          <button
+            type="button"
+            className="ops-rail-user"
+            onClick={() => navigate(profilePath)}
+            title="Xem hồ sơ cá nhân"
+          >
             <span className="ops-rail-avatar">{initials || 'RT'}</span>
             <span className="ops-rail-user-text">
               <strong>{user?.fullName || roleLabel}</strong>
-              <span>{user?.userName ? '@' + user.userName : roleLabel}</span>
+              <span>{roleLabel}</span>
             </span>
-          </div>
+          </button>
+          <button
+            type="button"
+            className="ops-rail-action"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+            aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <button
             type="button"
             className="ops-rail-logout"
@@ -160,6 +215,15 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
           <span className="ops-topbar-brand">
             <Leaf size={16} strokeWidth={2.25} /> ReThreads
             <span className="ops-topbar-role">{roleLabel}</span>
+          </span>
+          <span className="ops-topbar-actions">
+            <NotificationBell />
+            <button type="button" onClick={() => navigate(profilePath)} aria-label="Hồ sơ cá nhân">
+              <UserRound size={18} />
+            </button>
+            <button type="button" onClick={toggleTheme} aria-label="Chuyển đổi giao diện">
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </span>
         </header>
 

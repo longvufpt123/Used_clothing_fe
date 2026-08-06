@@ -80,7 +80,7 @@
   width: 100%;
   padding: 12px;
   border-radius: var(--radius-sm);
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   font-family: inherit;
@@ -90,6 +90,15 @@
   resize: vertical;
   transition: border-color var(--transition-fast);
   margin-top: var(--spacing-xs);
+}
+
+.donation-form .address-search-input {
+  background: var(--color-bg-primary);
+}
+
+[data-theme='light'] .donation-form .address-search-input,
+[data-theme='light'] .donation-form .custom-textarea {
+  background: #fff;
 }
 
 .custom-textarea:focus {

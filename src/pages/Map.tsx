@@ -1,84 +1,153 @@
-import React, { useState } from 'react';
-import { MapPin, Clock, Info, Search, Leaf } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { MapPin, Clock, Info, Search, Leaf, Loader2 } from 'lucide-react';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Input } from '@/components/common/Input';
+import apiClient from '@/services/api';
 import './Map.css';
 
-interface DropOffLocation {
-  id: number;
-  name: string;
+const DEFAULT_CENTER: [number, number] = [10.8231, 106.6297];
+
+interface WarehouseOption {
+  id: string;
   address: string;
-  hours: string;
-  fillLevel: number; // percentage (0 - 100)
-  status: 'available' | 'full';
-  coordinates: { x: number; y: number }; // Simulated coordinate positions for SVG map
+  totalCapacityKg: number;
+  currentWeight: number;
 }
 
-const LOCATIONS: DropOffLocation[] = [
-  {
-    id: 1,
-    name: 'Điểm Thu Gom Thông Minh Quận 1',
-    address: 'Công viên Tao Đàn, Đường Nguyễn Thị Minh Khai, Quận 1, TP. HCM',
-    hours: '24/7 (Cả tuần)',
-    fillLevel: 45,
-    status: 'available',
-    coordinates: { x: 120, y: 150 },
-  },
-  {
-    id: 2,
-    name: 'Điểm Thu Nhận Bưu Cục Quận 3',
-    address: '258 CMT8, Phường 10, Quận 3, TP. HCM',
-    hours: '08:00 - 20:00 (Thứ 2 - Thứ 7)',
-    fillLevel: 90,
-    status: 'full',
-    coordinates: { x: 180, y: 120 },
-  },
-  {
-    id: 3,
-    name: 'Thùng Thu Đồ Tiện Ích Bình Thạnh',
-    address: 'Dưới chân Tòa nhà Landmark 81, Vinhomes Central Park, Bình Thạnh, TP. HCM',
-    hours: '24/7 (Cả tuần)',
-    fillLevel: 20,
-    status: 'available',
-    coordinates: { x: 320, y: 80 },
-  },
-  {
-    id: 4,
-    name: 'Trung Tâm Phân Loại Chính Thủ Đức',
-    address: '15 Đường Số 4, Linh Trung, TP. Thủ Đức, TP. HCM',
-    hours: '07:30 - 17:30 (Thứ 2 - Thứ 6)',
-    fillLevel: 65,
-    status: 'available',
-    coordinates: { x: 420, y: 160 },
-  },
-];
+interface DropOffLocation {
+  id: string;
+  address: string;
+  hours: string;
+  lat: number;
+  lon: number;
+  totalCapacityKg: number;
+  currentWeight: number;
+  fillPercent: number;
+  isFull: boolean;
+}
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const asciiAddress = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[đĐ]/g, (m) => (m === 'đ' ? 'd' : 'D'))
+    .replace(/\b(Phuong|TP\.?|Thanh pho)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const geocodeQueries = (address: string) => {
+  const ascii = asciiAddress(address);
+  const street = ascii.split(',')[0].replace(/^\d+\s+/, '').trim();
+  return [...new Set([address, ascii, `${street}, Ho Chi Minh City`])];
+};
+
+async function geocode(address: string): Promise<{ lat: number; lon: number } | null> {
+  const key = `osm:${address.toLowerCase()}`;
+  const cached = localStorage.getItem(key);
+  if (cached) return JSON.parse(cached);
+
+  const queries = geocodeQueries(address);
+  for (let i = 0; i < queries.length; i++) {
+    if (i > 0) await wait(1100);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&q=${encodeURIComponent(queries[i])}`;
+      const response = await fetch(url, { headers: { 'Accept-Language': 'vi' } });
+      const data = await response.json();
+      if (data[0]) {
+        const point = { lat: Number(data[0].lat), lon: Number(data[0].lon) };
+        localStorage.setItem(key, JSON.stringify(point));
+        return point;
+      }
+    } catch {
+      // try next query variant
+    }
+  }
+  return null;
+}
+
+const pinIcon = L.divIcon({
+  className: 'drop-off-marker-icon',
+  html: '<span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-5.8 7-13a7 7 0 1 0-14 0c0 7.2 7 13 7 13Z"/><circle cx="12" cy="9" r="2.5"/></svg></span>',
+  iconSize: [34, 42],
+  iconAnchor: [17, 40],
+  popupAnchor: [0, -38],
+});
 
 export const Map: React.FC = () => {
-  const [locations, setLocations] = useState<DropOffLocation[]>(LOCATIONS);
+  const [locations, setLocations] = useState<DropOffLocation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLoc, setSelectedLoc] = useState<DropOffLocation>(LOCATIONS[0]);
+  const [selectedLoc, setSelectedLoc] = useState<DropOffLocation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  React.useEffect(() => {
-    import('@/services/api').then(({ default: apiClient }) => {
-      apiClient.get<unknown, any[]>('/warehouses').then((data) => {
-        if (data && data.length > 0) {
-          const mapped: DropOffLocation[] = data.map((w, idx) => ({
-            id: idx + 10,
-            name: w.name || w.warehouseName || `Kho / Điểm gom ${w.code || idx + 1}`,
-            address: w.address || w.location || 'TP. Hồ Chí Minh',
-            hours: '08:00 - 20:00 (Cả tuần)',
-            fillLevel: 30 + (idx * 15) % 60,
-            status: 'available',
-            coordinates: { x: 100 + (idx * 90) % 400, y: 100 + (idx * 60) % 250 },
-          }));
-          setLocations(mapped);
-          setSelectedLoc(mapped[0]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const warehouses = await apiClient.get<unknown, WarehouseOption[]>('/warehouses');
+        if (!isMounted) return;
+        if (!warehouses || warehouses.length === 0) {
+          setLocations([]);
+          return;
         }
-      }).catch(() => {});
-    });
+
+        const results: DropOffLocation[] = [];
+        for (let i = 0; i < warehouses.length; i++) {
+          if (i > 0) await wait(1100);
+          const warehouse = warehouses[i];
+          const point = await geocode(warehouse.address);
+          if (point && isMounted) {
+            const totalCapacityKg = warehouse.totalCapacityKg ?? 0;
+            const currentWeight = warehouse.currentWeight ?? 0;
+            const fillPercent = totalCapacityKg > 0
+              ? Math.min(100, Math.round((currentWeight / totalCapacityKg) * 100))
+              : 0;
+            results.push({
+              id: warehouse.id,
+              address: warehouse.address,
+              hours: '08:00 - 20:00 (Thứ 2 - Thứ 7, nghỉ Chủ nhật)',
+              lat: point.lat,
+              lon: point.lon,
+              totalCapacityKg,
+              currentWeight,
+              fillPercent,
+              isFull: fillPercent >= 100,
+            });
+          }
+        }
+
+        if (!isMounted) return;
+        setLocations(results);
+        if (results.length === 0) {
+          setError('Không thể xác định vị trí bản đồ cho các kho tiếp nhận.');
+        }
+      } catch {
+        if (isMounted) setError('Không thể tải danh sách điểm tiếp nhận. Vui lòng thử lại sau.');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  useEffect(() => {
+    if (locations.length > 0 && !selectedLoc) {
+      setSelectedLoc(locations[0]);
+    }
+  }, [locations, selectedLoc]);
+
   const filteredLocations = locations.filter((loc) =>
-    loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     loc.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -88,7 +157,7 @@ export const Map: React.FC = () => {
         <span className="section-subtitle">Đóng góp trực tiếp</span>
         <h1 className="text-gradient">Điểm Tiếp Nhận Quần Áo</h1>
         <p className="map-desc">
-          Tìm kiếm các thùng thu gom thông minh ReThreads gần bạn nhất để quyên gửi quần áo cũ trực tiếp.
+          Tìm kiếm các kho tiếp nhận ReThreads gần bạn nhất để quyên gửi quần áo cũ trực tiếp.
         </p>
       </div>
 
@@ -97,7 +166,7 @@ export const Map: React.FC = () => {
         <div className="locations-sidebar glass">
           <div className="search-box-wrapper">
             <Input
-              placeholder="Tìm kiếm khu vực (Quận 1, Thủ Đức...)"
+              placeholder="Tìm kiếm theo địa chỉ (Quận 1, Thủ Đức...)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               icon={<Search size={18} />}
@@ -105,16 +174,22 @@ export const Map: React.FC = () => {
           </div>
 
           <div className="locations-list">
-            {filteredLocations.map((loc) => (
+            {loading && (
+              <div className="empty-locations-search text-center">
+                <Loader2 className="map-loading-spinner" size={18} />
+                <span>Đang tải điểm tiếp nhận...</span>
+              </div>
+            )}
+            {!loading && filteredLocations.map((loc) => (
               <div
                 key={loc.id}
-                className={`location-item ${selectedLoc.id === loc.id ? 'active' : ''}`}
+                className={`location-item ${selectedLoc?.id === loc.id ? 'active' : ''}`}
                 onClick={() => setSelectedLoc(loc)}
               >
                 <div className="location-item-header">
-                  <h4>{loc.name}</h4>
-                  <span className={`fill-indicator ${loc.status === 'full' ? 'full' : ''}`}>
-                    {loc.status === 'full' ? 'Đã đầy' : `Chỗ trống: ${100 - loc.fillLevel}%`}
+                  <h4>Kho tiếp nhận</h4>
+                  <span className={`fill-indicator ${loc.isFull ? 'full' : ''}`}>
+                    {loc.isFull ? 'Đã đầy' : `${loc.fillPercent}%`}
                   </span>
                 </div>
                 <p className="location-item-address">
@@ -123,9 +198,9 @@ export const Map: React.FC = () => {
                 </p>
               </div>
             ))}
-            {filteredLocations.length === 0 && (
+            {!loading && filteredLocations.length === 0 && (
               <div className="empty-locations-search text-center">
-                Không tìm thấy điểm thu nhận phù hợp.
+                {error || 'Không tìm thấy điểm thu nhận phù hợp.'}
               </div>
             )}
           </div>
@@ -134,104 +209,72 @@ export const Map: React.FC = () => {
         {/* Right Side: Map Canvas & Spot Detail */}
         <div className="map-display-wrapper">
           <div className="map-canvas glass">
-            {/* Custom Interactive SVG Map Vector representation of TP. HCM */}
-            <svg viewBox="0 0 500 300" className="map-svg-vector">
-              <defs>
-                <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="rgba(16, 185, 129, 0.4)" />
-                  <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
-                </radialGradient>
-              </defs>
-              
-              {/* Simulated outline of TP. HCM River / districts */}
-              <path
-                d="M 50,220 C 120,240 220,180 250,150 C 280,120 380,150 450,90 C 470,70 420,30 380,50 C 340,70 300,40 200,60 C 100,80 30,120 50,220 Z"
-                fill="rgba(16, 185, 129, 0.03)"
-                stroke="var(--color-border)"
-                strokeWidth="2"
-                strokeDasharray="4 4"
-              />
-              <path
-                d="M 10,180 Q 150,190 280,130 T 490,110"
-                fill="none"
-                stroke="rgba(59, 130, 246, 0.15)"
-                strokeWidth="6"
-              />
-              
-              {/* Markers */}
+            <MapContainer
+              key={selectedLoc ? `${selectedLoc.lat}-${selectedLoc.lon}` : 'default-map'}
+              center={selectedLoc ? [selectedLoc.lat, selectedLoc.lon] : DEFAULT_CENTER}
+              zoom={selectedLoc ? 15 : 11}
+              scrollWheelZoom={false}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {filteredLocations.map((loc) => (
-                <g key={loc.id} className="map-marker-group" onClick={() => setSelectedLoc(loc)}>
-                  {selectedLoc.id === loc.id && (
-                    <circle cx={loc.coordinates.x} cy={loc.coordinates.y} r="25" fill="url(#glow)" />
-                  )}
-                  <circle
-                    cx={loc.coordinates.x}
-                    cy={loc.coordinates.y}
-                    r={selectedLoc.id === loc.id ? '10' : '7'}
-                    fill={loc.status === 'full' ? 'var(--color-danger)' : 'var(--color-primary)'}
-                    className="pulse-circle"
-                  />
-                  <text
-                    x={loc.coordinates.x}
-                    y={loc.coordinates.y - 15}
-                    textAnchor="middle"
-                    fill="var(--color-text-primary)"
-                    fontSize="10"
-                    fontWeight="700"
-                    className="marker-label"
-                  >
-                    Q.{loc.id}
-                  </text>
-                </g>
+                <Marker
+                  key={loc.id}
+                  position={[loc.lat, loc.lon]}
+                  icon={pinIcon}
+                  eventHandlers={{ click: () => setSelectedLoc(loc) }}
+                >
+                  <Popup><strong>Kho tiếp nhận</strong><br />{loc.address}</Popup>
+                </Marker>
               ))}
-            </svg>
-            
+            </MapContainer>
+
             <div className="map-overlay-tip">
               <Info size={14} style={{ marginRight: '4px' }} />
-              Chọn điểm ghim trên bản đồ để xem chi tiết thùng đồ tiếp nhận.
+              Chọn điểm ghim trên bản đồ để xem chi tiết kho tiếp nhận.
             </div>
           </div>
 
           {/* Spot Details Card */}
-          <div className="location-detail-card glass card-hover">
-            <div className="detail-card-header">
-              <Leaf className="logo-icon text-gradient" size={24} />
-              <div>
-                <h3>{selectedLoc.name}</h3>
-                <span className={`status-badge-inline ${selectedLoc.status === 'full' ? 'full' : 'available'}`}>
-                  {selectedLoc.status === 'full' ? 'Thùng đã đầy' : 'Đang hoạt động'}
-                </span>
+          {selectedLoc && (
+            <div className="location-detail-card glass card-hover">
+              <div className="detail-card-header">
+                <Leaf className="logo-icon text-gradient" size={24} />
+                <div>
+                  <h3>Kho tiếp nhận</h3>
+                  <span className={`status-badge-inline ${selectedLoc.isFull ? 'full' : 'available'}`}>
+                    {selectedLoc.isFull ? 'Đã đầy - Tạm ngừng nhận' : 'Đang hoạt động'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="detail-card-body">
+                <p className="detail-info">
+                  <strong>Địa chỉ:</strong> {selectedLoc.address}
+                </p>
+                <p className="detail-info">
+                  <Clock size={16} style={{ marginRight: '6px', color: 'var(--color-primary)' }} />
+                  <strong>Thời gian tiếp nhận:</strong> {selectedLoc.hours}
+                </p>
+
+                <div className="fill-level-progress-wrapper">
+                  <div className="fill-level-header">
+                    <span>Sức chứa hiện tại</span>
+                    <span>{selectedLoc.fillPercent}%</span>
+                  </div>
+                  <div className="progress-bar-bg">
+                    <div
+                      className={`progress-bar-fill ${selectedLoc.isFull ? 'danger' : ''}`}
+                      style={{ width: `${Math.min(100, selectedLoc.fillPercent)}%` }}
+                    />
+                  </div>
+                  <p className="fill-desc">
+                    {selectedLoc.currentWeight.toLocaleString('vi-VN')} kg / {selectedLoc.totalCapacityKg.toLocaleString('vi-VN')} kg
+                  </p>
+                </div>
               </div>
             </div>
-
-            <div className="detail-card-body">
-              <p className="detail-info">
-                <strong>Địa chỉ:</strong> {selectedLoc.address}
-              </p>
-              <p className="detail-info">
-                <Clock size={16} style={{ marginRight: '6px', color: 'var(--color-primary)' }} />
-                <strong>Thời gian tiếp nhận:</strong> {selectedLoc.hours}
-              </p>
-
-              <div className="fill-level-progress-wrapper">
-                <div className="fill-level-header">
-                  <span>Dung lượng đã chứa:</span>
-                  <strong>{selectedLoc.fillLevel}%</strong>
-                </div>
-                <div className="progress-bar-bg">
-                  <div
-                    className={`progress-bar-fill ${selectedLoc.fillLevel >= 85 ? 'danger' : ''}`}
-                    style={{ width: `${selectedLoc.fillLevel}%` }}
-                  />
-                </div>
-                <span className="fill-desc">
-                  {selectedLoc.status === 'full' 
-                    ? 'Thùng chứa đã đầy. Nhân viên đang di chuyển để thu gom làm rỗng.'
-                    : `Thùng còn chứa được thêm khoảng ${100 - selectedLoc.fillLevel}% lượng vải vụn quyên góp.`}
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

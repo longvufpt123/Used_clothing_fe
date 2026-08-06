@@ -7,6 +7,7 @@ import {
   ClipboardList,
   MapPin,
   Phone,
+  RotateCcw,
   Truck,
   Users,
 } from 'lucide-react';
@@ -16,11 +17,20 @@ import type { ReceivingBatch } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
 
+const getLocalDateValue = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const Team: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teamDate, setTeamDate] = useState(getLocalDateValue);
 
   useEffect(() => {
     receivingService
@@ -67,6 +77,14 @@ export const Team: React.FC = () => {
     return 'Chưa bắt đầu';
   };
 
+  const filteredTeams = useMemo(
+    () =>
+      teamDate
+        ? teams.filter((team) => team.shiftDate?.slice(0, 10) === teamDate)
+        : teams,
+    [teamDate, teams]
+  );
+
   return (
     <div className="ops-page">
       <header className="ops-pagehead">
@@ -80,6 +98,27 @@ export const Team: React.FC = () => {
         </div>
       </header>
 
+      <div className="rcv-team-filter">
+        <div className="rcv-team-filter-field">
+          <Calendar size={17} />
+          <label htmlFor="team-date-filter">Ngày làm việc</label>
+          <input
+            id="team-date-filter"
+            type="date"
+            value={teamDate}
+            onChange={(event) => setTeamDate(event.target.value)}
+          />
+        </div>
+        <span className="rcv-team-filter-result">
+          {filteredTeams.length}/{teams.length} team
+        </span>
+        {teamDate && (
+          <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setTeamDate('')}>
+            <RotateCcw size={15} /> Xóa lọc
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="ops-empty">
           <span className="ops-spinner" />
@@ -91,9 +130,18 @@ export const Team: React.FC = () => {
           <h4>Bạn chưa được phân vào team</h4>
           <p>Manager cần tạo team, thêm đúng 2 thành viên và phân công lô tiếp nhận.</p>
         </div>
+      ) : filteredTeams.length === 0 ? (
+        <div className="ops-empty">
+          <Calendar size={38} strokeWidth={1.5} />
+          <h4>Không có team trong ngày đã chọn</h4>
+          <p>Hãy chọn ngày khác hoặc xóa bộ lọc để xem toàn bộ team của bạn.</p>
+          <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setTeamDate('')}>
+            <RotateCcw size={15} /> Xem tất cả team
+          </button>
+        </div>
       ) : (
         <div className="rcv-team-page-list">
-          {teams.map((team) => (
+          {filteredTeams.map((team) => (
             <section className="rcv-team-detail-card" key={team.key}>
               <div className="rcv-team-detail-head">
                 <span className="rcv-team-icon"><Users size={24} /></span>

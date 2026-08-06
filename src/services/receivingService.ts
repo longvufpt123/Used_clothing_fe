@@ -6,7 +6,7 @@ export interface ReceivingRequest { id:string; batchId:string; code:string; dono
 export interface ReceivingBatch { id:string; code:string; route:string; date:string; shiftId:string; shiftName:string; shiftStatus:string; startTime:string; endTime:string; teamName:string; warehouseAddress:string; teamMembers:TeamMember[]; status:'Planned'|'Receiving'|'Completed'|'SentToClassification'; requests:ReceivingRequest[]; }
 interface ApiRequest { id:string; batchId:string; code:string; donorName:string; phoneNumber:string; pickupAddress:string; deliveryMethod:string; description:string; estimateWeight:number; actualWeight?:number|null; pickupDate?:string; status:string; notes?:string; imageUrls?:string[]; }
 interface ApiBatch { id:string; code:string; route:string; date:string; shiftId:string; shiftName:string; shiftStatus:string; startTime:string; endTime:string; teamName:string; warehouseAddress:string; teamMembers:TeamMember[]; status:ReceivingBatch['status']; requests:ApiRequest[]; }
-export interface DispatchRequest { id:string; code:string; contactName:string; phoneNumber:string; deliveryMethod:string; address:string; scheduledDate?:string; warehouseId:string; warehouseName:string; }
+export interface DispatchRequest { id:string; code:string; contactName:string; phoneNumber:string; deliveryMethod:string; address:string; scheduledDate?:string; warehouseId:string; warehouseName:string; createdAt?:string; }
 export interface DispatchTeam { id:string; teamName:string; teamType:string; shiftId:string; shiftName:string; shiftDate:string; shiftTime:string; warehouseId:string; members:TeamMember[]; }
 export interface DispatchBoard { requests:DispatchRequest[]; teams:DispatchTeam[]; }
 export interface WarehouseDutyContext {
@@ -45,6 +45,7 @@ export interface ManagerReceivingSetup {
   shifts:ManagerShiftOverview[];
 }
 export interface GenerateYearShiftsResult { workingDays:number; createdShifts:number; skippedExisting:number; }
+export interface GenerateMonthShiftsResult { workingDays:number; createdShifts:number; skippedExisting:number; }
 
 const mapBatch = (b:ApiBatch):ReceivingBatch => ({...b,date:b.date.slice(0,10),requests:b.requests.map(r=>({...r,category:r.description||'Quần áo hỗn hợp',weight:`${r.estimateWeight} kg`,condition:'Chờ kiểm tra thực tế',status:(r.status==='Cancelled'?'Canceled':r.status==='Received'||r.status==='Rescheduled'?r.status:'Pending') as ReceivingStatus,date:r.pickupDate?.slice(0,10)||b.date.slice(0,10),actualNotes:r.notes}))});
 
@@ -65,7 +66,9 @@ export const receivingService = {
   assignRequest:(requestId:string,teamId:string)=>apiClient.post('/receiving-operations/assign-request',{requestId,teamId}),
   getManagerSetup:()=>apiClient.get<unknown,ManagerReceivingSetup>('/receiving-operations/manager-setup'),
   generateStandardShifts:(warehouseId:string,date:string)=>apiClient.post('/receiving-operations/standard-shifts',{warehouseId,date}),
-  generateYearShifts:(warehouseId:string,year:number,holidayDates:string[])=>apiClient.post<unknown,GenerateYearShiftsResult>('/receiving-operations/year-shifts',{warehouseId,year,holidayDates}),
+  generateYearShifts:(warehouseId:string,year:number,holidayDates:string[],workingDays:number[]=[1,2,3,4,5],times={morningStartTime:'08:00:00',morningEndTime:'11:00:00',afternoonStartTime:'13:00:00',afternoonEndTime:'17:00:00'})=>apiClient.post<unknown,GenerateYearShiftsResult>('/receiving-operations/year-shifts',{warehouseId,year,holidayDates,workingDays,...times}),
+  generateMonthShifts:(warehouseId:string,year:number,month:number,holidayDates:string[],workingDays:number[]=[1,2,3,4,5],times={morningStartTime:'08:00:00',morningEndTime:'11:00:00',afternoonStartTime:'13:00:00',afternoonEndTime:'17:00:00'})=>apiClient.post<unknown,GenerateMonthShiftsResult>('/receiving-operations/month-shifts',{warehouseId,year,month,holidayDates,workingDays,...times}),
+  deleteYearShifts:(warehouseId:string,year:number)=>apiClient.delete<unknown,{deletedShifts:number;skippedOperationalShifts:number}>(`/receiving-operations/year-shifts?warehouseId=${warehouseId}&year=${year}`),
   updateShift:(shiftId:string,data:{warehouseId:string;shiftName:string;shiftDate:string;startTime:string;endTime:string})=>apiClient.put(`/receiving-operations/manager-shifts/${shiftId}`,data),
   deleteShift:(shiftId:string)=>apiClient.delete(`/receiving-operations/manager-shifts/${shiftId}`),
   createTeam:(shiftId:string,teamName:string,staffIds:string[],teamType='ReceivingPickup')=>apiClient.post('/receiving-operations/teams',{shiftId,teamName,staffIds,teamType}),

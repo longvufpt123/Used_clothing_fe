@@ -36,6 +36,14 @@ const setShiftActive = (active: boolean) =>
 const isTab = (v: string | null): v is TabKey =>
   v === 'receiving' || v === 'completed' || v === 'transferring';
 
+const getLocalDateValue = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -43,6 +51,7 @@ export const Dashboard: React.FC = () => {
 
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
+  const [teamDate, setTeamDate] = useState(getLocalDateValue);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [isTransferringId, setIsTransferringId] = useState<string | null>(null);
   const [dropOffBoard,setDropOffBoard]=useState<WarehouseDropOffBoard>({dutyContexts:[],requests:[]});
@@ -59,6 +68,16 @@ export const Dashboard: React.FC = () => {
   const activeTab: TabKey = isTab(tabParam) ? tabParam : 'receiving';
   const setActiveTab = (t: TabKey) =>
     setSearchParams(t === 'receiving' ? {} : { tab: t }, { replace: true });
+
+  useEffect(() => {
+    if (!isTab(tabParam)) return;
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById('receiving-batch-list')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [tabParam]);
 
   useEffect(() => {
     Promise.all([receivingService.getMyBatches(),receivingService.getMyWarehouseDropOffs()]).then(([data,dropOffData]) => {
@@ -158,6 +177,9 @@ export const Dashboard: React.FC = () => {
       ])
     ).values()
   );
+  const filteredAssignedTeams = teamDate
+    ? assignedTeams.filter((team) => team.shiftDate?.slice(0, 10) === teamDate)
+    : assignedTeams;
 
   const dropOffDates=Array.from(new Set(dropOffBoard.dutyContexts.map(x=>x.shiftDate.slice(0,10)))).sort();
   const normalizedDropOffSearch=dropOffSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -276,7 +298,25 @@ export const Dashboard: React.FC = () => {
             <span className="rcv-section-kicker">Phân công hiện tại</span>
             <h2 id="receiving-team-title">Thông tin team của tôi</h2>
           </div>
-          <span>{assignedTeams.length} team / ca được phân công</span>
+          <span>{filteredAssignedTeams.length}/{assignedTeams.length} team / ca</span>
+        </div>
+
+        <div className="rcv-team-filter">
+          <div className="rcv-team-filter-field">
+            <Calendar size={17} />
+            <label htmlFor="dashboard-team-date-filter">Ngày làm việc</label>
+            <input
+              id="dashboard-team-date-filter"
+              type="date"
+              value={teamDate}
+              onChange={(event) => setTeamDate(event.target.value)}
+            />
+          </div>
+          {teamDate && (
+            <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setTeamDate('')}>
+              <X size={15} /> Xóa lọc
+            </button>
+          )}
         </div>
 
         {assignedTeams.length === 0 ? (
@@ -287,9 +327,17 @@ export const Dashboard: React.FC = () => {
               <p>Manager cần tạo team, thêm thành viên và phân công Intake Batch cho team.</p>
             </div>
           </div>
+        ) : filteredAssignedTeams.length === 0 ? (
+          <div className="rcv-team-empty">
+            <Calendar size={28} strokeWidth={1.6} />
+            <div>
+              <strong>Không có team trong ngày đã chọn</strong>
+              <p>Chọn ngày khác hoặc xóa bộ lọc để xem toàn bộ team đã được phân công.</p>
+            </div>
+          </div>
         ) : (
           <div className="rcv-team-grid">
-            {assignedTeams.map((team) => (
+            {filteredAssignedTeams.map((team) => (
               <article
                 className="rcv-team-card"
                 key={`${team.shiftName}-${team.teamName}-${team.shiftDate}`}
@@ -366,7 +414,7 @@ export const Dashboard: React.FC = () => {
         {dropOffPages>1&&<nav className="rcv-dropoff-pagination"><button disabled={dropOffPage===1} onClick={()=>setDropOffPage(x=>x-1)}><ChevronLeft size={15}/>Trước</button><span>Trang {dropOffPage}/{dropOffPages}</span><button disabled={dropOffPage===dropOffPages} onClick={()=>setDropOffPage(x=>x+1)}>Sau<ChevronRight size={15}/></button></nav>}
       </section>}
 
-      <section>
+      <section id="receiving-batch-list" className="rcv-batch-list-section">
         <div className="ops-section-head">
           <h2>Tuyến lô tiếp nhận</h2>
           <span>Lọc theo trạng thái thu gom</span>

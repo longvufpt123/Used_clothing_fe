@@ -14,10 +14,12 @@ import {
 } from '@/services/warehouseService';
 import '@/styles/ops-shared.css';
 import './WarehouseControl.css';
+import './WarehouseCreate.css';
 
 type Tab='layout'|'intake'|'inbound'|'inventory'|'transactions';
 type LayoutEditor={kind:'area'|'group';id?:string;areaId?:string;name:string;description:string;capacityKg:number;currentKg:number;allocatedKg:number};
 type LocationEditor={id?:string;areaGroupId:string;locationCode:string;aisleCode:string;rackCode:string;shelfCode:string;binCode:string;preferredGarmentGroup:string;preferredProcessingDirection:string;capacityKg:number;currentWeightKg:number;allocatedKg:number;groupCapacityKg:number;status:string};
+type WarehouseForm={warehouseName:string;address:string;phoneNumber:string;email:string;description:string;totalCapacityKg:number};
 const tabLabels:Record<Tab,string>={
   layout:'Gian & vị trí',intake:'Intake Batch',inbound:'Batch nhập kho',
   inventory:'Tồn kho SKU',transactions:'Sổ nhập / xuất',
@@ -65,10 +67,16 @@ export default function ManagerWarehouseControl(){
   const [deleteLayoutConfirm,setDeleteLayoutConfirm]=useState(false);
   const [locationEditor,setLocationEditor]=useState<LocationEditor|null>(null);
   const [deleteLocationConfirm,setDeleteLocationConfirm]=useState(false);
+  const [warehouseEditorOpen,setWarehouseEditorOpen]=useState(false);
+  const [savingWarehouse,setSavingWarehouse]=useState(false);
+  const [warehouseForm,setWarehouseForm]=useState<WarehouseForm>({warehouseName:'',address:'',phoneNumber:'',email:'',description:'',totalCapacityKg:15000});
 
-  useEffect(()=>{receivingService.getManagerSetup().then(data=>{
-    setWarehouses(data.warehouses);setWarehouseId(current=>current||data.warehouses[0]?.id||'');
-  }).catch(()=>toast.error('Không tải được danh sách kho.'));},[]);
+  const loadWarehouses=async(preferredId?:string)=>{
+    const data=await receivingService.getManagerSetup();
+    setWarehouses(data.warehouses);
+    setWarehouseId(current=>preferredId||current||data.warehouses[0]?.id||'');
+  };
+  useEffect(()=>{loadWarehouses().catch(()=>toast.error('Không tải được danh sách kho.'));},[]);
 
   const load=async()=>{
     if(!warehouseId)return;setLoading(true);
@@ -183,8 +191,38 @@ export default function ManagerWarehouseControl(){
     finally{setSavingLayout(false);}
   };
 
+  const createWarehouse=async()=>{
+    const warehouseName=warehouseForm.warehouseName.trim();
+    const address=warehouseForm.address.trim();
+    if(warehouseName.length<3||warehouseName.length>150){
+      toast.warning('Tên kho phải có từ 3 đến 150 ký tự.');return;
+    }
+    if(address.length<10||address.length>500){
+      toast.warning('Địa chỉ kho phải là địa chỉ đầy đủ, có từ 10 đến 500 ký tự.');return;
+    }
+    if(warehouseForm.totalCapacityKg<=0||warehouseForm.totalCapacityKg>10000000){
+      toast.warning('Tổng sức chứa phải lớn hơn 0 và không vượt quá 10.000.000 kg.');return;
+    }
+    setSavingWarehouse(true);
+    try{
+      const result=await warehouseService.createWarehouse({
+        warehouseName,address,
+        phoneNumber:warehouseForm.phoneNumber.trim()||undefined,email:warehouseForm.email.trim()||undefined,
+        description:warehouseForm.description.trim()||undefined,totalCapacityKg:warehouseForm.totalCapacityKg,
+      });
+      await loadWarehouses(result.id);
+      setWarehouseEditorOpen(false);
+      setWarehouseForm({warehouseName:'',address:'',phoneNumber:'',email:'',description:'',totalCapacityKg:15000});
+      toast.success('Đã tạo kho mới và chuyển sang cấu hình kho.');
+    }catch(e:any){
+      console.error('Create warehouse failed:',e);
+      toast.error(e?.response?.data?.message||e?.response?.data?.title||e?.message||'Không thể tạo kho.');
+    }
+    finally{setSavingWarehouse(false);}
+  };
+
   return <AdminLayout><div className="ops-page manager-warehouse">
-    <header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">Warehouse Control Center</span><h1>Quản lý nhập – xuất – tồn kho</h1><p>Theo dõi xuyên suốt từ Intake Batch, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi giao dịch phát sinh.</p></div><button className="ops-btn ops-btn-secondary" onClick={load} disabled={loading}><RefreshCw size={16}/>{loading?'Đang tải':'Làm mới'}</button></header>
+    <header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">Warehouse Control Center</span><h1>Quản lý nhập – xuất – tồn kho</h1><p>Theo dõi xuyên suốt từ Intake Batch, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi giao dịch phát sinh.</p></div><div className="warehouse-head-actions"><button className="ops-btn ops-btn-primary" onClick={()=>setWarehouseEditorOpen(true)}><Plus size={16}/>Thêm kho</button><button className="ops-btn ops-btn-secondary" onClick={load} disabled={loading}><RefreshCw size={16}/>{loading?'Đang tải':'Làm mới'}</button></div></header>
 
     <section className="warehouse-commandbar"><div><Warehouse size={17}/><label>Kho đang quản lý</label><select value={warehouseId} onChange={e=>setWarehouseId(e.target.value)}>{warehouses.map(x=><option value={x.id} key={x.id}>{x.name}</option>)}</select></div><span>{warehouses.find(x=>x.id===warehouseId)?.address}</span></section>
 
@@ -209,6 +247,7 @@ export default function ManagerWarehouseControl(){
       {pages>1&&<div className="warehouse-pagination"><button disabled={page===1} onClick={()=>setPage(x=>x-1)}><ChevronLeft/>Trước</button><span>Trang {page} / {pages}</span><button disabled={page===pages} onClick={()=>setPage(x=>x+1)}>Sau<ChevronRight/></button></div>}
     </>}
 
+    {warehouseEditorOpen&&<div className="ops-modal-overlay warehouse-detail-overlay" onMouseDown={()=>!savingWarehouse&&setWarehouseEditorOpen(false)}><section className="ops-panel warehouse-layout-editor warehouse-create-modal" onMouseDown={e=>e.stopPropagation()}><header><div><span>THÊM KHO MỚI</span><h2>Thông tin kho vận hành</h2><p>Sau khi tạo, hệ thống sẽ khởi tạo sơ đồ lưu trữ theo tổng sức chứa đã nhập.</p></div><button onClick={()=>setWarehouseEditorOpen(false)} disabled={savingWarehouse}><X/></button></header><div className="warehouse-action-form"><div className="warehouse-form-row"><label>Tên kho *<input autoFocus required maxLength={150} value={warehouseForm.warehouseName} onChange={e=>setWarehouseForm({...warehouseForm,warehouseName:e.target.value})} placeholder="VD: Kho Bình Thạnh"/></label><label>Tổng sức chứa (kg) *<input required type="number" min={1} max={10000000} step={100} value={warehouseForm.totalCapacityKg} onChange={e=>setWarehouseForm({...warehouseForm,totalCapacityKg:Number(e.target.value)})}/></label></div><label>Địa chỉ đầy đủ *<textarea required maxLength={500} value={warehouseForm.address} onChange={e=>setWarehouseForm({...warehouseForm,address:e.target.value})} placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"/></label><div className="warehouse-form-row"><label>Số điện thoại<input value={warehouseForm.phoneNumber} onChange={e=>setWarehouseForm({...warehouseForm,phoneNumber:e.target.value})} placeholder="0901234567"/></label><label>Email<input type="email" value={warehouseForm.email} onChange={e=>setWarehouseForm({...warehouseForm,email:e.target.value})} placeholder="warehouse@rethreads.vn"/></label></div><label>Mô tả<textarea value={warehouseForm.description} onChange={e=>setWarehouseForm({...warehouseForm,description:e.target.value})} placeholder="Phạm vi phục vụ, giờ vận hành hoặc ghi chú quản lý..."/></label><div className="warehouse-capacity-rule"><b>Cấu trúc khởi tạo</b><span>Tổng sức chứa được chia đều cho 3 khu: từ thiện, tái chế và tiêu hủy. Manager có thể chỉnh lại từng khu vực, dãy và vị trí sau khi tạo.</span></div><div className="warehouse-modal-actions"><button className="ops-btn ops-btn-secondary" onClick={()=>setWarehouseEditorOpen(false)} disabled={savingWarehouse}>Hủy</button><button className="ops-btn ops-btn-primary" onClick={createWarehouse} disabled={savingWarehouse}>{savingWarehouse?'Đang tạo kho...':'Tạo kho'}</button></div></div></section></div>}
     {detail&&<DetailModal detail={detail} action={action} locations={locations} form={form} setForm={setForm} onAction={setAction} onInventoryAction={(item,mode)=>void openAction(item,mode)} onSubmit={submitAction} onClose={()=>{setDetail(null);setAction(null)}}/>}
     {layoutEditor&&<div className="ops-modal-overlay warehouse-detail-overlay" onMouseDown={()=>!savingLayout&&setLayoutEditor(null)}><section className="ops-panel warehouse-layout-editor" onMouseDown={e=>e.stopPropagation()}><header><div><span>{layoutEditor.id?'CHỈNH SỬA':'THÊM MỚI'} {layoutEditor.kind==='area'?'KHU VỰC':'DÃY KHO'}</span><h2>{layoutEditor.kind==='area'?'Cấu hình khu vực':'Cấu hình dãy trong khu vực'}</h2></div><button onClick={()=>setLayoutEditor(null)}><X/></button></header><div className="warehouse-action-form"><label>Tên {layoutEditor.kind==='area'?'khu vực':'dãy'}<input value={layoutEditor.name} onChange={e=>setLayoutEditor({...layoutEditor,name:e.target.value})}/></label><label>Mô tả<textarea value={layoutEditor.description} onChange={e=>setLayoutEditor({...layoutEditor,description:e.target.value})}/></label><label>Sức chứa (kg)<input type="number" min={Math.max(1,layoutEditor.currentKg,layoutEditor.allocatedKg)} value={layoutEditor.capacityKg} onChange={e=>setLayoutEditor({...layoutEditor,capacityKg:Number(e.target.value)})}/><small>Đang chứa: {layoutEditor.currentKg} kg{layoutEditor.kind==='area'?` · Đã cấp cho các dãy: ${layoutEditor.allocatedKg} kg`:''}</small></label>{layoutEditor.kind==='group'&&<div className="warehouse-capacity-rule"><b>Quy tắc sức chứa</b><span>Tổng capacity tất cả dãy không được vượt capacity của khu vực.</span></div>}<div className="warehouse-layout-editor-actions">{layoutEditor.id?<button className="ops-btn teams-danger-btn" onClick={()=>setDeleteLayoutConfirm(true)} disabled={savingLayout}><Trash2/>Xóa</button>:<span/>}<div><button className="ops-btn ops-btn-secondary" onClick={()=>setLayoutEditor(null)}>Hủy</button><button className="ops-btn ops-btn-primary" onClick={saveLayoutEntity} disabled={savingLayout}>{savingLayout?'Đang lưu...':'Lưu cấu hình'}</button></div></div></div>{deleteLayoutConfirm&&<div className="warehouse-delete-confirm"><strong>Xác nhận xóa {layoutEditor.kind==='area'?'khu vực':'dãy'}?</strong><p>Chỉ xóa được khi không còn hàng tồn. Các vị trí trống bên trong sẽ được ngừng hoạt động.</p><div><button className="ops-btn ops-btn-secondary" onClick={()=>setDeleteLayoutConfirm(false)}>Hủy</button><button className="ops-btn teams-danger-solid" onClick={deleteLayoutEntity} disabled={savingLayout}>Xác nhận xóa</button></div></div>}</section></div>}
     {locationEditor&&<div className="ops-modal-overlay warehouse-detail-overlay" onMouseDown={()=>!savingLayout&&setLocationEditor(null)}><section className="ops-panel warehouse-layout-editor" onMouseDown={e=>e.stopPropagation()}><header><div><span>{locationEditor.id?'CHỈNH SỬA':'THÊM MỚI'} LOCATION</span><h2>Vị trí lưu trữ trong dãy</h2></div><button onClick={()=>setLocationEditor(null)}><X/></button></header><div className="warehouse-action-form"><label>Mã location<input value={locationEditor.locationCode} onChange={e=>setLocationEditor({...locationEditor,locationCode:e.target.value.toUpperCase()})} placeholder="CHARITY-A02-R01-S01-B01"/></label><div className="warehouse-form-row"><label>Dãy / lối<input value={locationEditor.aisleCode} onChange={e=>setLocationEditor({...locationEditor,aisleCode:e.target.value.toUpperCase()})}/></label><label>Kệ<input value={locationEditor.rackCode} onChange={e=>setLocationEditor({...locationEditor,rackCode:e.target.value.toUpperCase()})}/></label><label>Tầng<input value={locationEditor.shelfCode} onChange={e=>setLocationEditor({...locationEditor,shelfCode:e.target.value.toUpperCase()})}/></label><label>Ô chứa<input value={locationEditor.binCode} onChange={e=>setLocationEditor({...locationEditor,binCode:e.target.value.toUpperCase()})}/></label></div><div className="warehouse-form-row"><label>Loại đồ ưu tiên<input value={locationEditor.preferredGarmentGroup} onChange={e=>setLocationEditor({...locationEditor,preferredGarmentGroup:e.target.value})}/></label><label>Hướng xử lý ưu tiên<select value={locationEditor.preferredProcessingDirection} onChange={e=>setLocationEditor({...locationEditor,preferredProcessingDirection:e.target.value})}><option value="">Đa mục đích</option><option value="Charity">Từ thiện</option><option value="Recycling">Tái chế</option><option value="Disposal">Tiêu hủy</option></select></label></div><div className="warehouse-form-row"><label>Sức chứa (kg)<input type="number" min={Math.max(1,locationEditor.currentWeightKg)} value={locationEditor.capacityKg} onChange={e=>setLocationEditor({...locationEditor,capacityKg:Number(e.target.value)})}/><small>Dãy đã phân bổ {locationEditor.allocatedKg}/{locationEditor.groupCapacityKg} kg</small></label><label>Trạng thái<select value={locationEditor.status} onChange={e=>setLocationEditor({...locationEditor,status:e.target.value})}><option value="Available">Available</option><option value="Blocked">Blocked</option><option value="Maintenance">Maintenance</option></select></label></div><div className="warehouse-capacity-rule"><b>Quy tắc capacity</b><span>Tổng capacity location không được vượt capacity dãy; location còn hàng không thể giảm dưới khối lượng hiện tại hoặc bị xóa.</span></div><div className="warehouse-layout-editor-actions">{locationEditor.id?<button className="ops-btn teams-danger-btn" onClick={()=>setDeleteLocationConfirm(true)}><Trash2/>Xóa</button>:<span/>}<div><button className="ops-btn ops-btn-secondary" onClick={()=>setLocationEditor(null)}>Hủy</button><button className="ops-btn ops-btn-primary" onClick={saveLocation} disabled={savingLayout}>{savingLayout?'Đang lưu...':'Lưu location'}</button></div></div></div>{deleteLocationConfirm&&<div className="warehouse-delete-confirm"><strong>Xác nhận xóa location?</strong><p>Chỉ xóa được khi location không còn Inventory.</p><div><button className="ops-btn ops-btn-secondary" onClick={()=>setDeleteLocationConfirm(false)}>Hủy</button><button className="ops-btn teams-danger-solid" onClick={deleteLocation}>Xác nhận xóa</button></div></div>}</section></div>}

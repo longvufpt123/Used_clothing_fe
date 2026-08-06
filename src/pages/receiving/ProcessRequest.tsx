@@ -19,8 +19,14 @@ import { Select } from '@/components/common/Select';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
 import type { ReceivingRequest } from '@/services/receivingService';
+import { uploadImages } from '@/utils/uploadImages';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
+
+type ReceiptImage = {
+  file: File;
+  previewUrl: string;
+};
 
 export const ProcessRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +40,7 @@ export const ProcessRequest: React.FC = () => {
   const [actualCategory, setActualCategory] = useState('');
   const [actualCondition, setActualCondition] = useState('good');
   const [actualNotes, setActualNotes] = useState('');
-  const [mockImages, setMockImages] = useState<string[]>([]);
+  const [receiptImages, setReceiptImages] = useState<ReceiptImage[]>([]);
 
   // Reschedule overlay states
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -77,22 +83,39 @@ export const ProcessRequest: React.FC = () => {
     { value: 'recycle', label: 'Cũ hỏng (Dành cho Tái chế dệt sợi)' },
   ];
 
-  const handleAddMockImage = () => {
-    const mockPhotos = [
-      'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&auto=format&fit=crop&q=80',
-    ];
-    if (mockImages.length >= 3) {
+  const handleSelectImages = (files: FileList | null) => {
+    if (!files) return;
+
+    const remainingSlots = 3 - receiptImages.length;
+    if (remainingSlots <= 0) {
       toast.warning('Tối đa đính kèm 3 hình ảnh minh họa thực nhận.');
       return;
     }
-    setMockImages([...mockImages, mockPhotos[mockImages.length]]);
-    toast.success('Đã chụp và lưu ảnh kiện hàng.');
+
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    const acceptedFiles = imageFiles.slice(0, remainingSlots);
+    if (acceptedFiles.length === 0) {
+      toast.error('Vui lòng chọn tệp hình ảnh hợp lệ.');
+      return;
+    }
+    if (imageFiles.length > remainingSlots) {
+      toast.warning(`Chỉ có thể thêm ${remainingSlots} ảnh nữa.`);
+    }
+
+    setReceiptImages((current) => [
+      ...current,
+      ...acceptedFiles.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })),
+    ]);
   };
 
   const handleRemoveImage = (index: number) => {
-    setMockImages(mockImages.filter((_, idx) => idx !== index));
+    setReceiptImages((current) => {
+      URL.revokeObjectURL(current[index].previewUrl);
+      return current.filter((_, idx) => idx !== index);
+    });
   };
 
   // 1. Success Collection Submission
@@ -104,11 +127,20 @@ export const ProcessRequest: React.FC = () => {
     }
     setIsSubmitting(true);
     try {
+      const imageUrls = receiptImages.length
+        ? await uploadImages(
+            receiptImages.map((image) => image.file),
+            `receiving-confirmations/${request.id}`,
+          )
+        : request.imageUrls;
+
       await receivingService.confirmPickup(request.batchId, request.id, {
         actualWeight: parseFloat(actualWeight),
         notes: `[${actualCategory} - ${actualCondition}] ${actualNotes}`,
-        imageUrls: mockImages.length > 0 ? mockImages : request.imageUrls,
+        imageUrls,
       });
+      receiptImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      setReceiptImages([]);
       setSubmittedStatus('Received');
       setIsSubmitted(true);
       setIsSubmitting(false);
@@ -252,21 +284,32 @@ export const ProcessRequest: React.FC = () => {
               </div>
 
               <div className="ops-field">
-                <label>Ảnh chụp thực nhận ({mockImages.length}/3)</label>
+                <label>Ảnh chụp thực nhận ({receiptImages.length}/3)</label>
                 <div className="rcv-upload-flex">
-                  {mockImages.map((img, idx) => (
-                    <div key={idx} className="rcv-upload-preview">
-                      <img src={img} alt="Kiện hàng" />
+                  {receiptImages.map((image, idx) => (
+                    <div key={image.previewUrl} className="rcv-upload-preview">
+                      <img src={image.previewUrl} alt={`Kiện hàng ${idx + 1}`} />
                       <button type="button" className="rcv-upload-del" onClick={() => handleRemoveImage(idx)}>
                         <Trash2 size={12} />
                       </button>
                     </div>
                   ))}
-                  {mockImages.length < 3 && (
-                    <button type="button" className="rcv-upload-add" onClick={handleAddMockImage}>
+                  {receiptImages.length < 3 && (
+                    <label className={`rcv-upload-add ${isSubmitting ? 'disabled' : ''}`}>
                       <Camera size={20} />
                       <span>Chụp ảnh</span>
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        multiple
+                        disabled={isSubmitting}
+                        onChange={(event) => {
+                          handleSelectImages(event.target.files);
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
               </div>

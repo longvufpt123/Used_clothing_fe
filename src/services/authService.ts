@@ -13,9 +13,24 @@ export interface AuthResponse {
 export interface RegisterResponse { userId: string; message: string; }
 export interface VerificationResponse {
   emailConfirmed: boolean;
-  phoneNumberConfirmed: boolean;
   accountActivated: boolean;
   message: string;
+}
+export interface CurrentUserProfile {
+  id: string;
+  fullName: string;
+  userName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  role: string;
+  status: string;
+  avatarUrl: string | null;
+  warehouseId: string | null;
+  warehouseName: string | null;
+  warehouseAddress: string | null;
+  emailConfirmed: boolean;
+  createAt: string | null;
 }
 
 export const loginApi = async (data: { userName: string; password: string }): Promise<AuthResponse> => {
@@ -29,15 +44,17 @@ export const registerApi = async (data: {
   password: string;
   address: string;
   phoneNumber: string;
-  verificationChannel: 'Email' | 'Sms';
 }): Promise<RegisterResponse> => {
   return apiClient.post<any, RegisterResponse>('/auth/register', data);
 };
 
 export const verifyRegistrationApi = (
-  userId: string, channel: 'Email' | 'Sms', code: string,
+  userId: string, code: string,
 ): Promise<VerificationResponse> =>
-  apiClient.post<any, VerificationResponse>('/auth/verify-registration', { userId, channel, code });
+  apiClient.post<any, VerificationResponse>('/auth/verify-registration', { userId, code });
 
-export const resendVerificationApi = (userId: string, channel: 'Email' | 'Sms'): Promise<void> =>
-  apiClient.post('/auth/resend-verification', { userId, channel });
+export const resendVerificationApi = (userId: string): Promise<void> =>
+  apiClient.post('/auth/resend-verification', { userId });
+
+export const getCurrentUserProfileApi = (): Promise<CurrentUserProfile> =>
+  apiClient.get<unknown, CurrentUserProfile>('/auth/me');

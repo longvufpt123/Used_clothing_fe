@@ -1,7 +1,9 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { LayoutDashboard, Truck, Archive, Leaf, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags } from 'lucide-react';
+import { LayoutDashboard, Truck, Archive, LogOut, ChevronLeft, ChevronRight, Users, Settings, X, Tags, HandHeart, Moon, Sun, UserRound, ClipboardCheck } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import './AdminSidebar.css';
 
 interface SidebarItem {
@@ -20,7 +22,8 @@ interface AdminSidebarProps {
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const isManager = location.pathname.startsWith('/manager');
   const basePath = isManager ? '/manager' : '/admin';
 
@@ -32,8 +35,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
         { label: 'Điều phối tiếp nhận', path: `${basePath}/dispatch`, icon: <Users size={18} /> },
         { label: 'Quản lý tài khoản', path: `${basePath}/users`, icon: <Users size={18} /> },
         { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
+        { label: 'Yêu cầu phân phối', path: `${basePath}/distributions`, icon: <HandHeart size={18} /> },
         { label: 'Danh mục phân loại', path: `${basePath}/categories`, icon: <Tags size={18} /> },
-        { label: 'Kế hoạch lịch trình AI', path: `${basePath}/campaigns`, icon: <Leaf size={18} /> },
+        { label: 'Tiêu chí đánh giá', path: `${basePath}/condition-criteria`, icon: <ClipboardCheck size={18} /> },
       ];
     } else {
       return [
@@ -70,10 +74,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, isMobil
         ))}
       </nav>
       <div className="sidebar-footer">
-        <button type="button" onClick={()=>{logout();onCloseMobile();navigate('/login',{replace:true})}} className="sidebar-link logout-btn" title={isCollapsed ? "Đăng xuất" : undefined}>
-          <LogOut size={18} />
-          <span>Đăng xuất</span>
-        </button>
+        <div className="admin-sidebar-tools">
+          <NotificationBell />
+          <button type="button" className="admin-sidebar-logout-icon" onClick={()=>{logout();onCloseMobile();navigate('/login',{replace:true})}} title="Đăng xuất" aria-label="Đăng xuất"><LogOut size={18}/></button>
+          <button type="button" onClick={toggleTheme} title={theme==='dark'?'Chuyển sang giao diện sáng':'Chuyển sang giao diện tối'}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}</button>
+          <button type="button" onClick={()=>{onCloseMobile();navigate(`${basePath}/profile`)}} title="Trang cá nhân"><UserRound size={18}/></button>
+        </div>
+        <button type="button" className="admin-sidebar-identity" onClick={()=>{onCloseMobile();navigate(`${basePath}/profile`)}} title={user?.fullName||'Manager'}><span>{(user?.fullName||'Manager').split(/\s+/).slice(-2).map(part=>part[0]).join('').toUpperCase()}</span><div><strong>{user?.fullName||'Manager'}</strong><small>{isManager?'Điều phối viên':'Quản trị viên'}</small></div></button>
       </div>
     </aside>
   );

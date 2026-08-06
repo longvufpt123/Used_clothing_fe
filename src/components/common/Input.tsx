@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useId, useRef } from 'react';
+import { CalendarDays } from 'lucide-react';
 import './Input.css';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -17,7 +18,10 @@ export const Input: React.FC<InputProps> = ({
   id,
   ...props
 }) => {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || `input-${generatedId}`;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasDatePicker = props.type === 'date' || props.type === 'datetime-local';
 
   const renderLabel = (text: string) => {
     if (text.endsWith('*')) {
@@ -41,10 +45,22 @@ export const Input: React.FC<InputProps> = ({
       <div className="input-container">
         {icon && <span className="input-icon-left">{icon}</span>}
         <input
+          ref={inputRef}
           id={inputId}
-          className={`custom-input ${icon ? 'has-icon-left' : ''}`}
+          className={`custom-input ${icon ? 'has-icon-left' : ''} ${hasDatePicker ? 'has-date-icon' : ''}`}
           {...props}
         />
+        {hasDatePicker && (
+          <button
+            type="button"
+            className="input-date-icon"
+            aria-label="Mở lịch chọn ngày"
+            tabIndex={-1}
+            onClick={() => inputRef.current?.showPicker?.()}
+          >
+            <CalendarDays size={17} />
+          </button>
+        )}
       </div>
       {error && <span className="input-error-text">{error}</span>}
       {!error && helperText && <span className="input-helper-text">{helperText}</span>}
