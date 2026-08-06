@@ -8,7 +8,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 // Request Interceptor: Inject Access Token
@@ -55,8 +55,14 @@ apiClient.interceptors.response.use(
 
     const status = error.response.status;
 
-    // If 401 Unauthorized, attempt to refresh token
-    if (status === 401 && !originalRequest._retry) {
+    // Check if the request is an auth endpoint (login, register, refresh, etc.)
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                           originalRequest.url?.includes('/auth/register') ||
+                           originalRequest.url?.includes('/auth/refresh') ||
+                           originalRequest.url?.includes('/auth/verify-registration');
+
+    // If 401 Unauthorized and NOT an auth endpoint, attempt to refresh token
+    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         // Queue this request while refreshing is in progress
         return new Promise((resolve, reject) => {
@@ -79,6 +85,8 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       if (!refreshToken) {
+        isRefreshing = false;
+        processQueue(error, null);
         console.warn('[API Client] No refresh token found. Logging out...');
         localStorage.removeItem('accessToken');
         return Promise.reject(error);
