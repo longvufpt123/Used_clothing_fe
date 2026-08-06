@@ -13,6 +13,24 @@
 .teams-schedule-times input{box-sizing:border-box;min-width:0;padding-inline:7px}
 @media(max-width:640px){.teams-year-modal{max-height:calc(100dvh - 16px)}.teams-schedule-times{grid-template-columns:1fr}.teams-year-actions{flex-direction:column-reverse}.teams-year-actions .ops-btn{width:100%}}
 @media(max-height:760px){.manager-modal-backdrop{align-items:start;padding:8px}.teams-year-modal{max-height:calc(100dvh - 16px)}.teams-year-modal .ops-field{margin-top:9px}.teams-schedule-times{margin-top:10px}.teams-year-note{margin:10px 0}}
+/* Month schedule modal: year stepper, month picker grid and live preview. */
+.teams-month-modal .teams-month-year{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:9px;padding:6px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-primary)}
+.teams-month-modal .teams-month-year strong{min-width:64px;text-align:center;font-size:1rem;font-variant-numeric:tabular-nums}
+.teams-month-modal .teams-month-year button{display:grid;width:30px;height:30px;place-items:center;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-secondary);color:var(--color-text-secondary);cursor:pointer}
+.teams-month-modal .teams-month-year button:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.teams-month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.teams-month-grid button{display:grid;gap:2px;min-width:0;padding:9px 6px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-primary);color:var(--color-text-secondary);text-align:center;cursor:pointer}
+.teams-month-grid button b{font-size:.8rem;font-weight:750}
+.teams-month-grid button small{color:var(--color-text-muted);font-size:.63rem}
+.teams-month-grid button:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.teams-month-grid button.selected{border-color:var(--color-primary);background:var(--color-primary);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--color-primary) 20%,transparent)}
+.teams-month-grid button.selected small{color:rgba(255,255,255,.8)}
+.teams-month-preview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-border);overflow:hidden}
+.teams-month-preview>div{display:grid;gap:3px;padding:11px 13px;background:var(--color-bg-primary)}
+.teams-month-preview span{color:var(--color-text-muted);font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.teams-month-preview strong{color:var(--color-text-primary);font-size:1.25rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.teams-month-preview>div:nth-child(2) strong{color:var(--color-primary)}
+@media(max-width:520px){.teams-month-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .teams-calendar-actions .teams-delete-year{width:auto;border-color:rgba(239,68,68,.4);color:#ef4444}
 .teams-calendar-actions .teams-delete-year:hover{background:rgba(239,68,68,.08)}
 .teams-delete-warning{margin:16px 0;padding:12px;border:1px solid rgba(239,68,68,.28);border-radius:9px;background:rgba(239,68,68,.07);color:var(--color-text-secondary);font-size:.76rem;line-height:1.5}

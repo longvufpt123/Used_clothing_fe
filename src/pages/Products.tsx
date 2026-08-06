@@ -85,16 +85,27 @@ const toLocalDateInputValue = (date: Date) => {
 const getVietnamNow = () =>
   new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
 
+const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+
 const getEarliestPickupDate = () => {
   const date = getVietnamNow();
   const currentMinutes = date.getHours() * 60 + date.getMinutes();
   if (currentMinutes >= PICKUP_CUTOFF_MINUTES) {
     date.setDate(date.getDate() + 1);
   }
+  while (isWeekend(date)) {
+    date.setDate(date.getDate() + 1);
+  }
   return toLocalDateInputValue(date);
 };
 
 const getDefaultPickupDate = getEarliestPickupDate;
+
+const isPickupDateInputWeekend = (value: string) => {
+  if (!value) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  return isWeekend(new Date(year, month - 1, day));
+};
 
 const estimateWeightByOption: Record<string, number> = {
   'under-5': 3,
@@ -365,6 +376,11 @@ export const Products: React.FC = () => {
       return;
     }
 
+    if (deliveryMethod === 'StaffPickup' && isPickupDateInputWeekend(pickupDate)) {
+      toast.error('Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -581,7 +597,13 @@ export const Products: React.FC = () => {
                   type="date"
                   value={pickupDate}
                   min={getEarliestPickupDate()}
-                  onChange={(e) => setPickupDate(e.target.value)}
+                  onChange={(e) => {
+                    if (isPickupDateInputWeekend(e.target.value)) {
+                      toast.error('Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.');
+                      return;
+                    }
+                    setPickupDate(e.target.value);
+                  }}
                   required
                 />
                 <Select

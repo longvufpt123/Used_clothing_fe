@@ -142,6 +142,25 @@ const toDateInputValue = (value?: string | null) => {
   return value.slice(0, 10);
 };
 
+const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+
+const isPickupDateInputWeekend = (value: string) => {
+  if (!value) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  return isWeekend(new Date(year, month - 1, day));
+};
+
+const getEarliestPickupDateInput = () => {
+  const date = new Date();
+  while (isWeekend(date)) {
+    date.setDate(date.getDate() + 1);
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const canModifyOrder = (status: string) => {
   return status === "PendingStaffAssign" || status === "WaitingReceivingStaff";
 };
@@ -409,6 +428,11 @@ export const MyOrders: React.FC = () => {
       toast.error(
         "Vui lòng nhập đầy đủ địa chỉ, ngày lấy hàng và kho tiếp nhận.",
       );
+      return;
+    }
+
+    if (isPickupDateInputWeekend(editForm.pickupDate)) {
+      toast.error("Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.");
       return;
     }
 
@@ -709,9 +733,16 @@ export const MyOrders: React.FC = () => {
                           label="Ngày lấy hàng"
                           type="date"
                           value={editForm.pickupDate}
-                          onChange={(event) =>
-                            updateEditForm("pickupDate", event.target.value)
-                          }
+                          min={getEarliestPickupDateInput()}
+                          onChange={(event) => {
+                            if (isPickupDateInputWeekend(event.target.value)) {
+                              toast.error(
+                                "Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.",
+                              );
+                              return;
+                            }
+                            updateEditForm("pickupDate", event.target.value);
+                          }}
                           required
                         />
                         <Select
