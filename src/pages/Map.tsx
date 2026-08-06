@@ -224,11 +224,7 @@ export const Map: React.FC = () => {
                     style={{ width: `${selectedLoc.fillLevel}%` }}
                   />
                 </div>
-                <span className="fill-desc">
-                  {selectedLoc.status === 'full' 
-                    ? 'Thùng chứa đã đầy. Nhân viên đang di chuyển để thu gom làm rỗng.'
-                    : `Thùng còn chứa được thêm khoảng ${100 - selectedLoc.fillLevel}% lượng vải vụn quyên góp.`}
-                </span>
+                
               </div>
             </div>
           </div>
