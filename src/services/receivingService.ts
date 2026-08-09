@@ -46,6 +46,18 @@ export interface ManagerReceivingSetup {
 }
 export interface GenerateYearShiftsResult { workingDays:number; createdShifts:number; skippedExisting:number; }
 export interface GenerateMonthShiftsResult { workingDays:number; createdShifts:number; skippedExisting:number; }
+export interface ShiftDefinitionInput { name:string; startTime:string; endTime:string; }
+export interface GenerateShiftsParams {
+  warehouseId:string;
+  startDate:string;
+  periodUnit:number; // 0: Day, 1: Week, 2: Month, 3: Quarter, 4: Year, 5: Custom
+  periodValue:number;
+  customEndDate?:string|null;
+  workingDays?:number[];
+  excludedDates?:string[];
+  shiftDefinitions?:ShiftDefinitionInput[];
+}
+export interface GenerateShiftsResult { startDate:string; endDate:string; workingDays:number; createdShifts:number; skippedExisting:number; }
 
 const mapBatch = (b:ApiBatch):ReceivingBatch => ({...b,date:b.date.slice(0,10),requests:b.requests.map(r=>({...r,category:r.description||'Quần áo hỗn hợp',weight:`${r.estimateWeight} kg`,condition:'Chờ kiểm tra thực tế',status:(r.status==='Cancelled'?'Canceled':r.status==='Received'||r.status==='Rescheduled'?r.status:'Pending') as ReceivingStatus,date:r.pickupDate?.slice(0,10)||b.date.slice(0,10),actualNotes:r.notes}))});
 
@@ -65,6 +77,7 @@ export const receivingService = {
   getDispatchBoard:()=>apiClient.get<unknown,DispatchBoard>('/receiving-operations/dispatch-board'),
   assignRequest:(requestId:string,teamId:string)=>apiClient.post('/receiving-operations/assign-request',{requestId,teamId}),
   getManagerSetup:()=>apiClient.get<unknown,ManagerReceivingSetup>('/receiving-operations/manager-setup'),
+  generateShifts:(data:GenerateShiftsParams)=>apiClient.post<unknown,GenerateShiftsResult>('/receiving-operations/shifts/generate',data),
   generateStandardShifts:(warehouseId:string,date:string)=>apiClient.post('/receiving-operations/standard-shifts',{warehouseId,date}),
   generateYearShifts:(warehouseId:string,year:number,holidayDates:string[],workingDays:number[]=[1,2,3,4,5],times={morningStartTime:'08:00:00',morningEndTime:'11:00:00',afternoonStartTime:'13:00:00',afternoonEndTime:'17:00:00'})=>apiClient.post<unknown,GenerateYearShiftsResult>('/receiving-operations/year-shifts',{warehouseId,year,holidayDates,workingDays,...times}),
   generateMonthShifts:(warehouseId:string,year:number,month:number,holidayDates:string[],workingDays:number[]=[1,2,3,4,5],times={morningStartTime:'08:00:00',morningEndTime:'11:00:00',afternoonStartTime:'13:00:00',afternoonEndTime:'17:00:00'})=>apiClient.post<unknown,GenerateMonthShiftsResult>('/receiving-operations/month-shifts',{warehouseId,year,month,holidayDates,workingDays,...times}),
