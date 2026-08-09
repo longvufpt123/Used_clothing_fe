@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+  import React, { useEffect, useState } from 'react';
 import { MapPin, Clock, Info, Search, Leaf, Loader2 } from 'lucide-react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
@@ -112,7 +112,7 @@ export const Map: React.FC = () => {
             results.push({
               id: warehouse.id,
               address: warehouse.address,
-              hours: '08:00 - 20:00 (Thứ 2 - Thứ 7, nghỉ Chủ nhật)',
+              hours: '08:00 - 20:00 (Thứ 2 - Thứ 6, nghỉ Thứ 7 & Chủ nhật)',
               lat: point.lat,
               lon: point.lon,
               totalCapacityKg,
