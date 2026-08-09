@@ -54,6 +54,7 @@ export default function ShiftCalendar(){
   const holidayDates=()=>holidays.split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
   const requestYear=()=>{const dates=holidayDates();if(!workingDays.length)return toast.warning('Chọn ít nhất một ngày làm việc trong tuần.');if(scheduleTimes.morningStartTime>=scheduleTimes.morningEndTime)return toast.warning('Giờ kết thúc ca sáng phải sau giờ bắt đầu.');if(scheduleTimes.afternoonStartTime>=scheduleTimes.afternoonEndTime)return toast.warning('Giờ kết thúc ca chiều phải sau giờ bắt đầu.');if(scheduleTimes.morningEndTime>scheduleTimes.afternoonStartTime)return toast.warning('Ca sáng phải kết thúc trước khi ca chiều bắt đầu.');if(dates.some(x=>!new RegExp(`^${year}-\\d{2}-\\d{2}$`).test(x)))return toast.warning(`Ngày phải có dạng ${year}-MM-DD.`);void createYear();};
   const createYear=async()=>{setCreatingYear(true);try{const times=Object.fromEntries(Object.entries(scheduleTimes).map(([key,value])=>[key,`${value}:00`])) as typeof scheduleTimes;const result=await receivingService.generateYearShifts(warehouseId,year,holidayDates(),workingDays,times);toast.success(`Đã tạo ${result.createdShifts} ca trên ${result.workingDays} ngày làm việc; bỏ qua ${result.skippedExisting} ca đã có.`);setYearOpen(false);setMonth(new Date(year,0,1));await load();}catch(e:any){toast.error(e?.response?.data?.message||'Không thể tạo lịch năm.');}finally{setCreatingYear(false);}};
+  const openYear=()=>{setYear(month.getFullYear());setHolidays('');setYearOpen(true);};
   const openMonth=()=>{setMonthYear(month.getFullYear());setMonthIndex(month.getMonth()+1);setMonthHolidays('');setMonthOpen(true);};
   const monthHolidayDates=()=>monthHolidays.split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
   const monthPreview=useMemo(()=>{
@@ -81,7 +82,7 @@ export default function ShiftCalendar(){
   return <AdminLayout><div className="teams-calendar-page">
     <header className="teams-calendar-head">
       <div><span>LỊCH VẬN HÀNH</span><h1>Ca làm việc</h1><p>Lập và theo dõi lịch tiếp nhận theo ngày, tuần và tháng.</p></div>
-      <div className="teams-calendar-actions"><button onClick={load}><RefreshCw size={16}/></button><button className="teams-delete-year" onClick={()=>setDeleteYearOpen(true)} disabled={!warehouseId}><Trash2 size={16}/> Xóa tất cả</button><button onClick={openMonth} disabled={!warehouseId}><CalendarRange size={16}/> Tạo lịch tháng</button><button className="primary" onClick={()=>setYearOpen(true)} disabled={!warehouseId}><CalendarDays size={16}/> Tạo lịch năm</button></div>
+      <div className="teams-calendar-actions"><button onClick={load}><RefreshCw size={16}/></button><button className="teams-delete-year" onClick={()=>setDeleteYearOpen(true)} disabled={!warehouseId}><Trash2 size={16}/> Xóa tất cả</button><button onClick={openMonth} disabled={!warehouseId}><CalendarRange size={16}/> Tạo lịch tháng</button><button className="primary" onClick={openYear} disabled={!warehouseId||currentYearHasShifts} title={currentYearHasShifts?'Kho này đã có lịch cho năm đang xem. Xóa tất cả trước khi tạo lại.':undefined}><CalendarDays size={16}/> Tạo lịch năm</button></div>
     </header>
     <div className="teams-calendar-toolbar">
       <button className="today" onClick={()=>{const now=new Date();setMonth(startMonth(now));setSelected(iso(now));}}>Hôm nay</button>
