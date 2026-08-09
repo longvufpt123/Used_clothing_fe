@@ -81,7 +81,7 @@ export default function ShiftCalendar(){
   return <AdminLayout><div className="teams-calendar-page">
     <header className="teams-calendar-head">
       <div><span>LỊCH VẬN HÀNH</span><h1>Ca làm việc</h1><p>Lập và theo dõi lịch tiếp nhận theo ngày, tuần và tháng.</p></div>
-      <div className="teams-calendar-actions"><button onClick={load}><RefreshCw size={16}/></button><button className="teams-delete-year" onClick={()=>setDeleteYearOpen(true)} disabled={!warehouseId}><Trash2 size={16}/> Xóa tất cả</button><button onClick={openMonth} disabled={!warehouseId}><CalendarRange size={16}/> Tạo lịch tháng</button><button className="primary" onClick={()=>setYearOpen(true)} disabled={!warehouseId||currentYearHasShifts} title={currentYearHasShifts?'Kho này đã có lịch cho năm đang xem. Xóa tất cả trước khi tạo lại.':undefined}><CalendarDays size={16}/> Tạo lịch năm</button></div>
+      <div className="teams-calendar-actions"><button onClick={load}><RefreshCw size={16}/></button><button className="teams-delete-year" onClick={()=>setDeleteYearOpen(true)} disabled={!warehouseId}><Trash2 size={16}/> Xóa tất cả</button><button onClick={openMonth} disabled={!warehouseId}><CalendarRange size={16}/> Tạo lịch tháng</button><button className="primary" onClick={()=>setYearOpen(true)} disabled={!warehouseId}><CalendarDays size={16}/> Tạo lịch năm</button></div>
     </header>
     <div className="teams-calendar-toolbar">
       <button className="today" onClick={()=>{const now=new Date();setMonth(startMonth(now));setSelected(iso(now));}}>Hôm nay</button>
