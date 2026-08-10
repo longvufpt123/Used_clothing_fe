@@ -60,15 +60,14 @@ export const Team: React.FC = () => {
                 members: batch.teamMembers,
                 batches: batches.filter(
                   (candidate) =>
-                    candidate.shiftId === batch.shiftId &&
-                    candidate.teamName === batch.teamName
+                    candidate.shiftId === batch.shiftId && candidate.teamName === batch.teamName,
                 ),
               },
             ];
-          })
-        ).values()
+          }),
+        ).values(),
       ),
-    [batches]
+    [batches],
   );
 
   const shiftStatusLabel = (status: string) => {
@@ -78,11 +77,8 @@ export const Team: React.FC = () => {
   };
 
   const filteredTeams = useMemo(
-    () =>
-      teamDate
-        ? teams.filter((team) => team.shiftDate?.slice(0, 10) === teamDate)
-        : teams,
-    [teamDate, teams]
+    () => (teamDate ? teams.filter((team) => team.shiftDate?.slice(0, 10) === teamDate) : teams),
+    [teamDate, teams],
   );
 
   return (
@@ -92,8 +88,8 @@ export const Team: React.FC = () => {
           <span className="ops-pagehead-kicker">Nhân sự tiếp nhận</span>
           <h1>Team của tôi</h1>
           <p>
-            Xem thành viên đồng hành, thông tin liên hệ, ca làm việc, kho xuất phát
-            và các lô thu gom mà team đang phụ trách.
+            Xem thành viên đồng hành, thông tin liên hệ, ca làm việc, kho xuất phát và các lô thu
+            gom mà team đang phụ trách.
           </p>
         </div>
       </header>
@@ -113,7 +109,11 @@ export const Team: React.FC = () => {
           {filteredTeams.length}/{teams.length} team
         </span>
         {teamDate && (
-          <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setTeamDate('')}>
+          <button
+            type="button"
+            className="ops-btn ops-btn-secondary"
+            onClick={() => setTeamDate('')}
+          >
             <RotateCcw size={15} /> Xóa lọc
           </button>
         )}
@@ -135,7 +135,11 @@ export const Team: React.FC = () => {
           <Calendar size={38} strokeWidth={1.5} />
           <h4>Không có team trong ngày đã chọn</h4>
           <p>Hãy chọn ngày khác hoặc xóa bộ lọc để xem toàn bộ team của bạn.</p>
-          <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setTeamDate('')}>
+          <button
+            type="button"
+            className="ops-btn ops-btn-secondary"
+            onClick={() => setTeamDate('')}
+          >
             <RotateCcw size={15} /> Xem tất cả team
           </button>
         </div>
@@ -144,12 +148,16 @@ export const Team: React.FC = () => {
           {filteredTeams.map((team) => (
             <section className="rcv-team-detail-card" key={team.key}>
               <div className="rcv-team-detail-head">
-                <span className="rcv-team-icon"><Users size={24} /></span>
+                <span className="rcv-team-icon">
+                  <Users size={24} />
+                </span>
                 <div>
                   <span>Receiving team</span>
                   <h2>{team.teamName || 'Chưa đặt tên team'}</h2>
                 </div>
-                <span className={`ops-badge ${team.shiftStatus === 'InProgress' ? 'stored' : 'pending'}`}>
+                <span
+                  className={`ops-badge ${team.shiftStatus === 'InProgress' ? 'stored' : 'pending'}`}
+                >
                   {shiftStatusLabel(team.shiftStatus)}
                 </span>
               </div>
@@ -158,7 +166,9 @@ export const Team: React.FC = () => {
                 <div>
                   <Calendar size={17} />
                   <span>Ca làm việc</span>
-                  <strong>{team.shiftName} · {team.shiftDate}</strong>
+                  <strong>
+                    {team.shiftName} · {team.shiftDate}
+                  </strong>
                 </div>
                 <div>
                   <Clock3 size={17} />
@@ -176,7 +186,9 @@ export const Team: React.FC = () => {
 
               <div className="rcv-team-detail-columns">
                 <div>
-                  <h3><Users size={17} /> Thành viên ({team.members.length})</h3>
+                  <h3>
+                    <Users size={17} /> Thành viên ({team.members.length})
+                  </h3>
                   <div className="rcv-team-members">
                     {team.members.map((member, index) => (
                       <div className="rcv-team-member" key={member.id}>
@@ -202,7 +214,9 @@ export const Team: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3><ClipboardList size={17} /> Lô được giao ({team.batches.length})</h3>
+                  <h3>
+                    <ClipboardList size={17} /> Lô được giao ({team.batches.length})
+                  </h3>
                   <div className="rcv-team-batches">
                     {team.batches.map((batch) => (
                       <button
@@ -210,10 +224,14 @@ export const Team: React.FC = () => {
                         key={batch.id}
                         onClick={() => navigate(`/receiving/batch/${batch.id}`)}
                       >
-                        <span className="rcv-team-batch-icon"><Truck size={17} /></span>
+                        <span className="rcv-team-batch-icon">
+                          <Truck size={17} />
+                        </span>
                         <span>
                           <strong>{batch.code}</strong>
-                          <small>{batch.route} · {batch.requests.length} đơn</small>
+                          <small>
+                            {batch.route} · {batch.requests.length} đơn
+                          </small>
                         </span>
                         <ArrowRight size={16} />
                       </button>

@@ -14,15 +14,78 @@ interface DonorRank {
 }
 
 const DONOR_DATA: DonorRank[] = [
-  { rank: 1, name: 'Nguyễn Thị Minh Vy', type: 'individual', weight: 285, impactSavedCo2: 427, treesPlanted: 19 },
-  { rank: 2, name: 'Công ty Cổ phần May Xanh', type: 'corporate', weight: 250, impactSavedCo2: 375, treesPlanted: 17 },
-  { rank: 3, name: 'Trần Hoàng Long', type: 'individual', weight: 195, impactSavedCo2: 292, treesPlanted: 13 },
-  { rank: 4, name: 'Đại học Quốc gia TP. HCM', type: 'corporate', weight: 160, impactSavedCo2: 240, treesPlanted: 10 },
-  { rank: 5, name: 'Phạm Thành Nhân', type: 'individual', weight: 125, impactSavedCo2: 187, treesPlanted: 8 },
-  { rank: 6, name: 'Lê Văn Khải', type: 'individual', weight: 110, impactSavedCo2: 165, treesPlanted: 7 },
-  { rank: 7, name: 'Cộng đồng Yêu Sống Xanh', type: 'corporate', weight: 95, impactSavedCo2: 142, treesPlanted: 6 },
-  { rank: 8, name: 'Nguyễn Bích Ngọc', type: 'individual', weight: 85, impactSavedCo2: 127, treesPlanted: 5 },
-  { rank: 9, name: 'Vũ Minh Tuấn', type: 'individual', weight: 70, impactSavedCo2: 105, treesPlanted: 4 },
+  {
+    rank: 1,
+    name: 'Nguyễn Thị Minh Vy',
+    type: 'individual',
+    weight: 285,
+    impactSavedCo2: 427,
+    treesPlanted: 19,
+  },
+  {
+    rank: 2,
+    name: 'Công ty Cổ phần May Xanh',
+    type: 'corporate',
+    weight: 250,
+    impactSavedCo2: 375,
+    treesPlanted: 17,
+  },
+  {
+    rank: 3,
+    name: 'Trần Hoàng Long',
+    type: 'individual',
+    weight: 195,
+    impactSavedCo2: 292,
+    treesPlanted: 13,
+  },
+  {
+    rank: 4,
+    name: 'Đại học Quốc gia TP. HCM',
+    type: 'corporate',
+    weight: 160,
+    impactSavedCo2: 240,
+    treesPlanted: 10,
+  },
+  {
+    rank: 5,
+    name: 'Phạm Thành Nhân',
+    type: 'individual',
+    weight: 125,
+    impactSavedCo2: 187,
+    treesPlanted: 8,
+  },
+  {
+    rank: 6,
+    name: 'Lê Văn Khải',
+    type: 'individual',
+    weight: 110,
+    impactSavedCo2: 165,
+    treesPlanted: 7,
+  },
+  {
+    rank: 7,
+    name: 'Cộng đồng Yêu Sống Xanh',
+    type: 'corporate',
+    weight: 95,
+    impactSavedCo2: 142,
+    treesPlanted: 6,
+  },
+  {
+    rank: 8,
+    name: 'Nguyễn Bích Ngọc',
+    type: 'individual',
+    weight: 85,
+    impactSavedCo2: 127,
+    treesPlanted: 5,
+  },
+  {
+    rank: 9,
+    name: 'Vũ Minh Tuấn',
+    type: 'individual',
+    weight: 70,
+    impactSavedCo2: 105,
+    treesPlanted: 4,
+  },
 ];
 
 export const Leaderboard: React.FC = () => {
@@ -87,7 +150,8 @@ export const Leaderboard: React.FC = () => {
         <span className="section-subtitle">Tác động cộng đồng</span>
         <h1 className="text-gradient">Bảng Vàng Vinh Danh</h1>
         <p className="leaderboard-desc">
-          Tri ân những đóng góp to lớn của các cá nhân và tập thể đã chung tay quyên gửi áo ấm và dệt sợi tái chế vải cũ bảo vệ hành tinh xanh.
+          Tri ân những đóng góp to lớn của các cá nhân và tập thể đã chung tay quyên gửi áo ấm và
+          dệt sợi tái chế vải cũ bảo vệ hành tinh xanh.
         </p>
       </div>
 
@@ -139,12 +203,12 @@ export const Leaderboard: React.FC = () => {
                       {donor.name.split(' ').pop()?.substring(0, 2).toUpperCase()}
                     </div>
                   </div>
-                  
+
                   <div className="podium-card glass">
                     <span className="podium-rank">Hạng {donor.rank}</span>
                     <h4 className="podium-donor-name">{donor.name}</h4>
                     <span className="podium-weight text-gradient">{donor.weight} kg</span>
-                    
+
                     <div className="podium-stats">
                       <div className="podium-stat-line">
                         <Recycle size={12} />

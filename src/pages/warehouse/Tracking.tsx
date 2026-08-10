@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MapPin, Package, Truck, Home } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import {
-  getDistributionByTracking,
-  type DistributionRequest,
-} from '@/utils/warehouseMockDb';
+import { getDistributionByTracking, type DistributionRequest } from '@/utils/warehouseMockDb';
 import '@/styles/ops-shared.css';
 
 export const WarehouseTracking: React.FC = () => {
@@ -20,12 +17,17 @@ export const WarehouseTracking: React.FC = () => {
     if (d) setDist(d);
 
     import('@/services/warehouseService').then(({ warehouseService }) => {
-      warehouseService.getDistributionRequests().then((res) => {
-        const found = res.find((x) => x.code === trackingCode || x.id === trackingCode);
-        if (found) {
-          setDist((prev) => prev ? { ...prev, destination: found.organizationName || prev.destination } : prev);
-        }
-      }).catch(() => {});
+      warehouseService
+        .getDistributionRequests()
+        .then((res) => {
+          const found = res.find((x) => x.code === trackingCode || x.id === trackingCode);
+          if (found) {
+            setDist((prev) =>
+              prev ? { ...prev, destination: found.organizationName || prev.destination } : prev,
+            );
+          }
+        })
+        .catch(() => {});
     });
   }, [trackingCode, navigate, toast]);
 
@@ -72,7 +74,9 @@ export const WarehouseTracking: React.FC = () => {
         </button>
         <div className="ops-title-row">
           <h1>Theo dõi vận đơn GHN</h1>
-          <span className={`ops-badge ${dist.status.toLowerCase()}`}>{dist.ghnStatus || dist.status}</span>
+          <span className={`ops-badge ${dist.status.toLowerCase()}`}>
+            {dist.ghnStatus || dist.status}
+          </span>
         </div>
       </div>
 
@@ -148,7 +152,12 @@ export const WarehouseTracking: React.FC = () => {
               alignItems: 'flex-start',
             }}
           >
-            <MapPin size={18} strokeWidth={1.75} color="var(--color-primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <MapPin
+              size={18}
+              strokeWidth={1.75}
+              color="var(--color-primary)"
+              style={{ flexShrink: 0, marginTop: 2 }}
+            />
             <div>
               <strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: 4 }}>
                 Địa chỉ giao

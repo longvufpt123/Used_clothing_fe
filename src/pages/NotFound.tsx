@@ -18,8 +18,8 @@ export const NotFound: React.FC = () => {
         </div>
         <h1 className="notfound-title">Không tìm thấy trang bạn cần</h1>
         <p className="notfound-desc">
-          Đường dẫn này có thể đã bị di chuyển hoặc không còn tồn tại. Hãy quay lại
-          trang trước hoặc trở về trang chủ để tiếp tục quyên góp.
+          Đường dẫn này có thể đã bị di chuyển hoặc không còn tồn tại. Hãy quay lại trang trước hoặc
+          trở về trang chủ để tiếp tục quyên góp.
         </p>
         <div className="notfound-actions">
           <Button size="lg" onClick={() => navigate('/')}>

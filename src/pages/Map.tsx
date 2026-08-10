@@ -41,7 +41,10 @@ const asciiAddress = (value: string) =>
 
 const geocodeQueries = (address: string) => {
   const ascii = asciiAddress(address);
-  const street = ascii.split(',')[0].replace(/^\d+\s+/, '').trim();
+  const street = ascii
+    .split(',')[0]
+    .replace(/^\d+\s+/, '')
+    .trim();
   return [...new Set([address, ascii, `${street}, Ho Chi Minh City`])];
 };
 
@@ -106,9 +109,10 @@ export const Map: React.FC = () => {
           if (point && isMounted) {
             const totalCapacityKg = warehouse.totalCapacityKg ?? 0;
             const currentWeight = warehouse.currentWeight ?? 0;
-            const fillPercent = totalCapacityKg > 0
-              ? Math.min(100, Math.round((currentWeight / totalCapacityKg) * 100))
-              : 0;
+            const fillPercent =
+              totalCapacityKg > 0
+                ? Math.min(100, Math.round((currentWeight / totalCapacityKg) * 100))
+                : 0;
             results.push({
               id: warehouse.id,
               address: warehouse.address,
@@ -148,7 +152,7 @@ export const Map: React.FC = () => {
   }, [locations, selectedLoc]);
 
   const filteredLocations = locations.filter((loc) =>
-    loc.address.toLowerCase().includes(searchTerm.toLowerCase())
+    loc.address.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -180,24 +184,25 @@ export const Map: React.FC = () => {
                 <span>Đang tải điểm tiếp nhận...</span>
               </div>
             )}
-            {!loading && filteredLocations.map((loc) => (
-              <div
-                key={loc.id}
-                className={`location-item ${selectedLoc?.id === loc.id ? 'active' : ''}`}
-                onClick={() => setSelectedLoc(loc)}
-              >
-                <div className="location-item-header">
-                  <h4>Kho tiếp nhận</h4>
-                  <span className={`fill-indicator ${loc.isFull ? 'full' : ''}`}>
-                    {loc.isFull ? 'Đã đầy' : `${loc.fillPercent}%`}
-                  </span>
+            {!loading &&
+              filteredLocations.map((loc) => (
+                <div
+                  key={loc.id}
+                  className={`location-item ${selectedLoc?.id === loc.id ? 'active' : ''}`}
+                  onClick={() => setSelectedLoc(loc)}
+                >
+                  <div className="location-item-header">
+                    <h4>Kho tiếp nhận</h4>
+                    <span className={`fill-indicator ${loc.isFull ? 'full' : ''}`}>
+                      {loc.isFull ? 'Đã đầy' : `${loc.fillPercent}%`}
+                    </span>
+                  </div>
+                  <p className="location-item-address">
+                    <MapPin size={14} style={{ marginRight: '4px', flexShrink: 0 }} />
+                    {loc.address}
+                  </p>
                 </div>
-                <p className="location-item-address">
-                  <MapPin size={14} style={{ marginRight: '4px', flexShrink: 0 }} />
-                  {loc.address}
-                </p>
-              </div>
-            ))}
+              ))}
             {!loading && filteredLocations.length === 0 && (
               <div className="empty-locations-search text-center">
                 {error || 'Không tìm thấy điểm thu nhận phù hợp.'}
@@ -216,7 +221,10 @@ export const Map: React.FC = () => {
               scrollWheelZoom={false}
               style={{ height: '100%', width: '100%' }}
             >
-              <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
               {filteredLocations.map((loc) => (
                 <Marker
                   key={loc.id}
@@ -224,7 +232,11 @@ export const Map: React.FC = () => {
                   icon={pinIcon}
                   eventHandlers={{ click: () => setSelectedLoc(loc) }}
                 >
-                  <Popup><strong>Kho tiếp nhận</strong><br />{loc.address}</Popup>
+                  <Popup>
+                    <strong>Kho tiếp nhận</strong>
+                    <br />
+                    {loc.address}
+                  </Popup>
                 </Marker>
               ))}
             </MapContainer>
@@ -242,7 +254,9 @@ export const Map: React.FC = () => {
                 <Leaf className="logo-icon text-gradient" size={24} />
                 <div>
                   <h3>Kho tiếp nhận</h3>
-                  <span className={`status-badge-inline ${selectedLoc.isFull ? 'full' : 'available'}`}>
+                  <span
+                    className={`status-badge-inline ${selectedLoc.isFull ? 'full' : 'available'}`}
+                  >
                     {selectedLoc.isFull ? 'Đã đầy - Tạm ngừng nhận' : 'Đang hoạt động'}
                   </span>
                 </div>
@@ -269,7 +283,8 @@ export const Map: React.FC = () => {
                     />
                   </div>
                   <p className="fill-desc">
-                    {selectedLoc.currentWeight.toLocaleString('vi-VN')} kg / {selectedLoc.totalCapacityKg.toLocaleString('vi-VN')} kg
+                    {selectedLoc.currentWeight.toLocaleString('vi-VN')} kg /{' '}
+                    {selectedLoc.totalCapacityKg.toLocaleString('vi-VN')} kg
                   </p>
                 </div>
               </div>

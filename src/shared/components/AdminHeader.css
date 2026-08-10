@@ -65,7 +65,8 @@
   transition: all var(--transition-fast);
 }
 
-.header-icon-btn:hover, .header-icon-btn.active {
+.header-icon-btn:hover,
+.header-icon-btn.active {
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-primary);
 }
@@ -127,7 +128,7 @@
   place-items: center;
   background: var(--color-primary-light);
   color: var(--color-primary);
-  font-size: .72rem;
+  font-size: 0.72rem;
   font-weight: 800;
 }
 
@@ -141,7 +142,7 @@
 }
 
 [data-theme='light'] .admin-layout-header .profile-avatar {
-  box-shadow: 0 0 0 2px rgba(255,255,255,.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
 .admin-layout-header .profile-info {

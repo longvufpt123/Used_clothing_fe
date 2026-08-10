@@ -74,10 +74,11 @@ export default function AddressSearchMap({
           headers: { 'Accept-Language': 'vi' },
         });
         if (!response.ok) throw new Error();
-        const data = await response.json() as AddressResult[];
+        const data = (await response.json()) as AddressResult[];
         setResults(data);
         setOpen(true);
-        if (!data.length) setMessage('Không tìm thấy địa chỉ. Hãy nhập thêm phường, quận hoặc thành phố.');
+        if (!data.length)
+          setMessage('Không tìm thấy địa chỉ. Hãy nhập thêm phường, quận hoặc thành phố.');
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           setResults([]);
@@ -95,7 +96,11 @@ export default function AddressSearchMap({
   }, [value, selected]);
 
   const chooseAddress = (result: AddressResult) => {
-    const point = { address: result.display_name, lat: Number(result.lat), lon: Number(result.lon) };
+    const point = {
+      address: result.display_name,
+      lat: Number(result.lat),
+      lon: Number(result.lon),
+    };
     skipNextSearch.current = true;
     setSelected(point);
     onChange(point.address);
@@ -114,9 +119,7 @@ export default function AddressSearchMap({
 
   return (
     <div className="address-search-field">
-      <label htmlFor="pickup-address-search">
-        Địa chỉ lấy hàng {required && <span>*</span>}
-      </label>
+      <label htmlFor="pickup-address-search">Địa chỉ lấy hàng {required && <span>*</span>}</label>
       <div className={`address-search-input${open ? ' open' : ''}`}>
         {loading ? <Loader2 className="address-search-spinner" size={18} /> : <Search size={18} />}
         <input
@@ -132,12 +135,16 @@ export default function AddressSearchMap({
             setOpen(true);
           }}
         />
-        {value && <button type="button" onClick={clear} aria-label="Xóa địa chỉ"><X size={17} /></button>}
+        {value && (
+          <button type="button" onClick={clear} aria-label="Xóa địa chỉ">
+            <X size={17} />
+          </button>
+        )}
       </div>
 
       {open && (results.length > 0 || message) && (
         <div className="address-search-results">
-          {results.map(result => (
+          {results.map((result) => (
             <button type="button" key={result.place_id} onClick={() => chooseAddress(result)}>
               <MapPin size={17} />
               <span>{result.display_name}</span>
@@ -149,28 +156,38 @@ export default function AddressSearchMap({
       )}
 
       <div className={`address-search-map${selected ? ' has-location' : ''}`}>
-          <div className="address-search-map-heading">
-            <MapPin size={16} />
-            <div>
-              <strong>{selected ? 'Vị trí lấy hàng đã chọn' : 'Chọn vị trí lấy hàng'}</strong>
-              <span>{selected?.address || 'Tìm kiếm và chọn một địa chỉ để đặt điểm lấy hàng trên bản đồ.'}</span>
-            </div>
+        <div className="address-search-map-heading">
+          <MapPin size={16} />
+          <div>
+            <strong>{selected ? 'Vị trí lấy hàng đã chọn' : 'Chọn vị trí lấy hàng'}</strong>
+            <span>
+              {selected?.address ||
+                'Tìm kiếm và chọn một địa chỉ để đặt điểm lấy hàng trên bản đồ.'}
+            </span>
           </div>
-          <MapContainer
-            key={selected ? `${selected.lat}-${selected.lon}` : 'default-pickup-map'}
-            center={selected ? [selected.lat, selected.lon] : DEFAULT_CENTER}
-            zoom={selected ? 16 : 11}
-            scrollWheelZoom={false}
-            style={{ height: 240, width: '100%' }}
-          >
-            <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {selected && (
-              <Marker position={[selected.lat, selected.lon]} icon={selectedMarker}>
-                <Popup><strong>Địa chỉ lấy hàng</strong><br />{selected.address}</Popup>
-              </Marker>
-            )}
-          </MapContainer>
         </div>
+        <MapContainer
+          key={selected ? `${selected.lat}-${selected.lon}` : 'default-pickup-map'}
+          center={selected ? [selected.lat, selected.lon] : DEFAULT_CENTER}
+          zoom={selected ? 16 : 11}
+          scrollWheelZoom={false}
+          style={{ height: 240, width: '100%' }}
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {selected && (
+            <Marker position={[selected.lat, selected.lon]} icon={selectedMarker}>
+              <Popup>
+                <strong>Địa chỉ lấy hàng</strong>
+                <br />
+                {selected.address}
+              </Popup>
+            </Marker>
+          )}
+        </MapContainer>
+      </div>
     </div>
   );
 }

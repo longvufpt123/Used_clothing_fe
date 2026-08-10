@@ -2,22 +2,185 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ClipboardCheck, Package, Recycle, Scale, Send, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
-import { classificationService, type ClassificationBatchDetail } from '@/services/classificationService';
+import {
+  classificationService,
+  type ClassificationBatchDetail,
+} from '@/services/classificationService';
 import '@/styles/ops-shared.css';
 
-const directionLabel: Record<string,string> = { Charity:'Từ thiện', Recycling:'Tái chế', Disposal:'Tiêu hủy' };
+const directionLabel: Record<string, string> = {
+  Charity: 'Từ thiện',
+  Recycling: 'Tái chế',
+  Disposal: 'Tiêu hủy',
+};
 
-export default function ClassifiedBatchDetail(){
-  const {batchId}=useParams(); const navigate=useNavigate(); const toast=useToast();
-  const [batch,setBatch]=useState<ClassificationBatchDetail|null>(null); const [loading,setLoading]=useState(true);
-  useEffect(()=>{if(!batchId)return;classificationService.getBatch(batchId).then(b=>{if(b.status!=='Classified')toast.warning('Batch này chưa hoàn tất phân loại.');setBatch(b);}).catch(()=>{toast.error('Không tải được chi tiết Classified Batch.');navigate('/classification');}).finally(()=>setLoading(false));},[batchId,navigate,toast]);
-  const stats=useMemo(()=>({A:batch?.items.filter(i=>i.conditionGrade==='A').length||0,B:batch?.items.filter(i=>i.conditionGrade==='B').length||0,C:batch?.items.filter(i=>i.conditionGrade==='C').length||0}),[batch]);
-  if(loading)return <div className="ops-page">Đang tải chi tiết...</div>; if(!batch)return null;
-  return <div className="ops-page">
-    <div className="ops-nav"><button className="ops-back" onClick={()=>navigate('/classification')}><ChevronLeft size={16}/> Quay lại</button><div className="ops-title-row"><h1>Chi tiết Classified Batch</h1><span className="ops-badge classified">Classified</span></div></div>
-    <header className="ops-pagehead"><div className="ops-pagehead-main"><span className="ops-pagehead-kicker">{batch.batchCode}</span><h1>{batch.routeName||'Intake Batch đã phân loại'}</h1><p>Hoàn tất phân loại ngày {new Date(batch.intakeDate).toLocaleDateString('vi-VN')}.</p></div></header>
-    <div className="ops-stats"><div className="ops-stat-card"><span className="ops-stat-label">Tổng item</span><div className="ops-stat-value"><Package size={18}/>{batch.items.length}</div><span className="ops-stat-foot">từ {batch.donationRequests} đơn quyên góp</span></div><div className="ops-stat-card"><span className="ops-stat-label">Loại A · Từ thiện</span><div className="ops-stat-value"><Send size={18}/>{stats.A}</div></div><div className="ops-stat-card"><span className="ops-stat-label">Loại B · Tái chế</span><div className="ops-stat-value"><Recycle size={18}/>{stats.B}</div></div><div className="ops-stat-card"><span className="ops-stat-label">Loại C · Tiêu hủy</span><div className="ops-stat-value"><Trash2 size={18}/>{stats.C}</div></div></div>
-    <section className="ops-panel glass"><span className="ops-panel-label">Thông tin batch</span><div className="ops-kv-grid"><div className="ops-kv"><span>Mã batch</span><strong>{batch.batchCode}</strong></div><div className="ops-kv"><span>Tổng khối lượng intake</span><strong><Scale size={14}/> {batch.totalWeight} kg</strong></div><div className="ops-kv"><span>Số Donation Request</span><strong>{batch.donationRequests}</strong></div><div className="ops-kv"><span>Kết quả</span><strong><ClipboardCheck size={14}/> {batch.items.length} item</strong></div></div></section>
-    <section style={{marginTop:20}}><div className="ops-section-head"><h2>Danh sách item đã phân loại</h2><span>Đầy đủ thuộc tính và hướng xử lý</span></div><div className="ops-list">{batch.items.map((item,index)=><article className="ops-card" key={item.id}><div className="ops-card-top"><div><div className="ops-card-code">#{index+1} · {item.itemCode}</div><div className="ops-card-meta"><span>{new Date(item.classifiedAt).toLocaleString('vi-VN')}</span></div></div><span className={`ops-badge ${item.conditionGrade==='A'?'done':item.conditionGrade==='B'?'pending':'classified'}`}>Loại {item.conditionGrade}</span></div><h3>{item.clothingType}</h3><div className="ops-kv-grid"><div className="ops-kv"><span>Loại vải</span><strong>{item.fabricType}</strong></div><div className="ops-kv"><span>Nhóm</span><strong>{item.garmentGroup}</strong></div><div className="ops-kv"><span>Giới tính</span><strong>{item.gender}</strong></div><div className="ops-kv"><span>Đối tượng</span><strong>{item.targetUser}</strong></div><div className="ops-kv"><span>Kích cỡ</span><strong>{item.size}</strong></div><div className="ops-kv"><span>Hướng xử lý</span><strong>{directionLabel[item.processingDirection]||item.processingDirection}</strong></div></div>{item.notes&&<p style={{marginTop:14}}>Ghi chú: {item.notes}</p>}</article>)}{batch.items.length===0&&<div className="ops-empty"><Package size={36}/><h4>Batch chưa có item</h4></div>}</div></section>
-  </div>;
+export default function ClassifiedBatchDetail() {
+  const { batchId } = useParams();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [batch, setBatch] = useState<ClassificationBatchDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!batchId) return;
+    classificationService
+      .getBatch(batchId)
+      .then((b) => {
+        if (b.status !== 'Classified') toast.warning('Batch này chưa hoàn tất phân loại.');
+        setBatch(b);
+      })
+      .catch(() => {
+        toast.error('Không tải được chi tiết Classified Batch.');
+        navigate('/classification');
+      })
+      .finally(() => setLoading(false));
+  }, [batchId, navigate, toast]);
+  const stats = useMemo(
+    () => ({
+      A: batch?.items.filter((i) => i.conditionGrade === 'A').length || 0,
+      B: batch?.items.filter((i) => i.conditionGrade === 'B').length || 0,
+      C: batch?.items.filter((i) => i.conditionGrade === 'C').length || 0,
+    }),
+    [batch],
+  );
+  if (loading) return <div className="ops-page">Đang tải chi tiết...</div>;
+  if (!batch) return null;
+  return (
+    <div className="ops-page">
+      <div className="ops-nav">
+        <button className="ops-back" onClick={() => navigate('/classification')}>
+          <ChevronLeft size={16} /> Quay lại
+        </button>
+        <div className="ops-title-row">
+          <h1>Chi tiết Classified Batch</h1>
+          <span className="ops-badge classified">Classified</span>
+        </div>
+      </div>
+      <header className="ops-pagehead">
+        <div className="ops-pagehead-main">
+          <span className="ops-pagehead-kicker">{batch.batchCode}</span>
+          <h1>{batch.routeName || 'Intake Batch đã phân loại'}</h1>
+          <p>Hoàn tất phân loại ngày {new Date(batch.intakeDate).toLocaleDateString('vi-VN')}.</p>
+        </div>
+      </header>
+      <div className="ops-stats">
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Tổng item</span>
+          <div className="ops-stat-value">
+            <Package size={18} />
+            {batch.items.length}
+          </div>
+          <span className="ops-stat-foot">từ {batch.donationRequests} đơn quyên góp</span>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Loại A · Từ thiện</span>
+          <div className="ops-stat-value">
+            <Send size={18} />
+            {stats.A}
+          </div>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Loại B · Tái chế</span>
+          <div className="ops-stat-value">
+            <Recycle size={18} />
+            {stats.B}
+          </div>
+        </div>
+        <div className="ops-stat-card">
+          <span className="ops-stat-label">Loại C · Tiêu hủy</span>
+          <div className="ops-stat-value">
+            <Trash2 size={18} />
+            {stats.C}
+          </div>
+        </div>
+      </div>
+      <section className="ops-panel glass">
+        <span className="ops-panel-label">Thông tin batch</span>
+        <div className="ops-kv-grid">
+          <div className="ops-kv">
+            <span>Mã batch</span>
+            <strong>{batch.batchCode}</strong>
+          </div>
+          <div className="ops-kv">
+            <span>Tổng khối lượng intake</span>
+            <strong>
+              <Scale size={14} /> {batch.totalWeight} kg
+            </strong>
+          </div>
+          <div className="ops-kv">
+            <span>Số Donation Request</span>
+            <strong>{batch.donationRequests}</strong>
+          </div>
+          <div className="ops-kv">
+            <span>Kết quả</span>
+            <strong>
+              <ClipboardCheck size={14} /> {batch.items.length} item
+            </strong>
+          </div>
+        </div>
+      </section>
+      <section style={{ marginTop: 20 }}>
+        <div className="ops-section-head">
+          <h2>Danh sách item đã phân loại</h2>
+          <span>Đầy đủ thuộc tính và hướng xử lý</span>
+        </div>
+        <div className="ops-list">
+          {batch.items.map((item, index) => (
+            <article className="ops-card" key={item.id}>
+              <div className="ops-card-top">
+                <div>
+                  <div className="ops-card-code">
+                    #{index + 1} · {item.itemCode}
+                  </div>
+                  <div className="ops-card-meta">
+                    <span>{new Date(item.classifiedAt).toLocaleString('vi-VN')}</span>
+                  </div>
+                </div>
+                <span
+                  className={`ops-badge ${item.conditionGrade === 'A' ? 'done' : item.conditionGrade === 'B' ? 'pending' : 'classified'}`}
+                >
+                  Loại {item.conditionGrade}
+                </span>
+              </div>
+              <h3>{item.clothingType}</h3>
+              <div className="ops-kv-grid">
+                <div className="ops-kv">
+                  <span>Loại vải</span>
+                  <strong>{item.fabricType}</strong>
+                </div>
+                <div className="ops-kv">
+                  <span>Nhóm</span>
+                  <strong>{item.garmentGroup}</strong>
+                </div>
+                <div className="ops-kv">
+                  <span>Giới tính</span>
+                  <strong>{item.gender}</strong>
+                </div>
+                <div className="ops-kv">
+                  <span>Đối tượng</span>
+                  <strong>{item.targetUser}</strong>
+                </div>
+                <div className="ops-kv">
+                  <span>Kích cỡ</span>
+                  <strong>{item.size}</strong>
+                </div>
+                <div className="ops-kv">
+                  <span>Hướng xử lý</span>
+                  <strong>
+                    {directionLabel[item.processingDirection] || item.processingDirection}
+                  </strong>
+                </div>
+              </div>
+              {item.notes && <p style={{ marginTop: 14 }}>Ghi chú: {item.notes}</p>}
+            </article>
+          ))}
+          {batch.items.length === 0 && (
+            <div className="ops-empty">
+              <Package size={36} />
+              <h4>Batch chưa có item</h4>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }

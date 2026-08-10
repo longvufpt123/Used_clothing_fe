@@ -21,7 +21,12 @@ export const TimePicker: React.FC<TimePickerProps> = ({
       return (
         <>
           {text.slice(0, -1)}
-          <span className="required-asterisk" style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}>*</span>
+          <span
+            className="required-asterisk"
+            style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}
+          >
+            *
+          </span>
         </>
       );
     }
@@ -39,12 +44,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
         <span className="timepicker-icon">
           <Clock size={18} />
         </span>
-        <input
-          type="time"
-          id={inputId}
-          className="custom-timepicker"
-          {...props}
-        />
+        <input type="time" id={inputId} className="custom-timepicker" {...props} />
       </div>
       {error && <span className="timepicker-error-text">{error}</span>}
     </div>

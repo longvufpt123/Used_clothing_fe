@@ -21,7 +21,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       return (
         <>
           {text.slice(0, -1)}
-          <span className="required-asterisk" style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}>*</span>
+          <span
+            className="required-asterisk"
+            style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}
+          >
+            *
+          </span>
         </>
       );
     }
@@ -39,12 +44,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <span className="datepicker-icon">
           <Calendar size={18} />
         </span>
-        <input
-          type="date"
-          id={inputId}
-          className="custom-datepicker"
-          {...props}
-        />
+        <input type="date" id={inputId} className="custom-datepicker" {...props} />
       </div>
       {error && <span className="datepicker-error-text">{error}</span>}
     </div>

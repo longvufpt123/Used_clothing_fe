@@ -10,7 +10,7 @@ export const exportToCSV = (filename: string, rows: Record<string, any>[]) => {
     ...rows.map((row) =>
       Object.values(row)
         .map((val) => `"${String(val ?? '').replace(/"/g, '""')}"`)
-        .join(',')
+        .join(','),
     ),
   ].join('\n');
 

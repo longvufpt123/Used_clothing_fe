@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Shield, CheckCircle2, ChevronRight, Award, History, MapPin, Compass, LogOut } from 'lucide-react';
+import {
+  Leaf,
+  Shield,
+  CheckCircle2,
+  ChevronRight,
+  Award,
+  History,
+  MapPin,
+  Compass,
+  LogOut,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import './Profile.css';
 
@@ -14,11 +24,14 @@ export const Profile: React.FC = () => {
     setMounted(true);
 
     import('@/services/api').then(({ default: apiClient }) => {
-      apiClient.get<unknown, any[]>('/profiles').then((res) => {
-        if (res && res.length > 0) {
-          setProfileData(res[0]);
-        }
-      }).catch(() => {});
+      apiClient
+        .get<unknown, any[]>('/profiles')
+        .then((res) => {
+          if (res && res.length > 0) {
+            setProfileData(res[0]);
+          }
+        })
+        .catch(() => {});
     });
   }, []);
 
@@ -27,7 +40,8 @@ export const Profile: React.FC = () => {
   //   return <Navigate to="/login" replace />;
   // }
 
-  const displayName = profileData?.fullName || user?.fullName || user?.userName || 'Thành viên ReThreads';
+  const displayName =
+    profileData?.fullName || user?.fullName || user?.userName || 'Thành viên ReThreads';
   const initials = displayName
     .split(' ')
     .filter(Boolean)
@@ -49,7 +63,6 @@ export const Profile: React.FC = () => {
 
       {/* Main Bento Grid */}
       <div className="profile-bento-grid">
-        
         {/* Card 1: Main User Card */}
         <div className="bento-card col-span-2 card-shell card-fade-up delay-1">
           <div className="card-core profile-main-card">
@@ -65,7 +78,7 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="identity-details">
                 <span className="eyebrow-tag">
                   <Shield size={10} style={{ marginRight: 4 }} />
@@ -73,7 +86,7 @@ export const Profile: React.FC = () => {
                 </span>
                 <h1 className="profile-name">{displayName}</h1>
                 <p className="profile-username">@{user?.userName || 'thanhvien'}</p>
-              <div className="profile-badges-row">
+                <div className="profile-badges-row">
                   <span className="badge-pill mini-badge">
                     <CheckCircle2 size={12} className="text-primary" />
                     Đã xác minh
@@ -84,7 +97,9 @@ export const Profile: React.FC = () => {
                   </span>
                 </div>
                 <button type="button" className="btn-logout-pill" onClick={handleLogout}>
-                  <span className="btn-icon-circle"><LogOut size={15} /></span>
+                  <span className="btn-icon-circle">
+                    <LogOut size={15} />
+                  </span>
                   Đăng xuất
                 </button>
               </div>
@@ -97,7 +112,7 @@ export const Profile: React.FC = () => {
           <div className="card-core score-bento-card">
             <span className="eyebrow-tag">Tác động xanh</span>
             <h3>Điểm đóng góp</h3>
-            
+
             <div className="score-main-display">
               <div className="leaf-glow-icon">
                 <Leaf size={40} className="leaf-icon" />
@@ -117,8 +132,10 @@ export const Profile: React.FC = () => {
                 <div className="score-progress-bar" style={{ width: '48%' }}></div>
               </div>
             </div>
-            
-            <p className="score-tip">Bạn đã giảm thiểu khoảng 36kg khí thải CO2 ra môi trường bằng việc quyên góp quần áo.</p>
+
+            <p className="score-tip">
+              Bạn đã giảm thiểu khoảng 36kg khí thải CO2 ra môi trường bằng việc quyên góp quần áo.
+            </p>
           </div>
         </div>
 
@@ -210,7 +227,6 @@ export const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

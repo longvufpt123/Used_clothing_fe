@@ -206,15 +206,30 @@
   border-color: transparent;
 }
 
-.assigned-chk { border-left-width: 4px; border-left-color: var(--color-warning); }
-.filter-checkbox-wrapper input:checked + .assigned-chk { background-color: var(--color-warning); }
-.picking-chk { border-left-width: 4px; border-left-color: var(--color-info); }
-.filter-checkbox-wrapper input:checked + .picking-chk { background-color: var(--color-info); }
-.completed-chk { border-left-width: 4px; border-left-color: var(--color-primary); }
-.filter-checkbox-wrapper input:checked + .completed-chk { background-color: var(--color-primary); }
+.assigned-chk {
+  border-left-width: 4px;
+  border-left-color: var(--color-warning);
+}
+.filter-checkbox-wrapper input:checked + .assigned-chk {
+  background-color: var(--color-warning);
+}
+.picking-chk {
+  border-left-width: 4px;
+  border-left-color: var(--color-info);
+}
+.filter-checkbox-wrapper input:checked + .picking-chk {
+  background-color: var(--color-info);
+}
+.completed-chk {
+  border-left-width: 4px;
+  border-left-color: var(--color-primary);
+}
+.filter-checkbox-wrapper input:checked + .completed-chk {
+  background-color: var(--color-primary);
+}
 
 .custom-chk-box::after {
-  content: "✓";
+  content: '✓';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1114,9 +1129,15 @@
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-2px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .copilot-pill-options {

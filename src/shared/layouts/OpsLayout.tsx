@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LogOut, Menu, X, Leaf, Moon, Sun, UserRound } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Menu,
+  X,
+  Leaf,
+  Moon,
+  Sun,
+  UserRound,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -30,12 +40,7 @@ interface OpsLayoutProps {
   nav: OpsNavItem[];
 }
 
-const isActive = (
-  item: OpsNavItem,
-  pathname: string,
-  search: string,
-  homePath: string
-) => {
+const isActive = (item: OpsNavItem, pathname: string, search: string, homePath: string) => {
   const [itemPath, itemQuery = ''] = item.to.split('?');
   const itemParams = new URLSearchParams(itemQuery);
   const currentParams = new URLSearchParams(search);
@@ -43,9 +48,7 @@ const isActive = (
   if (itemParams.size > 0) {
     return (
       pathname === itemPath &&
-      Array.from(itemParams.entries()).every(
-        ([key, value]) => currentParams.get(key) === value
-      )
+      Array.from(itemParams.entries()).every(([key, value]) => currentParams.get(key) === value)
     );
   }
 
@@ -53,28 +56,24 @@ const isActive = (
     return pathname === homePath && !currentParams.has('tab');
   }
   if (pathname === itemPath || pathname.startsWith(itemPath + '/')) return true;
-  return (item.matchPrefixes || []).some(
-    (p) => pathname === p || pathname.startsWith(p + '/')
-  );
+  return (item.matchPrefixes || []).some((p) => pathname === p || pathname.startsWith(p + '/'));
 };
 
-export const OpsLayout: React.FC<OpsLayoutProps> = ({
-  children,
-  homePath,
-  roleLabel,
-  nav,
-}) => {
+export const OpsLayout: React.FC<OpsLayoutProps> = ({ children, homePath, roleLabel, nav }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('ops-sidebar-collapsed') === 'true');
-  const toggleCollapsed = () => setCollapsed((value) => {
-    const next = !value;
-    localStorage.setItem('ops-sidebar-collapsed', String(next));
-    return next;
-  });
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('ops-sidebar-collapsed') === 'true',
+  );
+  const toggleCollapsed = () =>
+    setCollapsed((value) => {
+      const next = !value;
+      localStorage.setItem('ops-sidebar-collapsed', String(next));
+      return next;
+    });
 
   // Close the mobile drawer whenever the route changes
   useEffect(() => {
@@ -100,9 +99,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
       const Icon = item.icon;
       return (
         <React.Fragment key={item.to}>
-          {item.groupLabel && (
-            <span className="ops-rail-group">{item.groupLabel}</span>
-          )}
+          {item.groupLabel && <span className="ops-rail-group">{item.groupLabel}</span>}
           <button
             type="button"
             className={`ops-rail-link ${active ? 'active' : ''}`}
@@ -114,9 +111,7 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
               <Icon size={18} strokeWidth={2} />
             </span>
             <span className="ops-rail-link-label">{item.label}</span>
-            {item.count ? (
-              <span className="ops-rail-count">{item.count}</span>
-            ) : null}
+            {item.count ? <span className="ops-rail-count">{item.count}</span> : null}
           </button>
         </React.Fragment>
       );
@@ -143,7 +138,16 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
             <strong>ReThreads</strong>
             <span>{roleLabel}</span>
           </span>
-          <button type="button" className="ops-rail-collapse" onClick={(event) => { event.stopPropagation(); toggleCollapsed(); }} title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'} aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}>
+          <button
+            type="button"
+            className="ops-rail-collapse"
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleCollapsed();
+            }}
+            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
@@ -153,9 +157,33 @@ export const OpsLayout: React.FC<OpsLayoutProps> = ({
         <div className="ops-rail-footer">
           <div className="ops-rail-tools">
             <NotificationBell />
-            <button type="button" className="ops-rail-action" onClick={toggleTheme} title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} aria-label="Chuyển đổi giao diện">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-            <button type="button" className="ops-rail-action" onClick={() => navigate(profilePath)} title="Xem hồ sơ cá nhân" aria-label="Xem hồ sơ cá nhân"><UserRound size={18}/></button>
-            <button type="button" className="ops-rail-logout" onClick={handleLogout} title="Đăng xuất" aria-label="Đăng xuất"><LogOut size={18} strokeWidth={2}/></button>
+            <button
+              type="button"
+              className="ops-rail-action"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+              aria-label="Chuyển đổi giao diện"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              type="button"
+              className="ops-rail-action"
+              onClick={() => navigate(profilePath)}
+              title="Xem hồ sơ cá nhân"
+              aria-label="Xem hồ sơ cá nhân"
+            >
+              <UserRound size={18} />
+            </button>
+            <button
+              type="button"
+              className="ops-rail-logout"
+              onClick={handleLogout}
+              title="Đăng xuất"
+              aria-label="Đăng xuất"
+            >
+              <LogOut size={18} strokeWidth={2} />
+            </button>
           </div>
           <NotificationBell />
           <button

@@ -8,23 +8,38 @@ export const Footer: React.FC = () => {
       <div className="container footer-container">
         <div className="footer-brand">
           <h3>ReThreads</h3>
-          <p>Hệ thống tiếp nhận, phân loại và xử lý quần áo cũ vì cộng đồng và môi trường. Đưa quần áo cũ tái chế thành sợi hoặc giặt là sạch sẽ trao tặng người có hoàn cảnh khó khăn.</p>
+          <p>
+            Hệ thống tiếp nhận, phân loại và xử lý quần áo cũ vì cộng đồng và môi trường. Đưa quần
+            áo cũ tái chế thành sợi hoặc giặt là sạch sẽ trao tặng người có hoàn cảnh khó khăn.
+          </p>
         </div>
         <div className="footer-links">
           <div className="footer-col">
             <h4>Quy trình</h4>
             <ul>
-              <li><Link to="/products">Tiếp nhận quyên góp</Link></li>
-              <li><Link to="/products">Phân loại & Xử lý</Link></li>
-              <li><Link to="/admin">Kho phân phối</Link></li>
+              <li>
+                <Link to="/products">Tiếp nhận quyên góp</Link>
+              </li>
+              <li>
+                <Link to="/products">Phân loại & Xử lý</Link>
+              </li>
+              <li>
+                <Link to="/admin">Kho phân phối</Link>
+              </li>
             </ul>
           </div>
           <div className="footer-col">
             <h4>Hệ thống</h4>
             <ul>
-              <li><Link to="/admin">Thống kê tác động</Link></li>
-              <li><Link to="/login">Cổng nhân viên</Link></li>
-              <li><Link to="/">Trang chủ</Link></li>
+              <li>
+                <Link to="/admin">Thống kê tác động</Link>
+              </li>
+              <li>
+                <Link to="/login">Cổng nhân viên</Link>
+              </li>
+              <li>
+                <Link to="/">Trang chủ</Link>
+              </li>
             </ul>
           </div>
         </div>

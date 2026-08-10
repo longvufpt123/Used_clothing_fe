@@ -10,7 +10,10 @@ export interface AuthResponse {
   avatarUrl: string | null;
   role: string;
 }
-export interface RegisterResponse { userId: string; message: string; }
+export interface RegisterResponse {
+  userId: string;
+  message: string;
+}
 export interface VerificationResponse {
   emailConfirmed: boolean;
   accountActivated: boolean;
@@ -33,7 +36,10 @@ export interface CurrentUserProfile {
   createAt: string | null;
 }
 
-export const loginApi = async (data: { userName: string; password: string }): Promise<AuthResponse> => {
+export const loginApi = async (data: {
+  userName: string;
+  password: string;
+}): Promise<AuthResponse> => {
   return apiClient.post<any, AuthResponse>('/auth/login', data);
 };
 
@@ -49,7 +55,8 @@ export const registerApi = async (data: {
 };
 
 export const verifyRegistrationApi = (
-  userId: string, code: string,
+  userId: string,
+  code: string,
 ): Promise<VerificationResponse> =>
   apiClient.post<any, VerificationResponse>('/auth/verify-registration', { userId, code });
 

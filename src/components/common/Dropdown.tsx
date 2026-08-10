@@ -12,11 +12,7 @@ interface DropdownProps {
   align?: 'left' | 'right';
 }
 
-export const Dropdown: React.FC<DropdownProps> = ({
-  trigger,
-  items,
-  align = 'left',
-}) => {
+export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'left' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

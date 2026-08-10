@@ -1,9 +1,9 @@
 .teams-day-events > span,
-.teams-agenda-list article[role="button"] {
+.teams-agenda-list article[role='button'] {
   cursor: pointer;
 }
 
-.teams-agenda-list article[role="button"]:hover {
+.teams-agenda-list article[role='button']:hover {
   border-color: var(--color-primary);
 }
 
@@ -24,9 +24,9 @@
 
 .teams-detail-head span {
   color: var(--color-primary);
-  font-size: .68rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .teams-detail-head h2 {
@@ -37,7 +37,7 @@
 .teams-detail-head p {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: .8rem;
+  font-size: 0.8rem;
   text-transform: capitalize;
 }
 
@@ -68,14 +68,14 @@
 .teams-detail-summary span,
 .teams-detail-batch-grid span {
   color: var(--color-text-muted);
-  font-size: .68rem;
+  font-size: 0.68rem;
 }
 
 .teams-detail-summary strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: .8rem;
+  font-size: 0.8rem;
 }
 
 .teams-detail-summary svg {
@@ -111,24 +111,24 @@
   border-radius: 7px;
   background: var(--color-primary-light);
   color: var(--color-primary);
-  font-size: .65rem;
+  font-size: 0.65rem;
   font-weight: 800;
 }
 
 .teams-detail-section-title h3 {
   margin: 0;
-  font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 .teams-detail-section-title > b {
   color: var(--color-text-muted);
-  font-size: .68rem;
+  font-size: 0.68rem;
 }
 
 .teams-detail-team-name {
   margin: 0 0 9px;
   color: var(--color-primary);
-  font-size: .82rem;
+  font-size: 0.82rem;
 }
 
 .teams-detail-members {
@@ -155,7 +155,7 @@
   border-radius: 9px;
   background: var(--color-primary-light);
   color: var(--color-primary);
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 800;
 }
 
@@ -167,18 +167,18 @@
 }
 
 .teams-detail-members strong {
-  font-size: .76rem;
+  font-size: 0.76rem;
 }
 
 .teams-detail-members a {
   color: var(--color-text-secondary);
-  font-size: .68rem;
+  font-size: 0.68rem;
   text-decoration: none;
 }
 
 .teams-detail-members small {
   color: var(--color-text-muted);
-  font-size: .62rem;
+  font-size: 0.62rem;
 }
 
 .teams-detail-empty {
@@ -186,7 +186,7 @@
   border: 1px dashed var(--color-border);
   border-radius: 9px;
   color: var(--color-text-muted);
-  font-size: .76rem;
+  font-size: 0.76rem;
   text-align: center;
 }
 
@@ -212,19 +212,19 @@
 }
 
 .teams-detail-batch-code span {
-  font-size: .65rem;
+  font-size: 0.65rem;
 }
 
 .teams-detail-batch-code strong {
   color: var(--color-text-primary);
-  font-size: .82rem;
+  font-size: 0.82rem;
 }
 
 .teams-detail-batch-code > b {
   padding: 5px 7px;
   border-radius: 999px;
   background: var(--color-bg-secondary);
-  font-size: .62rem;
+  font-size: 0.62rem;
 }
 
 .teams-detail-batch-grid {
@@ -242,7 +242,7 @@
 }
 
 .teams-detail-batch-grid strong {
-  font-size: .74rem;
+  font-size: 0.74rem;
 }
 
 .teams-detail-actions {
@@ -275,12 +275,12 @@
   border: 1px solid var(--color-border);
   border-radius: 9px;
   color: var(--color-text-muted);
-  font-size: .72rem;
+  font-size: 0.72rem;
 }
 
 .teams-danger-btn {
   margin-right: auto;
-  border-color: rgba(239, 68, 68, .45);
+  border-color: rgba(239, 68, 68, 0.45);
   color: #ef4444;
   background: transparent;
 }
@@ -296,19 +296,19 @@
   gap: 7px;
   margin-top: 15px;
   padding: 13px;
-  border: 1px solid rgba(239, 68, 68, .42);
+  border: 1px solid rgba(239, 68, 68, 0.42);
   border-radius: 10px;
-  background: rgba(239, 68, 68, .08);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .teams-delete-confirm strong {
   color: #ef4444;
-  font-size: .84rem;
+  font-size: 0.84rem;
 }
 
 .teams-delete-confirm > span {
   color: var(--color-text-secondary);
-  font-size: .72rem;
+  font-size: 0.72rem;
 }
 
 .teams-delete-confirm > div {
@@ -328,5 +328,71 @@
 
   .teams-detail-actions {
     flex-wrap: wrap;
+  }
+}
+.manager-team-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 999px;
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.manager-team-status.inprogress {
+  border-color: rgba(16, 185, 129, 0.38);
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+.manager-team-status.completed {
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #94a3b8;
+}
+.manager-team-audit {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.manager-team-audit > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--ops-border, rgba(148, 163, 184, 0.2));
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.22);
+}
+.manager-team-audit span {
+  color: var(--ops-muted, #94a3b8);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.manager-team-audit strong {
+  overflow: hidden;
+  color: var(--ops-text, #e2e8f0);
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+.manager-request-status {
+  flex: 0 0 auto;
+  color: #10b981;
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .manager-team-audit {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .manager-team-audit {
+    grid-template-columns: 1fr;
+  }
+  .manager-team-status {
+    display: none;
   }
 }

@@ -1,6 +1,10 @@
 /** Mock DB for ClassificationStaff pipeline */
 
-export type ClassificationBatchStatus = 'PendingConfirmation' | 'PendingClassification' | 'Classified' | 'SendingToWarehouse';
+export type ClassificationBatchStatus =
+  | 'PendingConfirmation'
+  | 'PendingClassification'
+  | 'Classified'
+  | 'SendingToWarehouse';
 
 export interface ClassificationItem {
   id: string;
@@ -182,16 +186,17 @@ export const getClassificationBatch = (id: string): ClassificationBatch | undefi
 export const saveItemClassification = (
   batchId: string,
   itemId: string,
-  data: Pick<ClassificationItem, 'charityJackets' | 'charityTshirts' | 'charityPants' | 'recycleWeightKg' | 'notes'>
+  data: Pick<
+    ClassificationItem,
+    'charityJackets' | 'charityTshirts' | 'charityPants' | 'recycleWeightKg' | 'notes'
+  >,
 ) => {
   const batches = getClassificationBatches();
   const bIndex = batches.findIndex((b) => b.id === batchId);
   if (bIndex === -1) return false;
 
   const items = batches[bIndex].items.map((item) =>
-    item.id === itemId
-      ? { ...item, ...data, status: 'done' as const }
-      : item
+    item.id === itemId ? { ...item, ...data, status: 'done' as const } : item,
   );
 
   const allDone = items.every((i) => i.status === 'done');
@@ -223,7 +228,9 @@ export const confirmHandoffToWarehouse = (batchId: string): boolean => {
   try {
     // Dynamic handoff into warehouse storage
     const warehouseKey = 'warehouse_batches';
-    const existing: WarehouseHandoffBatch[] = JSON.parse(localStorage.getItem(warehouseKey) || '[]');
+    const existing: WarehouseHandoffBatch[] = JSON.parse(
+      localStorage.getItem(warehouseKey) || '[]',
+    );
     const batch = batches[bIndex];
     if (!existing.some((w) => w.id === batch.id)) {
       existing.unshift({

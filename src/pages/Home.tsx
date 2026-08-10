@@ -26,7 +26,8 @@ const PROCESS_STEPS = [
   },
   {
     title: 'Đi đến đúng nơi cần thiết',
-    detail: 'Đồ còn dùng tốt được chuẩn bị để trao tặng. Vật liệu không còn phù hợp được chuyển sang tái chế.',
+    detail:
+      'Đồ còn dùng tốt được chuẩn bị để trao tặng. Vật liệu không còn phù hợp được chuyển sang tái chế.',
     icon: Recycle,
   },
 ] as const;
@@ -48,7 +49,8 @@ export const Home: React.FC = () => {
             <p className="home-kicker">Quyên góp có định hướng</p>
             <h1 id="home-title">Quần áo cũ vẫn có thể đi tiếp.</h1>
             <p className="home-lead">
-              Gửi đồ còn dùng tốt đến nơi cần thiết, hoặc đưa vật liệu đã cũ vào đúng chu trình tái chế.
+              Gửi đồ còn dùng tốt đến nơi cần thiết, hoặc đưa vật liệu đã cũ vào đúng chu trình tái
+              chế.
             </p>
             <div className="home-actions">
               <Button size="lg" onClick={() => navigate('/products')}>
@@ -58,7 +60,9 @@ export const Home: React.FC = () => {
                 <MapPin size={18} aria-hidden="true" /> Tìm điểm thu gom
               </Button>
             </div>
-            <p className="home-action-note">Bạn chọn cách bàn giao. Hệ thống hướng dẫn phần còn lại.</p>
+            <p className="home-action-note">
+              Bạn chọn cách bàn giao. Hệ thống hướng dẫn phần còn lại.
+            </p>
           </div>
 
           <figure className="home-hero-media">
@@ -87,18 +91,14 @@ export const Home: React.FC = () => {
               <Shirt size={32} strokeWidth={1.5} aria-hidden="true" />
               <div>
                 <h3>Còn sử dụng tốt</h3>
-                <p>
-                  Được kiểm tra, làm sạch và chuẩn bị cho các hoạt động trao tặng phù hợp.
-                </p>
+                <p>Được kiểm tra, làm sạch và chuẩn bị cho các hoạt động trao tặng phù hợp.</p>
               </div>
             </article>
             <article className="home-path-card home-path-recycle">
               <Recycle size={32} strokeWidth={1.5} aria-hidden="true" />
               <div>
                 <h3>Đã cũ hoặc hư hỏng</h3>
-                <p>
-                  Được tách theo chất liệu để định hướng vào luồng tái chế thay vì bị bỏ đi.
-                </p>
+                <p>Được tách theo chất liệu để định hướng vào luồng tái chế thay vì bị bỏ đi.</p>
               </div>
             </article>
           </div>
@@ -111,7 +111,8 @@ export const Home: React.FC = () => {
             <p className="home-kicker">Từ yêu cầu đến bàn giao</p>
             <h2 id="ledger-title">Theo dõi từng bước từ lúc gửi yêu cầu đến khi bàn giao.</h2>
             <p>
-              ReThreads ghi nhận các bước tiếp nhận, phân loại và điều hướng đồ vào luồng xử lý phù hợp.
+              ReThreads ghi nhận các bước tiếp nhận, phân loại và điều hướng đồ vào luồng xử lý phù
+              hợp.
             </p>
           </div>
 
@@ -119,7 +120,12 @@ export const Home: React.FC = () => {
             {PROCESS_STEPS.map(({ title, detail, icon: Icon }, index) => (
               <li key={title} className="home-process-step">
                 <span className="home-process-index">0{index + 1}</span>
-                <Icon className="home-process-icon" size={24} strokeWidth={1.5} aria-hidden="true" />
+                <Icon
+                  className="home-process-icon"
+                  size={24}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
                 <div>
                   <h3>{title}</h3>
                   <p>{detail}</p>

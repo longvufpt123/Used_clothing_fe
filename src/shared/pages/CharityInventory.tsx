@@ -23,8 +23,6 @@ interface DistributionCampaign {
   status: 'pending' | 'shipped';
 }
 
-
-
 const INITIAL_CAMPAIGNS: DistributionCampaign[] = [
   {
     id: 1,
@@ -40,9 +38,7 @@ const INITIAL_CAMPAIGNS: DistributionCampaign[] = [
     id: 2,
     campaignName: 'Học sinh tới trường - Quảng Nam',
     destination: 'Huyện Tây Giang, Quảng Nam',
-    neededItems: [
-      { itemType: 'Quần dài kaki Người lớn Nam', qty: 40, currentStockId: 3 },
-    ],
+    neededItems: [{ itemType: 'Quần dài kaki Người lớn Nam', qty: 40, currentStockId: 3 }],
     status: 'pending',
   },
 ];
@@ -54,30 +50,33 @@ export const CharityInventory: React.FC = () => {
 
   React.useEffect(() => {
     import('@/services/managerService').then(({ managerService }) => {
-      managerService.getCharityInventory().then((invItems) => {
-        if (invItems && invItems.length > 0) {
-          const mapped: StockItem[] = invItems.map((item, idx) => ({
-            id: idx + 10,
-            name: `Hàng tồn kho ${item.itemCode || item.id.slice(0, 8)}`,
-            category: 'Áo khoác',
-            ageGroup: 'Hỗn hợp',
-            quantity: item.quantity || 10,
-            status: (item.quantity || 10) < 10 ? 'low' : 'good',
-          }));
-          setStock(mapped);
-        }
-      }).catch(() => {});
+      managerService
+        .getCharityInventory()
+        .then((invItems) => {
+          if (invItems && invItems.length > 0) {
+            const mapped: StockItem[] = invItems.map((item, idx) => ({
+              id: idx + 10,
+              name: `Hàng tồn kho ${item.itemCode || item.id.slice(0, 8)}`,
+              category: 'Áo khoác',
+              ageGroup: 'Hỗn hợp',
+              quantity: item.quantity || 10,
+              status: (item.quantity || 10) < 10 ? 'low' : 'good',
+            }));
+            setStock(mapped);
+          }
+        })
+        .catch(() => {});
     });
   }, []);
 
   const handleShipCampaign = (campId: number) => {
-    const campaign = campaigns.find(c => c.id === campId);
+    const campaign = campaigns.find((c) => c.id === campId);
     if (!campaign) return;
 
     // Deduct stock quantities
     let insufficientStock = false;
     campaign.neededItems.forEach((item) => {
-      const stockEntry = stock.find(s => s.id === item.currentStockId);
+      const stockEntry = stock.find((s) => s.id === item.currentStockId);
       if (!stockEntry || stockEntry.quantity < item.qty) {
         insufficientStock = true;
       }
@@ -91,19 +90,19 @@ export const CharityInventory: React.FC = () => {
     // Perform deduction
     setStock((prevStock) =>
       prevStock.map((sItem) => {
-        const needed = campaign.neededItems.find(item => item.currentStockId === sItem.id);
+        const needed = campaign.neededItems.find((item) => item.currentStockId === sItem.id);
         if (needed) {
           const newQty = sItem.quantity - needed.qty;
           const newStatus = newQty === 0 ? 'empty' : newQty <= 10 ? 'low' : 'good';
           return { ...sItem, quantity: newQty, status: newStatus };
         }
         return sItem;
-      })
+      }),
     );
 
     // Update campaign status
     setCampaigns((prevCamps) =>
-      prevCamps.map(c => (c.id === campId ? { ...c, status: 'shipped' } : c))
+      prevCamps.map((c) => (c.id === campId ? { ...c, status: 'shipped' } : c)),
     );
 
     toast.success(`Đã xuất kho thành công hàng từ thiện cho chiến dịch: ${campaign.campaignName}!`);
@@ -135,7 +134,10 @@ export const CharityInventory: React.FC = () => {
       <div className="charity-inventory-page">
         <div className="admin-page-header">
           <h2 className="dashboard-title">Kiểm kho quần áo từ thiện</h2>
-          <p className="dashboard-subtitle">Theo dõi quần áo đã qua xử lý khử khuẩn sạch sẽ trong kho và thực hiện xuất kho bàn giao tới các chiến dịch từ thiện.</p>
+          <p className="dashboard-subtitle">
+            Theo dõi quần áo đã qua xử lý khử khuẩn sạch sẽ trong kho và thực hiện xuất kho bàn giao
+            tới các chiến dịch từ thiện.
+          </p>
         </div>
 
         <div className="inventory-layout-grid">
@@ -151,7 +153,9 @@ export const CharityInventory: React.FC = () => {
           {/* Distribution Orders Section */}
           <div className="campaign-dispatch-section glass">
             <h3>Xuất kho chiến dịch từ thiện</h3>
-            <p className="dispatch-subtitle">Bàn giao các kiện hàng sạch tới các đoàn tình nguyện vùng cao.</p>
+            <p className="dispatch-subtitle">
+              Bàn giao các kiện hàng sạch tới các đoàn tình nguyện vùng cao.
+            </p>
 
             {campaigns.length === 0 ? (
               <div className="dispatch-empty">
@@ -159,50 +163,53 @@ export const CharityInventory: React.FC = () => {
                 <p>Chưa có yêu cầu xuất kho nào. Các chiến dịch cần hàng sẽ hiển thị ở đây.</p>
               </div>
             ) : (
-            <div className="campaign-dispatch-list">
-              {campaigns.map((camp) => (
-                <div key={camp.id} className={`dispatch-item glass ${camp.status}`}>
-                  <div className="dispatch-item-header">
-                    <h4>{camp.campaignName}</h4>
-                    <span className={`dispatch-status-badge ${camp.status}`}>
-                      {camp.status === 'shipped' ? 'Đã xuất kho' : 'Chờ xuất kho'}
-                    </span>
-                  </div>
-                  <div className="dispatch-destination">
-                    <strong>Điểm nhận:</strong> {camp.destination}
-                  </div>
-                  
-                  <div className="dispatch-needed-list">
-                    <strong>Sản phẩm yêu cầu xuất:</strong>
-                    <ul>
-                      {camp.neededItems.map((item, idx) => {
-                        const stockEntry = stock.find(s => s.id === item.currentStockId);
-                        const isShortage = stockEntry ? stockEntry.quantity < item.qty : true;
-                        
-                        return (
-                          <li key={idx} className={isShortage && camp.status === 'pending' ? 'shortage' : ''}>
-                            {item.itemType} ({item.qty} chiếc)
-                            {isShortage && camp.status === 'pending' && (
-                              <span className="shortage-warning"> (Thiếu tồn kho!)</span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
+              <div className="campaign-dispatch-list">
+                {campaigns.map((camp) => (
+                  <div key={camp.id} className={`dispatch-item glass ${camp.status}`}>
+                    <div className="dispatch-item-header">
+                      <h4>{camp.campaignName}</h4>
+                      <span className={`dispatch-status-badge ${camp.status}`}>
+                        {camp.status === 'shipped' ? 'Đã xuất kho' : 'Chờ xuất kho'}
+                      </span>
+                    </div>
+                    <div className="dispatch-destination">
+                      <strong>Điểm nhận:</strong> {camp.destination}
+                    </div>
 
-                  {camp.status === 'pending' && (
-                    <button
-                      className="dispatch-action-btn flex-center"
-                      onClick={() => handleShipCampaign(camp.id)}
-                    >
-                      <Send size={14} style={{ marginRight: '6px' }} />
-                      Xác nhận xuất kho
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <div className="dispatch-needed-list">
+                      <strong>Sản phẩm yêu cầu xuất:</strong>
+                      <ul>
+                        {camp.neededItems.map((item, idx) => {
+                          const stockEntry = stock.find((s) => s.id === item.currentStockId);
+                          const isShortage = stockEntry ? stockEntry.quantity < item.qty : true;
+
+                          return (
+                            <li
+                              key={idx}
+                              className={isShortage && camp.status === 'pending' ? 'shortage' : ''}
+                            >
+                              {item.itemType} ({item.qty} chiếc)
+                              {isShortage && camp.status === 'pending' && (
+                                <span className="shortage-warning"> (Thiếu tồn kho!)</span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+
+                    {camp.status === 'pending' && (
+                      <button
+                        className="dispatch-action-btn flex-center"
+                        onClick={() => handleShipCampaign(camp.id)}
+                      >
+                        <Send size={14} style={{ marginRight: '6px' }} />
+                        Xác nhận xuất kho
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

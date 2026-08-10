@@ -1,1 +1,48 @@
-.route-map-launch button{border:1px solid #10b981;background:#ecfdf5;color:#047857;padding:9px 13px;border-radius:9px;font-weight:700;cursor:pointer}.route-map-launch p{color:#dc2626;font-size:.8rem}.route-map-wrap{margin-top:14px;border:1px solid var(--color-border);border-radius:12px;overflow:hidden;background:var(--color-bg-secondary)}.route-map-wrap small{display:block;padding:8px 12px;color:var(--color-text-muted)}.route-order{padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap}.route-order span{background:var(--color-bg-tertiary);padding:4px 8px;border-radius:99px;font-size:.75rem}.route-number-icon span{display:grid;place-items:center;width:30px;height:30px;color:white;border:2px solid white;border-radius:50%;font-weight:800;box-shadow:0 2px 8px #0005}
+.route-map-launch button {
+  border: 1px solid #10b981;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 9px 13px;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.route-map-launch p {
+  color: #dc2626;
+  font-size: 0.8rem;
+}
+.route-map-wrap {
+  margin-top: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+}
+.route-map-wrap small {
+  display: block;
+  padding: 8px 12px;
+  color: var(--color-text-muted);
+}
+.route-order {
+  padding: 10px 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.route-order span {
+  background: var(--color-bg-tertiary);
+  padding: 4px 8px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+}
+.route-number-icon span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  font-weight: 800;
+  box-shadow: 0 2px 8px #0005;
+}

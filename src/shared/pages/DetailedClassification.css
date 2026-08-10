@@ -11,7 +11,9 @@
   min-height: 520px;
 }
 
-.scanner-section, .sorting-workspace-section, .printer-section {
+.scanner-section,
+.sorting-workspace-section,
+.printer-section {
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -19,14 +21,18 @@
   flex-direction: column;
 }
 
-.scanner-section h3, .sorting-workspace-section h3, .printer-section h3 {
+.scanner-section h3,
+.sorting-workspace-section h3,
+.printer-section h3 {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-xs);
 }
 
-.scanner-desc, .sorting-desc, .printer-desc {
+.scanner-desc,
+.sorting-desc,
+.printer-desc {
   font-size: 0.82rem;
   color: var(--color-text-secondary);
   line-height: 1.4;
@@ -169,7 +175,8 @@
   width: 100%;
 }
 
-.workspace-empty, .printer-empty {
+.workspace-empty,
+.printer-empty {
   flex-grow: 1;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-md);
@@ -314,7 +321,9 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-xl);
   }
-  .scanner-section, .sorting-workspace-section, .printer-section {
+  .scanner-section,
+  .sorting-workspace-section,
+  .printer-section {
     min-height: unset;
   }
 }

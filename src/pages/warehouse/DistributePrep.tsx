@@ -33,12 +33,17 @@ export const DistributePrep: React.FC = () => {
     }
 
     import('@/services/warehouseService').then(({ warehouseService }) => {
-      warehouseService.getDistributionRequests().then((res) => {
-        const found = res.find((x) => x.id === requestId);
-        if (found) {
-          setReq((prev) => prev ? { ...prev, destination: found.organizationName || prev.destination } : prev);
-        }
-      }).catch(() => {});
+      warehouseService
+        .getDistributionRequests()
+        .then((res) => {
+          const found = res.find((x) => x.id === requestId);
+          if (found) {
+            setReq((prev) =>
+              prev ? { ...prev, destination: found.organizationName || prev.destination } : prev,
+            );
+          }
+        })
+        .catch(() => {});
     });
   }, [requestId, navigate, toast]);
 
@@ -91,7 +96,11 @@ export const DistributePrep: React.FC = () => {
         <div className="ops-title-row">
           <h1>Gom hàng & đóng gói</h1>
           <span className={`ops-badge ${req.status.toLowerCase()}`}>
-            {req.status === 'Pending' ? 'Chờ gom' : req.status === 'Prepared' ? 'Đã đóng gói' : 'Đã gửi'}
+            {req.status === 'Pending'
+              ? 'Chờ gom'
+              : req.status === 'Prepared'
+                ? 'Đã đóng gói'
+                : 'Đã gửi'}
           </span>
         </div>
       </div>
@@ -102,8 +111,9 @@ export const DistributePrep: React.FC = () => {
           <div>
             <strong>Vận đơn GHN đã tạo</strong>
             <p>
-              Mã theo dõi: <strong style={{ color: 'var(--color-text-primary)' }}>{trackingCode}</strong>.
-              Trạng thái đơn: Đã chuẩn bị / Đã gửi hàng.
+              Mã theo dõi:{' '}
+              <strong style={{ color: 'var(--color-text-primary)' }}>{trackingCode}</strong>. Trạng
+              thái đơn: Đã chuẩn bị / Đã gửi hàng.
             </p>
           </div>
         </div>

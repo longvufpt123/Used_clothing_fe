@@ -22,11 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || isLoading}
       {...props}
     >
-      {isLoading ? (
-        <span className="spinner"></span>
-      ) : (
-        children
-      )}
+      {isLoading ? <span className="spinner"></span> : children}
     </button>
   );
 };

@@ -42,7 +42,9 @@
   border-radius: 50%;
   background: var(--color-primary);
   cursor: pointer;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
 
@@ -57,7 +59,9 @@
   border-radius: 50%;
   background: var(--color-primary);
   cursor: pointer;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
   border: none;
   box-shadow: var(--shadow-sm);
 }

@@ -92,7 +92,9 @@
   border-radius: var(--radius-lg);
   background: var(--color-bg-tertiary);
   box-shadow: var(--shadow-lg);
-  transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+  transition:
+    transform var(--transition-slow),
+    box-shadow var(--transition-slow);
 }
 
 .home-hero-media:hover .home-process-video {

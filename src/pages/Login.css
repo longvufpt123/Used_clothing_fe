@@ -36,11 +36,7 @@
 .login-visual-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(8, 12, 20, 0.3) 0%,
-    rgba(8, 12, 20, 0.8) 100%
-  );
+  background: linear-gradient(to bottom, rgba(8, 12, 20, 0.3) 0%, rgba(8, 12, 20, 0.8) 100%);
   z-index: 2;
 }
 
@@ -156,7 +152,9 @@
   -webkit-backdrop-filter: blur(24px) !important;
   backdrop-filter: blur(24px) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl) var(--spacing-xl) !important;
 }
@@ -164,7 +162,9 @@
 [data-theme='light'] .login-card.glass {
   background: rgba(255, 255, 255, 0.6) !important;
   border: 1px solid rgba(0, 0, 0, 0.07) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
 }
 
 /* Mascot Base Pedestal - Transparent (glow removed, moved down) */
@@ -237,13 +237,17 @@
   background: var(--color-bg-secondary) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
   color: var(--color-primary) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 [data-theme='light'] .auth-tab.active {
   background: #ffffff !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 #ffffff !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 #ffffff !important;
 }
 
 /* Simple, instant all-at-once fade-in animation for switching forms */
@@ -359,14 +363,16 @@
 }
 
 /* Eye Blink Animation */
-.mascot circle[fill="#ffffff"] {
+.mascot circle[fill='#ffffff'] {
   animation: mascotBlink 5s infinite;
   transform-box: fill-box;
   transform-origin: center;
 }
 
 @keyframes mascotBlink {
-  0%, 90%, 100% {
+  0%,
+  90%,
+  100% {
     transform: scaleY(1);
   }
   95% {
@@ -376,7 +382,9 @@
 
 /* Pupils Movement */
 .mascot-pupil {
-  transition: transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.15s ease;
+  transition:
+    transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.15s ease;
 }
 
 /* Hands Movement with Elastic Curve (Slowed down for visibility) */
@@ -433,7 +441,9 @@
 
 .strength-bar {
   height: 100%;
-  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s ease;
+  transition:
+    width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.35s ease;
 }
 
 .strength-text {
@@ -504,7 +514,7 @@
     border-radius: var(--radius-md);
     margin: var(--spacing-md) auto;
   }
-  
+
   .login-visual-side {
     display: none; /* Hide visual video side on mobile for speed and clarity */
   }

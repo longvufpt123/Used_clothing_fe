@@ -9,7 +9,18 @@ import Tooltip from '@/components/common/Tooltip';
 import Modal from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { useToast } from '@/context/ToastContext';
-import { UserPlus, Search, Trash2, Mail, Phone, ChevronDown, Lock, Unlock, User, UsersRound } from 'lucide-react';
+import {
+  UserPlus,
+  Search,
+  Trash2,
+  Mail,
+  Phone,
+  ChevronDown,
+  Lock,
+  Unlock,
+  User,
+  UsersRound,
+} from 'lucide-react';
 import './Users.css';
 
 interface UserItem {
@@ -23,33 +34,39 @@ interface UserItem {
   avatarUrl?: string;
 }
 
-
-
 export const Users: React.FC = () => {
   const toast = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);
 
   React.useEffect(() => {
     import('@/services/managerService').then(({ managerService }) => {
-      managerService.getProfiles().then((profiles) => {
-        if (profiles && profiles.length > 0) {
-          const mapped: UserItem[] = profiles.map((p, idx) => ({
-            id: idx + 10,
-            name: p.fullName || 'Người dùng',
-            email: p.email || 'user@example.com',
-            phone: p.phoneNumber || '0900000000',
-            role: p.role?.toLowerCase() === 'manager' ? 'manager' : p.role?.toLowerCase() === 'admin' ? 'admin' : 'staff',
-            status: p.status === 'Inactive' ? 'inactive' : 'active',
-            joinedDate: p.createdAt ? p.createdAt.slice(0, 10) : '2026-01-01',
-          }));
-          setUsers(mapped);
-        }
-      }).catch(() => {});
+      managerService
+        .getProfiles()
+        .then((profiles) => {
+          if (profiles && profiles.length > 0) {
+            const mapped: UserItem[] = profiles.map((p, idx) => ({
+              id: idx + 10,
+              name: p.fullName || 'Người dùng',
+              email: p.email || 'user@example.com',
+              phone: p.phoneNumber || '0900000000',
+              role:
+                p.role?.toLowerCase() === 'manager'
+                  ? 'manager'
+                  : p.role?.toLowerCase() === 'admin'
+                    ? 'admin'
+                    : 'staff',
+              status: p.status === 'Inactive' ? 'inactive' : 'active',
+              joinedDate: p.createdAt ? p.createdAt.slice(0, 10) : '2026-01-01',
+            }));
+            setUsers(mapped);
+          }
+        })
+        .catch(() => {});
     });
   }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(4);
@@ -80,7 +97,7 @@ export const Users: React.FC = () => {
     if (!newName.trim()) {
       tempErrors.name = 'Họ và tên không được để trống';
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!newEmail.trim()) {
       tempErrors.email = 'Email không được để trống';
@@ -118,9 +135,9 @@ export const Users: React.FC = () => {
         avatarUrl: newAvatar || undefined,
       };
 
-      setUsers(prev => [newUser, ...prev]);
+      setUsers((prev) => [newUser, ...prev]);
       toast.success(`Đã thêm nhân viên "${newName}" vào hệ thống.`);
-      
+
       // Reset Form
       setNewName('');
       setNewEmail('');
@@ -136,14 +153,16 @@ export const Users: React.FC = () => {
   };
 
   const handleToggleStatus = (id: number) => {
-    setUsers(prev => prev.map(user => {
-      if (user.id === id) {
-        const nextStatus = user.status === 'active' ? 'inactive' : 'active';
-        toast.success(`Đã cập nhật trạng thái hoạt động của ${user.name}`);
-        return { ...user, status: nextStatus };
-      }
-      return user;
-    }));
+    setUsers((prev) =>
+      prev.map((user) => {
+        if (user.id === id) {
+          const nextStatus = user.status === 'active' ? 'inactive' : 'active';
+          toast.success(`Đã cập nhật trạng thái hoạt động của ${user.name}`);
+          return { ...user, status: nextStatus };
+        }
+        return user;
+      }),
+    );
   };
 
   const handleDeleteUser = (id: number, name: string) => {
@@ -152,19 +171,20 @@ export const Users: React.FC = () => {
 
   const confirmDeleteUser = () => {
     if (!deleteTarget) return;
-    setUsers(prev => prev.filter(user => user.id !== deleteTarget.id));
+    setUsers((prev) => prev.filter((user) => user.id !== deleteTarget.id));
     toast.success(`Đã xoá tài khoản của ${deleteTarget.name}`);
     setCurrentPage(1);
     setDeleteTarget(null);
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.phone.includes(searchTerm);
-    
+
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
   });
 
@@ -175,23 +195,32 @@ export const Users: React.FC = () => {
   const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
   const columns = [
-    { 
-      header: 'STT', 
-      accessor: (_row: UserItem, index?: number) => (indexOfFirstItem + (index !== undefined ? index : 0) + 1)
+    {
+      header: 'STT',
+      accessor: (_row: UserItem, index?: number) =>
+        indexOfFirstItem + (index !== undefined ? index : 0) + 1,
     },
-    { 
-      header: 'Họ tên', 
+    {
+      header: 'Họ tên',
       accessor: (row: UserItem) => {
         const nameParts = row.name.split(' ');
-        const initials = nameParts.length > 1 
-          ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
-          : row.name.substring(0, 2).toUpperCase();
-        
+        const initials =
+          nameParts.length > 1
+            ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+            : row.name.substring(0, 2).toUpperCase();
+
         return (
           <div className="user-name-cell">
-            <div className={`user-avatar avatar-${row.role}`} style={{ overflow: 'hidden', padding: 0 }}>
+            <div
+              className={`user-avatar avatar-${row.role}`}
+              style={{ overflow: 'hidden', padding: 0 }}
+            >
               {row.avatarUrl ? (
-                <img src={row.avatarUrl} alt={row.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src={row.avatarUrl}
+                  alt={row.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               ) : (
                 initials
               )}
@@ -199,28 +228,28 @@ export const Users: React.FC = () => {
             <span className="user-name-text">{row.name}</span>
           </div>
         );
-      }
+      },
     },
-    { 
-      header: 'Email', 
+    {
+      header: 'Email',
       accessor: (row: UserItem) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Mail size={14} className="text-secondary" />
           <span>{row.email}</span>
         </div>
-      )
+      ),
     },
-    { 
-      header: 'Số điện thoại', 
+    {
+      header: 'Số điện thoại',
       accessor: (row: UserItem) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Phone size={14} className="text-secondary" />
           <span>{row.phone}</span>
         </div>
-      )
+      ),
     },
-    { 
-      header: 'Vai trò', 
+    {
+      header: 'Vai trò',
       accessor: (row: UserItem) => {
         switch (row.role) {
           case 'admin':
@@ -232,27 +261,39 @@ export const Users: React.FC = () => {
           default:
             return <Badge variant="primary">{row.role}</Badge>;
         }
-      }
+      },
     },
     {
       header: 'Trạng thái',
       accessor: (row: UserItem) => (
-        <Tooltip content={row.status === 'active' ? 'Tài khoản đang hoạt động' : 'Tài khoản tạm thời bị khóa'} position="top">
+        <Tooltip
+          content={
+            row.status === 'active' ? 'Tài khoản đang hoạt động' : 'Tài khoản tạm thời bị khóa'
+          }
+          position="top"
+        >
           <div className="status-indicator-wrapper">
-            <span className={`status-dot ${row.status === 'active' ? 'active-dot' : 'inactive-dot'}`}></span>
-            <span className={`status-label-text ${row.status === 'active' ? 'text-success' : 'text-warning'}`}>
+            <span
+              className={`status-dot ${row.status === 'active' ? 'active-dot' : 'inactive-dot'}`}
+            ></span>
+            <span
+              className={`status-label-text ${row.status === 'active' ? 'text-success' : 'text-warning'}`}
+            >
               {row.status === 'active' ? 'Đang hoạt động' : 'Tạm ngưng'}
             </span>
           </div>
         </Tooltip>
-      )
+      ),
     },
     {
       header: 'Thao tác',
       accessor: (row: UserItem) => (
         <div className="action-buttons-cell">
-          <Tooltip content={row.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'} position="top">
-            <button 
+          <Tooltip
+            content={row.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
+            position="top"
+          >
+            <button
               className={`action-btn ${row.status === 'active' ? 'btn-warning-light' : 'btn-success-light'}`}
               onClick={() => handleToggleStatus(row.id)}
             >
@@ -260,7 +301,7 @@ export const Users: React.FC = () => {
             </button>
           </Tooltip>
           <Tooltip content="Xóa tài khoản" position="top">
-            <button 
+            <button
               className="action-btn btn-danger-light"
               onClick={() => handleDeleteUser(row.id, row.name)}
             >
@@ -268,8 +309,8 @@ export const Users: React.FC = () => {
             </button>
           </Tooltip>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const breadcrumbItems = [
@@ -298,16 +339,19 @@ export const Users: React.FC = () => {
         <div className="users-actions-bar">
           <div className="search-box-wrapper glass">
             <Search size={18} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm nhân viên bằng tên, email hoặc SĐT..." 
+            <input
+              type="text"
+              placeholder="Tìm kiếm nhân viên bằng tên, email hoặc SĐT..."
               value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
 
           <div className="action-buttons-group">
-            <Dropdown 
+            <Dropdown
               trigger={
                 <div className="custom-select-trigger filter-trigger">
                   <span>Vai trò: {getFilterRoleLabel(roleFilter)}</span>
@@ -315,10 +359,34 @@ export const Users: React.FC = () => {
                 </div>
               }
               items={[
-                { label: 'Tất cả vai trò', onClick: () => { setRoleFilter('all'); setCurrentPage(1); } },
-                { label: 'Quản trị viên', onClick: () => { setRoleFilter('admin'); setCurrentPage(1); } },
-                { label: 'Điều phối viên', onClick: () => { setRoleFilter('manager'); setCurrentPage(1); } },
-                { label: 'Nhân viên kho', onClick: () => { setRoleFilter('staff'); setCurrentPage(1); } },
+                {
+                  label: 'Tất cả vai trò',
+                  onClick: () => {
+                    setRoleFilter('all');
+                    setCurrentPage(1);
+                  },
+                },
+                {
+                  label: 'Quản trị viên',
+                  onClick: () => {
+                    setRoleFilter('admin');
+                    setCurrentPage(1);
+                  },
+                },
+                {
+                  label: 'Điều phối viên',
+                  onClick: () => {
+                    setRoleFilter('manager');
+                    setCurrentPage(1);
+                  },
+                },
+                {
+                  label: 'Nhân viên kho',
+                  onClick: () => {
+                    setRoleFilter('staff');
+                    setCurrentPage(1);
+                  },
+                },
               ]}
             />
 
@@ -334,14 +402,24 @@ export const Users: React.FC = () => {
             <form className="add-user-form modal-content-900" onSubmit={handleAddUser}>
               <div className="modal-header-custom">
                 <h3>Nhập thông tin nhân viên mới</h3>
-                <button type="button" className="close-modal-btn" onClick={() => setShowAddForm(false)}>&times;</button>
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  &times;
+                </button>
               </div>
-              
+
               <div className="form-cols-container">
                 <div className="form-left-col">
                   <div className="avatar-picker-container">
                     {newAvatar ? (
-                      <img src={newAvatar} alt="Xem trước ảnh đại diện" className="avatar-picker-preview" />
+                      <img
+                        src={newAvatar}
+                        alt="Xem trước ảnh đại diện"
+                        className="avatar-picker-preview"
+                      />
                     ) : (
                       <div className="avatar-picker-placeholder">
                         <User size={36} className="placeholder-icon" />
@@ -350,28 +428,31 @@ export const Users: React.FC = () => {
                     )}
                     <label className="upload-avatar-label">
                       Chọn ảnh đại diện
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleAvatarChange} 
-                        style={{ display: 'none' }} 
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        style={{ display: 'none' }}
                       />
                     </label>
                   </div>
                 </div>
-                
+
                 <div className="form-right-col">
                   <div className="form-group">
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <User size={14} /> Họ và tên nhân viên
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="Ví dụ: Nguyễn Văn A" 
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: Nguyễn Văn A"
                       value={newName}
-                      onChange={(e) => { setNewName(e.target.value); if (errors.name) setErrors(prev => ({ ...prev, name: undefined })); }}
+                      onChange={(e) => {
+                        setNewName(e.target.value);
+                        if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                      }}
                       className={errors.name ? 'error-input' : ''}
-                      required 
+                      required
                     />
                     {errors.name && <span className="error-message-text">{errors.name}</span>}
                   </div>
@@ -380,13 +461,16 @@ export const Users: React.FC = () => {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Mail size={14} /> Email liên hệ
                     </label>
-                    <input 
-                      type="email" 
-                      placeholder="Ví dụ: nv.a@usedclothing.vn" 
+                    <input
+                      type="email"
+                      placeholder="Ví dụ: nv.a@usedclothing.vn"
                       value={newEmail}
-                      onChange={(e) => { setNewEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })); }}
+                      onChange={(e) => {
+                        setNewEmail(e.target.value);
+                        if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
                       className={errors.email ? 'error-input' : ''}
-                      required 
+                      required
                     />
                     {errors.email && <span className="error-message-text">{errors.email}</span>}
                   </div>
@@ -395,13 +479,16 @@ export const Users: React.FC = () => {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Phone size={14} /> Số điện thoại
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="Ví dụ: 09XXXXXXXX" 
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: 09XXXXXXXX"
                       value={newPhone}
-                      onChange={(e) => { setNewPhone(e.target.value); if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined })); }}
+                      onChange={(e) => {
+                        setNewPhone(e.target.value);
+                        if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+                      }}
                       className={errors.phone ? 'error-input' : ''}
-                      required 
+                      required
                     />
                     {errors.phone && <span className="error-message-text">{errors.phone}</span>}
                   </div>
@@ -410,7 +497,7 @@ export const Users: React.FC = () => {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Lock size={14} /> Vai trò hệ thống
                     </label>
-                    <Dropdown 
+                    <Dropdown
                       trigger={
                         <div className="custom-select-trigger">
                           <span>{getRoleLabel(newRole)}</span>
@@ -425,10 +512,18 @@ export const Users: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="form-actions-custom">
-                <button type="submit" className="submit-form-btn">Xác nhận tạo</button>
-                <button type="button" className="cancel-form-btn" onClick={() => setShowAddForm(false)}>Hủy bỏ</button>
+                <button type="submit" className="submit-form-btn">
+                  Xác nhận tạo
+                </button>
+                <button
+                  type="button"
+                  className="cancel-form-btn"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Hủy bỏ
+                </button>
               </div>
             </form>
           </div>
@@ -454,11 +549,12 @@ export const Users: React.FC = () => {
           <div className="table-pagination glass">
             <div className="pagination-left">
               <span className="pagination-info">
-                Hiển thị {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)} trong tổng số {filteredUsers.length} nhân viên
+                Hiển thị {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)}{' '}
+                trong tổng số {filteredUsers.length} nhân viên
               </span>
               <div className="page-size-selector">
                 <span className="selector-label">Số hàng:</span>
-                <Dropdown 
+                <Dropdown
                   trigger={
                     <div className="custom-select-trigger row-trigger">
                       <span>{itemsPerPage}</span>
@@ -466,19 +562,43 @@ export const Users: React.FC = () => {
                     </div>
                   }
                   items={[
-                    { label: '2', onClick: () => { setItemsPerPage(2); setCurrentPage(1); } },
-                    { label: '4', onClick: () => { setItemsPerPage(4); setCurrentPage(1); } },
-                    { label: '6', onClick: () => { setItemsPerPage(6); setCurrentPage(1); } },
-                    { label: '10', onClick: () => { setItemsPerPage(10); setCurrentPage(1); } },
+                    {
+                      label: '2',
+                      onClick: () => {
+                        setItemsPerPage(2);
+                        setCurrentPage(1);
+                      },
+                    },
+                    {
+                      label: '4',
+                      onClick: () => {
+                        setItemsPerPage(4);
+                        setCurrentPage(1);
+                      },
+                    },
+                    {
+                      label: '6',
+                      onClick: () => {
+                        setItemsPerPage(6);
+                        setCurrentPage(1);
+                      },
+                    },
+                    {
+                      label: '10',
+                      onClick: () => {
+                        setItemsPerPage(10);
+                        setCurrentPage(1);
+                      },
+                    },
                   ]}
                 />
               </div>
             </div>
-            
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
           </div>
         )}
@@ -489,13 +609,18 @@ export const Users: React.FC = () => {
           title="Xoá tài khoản"
           footer={
             <>
-              <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Huỷ bỏ</Button>
-              <Button variant="primary" className="btn-danger-confirm" onClick={confirmDeleteUser}>Xoá tài khoản</Button>
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+                Huỷ bỏ
+              </Button>
+              <Button variant="primary" className="btn-danger-confirm" onClick={confirmDeleteUser}>
+                Xoá tài khoản
+              </Button>
             </>
           }
         >
           <p className="delete-confirm-text">
-            Bạn có chắc chắn muốn xoá tài khoản của <strong>{deleteTarget?.name}</strong>? Thao tác này không thể hoàn tác.
+            Bạn có chắc chắn muốn xoá tài khoản của <strong>{deleteTarget?.name}</strong>? Thao tác
+            này không thể hoàn tác.
           </p>
         </Modal>
       </div>

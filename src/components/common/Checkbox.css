@@ -56,7 +56,9 @@
 .checkbox-icon {
   opacity: 0;
   transform: scale(0.5);
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
 .custom-checkbox:checked ~ .checkbox-checkmark .checkbox-icon {
@@ -73,4 +75,3 @@
   font-size: 0.8rem;
   color: var(--color-danger);
 }
-

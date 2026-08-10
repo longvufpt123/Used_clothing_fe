@@ -32,7 +32,10 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 140px;
-  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .metric-box:hover {
@@ -399,8 +402,12 @@
 }
 
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideUp {
@@ -455,7 +462,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .export-step-text {
@@ -493,15 +502,17 @@
 /* @media print Stylesheet Optimization */
 @media print {
   /* Hide unnecessary layout components */
-  body, html, #root {
+  body,
+  html,
+  #root {
     background: #fff !important;
     color: #000 !important;
     font-size: 11pt !important;
   }
 
-  .sidebar, 
-  .admin-sidebar, 
-  .navbar, 
+  .sidebar,
+  .admin-sidebar,
+  .navbar,
   .header,
   .dashboard-actions,
   .no-print,
@@ -538,7 +549,7 @@
   }
 
   .admin-page-header::before {
-    content: "HỆ THỐNG QUẢN LÝ DỰ ÁN VẢI DỆT VÀ QUẦN ÁO CŨ";
+    content: 'HỆ THỐNG QUẢN LÝ DỰ ÁN VẢI DỆT VÀ QUẦN ÁO CŨ';
     display: block;
     font-size: 9pt;
     font-weight: 700;
@@ -614,7 +625,8 @@
     border-collapse: collapse !important;
   }
 
-  th, td {
+  th,
+  td {
     border: 1px solid #ddd !important;
     padding: 8px !important;
     font-size: 9pt !important;
@@ -629,7 +641,7 @@
 
   /* Append approval signatures at the bottom */
   .admin-dashboard::after {
-    content: "Người lập biểu (ký, ghi rõ họ tên)                                              Xác nhận bởi Ban Giám đốc (ký tên, đóng dấu)\n\n\n\n\n....................................................                                              ....................................................";
+    content: 'Người lập biểu (ký, ghi rõ họ tên)                                              Xác nhận bởi Ban Giám đốc (ký tên, đóng dấu)\n\n\n\n\n....................................................                                              ....................................................';
     display: block;
     margin-top: 50px;
     font-size: 10pt;
@@ -640,4 +652,3 @@
     page-break-inside: avoid;
   }
 }
-

@@ -2,14 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Leaf, User, Mail, Lock, ShieldCheck, ArrowRight, Check, Circle, Phone, MapPin } from 'lucide-react';
+import {
+  Leaf,
+  User,
+  Mail,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  Check,
+  Circle,
+  Phone,
+  MapPin,
+} from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useToast } from '@/context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { loginApi, registerApi, resendVerificationApi, verifyRegistrationApi } from '@/services/authService';
+import {
+  loginApi,
+  registerApi,
+  resendVerificationApi,
+  verifyRegistrationApi,
+} from '@/services/authService';
 import './Login.css';
 
 // Login validation schema
@@ -21,23 +37,32 @@ const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 // Register validation schema
-const registerSchema = z.object({
-  fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
-  userName: z.string().regex(/^[A-Za-z0-9._]{3,30}$/, 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm hoặc gạch dưới'),
-  email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
-  phoneNumber: z.string().regex(/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/, 'Số điện thoại Việt Nam không hợp lệ'),
-  address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
-  password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-    .regex(/[A-Z]/, 'Mật khẩu cần chữ hoa').regex(/\d/, 'Mật khẩu cần chữ số')
-    .regex(/[^A-Za-z0-9]/, 'Mật khẩu cần ký tự đặc biệt'),
-  confirmPassword: z.string().min(6, 'Mật khẩu xác nhận phải chứa ít nhất 6 ký tự'),
-  agreeTerms: z.boolean().refine((val) => val === true, {
-    message: 'Bạn phải đồng ý với Điều khoản dịch vụ và Chính sách bảo mật',
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Mật khẩu xác nhận không trùng khớp',
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
+    userName: z
+      .string()
+      .regex(/^[A-Za-z0-9._]{3,30}$/, 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm hoặc gạch dưới'),
+    email: z.string().min(1, 'Email không được để trống').email('Định dạng email không hợp lệ'),
+    phoneNumber: z
+      .string()
+      .regex(/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/, 'Số điện thoại Việt Nam không hợp lệ'),
+    address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
+    password: z
+      .string()
+      .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+      .regex(/[A-Z]/, 'Mật khẩu cần chữ hoa')
+      .regex(/\d/, 'Mật khẩu cần chữ số')
+      .regex(/[^A-Za-z0-9]/, 'Mật khẩu cần ký tự đặc biệt'),
+    confirmPassword: z.string().min(6, 'Mật khẩu xác nhận phải chứa ít nhất 6 ký tự'),
+    agreeTerms: z.boolean().refine((val) => val === true, {
+      message: 'Bạn phải đồng ý với Điều khoản dịch vụ và Chính sách bảo mật',
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không trùng khớp',
+    path: ['confirmPassword'],
+  });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -72,15 +97,15 @@ export const Login: React.FC = () => {
       const dx = e.clientX - mascotCenterX;
       const dy = e.clientY - mascotCenterY;
       const angle = Math.atan2(dy, dx);
-      
+
       // Calculate look distance, cap at 2.5px to stay inside eyeball white boundaries
       const distance = Math.min(2.5, Math.sqrt(dx * dx + dy * dy) / 75);
-      
+
       const pupilX = Math.cos(angle) * distance;
       const pupilY = Math.sin(angle) * distance;
 
       const transformStr = `translate(${pupilX.toFixed(2)}px, ${pupilY.toFixed(2)}px)`;
-      
+
       if (leftPupilRef.current) leftPupilRef.current.style.transform = transformStr;
       if (rightPupilRef.current) rightPupilRef.current.style.transform = transformStr;
     };
@@ -136,7 +161,7 @@ export const Login: React.FC = () => {
         role: response.role.trim(),
       });
       toast.success('Đăng nhập thành công!');
-      
+
       // Redirect based on role
       const role = response.role.trim();
       if (role === 'ReceivingStaff') {
@@ -152,7 +177,10 @@ export const Login: React.FC = () => {
       }
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error?.response?.data?.message || error?.message || 'Tài khoản hoặc mật khẩu không chính xác';
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Tài khoản hoặc mật khẩu không chính xác';
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -174,7 +202,8 @@ export const Login: React.FC = () => {
       toast.success('Đã gửi mã xác nhận qua email.');
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      const errorMsg =
+        error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -195,7 +224,9 @@ export const Login: React.FC = () => {
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Mã xác nhận không hợp lệ.');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resendCode = async () => {
@@ -267,8 +298,8 @@ export const Login: React.FC = () => {
           </div>
           <h1 className="visual-heading">Hành trình mới cho quần áo cũ</h1>
           <p className="visual-description">
-            Cùng ReThreads xây dựng hệ thống quyên góp, phân loại và tái chế quần áo thông minh, 
-            góp phần giảm thiểu rác thải thời trang và kiến tạo tương lai xanh bền vững.
+            Cùng ReThreads xây dựng hệ thống quyên góp, phân loại và tái chế quần áo thông minh, góp
+            phần giảm thiểu rác thải thời trang và kiến tạo tương lai xanh bền vững.
           </p>
           <div className="visual-stats">
             <div className="stat-item">
@@ -286,7 +317,6 @@ export const Login: React.FC = () => {
       {/* Form side */}
       <div className="login-form-side">
         <div className="login-card glass">
-          
           {/* Interactive SVG Mascot */}
           <div className="mascot-wrapper flex-center">
             <svg
@@ -311,24 +341,60 @@ export const Login: React.FC = () => {
 
               {/* Face/Muzzle */}
               <ellipse cx="50" cy="62" rx="13" ry="9" fill="#a7f3d0" />
-              
+
               {/* Nose */}
               <polygon points="47,59 53,59 50,63" fill="#0f172a" />
 
               {/* Mouth */}
-              <path d="M47,66 Q50,68 53,66" stroke="#0f172a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path
+                d="M47,66 Q50,68 53,66"
+                stroke="#0f172a"
+                strokeWidth="1.5"
+                fill="none"
+                strokeLinecap="round"
+              />
 
               {/* Eyes White */}
               <circle cx="38" cy="46" r="7" fill="#ffffff" />
               <circle cx="62" cy="46" r="7" fill="#ffffff" />
 
               {/* Pupils */}
-              <circle ref={leftPupilRef} className="mascot-pupil" cx="38" cy="46" r="3.5" fill="#0f172a" />
-              <circle ref={rightPupilRef} className="mascot-pupil" cx="62" cy="46" r="3.5" fill="#0f172a" />
+              <circle
+                ref={leftPupilRef}
+                className="mascot-pupil"
+                cx="38"
+                cy="46"
+                r="3.5"
+                fill="#0f172a"
+              />
+              <circle
+                ref={rightPupilRef}
+                className="mascot-pupil"
+                cx="62"
+                cy="46"
+                r="3.5"
+                fill="#0f172a"
+              />
 
               {/* Hands */}
-              <circle className="mascot-hand-left" cx="22" cy="80" r="8" fill="var(--color-primary-hover)" stroke="#ffffff" strokeWidth="2" />
-              <circle className="mascot-hand-right" cx="78" cy="80" r="8" fill="var(--color-primary-hover)" stroke="#ffffff" strokeWidth="2" />
+              <circle
+                className="mascot-hand-left"
+                cx="22"
+                cy="80"
+                r="8"
+                fill="var(--color-primary-hover)"
+                stroke="#ffffff"
+                strokeWidth="2"
+              />
+              <circle
+                className="mascot-hand-right"
+                cx="78"
+                cy="80"
+                r="8"
+                fill="var(--color-primary-hover)"
+                stroke="#ffffff"
+                strokeWidth="2"
+              />
             </svg>
           </div>
 
@@ -353,11 +419,11 @@ export const Login: React.FC = () => {
             <div className="auth-form-wrapper fade-in">
               <h3 className="login-title text-gradient">Xác nhận tài khoản</h3>
               <p className="login-subtitle">
-                Nhập mã OTP 6 số đã gửi qua email.
-                Mã có hiệu lực 5 phút.
+                Nhập mã OTP 6 số đã gửi qua email. Mã có hiệu lực 5 phút.
               </p>
               <div className="login-form">
-                <Input label="Mã xác nhận email"
+                <Input
+                  label="Mã xác nhận email"
                   placeholder="000000"
                   value={emailCode}
                   maxLength={6}
@@ -365,10 +431,14 @@ export const Login: React.FC = () => {
                     const value = e.target.value.replace(/\D/g, '');
                     setEmailCode(value);
                   }}
-                  icon={<Mail size={18} />} />
-                <Button type="button" isLoading={loading}
+                  icon={<Mail size={18} />}
+                />
+                <Button
+                  type="button"
+                  isLoading={loading}
                   disabled={emailCode.length !== 6}
-                  onClick={verifyEmail}>
+                  onClick={verifyEmail}
+                >
                   Xác nhận tài khoản
                 </Button>
                 <button type="button" className="auth-tab" onClick={resendCode}>

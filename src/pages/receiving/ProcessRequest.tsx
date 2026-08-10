@@ -58,14 +58,17 @@ export const ProcessRequest: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    receivingService.findMyRequest(id).then((currentRequest) => {
-      if (!currentRequest) throw new Error('Không tìm thấy yêu cầu');
-      setRequest(currentRequest);
-      setActualCategory(currentRequest.category);
-    }).catch(() => {
-      toast.error('Đơn quyên góp không tồn tại.');
-      navigate('/receiving');
-    });
+    receivingService
+      .findMyRequest(id)
+      .then((currentRequest) => {
+        if (!currentRequest) throw new Error('Không tìm thấy yêu cầu');
+        setRequest(currentRequest);
+        setActualCategory(currentRequest.category);
+      })
+      .catch(() => {
+        toast.error('Đơn quyên góp không tồn tại.');
+        navigate('/receiving');
+      });
   }, [id, navigate, toast]);
 
   if (!request) return null;
@@ -161,12 +164,20 @@ export const ProcessRequest: React.FC = () => {
     setShowRescheduleModal(false);
     try {
       const formattedNote = `[Hẹn lại lịch vào ngày ${rescheduleDate} lúc ${rescheduleTime}] ${actualNotes}`;
-      await receivingService.reschedule(request.batchId, request.id, `${rescheduleDate}T${rescheduleTime}:00`, formattedNote);
+      await receivingService.reschedule(
+        request.batchId,
+        request.id,
+        `${rescheduleDate}T${rescheduleTime}:00`,
+        formattedNote,
+      );
       setSubmittedStatus('Rescheduled');
       setIsSubmitted(true);
       setIsSubmitting(false);
       toast.info('Đã cập nhật dời lịch thu nhận đơn!');
-    } catch (error: any) { setIsSubmitting(false); toast.error(error?.response?.data?.message || 'Không thể hẹn lại lịch thu gom.'); }
+    } catch (error: any) {
+      setIsSubmitting(false);
+      toast.error(error?.response?.data?.message || 'Không thể hẹn lại lịch thu gom.');
+    }
   };
 
   // 3. Cancel Action
@@ -184,7 +195,10 @@ export const ProcessRequest: React.FC = () => {
       setIsSubmitted(true);
       setIsSubmitting(false);
       toast.warning('Đã xác nhận hủy đơn quyên góp.');
-    } catch (error: any) { setIsSubmitting(false); toast.error(error?.response?.data?.message || 'Không thể từ chối đơn quyên góp.'); }
+    } catch (error: any) {
+      setIsSubmitting(false);
+      toast.error(error?.response?.data?.message || 'Không thể từ chối đơn quyên góp.');
+    }
   };
 
   return (
@@ -289,7 +303,11 @@ export const ProcessRequest: React.FC = () => {
                   {receiptImages.map((image, idx) => (
                     <div key={image.previewUrl} className="rcv-upload-preview">
                       <img src={image.previewUrl} alt={`Kiện hàng ${idx + 1}`} />
-                      <button type="button" className="rcv-upload-del" onClick={() => handleRemoveImage(idx)}>
+                      <button
+                        type="button"
+                        className="rcv-upload-del"
+                        onClick={() => handleRemoveImage(idx)}
+                      >
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -316,7 +334,12 @@ export const ProcessRequest: React.FC = () => {
             </div>
 
             <div className="ops-actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-              <Button type="submit" variant="primary" isLoading={isSubmitting} className="ops-btn-block">
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isSubmitting}
+                className="ops-btn-block"
+              >
                 <CheckCircle size={16} /> Thu nhận thành công
               </Button>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -359,14 +382,17 @@ export const ProcessRequest: React.FC = () => {
             {submittedStatus === 'Received'
               ? 'Tiếp nhận thành công!'
               : submittedStatus === 'Rescheduled'
-              ? 'Đã hẹn lại lịch thu gom'
-              : 'Đã hủy đơn quyên góp'}
+                ? 'Đã hẹn lại lịch thu gom'
+                : 'Đã hủy đơn quyên góp'}
           </h2>
           <p className="rcv-summary-msg">
             Dữ liệu đơn hàng {request.code} đã được cập nhật thành công lên hệ thống ReThreads.
           </p>
 
-          <div className="ops-kv-grid" style={{ maxWidth: 480, margin: '0 auto', textAlign: 'left' }}>
+          <div
+            className="ops-kv-grid"
+            style={{ maxWidth: 480, margin: '0 auto', textAlign: 'left' }}
+          >
             <div className="ops-kv">
               <span>Đơn quyên góp</span>
               <strong>{request.code}</strong>
@@ -388,7 +414,9 @@ export const ProcessRequest: React.FC = () => {
                 </div>
                 <div className="ops-kv">
                   <span>Hướng phân bổ</span>
-                  <strong>{actualCondition === 'good' ? 'Ủng hộ từ thiện' : 'Tái chế dệt sợi'}</strong>
+                  <strong>
+                    {actualCondition === 'good' ? 'Ủng hộ từ thiện' : 'Tái chế dệt sợi'}
+                  </strong>
                 </div>
               </>
             )}

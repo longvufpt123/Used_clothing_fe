@@ -22,7 +22,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Flag to prevent infinite loop during token refreshing
@@ -56,10 +56,11 @@ apiClient.interceptors.response.use(
     const status = error.response.status;
 
     // Check if the request is an auth endpoint (login, register, refresh, etc.)
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
-                           originalRequest.url?.includes('/auth/register') ||
-                           originalRequest.url?.includes('/auth/refresh') ||
-                           originalRequest.url?.includes('/auth/verify-registration');
+    const isAuthEndpoint =
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register') ||
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/verify-registration');
 
     // If 401 Unauthorized and NOT an auth endpoint, attempt to refresh token
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -96,7 +97,7 @@ apiClient.interceptors.response.use(
         // Attempt to call backend refresh token rotation API
         const refreshResponse = await axios.post<{ accessToken: string; refreshToken: string }>(
           `${API_BASE_URL}/auth/refresh`,
-          { refreshToken }
+          { refreshToken },
         );
 
         const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data;
@@ -120,13 +121,13 @@ apiClient.interceptors.response.use(
         console.error('[API Client] Refresh token expired or invalid. Clearing credentials...');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        
+
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

@@ -1,9 +1,6 @@
 /** Mock DB for WarehouseStaff pipeline */
 
-export type WarehouseBatchStatus =
-  | 'SendingToWarehouse'
-  | 'WarehouseReceived'
-  | 'Stored';
+export type WarehouseBatchStatus = 'SendingToWarehouse' | 'WarehouseReceived' | 'Stored';
 
 export type DistributionStatus = 'Pending' | 'Prepared' | 'Shipped';
 
@@ -96,12 +93,54 @@ const DEFAULT_BATCHES: WarehouseBatch[] = [
 ];
 
 const DEFAULT_SHELVES: ShelfSlot[] = [
-  { id: 'shelf-a1', label: 'A-01 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 12, occupied: false },
-  { id: 'shelf-a2', label: 'A-02 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 40, occupied: true },
-  { id: 'shelf-a3', label: 'A-03 · Từ thiện', zone: 'Khu A', capacityKg: 80, usedKg: 0, occupied: false },
-  { id: 'shelf-b1', label: 'B-01 · Tái chế', zone: 'Khu B', capacityKg: 120, usedKg: 55, occupied: false },
-  { id: 'shelf-b2', label: 'B-02 · Tái chế', zone: 'Khu B', capacityKg: 120, usedKg: 0, occupied: false },
-  { id: 'shelf-c1', label: 'C-01 · Trẻ em', zone: 'Khu C', capacityKg: 60, usedKg: 8, occupied: false },
+  {
+    id: 'shelf-a1',
+    label: 'A-01 · Từ thiện',
+    zone: 'Khu A',
+    capacityKg: 80,
+    usedKg: 12,
+    occupied: false,
+  },
+  {
+    id: 'shelf-a2',
+    label: 'A-02 · Từ thiện',
+    zone: 'Khu A',
+    capacityKg: 80,
+    usedKg: 40,
+    occupied: true,
+  },
+  {
+    id: 'shelf-a3',
+    label: 'A-03 · Từ thiện',
+    zone: 'Khu A',
+    capacityKg: 80,
+    usedKg: 0,
+    occupied: false,
+  },
+  {
+    id: 'shelf-b1',
+    label: 'B-01 · Tái chế',
+    zone: 'Khu B',
+    capacityKg: 120,
+    usedKg: 55,
+    occupied: false,
+  },
+  {
+    id: 'shelf-b2',
+    label: 'B-02 · Tái chế',
+    zone: 'Khu B',
+    capacityKg: 120,
+    usedKg: 0,
+    occupied: false,
+  },
+  {
+    id: 'shelf-c1',
+    label: 'C-01 · Trẻ em',
+    zone: 'Khu C',
+    capacityKg: 60,
+    usedKg: 8,
+    occupied: false,
+  },
 ];
 
 const DEFAULT_DIST: DistributionRequest[] = [
@@ -281,7 +320,7 @@ export const allocateShelf = (batchId: string, shelfId: string): boolean => {
 
 export const confirmDistributionPrep = (
   requestId: string,
-  packedItems: { label: string; qty: number }[]
+  packedItems: { label: string; qty: number }[],
 ): { ok: boolean; trackingCode?: string } => {
   const list = getDistributions();
   const idx = list.findIndex((d) => d.id === requestId);
@@ -304,7 +343,8 @@ export const confirmDistributionPrep = (
     if (p.label.toLowerCase().includes('khoác')) inv.jackets = Math.max(0, inv.jackets - q);
     else if (p.label.toLowerCase().includes('thun')) inv.tshirts = Math.max(0, inv.tshirts - q);
     else if (p.label.toLowerCase().includes('quần')) inv.pants = Math.max(0, inv.pants - q);
-    else if (p.label.toLowerCase().includes('tái chế')) inv.recycleKg = Math.max(0, inv.recycleKg - q);
+    else if (p.label.toLowerCase().includes('tái chế'))
+      inv.recycleKg = Math.max(0, inv.recycleKg - q);
   });
 
   saveDistributions(list);

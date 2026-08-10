@@ -15,9 +15,27 @@ interface PackageToClassify {
 }
 
 const PENDING_PACKAGES: PackageToClassify[] = [
-  { code: 'RT-2026-804', donorName: 'Trần Văn Hoàng', weight: '12 kg', estCategory: 'Áo khoác gió & Đồ nỉ', status: 'pending' },
-  { code: 'RT-2026-807', donorName: 'Hoàng Thị Dung', weight: '7 kg', estCategory: 'Đồ trẻ em tổng hợp', status: 'pending' },
-  { code: 'RT-2026-808', donorName: 'Lê Minh Quân', weight: '18 kg', estCategory: 'Quần áo kaki dệt', status: 'pending' },
+  {
+    code: 'RT-2026-804',
+    donorName: 'Trần Văn Hoàng',
+    weight: '12 kg',
+    estCategory: 'Áo khoác gió & Đồ nỉ',
+    status: 'pending',
+  },
+  {
+    code: 'RT-2026-807',
+    donorName: 'Hoàng Thị Dung',
+    weight: '7 kg',
+    estCategory: 'Đồ trẻ em tổng hợp',
+    status: 'pending',
+  },
+  {
+    code: 'RT-2026-808',
+    donorName: 'Lê Minh Quân',
+    weight: '18 kg',
+    estCategory: 'Quần áo kaki dệt',
+    status: 'pending',
+  },
 ];
 
 export const DetailedClassification: React.FC = () => {
@@ -26,18 +44,21 @@ export const DetailedClassification: React.FC = () => {
 
   React.useEffect(() => {
     import('@/services/managerService').then(({ managerService }) => {
-      managerService.getDetailedClassification().then((batches) => {
-        if (batches && batches.length > 0) {
-          const mapped: PackageToClassify[] = batches.map((b) => ({
-            code: b.batchCode || b.id.slice(0, 8),
-            donorName: b.garmentGroup || 'Đợt phân loại',
-            weight: `${(b.totalItem || 10) * 0.5} kg`,
-            estCategory: `${b.clothingType || 'Quần áo'} (${b.conditionGrade || 'Loại A'})`,
-            status: b.status === 'Completed' ? 'completed' : 'pending',
-          }));
-          setPackages(mapped);
-        }
-      }).catch(() => {});
+      managerService
+        .getDetailedClassification()
+        .then((batches) => {
+          if (batches && batches.length > 0) {
+            const mapped: PackageToClassify[] = batches.map((b) => ({
+              code: b.batchCode || b.id.slice(0, 8),
+              donorName: b.garmentGroup || 'Đợt phân loại',
+              weight: `${(b.totalItem || 10) * 0.5} kg`,
+              estCategory: `${b.clothingType || 'Quần áo'} (${b.conditionGrade || 'Loại A'})`,
+              status: b.status === 'Completed' ? 'completed' : 'pending',
+            }));
+            setPackages(mapped);
+          }
+        })
+        .catch(() => {});
     });
   }, []);
   const [selectedCode, setSelectedCode] = useState(packages[0]?.code || '');
@@ -49,7 +70,7 @@ export const DetailedClassification: React.FC = () => {
   const [charityTshirts, setCharityTshirts] = useState(0);
   const [charityPants, setCharityPants] = useState(0);
   const [recycleScrapsWeight, setRecycleScrapsWeight] = useState(0); // kg
-  
+
   const [printPreview, setPrintPreview] = useState<{
     code: string;
     charityPacks: string;
@@ -79,13 +100,18 @@ export const DetailedClassification: React.FC = () => {
     e.preventDefault();
     if (!scannedPackage) return;
 
-    if (charityJackets === 0 && charityTshirts === 0 && charityPants === 0 && recycleScrapsWeight === 0) {
+    if (
+      charityJackets === 0 &&
+      charityTshirts === 0 &&
+      charityPants === 0 &&
+      recycleScrapsWeight === 0
+    ) {
       toast.error('Vui lòng phân loại ít nhất 1 mặt hàng dệt may!');
       return;
     }
 
     toast.success('Xác nhận phân loại thành công! Nhãn dán kho dệt đã được sinh ra.');
-    
+
     // Generate label preview
     setPrintPreview({
       code: scannedPackage.code,
@@ -110,14 +136,19 @@ export const DetailedClassification: React.FC = () => {
       <div className="classification-page">
         <div className="admin-page-header">
           <h2 className="dashboard-title">Phân loại chi tiết kiện hàng</h2>
-          <p className="dashboard-subtitle">Thực hiện mở kiện, kiểm đếm số lượng chi tiết và chia tách thành kiện từ thiện hoặc thùng xé sợi tái chế dệt may.</p>
+          <p className="dashboard-subtitle">
+            Thực hiện mở kiện, kiểm đếm số lượng chi tiết và chia tách thành kiện từ thiện hoặc
+            thùng xé sợi tái chế dệt may.
+          </p>
         </div>
 
         <div className="classification-grid">
           {/* Left panel: Scanner and selector */}
           <div className="scanner-section glass">
             <h3>Trạm quét & mở kiện</h3>
-            <p className="scanner-desc">Chọn mã kiện hàng thu gom được để tiến hành mở kiện phân loại.</p>
+            <p className="scanner-desc">
+              Chọn mã kiện hàng thu gom được để tiến hành mở kiện phân loại.
+            </p>
 
             {packages.length > 0 ? (
               <div className="scanner-controller">
@@ -130,10 +161,10 @@ export const DetailedClassification: React.FC = () => {
                   value={selectedCode}
                   onChange={(e) => setSelectedCode(e.target.value)}
                 />
-                
-                <Button 
-                  onClick={handleScan} 
-                  isLoading={isScanning} 
+
+                <Button
+                  onClick={handleScan}
+                  isLoading={isScanning}
                   className="scan-btn"
                   variant="primary"
                 >
@@ -154,11 +185,17 @@ export const DetailedClassification: React.FC = () => {
               <div className="scanned-info-card">
                 <h4>Chi tiết kiện đang mở: {scannedPackage.code}</h4>
                 <div className="info-row">
-                  <div><strong>Người gửi:</strong> {scannedPackage.donorName}</div>
-                  <div><strong>Khối lượng:</strong> {scannedPackage.weight}</div>
+                  <div>
+                    <strong>Người gửi:</strong> {scannedPackage.donorName}
+                  </div>
+                  <div>
+                    <strong>Khối lượng:</strong> {scannedPackage.weight}
+                  </div>
                 </div>
                 <div className="info-row">
-                  <div><strong>Mô tả của người dân:</strong> {scannedPackage.estCategory}</div>
+                  <div>
+                    <strong>Mô tả của người dân:</strong> {scannedPackage.estCategory}
+                  </div>
                 </div>
               </div>
             )}
@@ -177,15 +214,18 @@ export const DetailedClassification: React.FC = () => {
                     <Heart size={16} style={{ marginRight: '6px' }} />
                     Quần áo Từ thiện (Còn tốt - Đưa đi giặt hấp)
                   </h4>
-                  
+
                   <div className="counter-item">
                     <span>Áo khoác / Đồ ấm:</span>
                     <div className="counter-controls">
-                      <button type="button" onClick={() => setCharityJackets(v => Math.max(0, v - 1))}>
+                      <button
+                        type="button"
+                        onClick={() => setCharityJackets((v) => Math.max(0, v - 1))}
+                      >
                         <Minus size={14} />
                       </button>
                       <span className="counter-value">{charityJackets}</span>
-                      <button type="button" onClick={() => setCharityJackets(v => v + 1)}>
+                      <button type="button" onClick={() => setCharityJackets((v) => v + 1)}>
                         <Plus size={14} />
                       </button>
                     </div>
@@ -194,11 +234,14 @@ export const DetailedClassification: React.FC = () => {
                   <div className="counter-item">
                     <span>Áo thun / Áo sơ mi:</span>
                     <div className="counter-controls">
-                      <button type="button" onClick={() => setCharityTshirts(v => Math.max(0, v - 1))}>
+                      <button
+                        type="button"
+                        onClick={() => setCharityTshirts((v) => Math.max(0, v - 1))}
+                      >
                         <Minus size={14} />
                       </button>
                       <span className="counter-value">{charityTshirts}</span>
-                      <button type="button" onClick={() => setCharityTshirts(v => v + 1)}>
+                      <button type="button" onClick={() => setCharityTshirts((v) => v + 1)}>
                         <Plus size={14} />
                       </button>
                     </div>
@@ -207,11 +250,14 @@ export const DetailedClassification: React.FC = () => {
                   <div className="counter-item">
                     <span>Quần denim / Quần kaki:</span>
                     <div className="counter-controls">
-                      <button type="button" onClick={() => setCharityPants(v => Math.max(0, v - 1))}>
+                      <button
+                        type="button"
+                        onClick={() => setCharityPants((v) => Math.max(0, v - 1))}
+                      >
                         <Minus size={14} />
                       </button>
                       <span className="counter-value">{charityPants}</span>
-                      <button type="button" onClick={() => setCharityPants(v => v + 1)}>
+                      <button type="button" onClick={() => setCharityPants((v) => v + 1)}>
                         <Plus size={14} />
                       </button>
                     </div>
@@ -224,15 +270,18 @@ export const DetailedClassification: React.FC = () => {
                     <RefreshCw size={16} style={{ marginRight: '6px' }} />
                     Quần áo cũ nát (Để Tái chế xé sợi)
                   </h4>
-                  
+
                   <div className="counter-item">
                     <span>Khối lượng sợi cotton kaki thu hồi (kg):</span>
                     <div className="counter-controls">
-                      <button type="button" onClick={() => setRecycleScrapsWeight(v => Math.max(0, v - 1))}>
+                      <button
+                        type="button"
+                        onClick={() => setRecycleScrapsWeight((v) => Math.max(0, v - 1))}
+                      >
                         <Minus size={14} />
                       </button>
                       <span className="counter-value">{recycleScrapsWeight} kg</span>
-                      <button type="button" onClick={() => setRecycleScrapsWeight(v => v + 1)}>
+                      <button type="button" onClick={() => setRecycleScrapsWeight((v) => v + 1)}>
                         <Plus size={14} />
                       </button>
                     </div>
@@ -253,7 +302,10 @@ export const DetailedClassification: React.FC = () => {
           {/* Right panel: Printer Preview */}
           <div className="printer-section glass">
             <h3>Xem trước tem mã vạch kho</h3>
-            <p className="printer-desc">Mã vạch sinh ra tự động dán lên thùng hàng phân loại để chuyển sang kho giặt khử khuẩn hoặc nhà máy dệt.</p>
+            <p className="printer-desc">
+              Mã vạch sinh ra tự động dán lên thùng hàng phân loại để chuyển sang kho giặt khử khuẩn
+              hoặc nhà máy dệt.
+            </p>
 
             {printPreview ? (
               <div className="label-preview-card">
@@ -261,7 +313,7 @@ export const DetailedClassification: React.FC = () => {
                   <div className="bar-code-title">Tem kho ReThreads</div>
                   <span className="label-code">{printPreview.code}</span>
                 </div>
-                
+
                 {/* Simulated barcode */}
                 <div className="barcode-sim">
                   <div className="barcode-lines"></div>
@@ -280,14 +332,19 @@ export const DetailedClassification: React.FC = () => {
                   <div className="label-date">Ngày tạo: {printPreview.date}</div>
                 </div>
 
-                <Button variant="secondary" className="print-action-btn" onClick={() => toast.success('Đang gửi lệnh tới máy in tem...')}>
+                <Button
+                  variant="secondary"
+                  className="print-action-btn"
+                  onClick={() => toast.success('Đang gửi lệnh tới máy in tem...')}
+                >
                   <Printer size={16} style={{ marginRight: '6px' }} />
                   In Nhãn Kho
                 </Button>
               </div>
             ) : (
               <div className="printer-empty flex-center">
-                Nhãn dán kho dệt sẽ tự động hiển thị ở đây sau khi bạn xác nhận phân loại thành công.
+                Nhãn dán kho dệt sẽ tự động hiển thị ở đây sau khi bạn xác nhận phân loại thành
+                công.
               </div>
             )}
           </div>

@@ -19,11 +19,6 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     height: height,
   };
 
-  return (
-    <div
-      className={`skeleton skeleton-${variant} ${className}`}
-      style={style}
-    ></div>
-  );
+  return <div className={`skeleton skeleton-${variant} ${className}`} style={style}></div>;
 };
 export default Skeleton;

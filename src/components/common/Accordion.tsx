@@ -12,16 +12,13 @@ interface AccordionProps {
   allowMultiple?: boolean;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({
-  items,
-  allowMultiple = false,
-}) => {
+export const Accordion: React.FC<AccordionProps> = ({ items, allowMultiple = false }) => {
   const [openIndexes, setOpenIndexes] = useState<number[]>([]);
 
   const handleToggle = (index: number) => {
     if (allowMultiple) {
       setOpenIndexes((prev) =>
-        prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+        prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
       );
     } else {
       setOpenIndexes((prev) => (prev.includes(index) ? [] : [index]));
