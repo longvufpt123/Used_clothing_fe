@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/shared/layouts/AdminLayout';
 import { useToast } from '@/context/ToastContext';
 import Tooltip from '@/components/common/Tooltip';
-import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronDown, 
-  Plus, 
-  Clock, 
-  MapPin, 
-  List, 
-  Sparkle, 
-  Check, 
-  X, 
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Clock,
+  MapPin,
+  List,
+  Sparkle,
+  Check,
+  X,
   SlidersHorizontal,
-  PlusCircle
+  PlusCircle,
 } from 'lucide-react';
 import './CollectionSchedule.css';
 import DispatchPanel from '@/pages/manager/DispatchPanel';
@@ -34,22 +34,30 @@ interface CalendarEvent {
   weight?: string;
 }
 
-
-
 const HOURS = Array.from({ length: 24 }).map((_, i) => {
-  if (i === 0) return "12 SA";
+  if (i === 0) return '12 SA';
   if (i < 12) return `${i} SA`;
-  if (i === 12) return "12 CH";
+  if (i === 12) return '12 CH';
   return `${i - 12} CH`;
 });
 
 const MONTH_NAMES = [
-  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  'Tháng 1',
+  'Tháng 2',
+  'Tháng 3',
+  'Tháng 4',
+  'Tháng 5',
+  'Tháng 6',
+  'Tháng 7',
+  'Tháng 8',
+  'Tháng 9',
+  'Tháng 10',
+  'Tháng 11',
+  'Tháng 12',
 ];
 
-const WEEKDAY_NAMES = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
-const WEEKDAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const WEEKDAY_NAMES = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+const WEEKDAY_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 const STATUS_LABELS: Record<'assigned' | 'picking' | 'completed', string> = {
   assigned: 'Đã phân công',
@@ -57,36 +65,44 @@ const STATUS_LABELS: Record<'assigned' | 'picking' | 'completed', string> = {
   completed: 'Hoàn thành',
 };
 
-type CalendarViewType = "day" | "workweek" | "week" | "month";
+type CalendarViewType = 'day' | 'workweek' | 'week' | 'month';
 
 export const CollectionSchedule: React.FC = () => {
   const toast = useToast();
-  
+
   // Date states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 6, 6)); // July 6, 2026
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2026, 6, 1));
-  const [currentView, setCurrentView] = useState<CalendarViewType>("month");
-  
+  const [currentView, setCurrentView] = useState<CalendarViewType>('month');
+
   // Events state
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
     import('@/services/managerService').then(({ managerService }) => {
-      managerService.getShifts().then((apiShifts) => {
-        if (apiShifts && apiShifts.length > 0) {
-          const mapped: CalendarEvent[] = apiShifts.map((s, idx) => ({
-            id: idx + 100,
-            date: new Date(s.date || Date.now()),
-            time: '08:00 SA',
-            durationMinutes: 120,
-            title: s.shiftName || 'Ca thu gom',
-            location: 'Tuyến thu gom chính',
-            organizer: 'Ban Quản lý',
-            status: s.status === 'Completed' ? 'completed' : s.status === 'InProgress' ? 'picking' : 'assigned',
-          }));
-          setEvents(mapped);
-        }
-      }).catch(() => {});
+      managerService
+        .getShifts()
+        .then((apiShifts) => {
+          if (apiShifts && apiShifts.length > 0) {
+            const mapped: CalendarEvent[] = apiShifts.map((s, idx) => ({
+              id: idx + 100,
+              date: new Date(s.date || Date.now()),
+              time: '08:00 SA',
+              durationMinutes: 120,
+              title: s.shiftName || 'Ca thu gom',
+              location: 'Tuyến thu gom chính',
+              organizer: 'Ban Quản lý',
+              status:
+                s.status === 'Completed'
+                  ? 'completed'
+                  : s.status === 'InProgress'
+                    ? 'picking'
+                    : 'assigned',
+            }));
+            setEvents(mapped);
+          }
+        })
+        .catch(() => {});
     });
   }, []);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -99,7 +115,7 @@ export const CollectionSchedule: React.FC = () => {
   const [inlineAddDate, setInlineAddDate] = useState<Date | null>(null);
   const [inlineAddWeekDate, setInlineAddWeekDate] = useState<Date | null>(null);
   const [inlineAddWeekMinutes, setInlineAddWeekMinutes] = useState<number | null>(null);
-  const [inlineAddTitle, setInlineAddTitle] = useState("");
+  const [inlineAddTitle, setInlineAddTitle] = useState('');
 
   // Filters State
   const [filters, setFilters] = useState({
@@ -109,7 +125,7 @@ export const CollectionSchedule: React.FC = () => {
   });
 
   const [currentTimeMinutes, setCurrentTimeMinutes] = useState(
-    new Date().getHours() * 60 + new Date().getMinutes()
+    new Date().getHours() * 60 + new Date().getMinutes(),
   );
 
   useEffect(() => {
@@ -153,14 +169,14 @@ export const CollectionSchedule: React.FC = () => {
   for (let i = firstDayIndex - 1; i >= 0; i--) {
     monthGridDays.push({
       date: new Date(year, month - 1, prevLastDate - i),
-      isCurrentMonth: false
+      isCurrentMonth: false,
     });
   }
   // Current Month Days
   for (let i = 1; i <= lastDate; i++) {
     monthGridDays.push({
       date: new Date(year, month, i),
-      isCurrentMonth: true
+      isCurrentMonth: true,
     });
   }
   // Next Month Days
@@ -171,7 +187,7 @@ export const CollectionSchedule: React.FC = () => {
   for (let i = 1; i <= nextDaysCount; i++) {
     monthGridDays.push({
       date: new Date(year, month + 1, i),
-      isCurrentMonth: false
+      isCurrentMonth: false,
     });
   }
 
@@ -186,14 +202,14 @@ export const CollectionSchedule: React.FC = () => {
   const getWeekDays = (baseDate: Date) => {
     const sun = getSunday(baseDate);
     const result: Date[] = [];
-    if (currentView === "workweek") {
+    if (currentView === 'workweek') {
       // Mon - Fri
       for (let i = 1; i <= 5; i++) {
         const next = new Date(sun);
         next.setDate(sun.getDate() + i);
         result.push(next);
       }
-    } else if (currentView === "day") {
+    } else if (currentView === 'day') {
       result.push(new Date(baseDate));
     } else {
       // Sun - Sat
@@ -209,15 +225,15 @@ export const CollectionSchedule: React.FC = () => {
   const activeWeekDays = getWeekDays(selectedDate);
 
   const getHeaderTitle = () => {
-    if (currentView === "month") {
+    if (currentView === 'month') {
       return `${MONTH_NAMES[month]} ${year}`;
     }
-    if (currentView === "day") {
+    if (currentView === 'day') {
       return `Ngày ${selectedDate.getDate()} ${MONTH_NAMES[selectedDate.getMonth()]} năm ${selectedDate.getFullYear()}`;
     }
     const start = activeWeekDays[0];
     const end = activeWeekDays[activeWeekDays.length - 1];
-    
+
     if (start.getFullYear() !== end.getFullYear()) {
       return `Từ ngày ${start.getDate()} ${MONTH_NAMES[start.getMonth()]} năm ${start.getFullYear()} đến ngày ${end.getDate()} ${MONTH_NAMES[end.getMonth()]} năm ${end.getFullYear()}`;
     }
@@ -229,9 +245,9 @@ export const CollectionSchedule: React.FC = () => {
 
   // Navigations
   const handlePrev = () => {
-    if (currentView === "month") {
+    if (currentView === 'month') {
       setCurrentMonth(new Date(year, month - 1, 1));
-    } else if (currentView === "week" || currentView === "workweek") {
+    } else if (currentView === 'week' || currentView === 'workweek') {
       const prevWeek = new Date(selectedDate);
       prevWeek.setDate(selectedDate.getDate() - 7);
       setSelectedDate(prevWeek);
@@ -243,9 +259,9 @@ export const CollectionSchedule: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (currentView === "month") {
+    if (currentView === 'month') {
       setCurrentMonth(new Date(year, month + 1, 1));
-    } else if (currentView === "week" || currentView === "workweek") {
+    } else if (currentView === 'week' || currentView === 'workweek') {
       const nextWeek = new Date(selectedDate);
       nextWeek.setDate(selectedDate.getDate() + 7);
       setSelectedDate(nextWeek);
@@ -284,24 +300,24 @@ export const CollectionSchedule: React.FC = () => {
         id: Date.now(),
         title: inlineAddTitle.trim(),
         date: date,
-        time: "09:00 SA",
+        time: '09:00 SA',
         durationMinutes: 60,
         status: 'assigned',
-        organizer: "Hà Thu",
-        description: "Lịch trực thu gom nhanh được tạo từ giao diện Lịch."
+        organizer: 'Hà Thu',
+        description: 'Lịch trực thu gom nhanh được tạo từ giao diện Lịch.',
       };
-      setEvents(prev => [...prev, newEvt]);
+      setEvents((prev) => [...prev, newEvt]);
       toast.success(`Đã tạo nhanh ca trực: "${inlineAddTitle}"`);
     }
     setInlineAddDate(null);
-    setInlineAddTitle("");
+    setInlineAddTitle('');
   };
 
   const handleSaveInlineWeekEvent = (date: Date, minutes: number) => {
     if (inlineAddTitle.trim()) {
       const hour24 = Math.floor(minutes / 60);
       const min = minutes % 60;
-      const ampm = hour24 >= 12 ? "CH" : "SA";
+      const ampm = hour24 >= 12 ? 'CH' : 'SA';
       const displayHour = hour24 % 12 === 0 ? 12 : hour24 % 12;
       const minStr = min < 10 ? `0${min}` : min;
       const timeStr = `${displayHour < 10 ? '0' + displayHour : displayHour}:${minStr} ${ampm}`;
@@ -313,15 +329,15 @@ export const CollectionSchedule: React.FC = () => {
         time: timeStr,
         durationMinutes: 60,
         status: 'assigned',
-        organizer: "Hà Thu",
-        description: "Lịch trực thu gom nhanh được tạo từ giao diện Lưới giờ."
+        organizer: 'Hà Thu',
+        description: 'Lịch trực thu gom nhanh được tạo từ giao diện Lưới giờ.',
       };
-      setEvents(prev => [...prev, newEvt]);
+      setEvents((prev) => [...prev, newEvt]);
       toast.success(`Đã tạo nhanh ca trực: "${inlineAddTitle}" lúc ${timeStr}`);
     }
     setInlineAddWeekDate(null);
     setInlineAddWeekMinutes(null);
-    setInlineAddTitle("");
+    setInlineAddTitle('');
   };
 
   const handleGridColumnClick = (e: React.MouseEvent, date: Date) => {
@@ -331,7 +347,7 @@ export const CollectionSchedule: React.FC = () => {
     const minutes = Math.min(23 * 60 + 30, Math.max(0, Math.floor(clickY / 40) * 30));
     setInlineAddWeekDate(date);
     setInlineAddWeekMinutes(minutes);
-    setInlineAddTitle("");
+    setInlineAddTitle('');
   };
 
   const parseEventTime = (timeStr: string) => {
@@ -340,27 +356,27 @@ export const CollectionSchedule: React.FC = () => {
     let hour = parseInt(match[1]);
     const minute = parseInt(match[2]);
     const period = match[3].toUpperCase();
-    if (period === "CH" && hour < 12) hour += 12;
-    if (period === "SA" && hour === 12) hour = 0;
+    if (period === 'CH' && hour < 12) hour += 12;
+    if (period === 'SA' && hour === 12) hour = 0;
     return { hour, minute, totalMinutes: hour * 60 + minute };
   };
 
   // RSVP Actions for Popover
   const handleAcceptRsvp = (id: number) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, status: 'picking' } : e));
-    toast.success("Đã xác nhận NHẬN ca trực thu gom này!");
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'picking' } : e)));
+    toast.success('Đã xác nhận NHẬN ca trực thu gom này!');
     setActivePopoverEvent(null);
   };
 
   const handleDeclineRsvp = (id: number) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, status: 'assigned' } : e));
-    toast.info("Đã từ chối hoặc hủy nhận ca trực.");
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'assigned' } : e)));
+    toast.info('Đã từ chối hoặc hủy nhận ca trực.');
     setActivePopoverEvent(null);
   };
 
   const handleCompleteRsvp = (id: number) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, status: 'completed' } : e));
-    toast.success("Đã xác nhận HOÀN THÀNH ca trực thu gom!");
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'completed' } : e)));
+    toast.success('Đã xác nhận HOÀN THÀNH ca trực thu gom!');
     setActivePopoverEvent(null);
   };
 
@@ -385,7 +401,7 @@ export const CollectionSchedule: React.FC = () => {
   }
 
   // Filtered Events
-  const filteredEvents = events.filter(e => {
+  const filteredEvents = events.filter((e) => {
     if (e.status === 'assigned' && !filters.assigned) return false;
     if (e.status === 'picking' && !filters.picking) return false;
     if (e.status === 'completed' && !filters.completed) return false;
@@ -399,15 +415,16 @@ export const CollectionSchedule: React.FC = () => {
 
         {/* Calendar layout */}
         <div className="calendar-layout-container">
-          
           {/* Sidebar */}
           <div className="calendar-sidebar-wrapper">
-            
             {/* Quick add button */}
-            <button className="sidebar-quick-add-btn" onClick={() => {
-              setInlineAddDate(new Date(selectedDate));
-              setInlineAddTitle("");
-            }}>
+            <button
+              className="sidebar-quick-add-btn"
+              onClick={() => {
+                setInlineAddDate(new Date(selectedDate));
+                setInlineAddTitle('');
+              }}
+            >
               <PlusCircle size={16} />
               <span>Tạo nhanh ca trực</span>
             </button>
@@ -419,25 +436,33 @@ export const CollectionSchedule: React.FC = () => {
                   {MONTH_NAMES[miniMonth]} {miniYear}
                 </span>
                 <div className="mini-cal-navs">
-                  <button className="mini-cal-btn" onClick={() => setCurrentMonth(new Date(miniYear, miniMonth - 1, 1))}>
+                  <button
+                    className="mini-cal-btn"
+                    onClick={() => setCurrentMonth(new Date(miniYear, miniMonth - 1, 1))}
+                  >
                     <ChevronLeft size={14} />
                   </button>
-                  <button className="mini-cal-btn" onClick={() => setCurrentMonth(new Date(miniYear, miniMonth + 1, 1))}>
+                  <button
+                    className="mini-cal-btn"
+                    onClick={() => setCurrentMonth(new Date(miniYear, miniMonth + 1, 1))}
+                  >
                     <ChevronRight size={14} />
                   </button>
                 </div>
               </div>
               <div className="mini-cal-grid">
                 {WEEKDAY_SHORT.map((w, idx) => (
-                  <span key={idx} className="mini-cal-weekday">{w}</span>
+                  <span key={idx} className="mini-cal-weekday">
+                    {w}
+                  </span>
                 ))}
                 {miniDays.map((d, idx) => {
                   const isSel = isSameDay(d, selectedDate);
                   const isCurr = d.getMonth() === miniMonth;
                   const isTday = isToday(d);
                   return (
-                    <button 
-                      key={idx} 
+                    <button
+                      key={idx}
                       className={`mini-cal-day-btn ${!isCurr ? 'outside-day' : ''} ${isSel ? 'selected' : ''} ${isTday ? 'today' : ''}`}
                       onClick={() => {
                         setSelectedDate(d);
@@ -458,28 +483,28 @@ export const CollectionSchedule: React.FC = () => {
               </div>
               <div className="filter-options-list">
                 <label className="filter-checkbox-wrapper">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.assigned} 
-                    onChange={() => setFilters(p => ({ ...p, assigned: !p.assigned }))} 
+                  <input
+                    type="checkbox"
+                    checked={filters.assigned}
+                    onChange={() => setFilters((p) => ({ ...p, assigned: !p.assigned }))}
                   />
                   <span className="custom-chk-box assigned-chk" />
                   <span>Đã phân công (Chờ nhận)</span>
                 </label>
                 <label className="filter-checkbox-wrapper">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.picking} 
-                    onChange={() => setFilters(p => ({ ...p, picking: !p.picking }))} 
+                  <input
+                    type="checkbox"
+                    checked={filters.picking}
+                    onChange={() => setFilters((p) => ({ ...p, picking: !p.picking }))}
                   />
                   <span className="custom-chk-box picking-chk" />
                   <span>Đang đi thu gom</span>
                 </label>
                 <label className="filter-checkbox-wrapper">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.completed} 
-                    onChange={() => setFilters(p => ({ ...p, completed: !p.completed }))} 
+                  <input
+                    type="checkbox"
+                    checked={filters.completed}
+                    onChange={() => setFilters((p) => ({ ...p, completed: !p.completed }))}
                   />
                   <span className="custom-chk-box completed-chk" />
                   <span>Đã hoàn thành</span>
@@ -491,42 +516,90 @@ export const CollectionSchedule: React.FC = () => {
             <div className="sidebar-tasks-for-day">
               <div className="filter-section-title" style={{ marginBottom: '8px' }}>
                 <CalendarIcon size={14} />
-                <span>Ca trực ngày {selectedDate.getDate()}/{selectedDate.getMonth() + 1}</span>
+                <span>
+                  Ca trực ngày {selectedDate.getDate()}/{selectedDate.getMonth() + 1}
+                </span>
               </div>
               <div className="day-tasks-list">
-                {events.filter(e => isSameDay(e.date, selectedDate)).length === 0 ? (
-                  <p className="no-tasks-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '4px 0' }}>Không có ca trực nào.</p>
+                {events.filter((e) => isSameDay(e.date, selectedDate)).length === 0 ? (
+                  <p
+                    className="no-tasks-text"
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--color-text-muted)',
+                      margin: '4px 0',
+                    }}
+                  >
+                    Không có ca trực nào.
+                  </p>
                 ) : (
                   events
-                    .filter(e => isSameDay(e.date, selectedDate))
-                    .map(evt => {
+                    .filter((e) => isSameDay(e.date, selectedDate))
+                    .map((evt) => {
                       const tooltipContent = `${evt.title} | Thời gian: ${evt.time} | Địa điểm: ${evt.location || 'Chưa có'} | Tài xế: ${evt.driver || 'Chưa phân công'}`;
                       return (
                         <Tooltip key={evt.id} content={tooltipContent} position="top">
-                          <div 
+                          <div
                             className={`day-task-item status-${evt.status}`}
                             onClick={(e) => handleEventCardClick(e, evt)}
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px', 
-                              padding: '6px 8px', 
-                              borderRadius: 'var(--radius-sm)', 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '6px 8px',
+                              borderRadius: 'var(--radius-sm)',
                               cursor: 'pointer',
                               marginBottom: '6px',
-                              border: '1px solid var(--color-border)'
+                              border: '1px solid var(--color-border)',
                             }}
                           >
-                            <span className={`status-indicator-dot dot-${evt.status}`} style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: evt.status === 'assigned' ? '#f59e0b' : evt.status === 'picking' ? '#3b82f6' : '#10b981',
-                              flexShrink: 0
-                            }} />
-                            <div className="day-task-info" style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
-                              <span className="day-task-time" style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>{evt.time}</span>
-                              <span className="day-task-title" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{evt.title}</span>
+                            <span
+                              className={`status-indicator-dot dot-${evt.status}`}
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor:
+                                  evt.status === 'assigned'
+                                    ? '#f59e0b'
+                                    : evt.status === 'picking'
+                                      ? '#3b82f6'
+                                      : '#10b981',
+                                flexShrink: 0,
+                              }}
+                            />
+                            <div
+                              className="day-task-info"
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <span
+                                className="day-task-time"
+                                style={{
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  color: 'var(--color-text-secondary)',
+                                }}
+                              >
+                                {evt.time}
+                              </span>
+                              <span
+                                className="day-task-title"
+                                style={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: 'var(--color-text-primary)',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {evt.title}
+                              </span>
                             </div>
                           </div>
                         </Tooltip>
@@ -539,7 +612,6 @@ export const CollectionSchedule: React.FC = () => {
 
           {/* Main Grid View */}
           <div className="calendar-grid-wrapper">
-            
             {/* Toolbar */}
             <div className="calendar-toolbar-header">
               <div className="toolbar-left-group">
@@ -556,34 +628,72 @@ export const CollectionSchedule: React.FC = () => {
                   </button>
                 </div>
                 <div className="toolbar-current-title" style={{ position: 'relative' }}>
-                  <div className="title-trigger-flex" onClick={() => { setIsMonthPickerOpen(!isMonthPickerOpen); setPickerViewMode('month'); setPickerActiveYear(selectedDate.getFullYear()); }} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <div
+                    className="title-trigger-flex"
+                    onClick={() => {
+                      setIsMonthPickerOpen(!isMonthPickerOpen);
+                      setPickerViewMode('month');
+                      setPickerActiveYear(selectedDate.getFullYear());
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                  >
                     <h3>{getHeaderTitle()}</h3>
                     <ChevronDown size={14} />
                   </div>
                   {isMonthPickerOpen && (
                     <>
-                      <div className="popover-backdrop" onClick={(e) => { e.stopPropagation(); setIsMonthPickerOpen(false); }} />
-                      <div className="month-year-picker-dropdown" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="popover-backdrop"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsMonthPickerOpen(false);
+                        }}
+                      />
+                      <div
+                        className="month-year-picker-dropdown"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {pickerViewMode === 'month' ? (
                           <>
                             <div className="picker-header">
-                              <button type="button" className="picker-nav-btn" onClick={() => setPickerActiveYear(p => p - 1)}>
+                              <button
+                                type="button"
+                                className="picker-nav-btn"
+                                onClick={() => setPickerActiveYear((p) => p - 1)}
+                              >
                                 &laquo;
                               </button>
-                              <span 
-                                className="picker-year-label clickable" 
+                              <span
+                                className="picker-year-label clickable"
                                 onClick={() => setPickerViewMode('year')}
                                 style={{ cursor: 'pointer', textDecoration: 'underline' }}
                                 title="Bấm để chọn năm"
                               >
                                 {pickerActiveYear}
                               </span>
-                              <button type="button" className="picker-nav-btn" onClick={() => setPickerActiveYear(p => p + 1)}>
+                              <button
+                                type="button"
+                                className="picker-nav-btn"
+                                onClick={() => setPickerActiveYear((p) => p + 1)}
+                              >
                                 &raquo;
                               </button>
                             </div>
                             <div className="picker-months-grid">
-                              {["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"].map((m, idx) => (
+                              {[
+                                'T1',
+                                'T2',
+                                'T3',
+                                'T4',
+                                'T5',
+                                'T6',
+                                'T7',
+                                'T8',
+                                'T9',
+                                'T10',
+                                'T11',
+                                'T12',
+                              ].map((m, idx) => (
                                 <button
                                   key={idx}
                                   type="button"
@@ -604,17 +714,26 @@ export const CollectionSchedule: React.FC = () => {
                         ) : (
                           <>
                             <div className="picker-header">
-                              <button type="button" className="picker-nav-btn" onClick={() => setPickerActiveYear(p => p - 12)}>
+                              <button
+                                type="button"
+                                className="picker-nav-btn"
+                                onClick={() => setPickerActiveYear((p) => p - 12)}
+                              >
                                 &laquo;
                               </button>
-                              <span 
-                                className="picker-year-label clickable" 
+                              <span
+                                className="picker-year-label clickable"
                                 onClick={() => setPickerViewMode('month')}
                                 style={{ cursor: 'pointer', textDecoration: 'underline' }}
                               >
-                                {pickerActiveYear - (pickerActiveYear % 12)} - {pickerActiveYear - (pickerActiveYear % 12) + 11}
+                                {pickerActiveYear - (pickerActiveYear % 12)} -{' '}
+                                {pickerActiveYear - (pickerActiveYear % 12) + 11}
                               </span>
-                              <button type="button" className="picker-nav-btn" onClick={() => setPickerActiveYear(p => p + 12)}>
+                              <button
+                                type="button"
+                                className="picker-nav-btn"
+                                onClick={() => setPickerActiveYear((p) => p + 12)}
+                              >
                                 &raquo;
                               </button>
                             </div>
@@ -648,7 +767,7 @@ export const CollectionSchedule: React.FC = () => {
 
               <div className="toolbar-right-group">
                 <div className="view-switch-buttons">
-                  {(["day", "workweek", "week", "month"] as const).map((view) => (
+                  {(['day', 'workweek', 'week', 'month'] as const).map((view) => (
                     <button
                       key={view}
                       className={`view-switch-btn ${currentView === view ? 'active' : ''}`}
@@ -665,7 +784,7 @@ export const CollectionSchedule: React.FC = () => {
             </div>
 
             {/* Month View Grid */}
-            {currentView === "month" && (
+            {currentView === 'month' && (
               <div className="month-grid-view">
                 <div className="weekdays-labels-header">
                   {WEEKDAY_NAMES.map((day, idx) => (
@@ -677,76 +796,91 @@ export const CollectionSchedule: React.FC = () => {
                 <div className="month-grid-body-scroll">
                   {Array.from({ length: gridRows }).map((_, weekIdx) => (
                     <div key={weekIdx} className="month-week-row-grid">
-                      {monthGridDays.slice(weekIdx * 7, (weekIdx + 1) * 7).map((dayItem, dayIdx) => {
-                        const date = dayItem.date;
-                        const isSel = isSameDay(date, selectedDate);
-                        const isTday = isToday(date);
-                        const dayEvents = filteredEvents.filter(e => isSameDay(e.date, date));
-                        
-                        let dateLabel = `${date.getDate()}`;
-                        if (date.getDate() === 1 || (weekIdx === 0 && dayIdx === 0)) {
-                          dateLabel = `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
-                        }
+                      {monthGridDays
+                        .slice(weekIdx * 7, (weekIdx + 1) * 7)
+                        .map((dayItem, dayIdx) => {
+                          const date = dayItem.date;
+                          const isSel = isSameDay(date, selectedDate);
+                          const isTday = isToday(date);
+                          const dayEvents = filteredEvents.filter((e) => isSameDay(e.date, date));
 
-                        return (
-                          <div 
-                            key={dayIdx}
-                            className={`month-day-cell ${isSel ? 'selected-cell' : ''} ${!dayItem.isCurrentMonth ? 'outside-month-cell' : ''}`}
-                            onClick={(e) => {
-                              setSelectedDate(date);
-                              if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('events-cell-container')) {
-                                setInlineAddDate(date);
-                                setInlineAddTitle("");
-                              }
-                            }}
-                          >
-                            <div className="day-cell-top-bar">
-                              <span className={`day-cell-number ${isTday ? 'today-badge' : ''}`}>
-                                {dateLabel}
-                              </span>
-                              <button className="day-cell-quick-add-btn" onClick={(e) => {
-                                e.stopPropagation();
+                          let dateLabel = `${date.getDate()}`;
+                          if (date.getDate() === 1 || (weekIdx === 0 && dayIdx === 0)) {
+                            dateLabel = `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
+                          }
+
+                          return (
+                            <div
+                              key={dayIdx}
+                              className={`month-day-cell ${isSel ? 'selected-cell' : ''} ${!dayItem.isCurrentMonth ? 'outside-month-cell' : ''}`}
+                              onClick={(e) => {
                                 setSelectedDate(date);
-                                setInlineAddDate(date);
-                                setInlineAddTitle("");
-                              }}>
-                                <Plus size={10} />
-                              </button>
-                            </div>
-
-                            <div className="events-cell-container">
-                              {dayEvents.map((evt) => (
-                                <div 
-                                  key={evt.id}
-                                  className={`month-event-card-item status-${evt.status}`}
-                                  onClick={(e) => handleEventCardClick(e, evt)}
+                                if (
+                                  e.target === e.currentTarget ||
+                                  (e.target as HTMLElement).classList.contains(
+                                    'events-cell-container',
+                                  )
+                                ) {
+                                  setInlineAddDate(date);
+                                  setInlineAddTitle('');
+                                }
+                              }}
+                            >
+                              <div className="day-cell-top-bar">
+                                <span className={`day-cell-number ${isTday ? 'today-badge' : ''}`}>
+                                  {dateLabel}
+                                </span>
+                                <button
+                                  className="day-cell-quick-add-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedDate(date);
+                                    setInlineAddDate(date);
+                                    setInlineAddTitle('');
+                                  }}
                                 >
-                                  <span className="evt-time-prefix">{evt.time.split(' ')[0]}</span>
-                                  <span className="evt-title-text">{evt.title}</span>
-                                </div>
-                              ))}
+                                  <Plus size={10} />
+                                </button>
+                              </div>
 
-                              {/* Inline Quick Add Field */}
-                              {inlineAddDate && isSameDay(inlineAddDate, date) && (
-                                <div className="inline-add-input-box" onClick={e => e.stopPropagation()}>
-                                  <input 
-                                    type="text"
-                                    value={inlineAddTitle}
-                                    onChange={e => setInlineAddTitle(e.target.value)}
-                                    onKeyDown={e => {
-                                      if (e.key === 'Enter') handleSaveInlineEvent(date);
-                                      if (e.key === 'Escape') setInlineAddDate(null);
-                                    }}
-                                    onBlur={() => handleSaveInlineEvent(date)}
-                                    autoFocus
-                                    placeholder="Tên ca trực..."
-                                  />
-                                </div>
-                              )}
+                              <div className="events-cell-container">
+                                {dayEvents.map((evt) => (
+                                  <div
+                                    key={evt.id}
+                                    className={`month-event-card-item status-${evt.status}`}
+                                    onClick={(e) => handleEventCardClick(e, evt)}
+                                  >
+                                    <span className="evt-time-prefix">
+                                      {evt.time.split(' ')[0]}
+                                    </span>
+                                    <span className="evt-title-text">{evt.title}</span>
+                                  </div>
+                                ))}
+
+                                {/* Inline Quick Add Field */}
+                                {inlineAddDate && isSameDay(inlineAddDate, date) && (
+                                  <div
+                                    className="inline-add-input-box"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <input
+                                      type="text"
+                                      value={inlineAddTitle}
+                                      onChange={(e) => setInlineAddTitle(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveInlineEvent(date);
+                                        if (e.key === 'Escape') setInlineAddDate(null);
+                                      }}
+                                      onBlur={() => handleSaveInlineEvent(date)}
+                                      autoFocus
+                                      placeholder="Tên ca trực..."
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   ))}
                 </div>
@@ -754,9 +888,8 @@ export const CollectionSchedule: React.FC = () => {
             )}
 
             {/* Time Grid View (Week / Workweek / Day) */}
-            {currentView !== "month" && (
+            {currentView !== 'month' && (
               <div className="time-grid-view">
-                
                 {/* Column Headers */}
                 <div className="time-grid-columns-header">
                   <div className="time-label-header-spacer" />
@@ -765,7 +898,7 @@ export const CollectionSchedule: React.FC = () => {
                       const isSel = isSameDay(date, selectedDate);
                       const isTday = isToday(date);
                       return (
-                        <div 
+                        <div
                           key={idx}
                           className={`time-header-day-cell ${isSel ? 'selected' : ''} ${isTday ? 'today' : ''}`}
                           onClick={() => setSelectedDate(date)}
@@ -775,12 +908,15 @@ export const CollectionSchedule: React.FC = () => {
                             <span className="header-day-name">{WEEKDAY_NAMES[date.getDay()]}</span>
                           </div>
                           {isSel && (
-                            <button className="time-header-quick-add" onClick={(e) => {
-                              e.stopPropagation();
-                              setInlineAddWeekDate(date);
-                              setInlineAddWeekMinutes(480); // Mặc định 08:00 SA
-                              setInlineAddTitle("");
-                            }}>
+                            <button
+                              className="time-header-quick-add"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInlineAddWeekDate(date);
+                                setInlineAddWeekMinutes(480); // Mặc định 08:00 SA
+                                setInlineAddTitle('');
+                              }}
+                            >
                               <Plus size={12} />
                             </button>
                           )}
@@ -813,11 +949,11 @@ export const CollectionSchedule: React.FC = () => {
                     {/* Columns representing days */}
                     <div className="time-grid-day-columns">
                       {activeWeekDays.map((dayDate, colIdx) => {
-                        const dayEvts = filteredEvents.filter(e => isSameDay(e.date, dayDate));
+                        const dayEvts = filteredEvents.filter((e) => isSameDay(e.date, dayDate));
                         const isTday = isToday(dayDate);
 
                         return (
-                          <div 
+                          <div
                             key={colIdx}
                             className="time-grid-day-column"
                             onClick={(e) => handleGridColumnClick(e, dayDate)}
@@ -829,12 +965,12 @@ export const CollectionSchedule: React.FC = () => {
                               const heightPx = (evt.durationMinutes / 60) * 40;
 
                               return (
-                                <div 
+                                <div
                                   key={evt.id}
                                   className={`time-event-card-item status-${evt.status}`}
                                   style={{
                                     top: `${topPx}px`,
-                                    height: `${heightPx}px`
+                                    height: `${heightPx}px`,
                                   }}
                                   onClick={(e) => handleEventCardClick(e, evt)}
                                 >
@@ -845,36 +981,41 @@ export const CollectionSchedule: React.FC = () => {
                             })}
 
                             {/* Inline Week Add Card */}
-                            {inlineAddWeekDate && isSameDay(inlineAddWeekDate, dayDate) && inlineAddWeekMinutes !== null && (
-                              <div 
-                                className="inline-week-add-card"
-                                style={{
-                                  top: `${(inlineAddWeekMinutes / 60) * 40}px`,
-                                  height: '40px'
-                                }}
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <input 
-                                  type="text"
-                                  value={inlineAddTitle}
-                                  onChange={e => setInlineAddTitle(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') handleSaveInlineWeekEvent(dayDate, inlineAddWeekMinutes);
-                                    if (e.key === 'Escape') {
-                                      setInlineAddWeekDate(null);
-                                      setInlineAddWeekMinutes(null);
-                                    }
+                            {inlineAddWeekDate &&
+                              isSameDay(inlineAddWeekDate, dayDate) &&
+                              inlineAddWeekMinutes !== null && (
+                                <div
+                                  className="inline-week-add-card"
+                                  style={{
+                                    top: `${(inlineAddWeekMinutes / 60) * 40}px`,
+                                    height: '40px',
                                   }}
-                                  onBlur={() => handleSaveInlineWeekEvent(dayDate, inlineAddWeekMinutes)}
-                                  autoFocus
-                                  placeholder="Nhập tên..."
-                                />
-                              </div>
-                            )}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="text"
+                                    value={inlineAddTitle}
+                                    onChange={(e) => setInlineAddTitle(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter')
+                                        handleSaveInlineWeekEvent(dayDate, inlineAddWeekMinutes);
+                                      if (e.key === 'Escape') {
+                                        setInlineAddWeekDate(null);
+                                        setInlineAddWeekMinutes(null);
+                                      }
+                                    }}
+                                    onBlur={() =>
+                                      handleSaveInlineWeekEvent(dayDate, inlineAddWeekMinutes)
+                                    }
+                                    autoFocus
+                                    placeholder="Nhập tên..."
+                                  />
+                                </div>
+                              )}
 
                             {/* Real-time indicator line */}
                             {isTday && (
-                              <div 
+                              <div
                                 className="currentTimeIndicator-line"
                                 style={{ top: `${(currentTimeMinutes / 60) * 40}px` }}
                               >
@@ -888,7 +1029,6 @@ export const CollectionSchedule: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
               </div>
             )}
           </div>
@@ -898,19 +1038,23 @@ export const CollectionSchedule: React.FC = () => {
         {activePopoverEvent && (
           <>
             <div className="popover-backdrop" onClick={() => setActivePopoverEvent(null)} />
-            <div 
+            <div
               className="popover-details-card"
               style={{
                 top: `${popoverPosition.top}px`,
-                left: `${popoverPosition.left}px`
+                left: `${popoverPosition.left}px`,
               }}
             >
               <div className="popover-card-header">
                 <div className="popover-title-info">
-                  <span className="popover-event-status-tag">{STATUS_LABELS[activePopoverEvent.status]}</span>
+                  <span className="popover-event-status-tag">
+                    {STATUS_LABELS[activePopoverEvent.status]}
+                  </span>
                   <h3 className="popover-event-title">{activePopoverEvent.title}</h3>
                 </div>
-                <button className="popover-close-btn" onClick={() => setActivePopoverEvent(null)}>&times;</button>
+                <button className="popover-close-btn" onClick={() => setActivePopoverEvent(null)}>
+                  &times;
+                </button>
               </div>
 
               <div className="popover-card-body-rows">
@@ -918,7 +1062,10 @@ export const CollectionSchedule: React.FC = () => {
                   <Clock size={16} />
                   <div>
                     <span>{activePopoverEvent.date.toDateString()}</span>
-                    <span className="popover-body-row-sub"> • {activePopoverEvent.time} ({activePopoverEvent.durationMinutes} phút)</span>
+                    <span className="popover-body-row-sub">
+                      {' '}
+                      • {activePopoverEvent.time} ({activePopoverEvent.durationMinutes} phút)
+                    </span>
                   </div>
                 </div>
 
@@ -936,9 +1083,14 @@ export const CollectionSchedule: React.FC = () => {
                     className="popover-organizer-avatar"
                   />
                   <div>
-                    <span>Điều phối bởi <strong>{activePopoverEvent.organizer}</strong></span>
+                    <span>
+                      Điều phối bởi <strong>{activePopoverEvent.organizer}</strong>
+                    </span>
                     {activePopoverEvent.driver && (
-                      <span className="popover-body-row-sub"> • Tài xế: {activePopoverEvent.driver}</span>
+                      <span className="popover-body-row-sub">
+                        {' '}
+                        • Tài xế: {activePopoverEvent.driver}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -956,8 +1108,8 @@ export const CollectionSchedule: React.FC = () => {
                 <span className="footer-action-label">Xác nhận ca trực:</span>
                 <div className="footer-action-btns-group">
                   {activePopoverEvent.status === 'assigned' && (
-                    <button 
-                      className="popover-rsvp-btn accept-btn" 
+                    <button
+                      className="popover-rsvp-btn accept-btn"
                       onClick={() => handleAcceptRsvp(activePopoverEvent.id)}
                     >
                       <Check size={14} />
@@ -966,15 +1118,15 @@ export const CollectionSchedule: React.FC = () => {
                   )}
                   {activePopoverEvent.status === 'picking' && (
                     <>
-                      <button 
-                        className="popover-rsvp-btn complete-btn" 
+                      <button
+                        className="popover-rsvp-btn complete-btn"
                         onClick={() => handleCompleteRsvp(activePopoverEvent.id)}
                       >
                         <Check size={14} />
                         <span>Hoàn thành ca</span>
                       </button>
-                      <button 
-                        className="popover-rsvp-btn decline-btn" 
+                      <button
+                        className="popover-rsvp-btn decline-btn"
                         onClick={() => handleDeclineRsvp(activePopoverEvent.id)}
                       >
                         <X size={14} />
@@ -995,10 +1147,22 @@ export const CollectionSchedule: React.FC = () => {
                   <span>Gemini AI trợ lý lịch trình</span>
                 </div>
                 <div className="copilot-pill-options">
-                  <button className="copilot-pill-btn" onClick={() => toast.info("Gemini: Tuyến đường CMT8 đang kẹt xe nhẹ, đề xuất đi đường Lê Văn Sỹ.")}>
+                  <button
+                    className="copilot-pill-btn"
+                    onClick={() =>
+                      toast.info(
+                        'Gemini: Tuyến đường CMT8 đang kẹt xe nhẹ, đề xuất đi đường Lê Văn Sỹ.',
+                      )
+                    }
+                  >
                     Tối ưu lộ trình đi?
                   </button>
-                  <button className="copilot-pill-btn" onClick={() => toast.info("Gemini: Tài xế Tấn trống lịch từ 10h-12h cùng khu vực.")}>
+                  <button
+                    className="copilot-pill-btn"
+                    onClick={() =>
+                      toast.info('Gemini: Tài xế Tấn trống lịch từ 10h-12h cùng khu vực.')
+                    }
+                  >
                     Đề xuất đổi tài xế?
                   </button>
                 </div>

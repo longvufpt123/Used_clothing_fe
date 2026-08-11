@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
-import { useMemo } from "react";
-import { useRef } from "react";
+﻿import React, { useEffect, useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { useMemo } from 'react';
+import { useRef } from 'react';
 import {
   CalendarDays,
   Edit3,
@@ -14,16 +15,17 @@ import {
   XCircle,
   FilterX,
   Search,
-} from "lucide-react";
-import { Button } from "@/components/common/Button";
-import { Input } from "@/components/common/Input";
-import { Select } from "@/components/common/Select";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import Pagination from "@/components/common/Pagination";
-import apiClient from "@/services/api";
-import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/context/ToastContext";
-import "./MyOrders.css";
+} from 'lucide-react';
+import { Button } from '@/components/common/Button';
+import AddressSearchMap from '@/components/common/AddressSearchMap';
+import WorkdayDatePicker from '@/components/common/WorkdayDatePicker';
+import { Select } from '@/components/common/Select';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import Pagination from '@/components/common/Pagination';
+import apiClient from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import './MyOrders.css';
 
 interface DonorRequestSearchApiResponse {
   id: string;
@@ -69,46 +71,43 @@ interface UpdateDonationPayload {
 }
 
 const categoryOptions = [
-  { value: "outerwear", label: "Áo khoác / Đồ ấm mùa đông" },
-  { value: "shirts", label: "Áo thun / Áo sơ mi dệt kim" },
-  { value: "pants", label: "Quần denim / Quần dài / kaki" },
-  { value: "kids", label: "Quần áo trẻ em" },
-  { value: "mixed", label: "Hỗn hợp / Khác" },
+  { value: 'outerwear', label: 'Áo khoác / Đồ ấm mùa đông' },
+  { value: 'shirts', label: 'Áo thun / Áo sơ mi dệt kim' },
+  { value: 'pants', label: 'Quần denim / Quần dài / kaki' },
+  { value: 'kids', label: 'Quần áo trẻ em' },
+  { value: 'mixed', label: 'Hỗn hợp / Khác' },
 ];
 
 const weightOptions = [
-  { value: "under-5", label: "Dưới 5 kg (Túi nhỏ)" },
-  { value: "5-10", label: "Từ 5 - 10 kg (Thùng giấy vừa)" },
-  { value: "10-20", label: "Từ 10 - 20 kg (Bao tải lớn)" },
-  { value: "over-20", label: "Trên 20 kg (Nhiều bao tải)" },
+  { value: 'under-5', label: 'Dưới 5 kg (Túi nhỏ)' },
+  { value: '5-10', label: 'Từ 5 - 10 kg (Thùng giấy vừa)' },
+  { value: '10-20', label: 'Từ 10 - 20 kg (Bao tải lớn)' },
+  { value: 'over-20', label: 'Trên 20 kg (Nhiều bao tải)' },
 ];
 
 const conditionOptions = [
-  { value: "good", label: "Còn tốt, lành lặn (Dùng làm từ thiện)" },
-  { value: "recycle", label: "Cũ rách, mục hỏng (Dành để tái chế dệt lại)" },
-  { value: "mixed", label: "Hỗn hợp (Có cả đồ từ thiện và đồ tái chế)" },
+  { value: 'good', label: 'Còn tốt, lành lặn (Dùng làm từ thiện)' },
+  { value: 'recycle', label: 'Cũ rách, mục hỏng (Dành để tái chế dệt lại)' },
+  { value: 'mixed', label: 'Hỗn hợp (Có cả đồ từ thiện và đồ tái chế)' },
 ];
 
 const estimateWeightByOption: Record<string, number> = {
-  "under-5": 3,
-  "5-10": 7.5,
-  "10-20": 15,
-  "over-20": 25,
+  'under-5': 3,
+  '5-10': 7.5,
+  '10-20': 15,
+  'over-20': 25,
 };
 
-const getDescriptionValue = (
-  description: string | undefined,
-  label: string,
-) => {
+const getDescriptionValue = (description: string | undefined, label: string) => {
   if (!description) {
-    return "";
+    return '';
   }
 
   const line = description
-    .split("\n")
+    .split('\n')
     .find((item) => item.toLowerCase().startsWith(label.toLowerCase()));
 
-  return line?.split(":").slice(1).join(":").trim() || "";
+  return line?.split(':').slice(1).join(':').trim() || '';
 };
 
 const findOptionValueByLabel = (
@@ -121,21 +120,19 @@ const findOptionValueByLabel = (
 
 const formatDate = (value?: string | null) => {
   if (!value) {
-    return "Chưa cập nhật";
+    return 'Chưa cập nhật';
   }
 
-  const [year, month, day] = value.slice(0, 10).split("-");
-  return year && month && day
-    ? `${Number(day)}/${Number(month)}/${year}`
-    : "Chưa cập nhật";
+  const [year, month, day] = value.slice(0, 10).split('-');
+  return year && month && day ? `${Number(day)}/${Number(month)}/${year}` : 'Chưa cập nhật';
 };
 
 const toDateInputValue = (value?: string | null) => {
   if (!value) {
     const today = new Date();
     const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -146,7 +143,7 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 const isPickupDateInputWeekend = (value: string) => {
   if (!value) return false;
-  const [year, month, day] = value.split("-").map(Number);
+  const [year, month, day] = value.split('-').map(Number);
   return isWeekend(new Date(year, month - 1, day));
 };
 
@@ -156,60 +153,51 @@ const getEarliestPickupDateInput = () => {
     date.setDate(date.getDate() + 1);
   }
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
 const canModifyOrder = (status: string) => {
-  return status === "PendingStaffAssign" || status === "WaitingReceivingStaff";
+  return status === 'PendingStaffAssign' || status === 'WaitingReceivingStaff';
 };
 
 const getStatusToneClass = (status: string) => {
-  if (status === "Cancelled" || status === "Reject") {
-    return "order-status-danger";
+  if (status === 'Cancelled' || status === 'Reject') {
+    return 'order-status-danger';
   }
 
-  if (status.includes("Pending") || status.includes("Waiting")) {
-    return "order-status-warning";
+  if (status.includes('Pending') || status.includes('Waiting')) {
+    return 'order-status-warning';
   }
 
-  if (
-    status === "Confirmed" ||
-    status === "Stored" ||
-    status === "Classified"
-  ) {
-    return "order-status-success";
+  if (status === 'Confirmed' || status === 'Stored' || status === 'Classified') {
+    return 'order-status-success';
   }
 
-  return "order-status-info";
+  return 'order-status-info';
 };
 
 export const MyOrders: React.FC = () => {
   const pageSize = 10;
   const { isAuthenticated } = useAuth();
   const toast = useToast();
-  const [orders, setOrders] = useState<DonorRequestSearchApiResponse[] | null>(
-    null,
-  );
+  const [orders, setOrders] = useState<DonorRequestSearchApiResponse[] | null>(null);
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
-  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(
-    null,
-  );
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<UpdateOrderFormState | null>(null);
   const [pendingCancelOrder, setPendingCancelOrder] =
     useState<DonorRequestSearchApiResponse | null>(null);
-  const [selectedOrder, setSelectedOrder] =
-    useState<DonorRequestSearchApiResponse | null>(null);
-  const [searchCode, setSearchCode] = useState("");
-  const [filterDate, setFilterDate] = useState("");
-  const [filterMonth, setFilterMonth] = useState("");
-  const [filterYear, setFilterYear] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<DonorRequestSearchApiResponse | null>(null);
+  const [searchCode, setSearchCode] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [page, setPage] = useState(1);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const handledCreatedIdRef = useRef<string | null>(null);
@@ -225,9 +213,7 @@ export const MyOrders: React.FC = () => {
       Array.from(
         new Set(
           (orders || [])
-            .map((order) =>
-              (order.pickupDate || order.createdAt || "").slice(0, 4),
-            )
+            .map((order) => (order.pickupDate || order.createdAt || '').slice(0, 4))
             .filter(Boolean),
         ),
       ).sort((a, b) => Number(b) - Number(a)),
@@ -238,24 +224,18 @@ export const MyOrders: React.FC = () => {
     () =>
       Array.from(
         new Map(
-          (orders || []).map((order) => [
-            order.status,
-            order.statusText || order.status,
-          ]),
+          (orders || []).map((order) => [order.status, order.statusText || order.status]),
         ).entries(),
-      ).sort((a, b) => a[1].localeCompare(b[1], "vi")),
+      ).sort((a, b) => a[1].localeCompare(b[1], 'vi')),
     [orders],
   );
 
   const filteredOrders = useMemo(() => {
-    const code = searchCode.trim().toLocaleLowerCase("vi");
+    const code = searchCode.trim().toLocaleLowerCase('vi');
     return (orders || []).filter((order) => {
-      const orderDate = (order.pickupDate || order.createdAt || "").slice(
-        0,
-        10,
-      );
+      const orderDate = (order.pickupDate || order.createdAt || '').slice(0, 10);
       return (
-        (!code || order.code.toLocaleLowerCase("vi").includes(code)) &&
+        (!code || order.code.toLocaleLowerCase('vi').includes(code)) &&
         (!filterDate || orderDate === filterDate) &&
         (!filterMonth || orderDate.slice(0, 7) === filterMonth) &&
         (!filterYear || orderDate.slice(0, 4) === filterYear) &&
@@ -265,18 +245,9 @@ export const MyOrders: React.FC = () => {
   }, [orders, searchCode, filterDate, filterMonth, filterYear, filterStatus]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
-  const pagedOrders = filteredOrders.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const pagedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
 
-  useEffect(() => setPage(1), [
-    searchCode,
-    filterDate,
-    filterMonth,
-    filterYear,
-    filterStatus,
-  ]);
+  useEffect(() => setPage(1), [searchCode, filterDate, filterMonth, filterYear, filterStatus]);
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -284,19 +255,16 @@ export const MyOrders: React.FC = () => {
   const loadMyOrders = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const result = await apiClient.get<
-        unknown,
-        DonorRequestSearchApiResponse[]
-      >("/donor-requests/my");
+      const result = await apiClient.get<unknown, DonorRequestSearchApiResponse[]>(
+        '/donor-requests/my',
+      );
       setOrders(result);
       setSelectedOrder((current) =>
         current ? result.find((order) => order.id === current.id) || null : null,
       );
     } catch (error) {
       if (!silent) {
-        toast.error(
-          error instanceof Error ? error.message : "Không thể tải danh sách đơn.",
-        );
+        toast.error(error instanceof Error ? error.message : 'Không thể tải danh sách đơn.');
       }
     } finally {
       if (!silent) setLoading(false);
@@ -306,12 +274,10 @@ export const MyOrders: React.FC = () => {
   const loadWarehouses = async () => {
     setWarehouseLoading(true);
     try {
-      const result = await apiClient.get<unknown, WarehouseOption[]>(
-        "/warehouses",
-      );
+      const result = await apiClient.get<unknown, WarehouseOption[]>('/warehouses');
       setWarehouses(result);
     } catch {
-      toast.error("Không thể tải danh sách kho tiếp nhận.");
+      toast.error('Không thể tải danh sách kho tiếp nhận.');
     } finally {
       setWarehouseLoading(false);
     }
@@ -319,7 +285,7 @@ export const MyOrders: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       loadMyOrders();
       loadWarehouses();
     }
@@ -329,21 +295,21 @@ export const MyOrders: React.FC = () => {
     if (!isAuthenticated) return;
 
     const refresh = () => {
-      if (document.visibilityState === "visible") void loadMyOrders(true);
+      if (document.visibilityState === 'visible') void loadMyOrders(true);
     };
     const intervalId = window.setInterval(refresh, 5000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
     };
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const requestId = searchParams.get("requestId");
+    const requestId = searchParams.get('requestId');
     if (requestId && orders) {
       setSelectedOrder(orders.find((order) => order.id === requestId) || null);
     }
@@ -351,57 +317,50 @@ export const MyOrders: React.FC = () => {
 
   const closeOrderDetail = () => {
     setSelectedOrder(null);
-    if (searchParams.has("requestId")) {
+    if (searchParams.has('requestId')) {
       const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("requestId");
+      nextParams.delete('requestId');
       setSearchParams(nextParams, { replace: true });
     }
   };
 
   useEffect(() => {
-    const createdId = searchParams.get("created");
+    const createdId = searchParams.get('created');
     if (!createdId || !orders?.length) return;
     if (handledCreatedIdRef.current === createdId) return;
     const index = orders.findIndex((order) => order.id === createdId);
     if (index < 0) return;
     handledCreatedIdRef.current = createdId;
-    setSearchCode(""); setFilterDate(""); setFilterMonth(""); setFilterYear(""); setFilterStatus("");
+    setSearchCode('');
+    setFilterDate('');
+    setFilterMonth('');
+    setFilterYear('');
+    setFilterStatus('');
     setPage(Math.floor(index / pageSize) + 1);
     setHighlightedOrderId(createdId);
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const timer = window.setTimeout(() => setHighlightedOrderId(null), 4000);
     return () => window.clearTimeout(timer);
   }, [orders, searchParams]);
 
   const startEditOrder = (order: DonorRequestSearchApiResponse) => {
-    const categoryLabel = getDescriptionValue(
-      order.description,
-      "Loai quan ao",
-    );
-    const weightLabel = getDescriptionValue(
-      order.description,
-      "Khoi luong uoc luong",
-    );
-    const conditionLabel = getDescriptionValue(order.description, "Tinh trang");
+    const categoryLabel = getDescriptionValue(order.description, 'Loai quan ao');
+    const weightLabel = getDescriptionValue(order.description, 'Khoi luong uoc luong');
+    const conditionLabel = getDescriptionValue(order.description, 'Tinh trang');
 
     setEditingOrderId(order.id);
     setEditForm({
-      category: findOptionValueByLabel(categoryOptions, categoryLabel, "mixed"),
-      weight: findOptionValueByLabel(weightOptions, weightLabel, "5-10"),
-      condition: findOptionValueByLabel(
-        conditionOptions,
-        conditionLabel,
-        "good",
-      ),
+      category: findOptionValueByLabel(categoryOptions, categoryLabel, 'mixed'),
+      weight: findOptionValueByLabel(weightOptions, weightLabel, '5-10'),
+      condition: findOptionValueByLabel(conditionOptions, conditionLabel, 'good'),
       pickupAddress: order.pickupAddress,
       pickupDate: toDateInputValue(order.pickupDate),
       warehouseId:
         order.warehouseId ||
-        warehouses.find((item) => item.address === order.warehouseAddress)
-          ?.id ||
+        warehouses.find((item) => item.address === order.warehouseAddress)?.id ||
         warehouses[0]?.id ||
-        "",
-      notes: getDescriptionValue(order.description, "Ghi chu"),
+        '',
+      notes: getDescriptionValue(order.description, 'Ghi chu'),
       imageUrls: order.imageUrls || [],
     });
   };
@@ -420,31 +379,25 @@ export const MyOrders: React.FC = () => {
       return;
     }
 
-    if (
-      !editForm.pickupAddress ||
-      !editForm.pickupDate ||
-      !editForm.warehouseId
-    ) {
-      toast.error(
-        "Vui lòng nhập đầy đủ địa chỉ, ngày lấy hàng và kho tiếp nhận.",
-      );
+    if (!editForm.pickupAddress || !editForm.pickupDate || !editForm.warehouseId) {
+      toast.error('Vui lòng nhập đầy đủ địa chỉ, ngày lấy hàng và kho tiếp nhận.');
       return;
     }
 
     if (isPickupDateInputWeekend(editForm.pickupDate)) {
-      toast.error("Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.");
+      toast.error('Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.');
       return;
     }
 
     const selectedCategoryLabel =
-      categoryOptions.find((option) => option.value === editForm.category)
-        ?.label || "Hỗn hợp / Khác";
+      categoryOptions.find((option) => option.value === editForm.category)?.label ||
+      'Hỗn hợp / Khác';
     const selectedWeightLabel =
       weightOptions.find((option) => option.value === editForm.weight)?.label ||
-      "Dưới 5 kg (Túi nhỏ)";
+      'Dưới 5 kg (Túi nhỏ)';
     const selectedConditionLabel =
-      conditionOptions.find((option) => option.value === editForm.condition)
-        ?.label || "Còn tốt, lành lặn (Dùng làm từ thiện)";
+      conditionOptions.find((option) => option.value === editForm.condition)?.label ||
+      'Còn tốt, lành lặn (Dùng làm từ thiện)';
 
     const payload: UpdateDonationPayload = {
       pickupDate: `${editForm.pickupDate}T00:00:00`,
@@ -454,32 +407,24 @@ export const MyOrders: React.FC = () => {
         `Loai quan ao: ${selectedCategoryLabel}`,
         `Khoi luong uoc luong: ${selectedWeightLabel}`,
         `Tinh trang: ${selectedConditionLabel}`,
-        editForm.notes.trim() ? `Ghi chu: ${editForm.notes.trim()}` : "",
+        editForm.notes.trim() ? `Ghi chu: ${editForm.notes.trim()}` : '',
       ]
         .filter(Boolean)
-        .join("\n"),
+        .join('\n'),
       imageUrls: editForm.imageUrls,
-      estimateWeight:
-        estimateWeightByOption[editForm.weight] ?? order.estimateWeight,
+      estimateWeight: estimateWeightByOption[editForm.weight] ?? order.estimateWeight,
       pickupAddress: editForm.pickupAddress,
       warehouseId: editForm.warehouseId,
     };
 
     setSavingOrderId(order.id);
     try {
-      await apiClient.put<unknown, unknown>(
-        `/donor-requests/${order.id}`,
-        payload,
-      );
-      toast.success("Cập nhật đơn quyên góp thành công.");
+      await apiClient.put<unknown, unknown>(`/donor-requests/${order.id}`, payload);
+      toast.success('Cập nhật đơn quyên góp thành công.');
       stopEditOrder();
       await loadMyOrders();
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Không thể cập nhật đơn quyên góp.",
-      );
+      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật đơn quyên góp.');
     } finally {
       setSavingOrderId(null);
     }
@@ -502,19 +447,15 @@ export const MyOrders: React.FC = () => {
 
     setCancellingOrderId(pendingCancelOrder.id);
     try {
-      await apiClient.patch<unknown, unknown>(
-        `/donor-requests/${pendingCancelOrder.id}/cancel`,
-      );
-      toast.success("Đã hủy đơn quyên góp.");
+      await apiClient.patch<unknown, unknown>(`/donor-requests/${pendingCancelOrder.id}/cancel`);
+      toast.success('Đã hủy đơn quyên góp.');
       if (editingOrderId === pendingCancelOrder.id) {
         stopEditOrder();
       }
       setPendingCancelOrder(null);
       await loadMyOrders();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Không thể hủy đơn quyên góp.",
-      );
+      toast.error(error instanceof Error ? error.message : 'Không thể hủy đơn quyên góp.');
     } finally {
       setCancellingOrderId(null);
     }
@@ -566,10 +507,7 @@ export const MyOrders: React.FC = () => {
           </label>
           <label>
             <span>Năm</span>
-            <select
-              value={filterYear}
-              onChange={(event) => setFilterYear(event.target.value)}
-            >
+            <select value={filterYear} onChange={(event) => setFilterYear(event.target.value)}>
               <option value="">Tất cả năm</option>
               {years.map((year) => (
                 <option value={year} key={year}>
@@ -580,10 +518,7 @@ export const MyOrders: React.FC = () => {
           </label>
           <label>
             <span>Trạng thái</span>
-            <select
-              value={filterStatus}
-              onChange={(event) => setFilterStatus(event.target.value)}
-            >
+            <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)}>
               <option value="">Tất cả trạng thái</option>
               {statuses.map(([value, label]) => (
                 <option value={value} key={value}>
@@ -592,28 +527,22 @@ export const MyOrders: React.FC = () => {
               ))}
             </select>
           </label>
-          {(searchCode ||
-            filterDate ||
-            filterMonth ||
-            filterYear ||
-            filterStatus) && (
+          {(searchCode || filterDate || filterMonth || filterYear || filterStatus) && (
             <button
               type="button"
               className="orders-clear-filter"
               onClick={() => {
-                setSearchCode("");
-                setFilterDate("");
-                setFilterMonth("");
-                setFilterYear("");
-                setFilterStatus("");
+                setSearchCode('');
+                setFilterDate('');
+                setFilterMonth('');
+                setFilterYear('');
+                setFilterStatus('');
               }}
             >
               <FilterX size={16} /> Xóa lọc
             </button>
           )}
-          <span className="orders-result-count">
-            {filteredOrders.length} đơn
-          </span>
+          <span className="orders-result-count">{filteredOrders.length} đơn</span>
         </div>
       </div>
 
@@ -624,8 +553,8 @@ export const MyOrders: React.FC = () => {
               <PackageSearch size={34} />
               <p>
                 {orders.length
-                  ? "Không tìm thấy đơn phù hợp bộ lọc."
-                  : "Tài khoản này chưa có đơn quyên góp nào."}
+                  ? 'Không tìm thấy đơn phù hợp bộ lọc.'
+                  : 'Tài khoản này chưa có đơn quyên góp nào.'}
               </p>
             </div>
           ) : (
@@ -635,21 +564,22 @@ export const MyOrders: React.FC = () => {
 
               return (
                 <article
-                  className={`order-card glass ${isEditing ? "is-editing" : ""} ${highlightedOrderId === order.id ? "is-newly-created" : ""}`}
+                  className={`order-card glass ${isEditing ? 'is-editing' : ''} ${highlightedOrderId === order.id ? 'is-newly-created' : ''}`}
                   key={order.id}
                   role="button"
                   tabIndex={0}
                   onClick={(event) => {
                     if (
                       (event.target as HTMLElement).closest(
-                        "button, a, input, select, textarea, form",
+                        'button, a, input, select, textarea, form',
                       )
                     )
                       return;
                     setSelectedOrder(order);
                   }}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       setSelectedOrder(order);
                     }
@@ -659,16 +589,11 @@ export const MyOrders: React.FC = () => {
                     <div>
                       <span className="order-code">{order.code}</span>
                       <h2>
-                        {getDescriptionValue(
-                          order.description,
-                          "Loai quan ao",
-                        ) || "Đơn quyên góp"}
+                        {getDescriptionValue(order.description, 'Loai quan ao') || 'Đơn quyên góp'}
                       </h2>
                     </div>
                     <div className="order-header-actions">
-                      <span
-                        className={`order-status ${getStatusToneClass(order.status)}`}
-                      >
+                      <span className={`order-status ${getStatusToneClass(order.status)}`}>
                         {order.statusText}
                       </span>
                       {isModifiable && !isEditing && (
@@ -697,132 +622,135 @@ export const MyOrders: React.FC = () => {
                   </div>
 
                   {isEditing ? (
-                    <form
-                      className="edit-order-form"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        handleUpdateOrder(order);
-                      }}
-                    >
-                      <div className="edit-form-grid">
-                        <Select
-                          label="Loại quần áo"
-                          options={categoryOptions}
-                          value={editForm.category}
-                          onChange={(event) =>
-                            updateEditForm("category", event.target.value)
+                    createPortal(
+                      <div
+                        className="edit-order-overlay"
+                        onMouseDown={(event) => {
+                          event.stopPropagation();
+                          if (event.target === event.currentTarget) {
+                            stopEditOrder();
                           }
-                        />
-                        <Select
-                          label="Khối lượng ước lượng"
-                          options={weightOptions}
-                          value={editForm.weight}
-                          onChange={(event) =>
-                            updateEditForm("weight", event.target.value)
-                          }
-                        />
-                        <Select
-                          label="Tình trạng"
-                          options={conditionOptions}
-                          value={editForm.condition}
-                          onChange={(event) =>
-                            updateEditForm("condition", event.target.value)
-                          }
-                        />
-                        <Input
-                          label="Ngày lấy hàng"
-                          type="date"
-                          value={editForm.pickupDate}
-                          min={getEarliestPickupDateInput()}
-                          onChange={(event) => {
-                            if (isPickupDateInputWeekend(event.target.value)) {
-                              toast.error(
-                                "Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.",
-                              );
-                              return;
-                            }
-                            updateEditForm("pickupDate", event.target.value);
-                          }}
-                          required
-                        />
-                        <Select
-                          label="Kho tiếp nhận"
-                          options={
-                            warehouseOptions.length > 0
-                              ? warehouseOptions
-                              : [
-                                  {
-                                    value: "",
-                                    label: warehouseLoading
-                                      ? "Đang tải danh sách kho..."
-                                      : "Không có kho tiếp nhận",
-                                  },
-                                ]
-                          }
-                          value={editForm.warehouseId}
-                          onChange={(event) =>
-                            updateEditForm("warehouseId", event.target.value)
-                          }
-                          disabled={
-                            warehouseLoading || warehouseOptions.length === 0
-                          }
-                          required
-                        />
-                        <Input
-                          label="Địa chỉ lấy hàng"
-                          value={editForm.pickupAddress}
-                          onChange={(event) =>
-                            updateEditForm("pickupAddress", event.target.value)
-                          }
-                          required
-                        />
-                      </div>
-
-                      <label
-                        className="edit-notes-label"
-                        htmlFor={`notes-${order.id}`}
+                        }}
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
                       >
-                        Ghi chú
-                      </label>
-                      <textarea
-                        id={`notes-${order.id}`}
-                        className="edit-notes-input"
-                        value={editForm.notes}
-                        onChange={(event) =>
-                          updateEditForm("notes", event.target.value)
-                        }
-                        rows={3}
-                        placeholder="Ghi chú thêm cho nhân viên tiếp nhận"
-                      />
+                        <form
+                          className="edit-order-form"
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            handleUpdateOrder(order);
+                          }}
+                        >
+                          <header className="edit-order-modal-header">
+                            <div>
+                              <span>CHỈNH SỬA ĐƠN QUYÊN GÓP</span>
+                              <h2>{order.code}</h2>
+                              <p>Cập nhật thông tin tiếp nhận của đơn.</p>
+                            </div>
+                            <button
+                              type="button"
+                              aria-label="Đóng popup chỉnh sửa"
+                              onClick={stopEditOrder}
+                            >
+                              <X size={20} />
+                            </button>
+                          </header>
+                          <div className="edit-form-grid">
+                            <Select
+                              label="Loại quần áo"
+                              options={categoryOptions}
+                              value={editForm.category}
+                              onChange={(event) => updateEditForm('category', event.target.value)}
+                            />
+                            <Select
+                              label="Khối lượng ước lượng"
+                              options={weightOptions}
+                              value={editForm.weight}
+                              onChange={(event) => updateEditForm('weight', event.target.value)}
+                            />
+                            <Select
+                              label="Tình trạng"
+                              options={conditionOptions}
+                              value={editForm.condition}
+                              onChange={(event) => updateEditForm('condition', event.target.value)}
+                            />
+                            <WorkdayDatePicker
+                              label="Ngày lấy hàng"
+                              value={editForm.pickupDate}
+                              min={getEarliestPickupDateInput()}
+                              onChange={(value) => updateEditForm('pickupDate', value)}
+                              required
+                            />
+                            <Select
+                              label="Kho tiếp nhận"
+                              options={
+                                warehouseOptions.length > 0
+                                  ? warehouseOptions
+                                  : [
+                                      {
+                                        value: '',
+                                        label: warehouseLoading
+                                          ? 'Đang tải danh sách kho...'
+                                          : 'Không có kho tiếp nhận',
+                                      },
+                                    ]
+                              }
+                              value={editForm.warehouseId}
+                              onChange={(event) =>
+                                updateEditForm('warehouseId', event.target.value)
+                              }
+                              disabled={warehouseLoading || warehouseOptions.length === 0}
+                              required
+                            />
+                          </div>
 
-                      <div className="edit-form-actions">
-                        <Button
-                          type="submit"
-                          isLoading={savingOrderId === order.id}
-                          disabled={
-                            warehouseLoading || warehouseOptions.length === 0
-                          }
-                        >
-                          <Save size={16} /> Lưu thay đổi
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={stopEditOrder}
-                        >
-                          <X size={16} /> Đóng
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="btn-danger"
-                          isLoading={cancellingOrderId === order.id}
-                          onClick={() => requestCancelOrder(order)}
-                        >
-                          <XCircle size={16} /> Hủy đơn
-                        </Button>
-                      </div>
-                    </form>
+                          <div className="edit-order-address-map">
+                            <AddressSearchMap
+                              value={editForm.pickupAddress}
+                              onChange={(value) => updateEditForm('pickupAddress', value)}
+                              required
+                            />
+                          </div>
+
+                          <label className="edit-notes-label" htmlFor={`notes-${order.id}`}>
+                            Ghi chú
+                          </label>
+                          <textarea
+                            id={`notes-${order.id}`}
+                            className="edit-notes-input"
+                            value={editForm.notes}
+                            onChange={(event) => updateEditForm('notes', event.target.value)}
+                            rows={3}
+                            placeholder="Ghi chú thêm cho nhân viên tiếp nhận"
+                          />
+
+                          <div className="edit-form-actions">
+                            <Button
+                              type="submit"
+                              isLoading={savingOrderId === order.id}
+                              disabled={warehouseLoading || warehouseOptions.length === 0}
+                            >
+                              <Save size={16} /> Lưu thay đổi
+                            </Button>
+                            <Button type="button" variant="outline" onClick={stopEditOrder}>
+                              <X size={16} /> Đóng
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="btn-danger"
+                              isLoading={cancellingOrderId === order.id}
+                              onClick={() => requestCancelOrder(order)}
+                            >
+                              <XCircle size={16} /> Hủy đơn
+                            </Button>
+                          </div>
+                        </form>
+                      </div>,
+                      document.body,
+                    )
                   ) : (
                     <>
                       <div className="order-meta-grid">
@@ -837,19 +765,15 @@ export const MyOrders: React.FC = () => {
                         <div>
                           <strong>Khối lượng</strong>
                           <span>
-                            {getDescriptionValue(
-                              order.description,
-                              "Khoi luong uoc luong",
-                            ) || `${order.estimateWeight} kg`}
+                            {getDescriptionValue(order.description, 'Khoi luong uoc luong') ||
+                              `${order.estimateWeight} kg`}
                           </span>
                         </div>
                         <div>
                           <strong>Tình trạng</strong>
                           <span>
-                            {getDescriptionValue(
-                              order.description,
-                              "Tinh trang",
-                            ) || "Đang cập nhật"}
+                            {getDescriptionValue(order.description, 'Tinh trang') ||
+                              'Đang cập nhật'}
                           </span>
                         </div>
                         <div>
@@ -907,19 +831,12 @@ export const MyOrders: React.FC = () => {
       )}
       {filteredOrders.length > pageSize && (
         <div className="orders-pagination">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
 
       {selectedOrder && (
-        <div
-          className="order-detail-overlay"
-          onMouseDown={closeOrderDetail}
-        >
+        <div className="order-detail-overlay" onMouseDown={closeOrderDetail}>
           <section
             className="order-detail-modal glass"
             onMouseDown={(event) => event.stopPropagation()}
@@ -928,56 +845,75 @@ export const MyOrders: React.FC = () => {
               <div>
                 <span className="order-code">{selectedOrder.code}</span>
                 <h2>
-                  {getDescriptionValue(
-                    selectedOrder.description,
-                    "Loai quan ao",
-                  ) || "Đơn quyên góp"}
+                  {getDescriptionValue(selectedOrder.description, 'Loai quan ao') ||
+                    'Đơn quyên góp'}
                 </h2>
               </div>
-              <button
-                type="button"
-                aria-label="Đóng chi tiết"
-                onClick={closeOrderDetail}
-              >
+              <button type="button" aria-label="Đóng chi tiết" onClick={closeOrderDetail}>
                 <X size={20} />
               </button>
             </header>
-            <span
-              className={`order-status ${getStatusToneClass(selectedOrder.status)}`}
-            >
+            <span className={`order-status ${getStatusToneClass(selectedOrder.status)}`}>
               {selectedOrder.statusText}
             </span>
             <div className="order-detail-grid">
-              <div><span>Người gửi</span><strong>{selectedOrder.donorName}</strong></div>
-              <div><span>Số điện thoại</span><strong>{selectedOrder.phoneNumber}</strong></div>
-              <div><span>Khối lượng</span><strong>{getDescriptionValue(selectedOrder.description, "Khoi luong uoc luong") || `${selectedOrder.estimateWeight} kg`}</strong></div>
-              <div><span>Tình trạng</span><strong>{getDescriptionValue(selectedOrder.description, "Tinh trang") || "Đang cập nhật"}</strong></div>
-              <div><span>Ngày lấy hàng</span><strong>{formatDate(selectedOrder.pickupDate)}</strong></div>
-              <div><span>Ngày tạo</span><strong>{formatDate(selectedOrder.createdAt)}</strong></div>
-              <div className="wide"><span>Kho tiếp nhận</span><strong>{selectedOrder.warehouseAddress}</strong></div>
-              <div className="wide"><span>Địa chỉ lấy hàng</span><strong>{selectedOrder.pickupAddress}</strong></div>
+              <div>
+                <span>Người gửi</span>
+                <strong>{selectedOrder.donorName}</strong>
+              </div>
+              <div>
+                <span>Số điện thoại</span>
+                <strong>{selectedOrder.phoneNumber}</strong>
+              </div>
+              <div>
+                <span>Khối lượng</span>
+                <strong>
+                  {getDescriptionValue(selectedOrder.description, 'Khoi luong uoc luong') ||
+                    `${selectedOrder.estimateWeight} kg`}
+                </strong>
+              </div>
+              <div>
+                <span>Tình trạng</span>
+                <strong>
+                  {getDescriptionValue(selectedOrder.description, 'Tinh trang') || 'Đang cập nhật'}
+                </strong>
+              </div>
+              <div>
+                <span>Ngày lấy hàng</span>
+                <strong>{formatDate(selectedOrder.pickupDate)}</strong>
+              </div>
+              <div>
+                <span>Ngày tạo</span>
+                <strong>{formatDate(selectedOrder.createdAt)}</strong>
+              </div>
+              <div className="wide">
+                <span>Kho tiếp nhận</span>
+                <strong>{selectedOrder.warehouseAddress}</strong>
+              </div>
+              <div className="wide">
+                <span>Địa chỉ lấy hàng</span>
+                <strong>{selectedOrder.pickupAddress}</strong>
+              </div>
             </div>
-            {selectedOrder.imageUrls &&
-              selectedOrder.imageUrls.length > 0 && (
-                <div className="order-detail-images">
-                  <h3><ImageIcon size={17} /> Hình ảnh</h3>
-                  <div>
-                    {selectedOrder.imageUrls.map((url, index) => (
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        key={`${selectedOrder.id}-detail-${url}`}
-                      >
-                        <img
-                          src={url}
-                          alt={`Hình ảnh đơn ${selectedOrder.code} ${index + 1}`}
-                        />
-                      </a>
-                    ))}
-                  </div>
+            {selectedOrder.imageUrls && selectedOrder.imageUrls.length > 0 && (
+              <div className="order-detail-images">
+                <h3>
+                  <ImageIcon size={17} /> Hình ảnh
+                </h3>
+                <div>
+                  {selectedOrder.imageUrls.map((url, index) => (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      key={`${selectedOrder.id}-detail-${url}`}
+                    >
+                      <img src={url} alt={`Hình ảnh đơn ${selectedOrder.code} ${index + 1}`} />
+                    </a>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
             <footer>
               {canModifyOrder(selectedOrder.status) && (
                 <>
@@ -1018,7 +954,7 @@ export const MyOrders: React.FC = () => {
         message={
           pendingCancelOrder
             ? `Bạn có chắc muốn hủy đơn ${pendingCancelOrder.code}? Sau khi hủy, đơn sẽ không thể tiếp tục cập nhật.`
-            : ""
+            : ''
         }
         confirmText="Hủy đơn"
         cancelText="Giữ lại"

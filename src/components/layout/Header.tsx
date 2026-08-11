@@ -18,7 +18,9 @@ export const Header: React.FC = () => {
       <div className="container header-container">
         <Link to="/" className="logo">
           <Leaf className="logo-icon text-gradient" />
-          <span>Re<span className="logo-highlight">Threads</span></span>
+          <span>
+            Re<span className="logo-highlight">Threads</span>
+          </span>
         </Link>
 
         <button
@@ -33,25 +35,61 @@ export const Header: React.FC = () => {
         </button>
 
         <nav id="primary-navigation" className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
-          <NavLink to="/" end onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Trang chủ</NavLink>
-          <NavLink to="/products" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Quyên góp</NavLink>
-          <NavLink to="/map" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Điểm thu gom</NavLink>
-          <NavLink to="/leaderboard" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Bảng vàng</NavLink>
+          <NavLink
+            to="/"
+            end
+            onClick={closeMenu}
+            className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
+          >
+            Trang chủ
+          </NavLink>
+          <NavLink
+            to="/products"
+            onClick={closeMenu}
+            className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
+          >
+            Quyên góp
+          </NavLink>
+          <NavLink
+            to="/map"
+            onClick={closeMenu}
+            className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
+          >
+            Điểm thu gom
+          </NavLink>
+          <NavLink
+            to="/leaderboard"
+            onClick={closeMenu}
+            className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
+          >
+            Bảng vàng
+          </NavLink>
         </nav>
 
         <div className="header-actions">
-          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Chuyển đổi giao diện">
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label="Chuyển đổi giao diện"
+          >
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
           {isAuthenticated ? (
-            <><NotificationBell /><Link to="/profile" className="action-link user-menu-trigger" title="Hồ sơ cá nhân">
-              {user?.avatarUrl ? (
-                <img className="user-avatar" src={user.avatarUrl} alt={user.fullName || user.userName} />
-              ) : (
-                <User size={20} />
-              )}
-            </Link></>
+            <>
+              <NotificationBell />
+              <Link to="/profile" className="action-link user-menu-trigger" title="Hồ sơ cá nhân">
+                {user?.avatarUrl ? (
+                  <img
+                    className="user-avatar"
+                    src={user.avatarUrl}
+                    alt={user.fullName || user.userName}
+                  />
+                ) : (
+                  <User size={20} />
+                )}
+              </Link>
+            </>
           ) : (
             <Link to="/login" className="action-link login-link-btn" title="Đăng nhập">
               <LogIn size={18} />

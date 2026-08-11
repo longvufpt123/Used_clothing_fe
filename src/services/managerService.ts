@@ -45,28 +45,22 @@ export const managerService = {
   planShift: (dto: PlanReceivingShiftDto) =>
     apiClient.post<{ plannedRequests: number }>('/receiving-operations/plan', dto),
 
-  getShifts: () =>
-    apiClient.get<unknown, ApiShift[]>('/shifts'),
+  getShifts: () => apiClient.get<unknown, ApiShift[]>('/shifts'),
 
   // Staff & User Management
-  getProfiles: () =>
-    apiClient.get<unknown, ApiProfile[]>('/profiles'),
+  getProfiles: () => apiClient.get<unknown, ApiProfile[]>('/profiles'),
 
-  getTeamMembers: () =>
-    apiClient.get<unknown, any[]>('/team-members'),
+  getTeamMembers: () => apiClient.get<unknown, any[]>('/team-members'),
 
   // Reports & Analytics Data
-  getInventoriesSummary: () =>
-    apiClient.get<unknown, any[]>('/inventories'),
+  getInventoriesSummary: () => apiClient.get<unknown, any[]>('/inventories'),
 
-  getCharityInventory: () =>
-    apiClient.get<unknown, any[]>('/inventories'),
+  getCharityInventory: () => apiClient.get<unknown, any[]>('/inventories'),
 
   getDetailedClassification: () =>
     apiClient.get<unknown, any[]>('/classification-operations/grouped-batches'),
 
-  getClassificationResults: () =>
-    apiClient.get<unknown, any[]>('/classification-results'),
+  getClassificationResults: () => apiClient.get<unknown, any[]>('/classification-results'),
 };
 
 export default managerService;

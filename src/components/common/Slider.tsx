@@ -10,14 +10,7 @@ interface SliderProps {
   step?: number;
 }
 
-export const Slider: React.FC<SliderProps> = ({
-  label,
-  min,
-  max,
-  value,
-  onChange,
-  step = 1,
-}) => {
+export const Slider: React.FC<SliderProps> = ({ label, min, max, value, onChange, step = 1 }) => {
   return (
     <div className="slider-wrapper">
       {label && (

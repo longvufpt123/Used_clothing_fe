@@ -1,35 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRightLeft, Boxes, Search, Send } from "lucide-react";
-import { useToast } from "@/context/ToastContext";
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRightLeft, Boxes, Search, Send } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 import {
   warehouseService,
   type StorageLocation,
   type WarehouseInventory,
-} from "@/services/warehouseService";
-import Pagination from "@/components/common/Pagination";
-import "@/styles/ops-shared.css";
+} from '@/services/warehouseService';
+import Pagination from '@/components/common/Pagination';
+import '@/styles/ops-shared.css';
 
 export default function WarehouseInventoryPage() {
   const toast = useToast();
   const [items, setItems] = useState<WarehouseInventory[]>([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 6;
   const [selected, setSelected] = useState<WarehouseInventory | null>(null);
-  const [mode, setMode] = useState<"issue" | "move" | null>(null);
+  const [mode, setMode] = useState<'issue' | 'move' | null>(null);
   const [locations, setLocations] = useState<StorageLocation[]>([]);
   const [form, setForm] = useState({
     quantity: 1,
     weightKg: 1,
-    reason: "Phân phối từ thiện",
-    notes: "",
-    destinationLocationId: "",
+    reason: 'Phân phối từ thiện',
+    notes: '',
+    destinationLocationId: '',
   });
   const load = () =>
     warehouseService
       .inventory()
       .then(setItems)
-      .catch(() => toast.error("Không tải được tồn kho."));
+      .catch(() => toast.error('Không tải được tồn kho.'));
   useEffect(() => {
     load();
   }, []);
@@ -53,7 +53,7 @@ export default function WarehouseInventoryPage() {
             item.status,
             ...item.donationRequestCodes,
           ].some((value) =>
-            String(value || "")
+            String(value || '')
               .toLowerCase()
               .includes(q),
           ),
@@ -65,7 +65,7 @@ export default function WarehouseInventoryPage() {
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
-  const open = async (item: WarehouseInventory, next: "issue" | "move") => {
+  const open = async (item: WarehouseInventory, next: 'issue' | 'move') => {
     setSelected(item);
     setMode(next);
     setForm((f) => ({
@@ -73,20 +73,19 @@ export default function WarehouseInventoryPage() {
       quantity: Math.min(1, item.availableQuantity),
       weightKg: Math.min(1, item.availableWeightKg),
     }));
-    if (next === "move") {
+    if (next === 'move') {
       const l = await warehouseService.locations(item.classifiedBatchId);
       setLocations(l.filter((x) => x.locationCode !== item.locationCode));
       setForm((f) => ({
         ...f,
-        destinationLocationId:
-          l.find((x) => x.locationCode !== item.locationCode)?.id || "",
+        destinationLocationId: l.find((x) => x.locationCode !== item.locationCode)?.id || '',
       }));
     }
   };
   const submit = async () => {
     if (!selected || !mode) return;
     try {
-      if (mode === "issue")
+      if (mode === 'issue')
         await warehouseService.issue(selected.id, {
           quantity: form.quantity,
           weightKg: form.weightKg,
@@ -100,17 +99,15 @@ export default function WarehouseInventoryPage() {
           notes: form.notes,
         });
       toast.success(
-        mode === "issue"
-          ? "Đã xuất kho và ghi transaction OUT."
-          : "Đã điều chuyển và ghi transaction MOVE.",
+        mode === 'issue'
+          ? 'Đã xuất kho và ghi transaction OUT.'
+          : 'Đã điều chuyển và ghi transaction MOVE.',
       );
       setMode(null);
       setSelected(null);
       load();
     } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || "Không thực hiện được nghiệp vụ.",
-      );
+      toast.error(e?.response?.data?.message || 'Không thực hiện được nghiệp vụ.');
     }
   };
   return (
@@ -119,10 +116,7 @@ export default function WarehouseInventoryPage() {
         <div className="ops-pagehead-main">
           <span className="ops-pagehead-kicker">Stock Ledger</span>
           <h1>Tồn kho theo SKU và vị trí</h1>
-          <p>
-            Tồn khả dụng đã trừ phần giữ chỗ; mỗi SKU truy ngược được Classified
-            Batch nguồn.
-          </p>
+          <p>Tồn khả dụng đã trừ phần giữ chỗ; mỗi SKU truy ngược được Classified Batch nguồn.</p>
         </div>
       </header>
       <section className="ops-panel glass">
@@ -135,9 +129,7 @@ export default function WarehouseInventoryPage() {
               placeholder="Tìm SKU, batch, loại hàng hoặc mã vị trí..."
             />
           </label>
-          <span className="ops-list-result">
-            {filtered.length} kết quả · 6 item/trang
-          </span>
+          <span className="ops-list-result">{filtered.length} kết quả · 6 item/trang</span>
         </div>
       </section>
       <div className="ops-list" style={{ marginTop: 20 }}>
@@ -152,9 +144,7 @@ export default function WarehouseInventoryPage() {
                   <span>Nhãn {item.conditionGrade}</span>
                 </div>
               </div>
-              <span
-                className={`ops-badge ${item.status === "Available" ? "done" : "pending"}`}
-              >
+              <span className={`ops-badge ${item.status === 'Available' ? 'done' : 'pending'}`}>
                 {item.status}
               </span>
             </div>
@@ -184,8 +174,8 @@ export default function WarehouseInventoryPage() {
             <div className="ops-actions">
               <button
                 className="ops-btn ops-btn-secondary"
-                disabled={item.status !== "Available"}
-                onClick={() => open(item, "move")}
+                disabled={item.status !== 'Available'}
+                onClick={() => open(item, 'move')}
               >
                 <ArrowRightLeft size={15} />
                 Điều chuyển
@@ -193,7 +183,7 @@ export default function WarehouseInventoryPage() {
               <button
                 className="ops-btn ops-btn-primary"
                 disabled={item.availableQuantity <= 0}
-                onClick={() => open(item, "issue")}
+                onClick={() => open(item, 'issue')}
               >
                 <Send size={15} />
                 Xuất kho
@@ -210,26 +200,17 @@ export default function WarehouseInventoryPage() {
       </div>
       {filtered.length > pageSize && (
         <div className="ops-list-pagination">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
       {selected && mode && (
         <div className="ops-modal-overlay" onMouseDown={() => setMode(null)}>
-          <section
-            className="ops-modal glass"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <h2>
-              {mode === "issue" ? "Phiếu xuất kho" : "Phiếu điều chuyển nội bộ"}
-            </h2>
+          <section className="ops-modal glass" onMouseDown={(e) => e.stopPropagation()}>
+            <h2>{mode === 'issue' ? 'Phiếu xuất kho' : 'Phiếu điều chuyển nội bộ'}</h2>
             <p>
               {selected.sku} · {selected.locationCode}
             </p>
-            {mode === "issue" ? (
+            {mode === 'issue' ? (
               <>
                 <div className="ops-field">
                   <label>Số lượng xuất</label>
@@ -238,9 +219,7 @@ export default function WarehouseInventoryPage() {
                     min={1}
                     max={selected.availableQuantity}
                     value={form.quantity}
-                    onChange={(e) =>
-                      setForm({ ...form, quantity: Number(e.target.value) })
-                    }
+                    onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
                   />
                 </div>
                 <div className="ops-field">
@@ -251,9 +230,7 @@ export default function WarehouseInventoryPage() {
                     max={selected.availableWeightKg}
                     step=".01"
                     value={form.weightKg}
-                    onChange={(e) =>
-                      setForm({ ...form, weightKg: Number(e.target.value) })
-                    }
+                    onChange={(e) => setForm({ ...form, weightKg: Number(e.target.value) })}
                   />
                 </div>
               </>
@@ -262,9 +239,7 @@ export default function WarehouseInventoryPage() {
                 <label>Vị trí đích</label>
                 <select
                   value={form.destinationLocationId}
-                  onChange={(e) =>
-                    setForm({ ...form, destinationLocationId: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, destinationLocationId: e.target.value })}
                 >
                   {locations.map((l) => (
                     <option value={l.id} key={l.id}>
@@ -288,10 +263,7 @@ export default function WarehouseInventoryPage() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button
-              className="ops-btn ops-btn-primary ops-btn-block"
-              onClick={submit}
-            >
+            <button className="ops-btn ops-btn-primary ops-btn-block" onClick={submit}>
               Xác nhận và ghi sổ
             </button>
           </section>

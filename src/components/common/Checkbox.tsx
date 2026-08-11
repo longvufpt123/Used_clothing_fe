@@ -19,12 +19,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   return (
     <div className={`checkbox-wrapper ${error ? 'has-error' : ''} ${className}`}>
       <label htmlFor={inputId} className="checkbox-label">
-        <input
-          type="checkbox"
-          id={inputId}
-          className="custom-checkbox"
-          {...props}
-        />
+        <input type="checkbox" id={inputId} className="custom-checkbox" {...props} />
         <span className="checkbox-checkmark">
           <Check className="checkbox-icon" size={13} strokeWidth={3} />
         </span>
@@ -35,4 +30,3 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   );
 };
 export default Checkbox;
-

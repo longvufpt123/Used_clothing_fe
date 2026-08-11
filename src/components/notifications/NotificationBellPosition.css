@@ -1,15 +1,52 @@
 /* The desktop staff bell lives at the bottom of the workflow rail. */
-.ops-rail-footer .app-notification{z-index:1100}
-.ops-rail-footer .app-notification-panel{top:auto;bottom:48px;left:0;right:auto;max-height:min(560px,calc(100dvh - 84px));transform-origin:bottom left}
-.ops-rail-footer .app-notification-list{max-height:min(430px,calc(100dvh - 180px))}
+.ops-rail-footer .app-notification {
+  z-index: 1100;
+}
+.ops-rail-footer .app-notification-panel {
+  top: auto;
+  bottom: 48px;
+  left: 0;
+  right: auto;
+  max-height: min(560px, calc(100dvh - 84px));
+  transform-origin: bottom left;
+}
+.ops-rail-footer .app-notification-list {
+  max-height: min(430px, calc(100dvh - 180px));
+}
 
 /* Manager controls live at the bottom-left sidebar. Open the feed upward and
    toward the content area so it never gets clipped outside the viewport. */
-.admin-sidebar-tools .app-notification{z-index:1100}
-.admin-sidebar-tools .app-notification-panel{top:auto;right:auto;bottom:48px;left:0;width:min(390px,calc(100vw - 24px));max-height:min(560px,calc(100dvh - 84px));transform-origin:bottom left}
-.admin-sidebar-tools .app-notification-list{max-height:min(430px,calc(100dvh - 180px))}
+.admin-sidebar-tools .app-notification {
+  z-index: 1100;
+}
+.admin-sidebar-tools .app-notification-panel {
+  top: auto;
+  right: auto;
+  bottom: 48px;
+  left: 0;
+  width: min(390px, calc(100vw - 24px));
+  max-height: min(560px, calc(100dvh - 84px));
+  transform-origin: bottom left;
+}
+.admin-sidebar-tools .app-notification-list {
+  max-height: min(430px, calc(100dvh - 180px));
+}
 
-@media(max-width:760px){
-  .ops-rail-footer .app-notification-panel{position:fixed;left:12px;right:12px;bottom:76px;width:auto;max-height:calc(100dvh - 100px)}
-  .admin-sidebar-tools .app-notification-panel{position:fixed;left:12px;right:12px;bottom:76px;width:auto;max-height:calc(100dvh - 100px)}
+@media (max-width: 760px) {
+  .ops-rail-footer .app-notification-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 76px;
+    width: auto;
+    max-height: calc(100dvh - 100px);
+  }
+  .admin-sidebar-tools .app-notification-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 76px;
+    width: auto;
+    max-height: calc(100dvh - 100px);
+  }
 }

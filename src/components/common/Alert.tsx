@@ -8,11 +8,7 @@ interface AlertProps {
   onClose?: () => void;
 }
 
-export const Alert: React.FC<AlertProps> = ({
-  type = 'info',
-  message,
-  onClose,
-}) => {
+export const Alert: React.FC<AlertProps> = ({ type = 'info', message, onClose }) => {
   const getIcon = () => {
     switch (type) {
       case 'success':

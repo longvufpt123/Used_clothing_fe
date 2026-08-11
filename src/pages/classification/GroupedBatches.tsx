@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ArrowRight,
-  Boxes,
-  CalendarDays,
-  CheckCircle2,
-  Package,
-  Send,
-} from 'lucide-react';
+import { ArrowRight, Boxes, CalendarDays, CheckCircle2, Package, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useToast } from '@/context/ToastContext';
@@ -53,10 +46,7 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
     loadGroups();
   }, [date]);
 
-  const openGroups = useMemo(
-    () => groups.filter((group) => group.status === 'Open'),
-    [groups],
-  );
+  const openGroups = useMemo(() => groups.filter((group) => group.status === 'Open'), [groups]);
   const visibleGroups = useMemo(
     () =>
       view === 'open'
@@ -80,8 +70,7 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
       await loadGroups();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          'Không thể gửi tất cả Classified Batch sang kho.',
+        error?.response?.data?.message || 'Không thể gửi tất cả Classified Batch sang kho.',
       );
     } finally {
       setSending(false);
@@ -95,7 +84,9 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
           <span className="ops-pagehead-kicker">
             {view === 'open' ? 'Batch tổng hợp theo thuộc tính' : 'Lịch sử bàn giao kho'}
           </span>
-          <h1>{view === 'open' ? 'Classified Batch chưa gửi kho' : 'Classified Batch đã gửi sang kho'}</h1>
+          <h1>
+            {view === 'open' ? 'Classified Batch chưa gửi kho' : 'Classified Batch đã gửi sang kho'}
+          </h1>
           <p>
             {view === 'open'
               ? 'Các item cùng thuộc tính được gom chung và đang chờ bàn giao cho bộ phận kho.'
@@ -119,7 +110,10 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
       <div className="ops-stats">
         <div className="ops-stat-card">
           <span className="ops-stat-label">Số batch nhóm</span>
-          <div className="ops-stat-value"><Boxes size={18} />{visibleGroups.length}</div>
+          <div className="ops-stat-value">
+            <Boxes size={18} />
+            {visibleGroups.length}
+          </div>
         </div>
         <div className="ops-stat-card">
           <span className="ops-stat-label">Tổng item</span>
@@ -141,11 +135,7 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
         <div className="ops-section-head">
           <div>
             <h2>{view === 'open' ? 'Danh sách chờ gửi kho' : 'Danh sách đã gửi kho'}</h2>
-            <span>
-              {loading
-                ? 'Đang tải...'
-                : `${visibleGroups.length} batch`}
-            </span>
+            <span>{loading ? 'Đang tải...' : `${visibleGroups.length} batch`}</span>
           </div>
           {view === 'open' && (
             <button
@@ -189,10 +179,18 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
                             : 'classified'
                     }`}
                   >
-                    {sent ? <><CheckCircle2 size={13} /> Đã gửi kho</> : `Nhãn ${group.conditionGrade}`}
+                    {sent ? (
+                      <>
+                        <CheckCircle2 size={13} /> Đã gửi kho
+                      </>
+                    ) : (
+                      `Nhãn ${group.conditionGrade}`
+                    )}
                   </span>
                 </div>
-                <h3>{group.clothingType} · {group.fabricType}</h3>
+                <h3>
+                  {group.clothingType} · {group.fabricType}
+                </h3>
                 <div className="ops-card-meta">
                   <span>{group.gender}</span>
                   <span>{group.targetUser}</span>
@@ -200,7 +198,9 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
                   <span>{group.processingDirection}</span>
                 </div>
                 <div className="ops-card-footer">
-                  <span><strong>{group.totalItem}</strong> item</span>
+                  <span>
+                    <strong>{group.totalItem}</strong> item
+                  </span>
                   <span className="ops-card-action">
                     Xem chi tiết <ArrowRight size={14} />
                   </span>

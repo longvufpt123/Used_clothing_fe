@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownToLine,
   ArrowRightLeft,
@@ -9,13 +9,10 @@ import {
   Search,
   Weight,
   X,
-} from "lucide-react";
-import {
-  warehouseService,
-  type WarehouseTransaction,
-} from "@/services/warehouseService";
-import Pagination from "@/components/common/Pagination";
-import "@/styles/ops-shared.css";
+} from 'lucide-react';
+import { warehouseService, type WarehouseTransaction } from '@/services/warehouseService';
+import Pagination from '@/components/common/Pagination';
+import '@/styles/ops-shared.css';
 
 const transactionIcons: Record<string, typeof ClipboardList> = {
   RECEIPT: ArrowDownToLine,
@@ -25,21 +22,20 @@ const transactionIcons: Record<string, typeof ClipboardList> = {
 };
 
 const transactionLabels: Record<string, string> = {
-  RECEIPT: "Tiếp nhận kho",
-  PUTAWAY: "Xếp vào vị trí",
-  MOVE: "Điều chuyển",
-  OUT: "Xuất kho",
+  RECEIPT: 'Tiếp nhận kho',
+  PUTAWAY: 'Xếp vào vị trí',
+  MOVE: 'Điều chuyển',
+  OUT: 'Xuất kho',
 };
 
 const PAGE_SIZE = 6;
 
-const transactionLabel = (type: string) =>
-  transactionLabels[type.toUpperCase()] || type;
+const transactionLabel = (type: string) => transactionLabels[type.toUpperCase()] || type;
 
 export default function WarehouseTransactions() {
-  const [type, setType] = useState("");
+  const [type, setType] = useState('');
   const [list, setList] = useState<WarehouseTransaction[]>([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<WarehouseTransaction | null>(null);
 
@@ -65,7 +61,11 @@ export default function WarehouseTransactions() {
           item.destinationLocationCode,
           ...item.donationRequestCodes,
         ]),
-      ].some((value) => String(value || "").toLowerCase().includes(q)),
+      ].some((value) =>
+        String(value || '')
+          .toLowerCase()
+          .includes(q),
+      ),
     );
   }, [list, search]);
 
@@ -83,20 +83,20 @@ export default function WarehouseTransactions() {
           <span className="ops-pagehead-kicker">Nhật ký vận hành</span>
           <h1>Sổ giao dịch kho</h1>
           <p>
-            Theo dõi người thực hiện, thời gian, vị trí nguồn – đích và tồn kho
-            trước – sau của từng nghiệp vụ.
+            Theo dõi người thực hiện, thời gian, vị trí nguồn – đích và tồn kho trước – sau của từng
+            nghiệp vụ.
           </p>
         </div>
       </header>
 
       <div className="ops-tabs">
-        {["", "RECEIPT", "PUTAWAY", "MOVE", "OUT"].map((value) => (
+        {['', 'RECEIPT', 'PUTAWAY', 'MOVE', 'OUT'].map((value) => (
           <button
-            className={`ops-tab ${type === value ? "active" : ""}`}
+            className={`ops-tab ${type === value ? 'active' : ''}`}
             key={value}
             onClick={() => setType(value)}
           >
-            {value ? transactionLabel(value) : "Tất cả"}
+            {value ? transactionLabel(value) : 'Tất cả'}
           </button>
         ))}
       </div>
@@ -122,10 +122,7 @@ export default function WarehouseTransactions() {
             (sum, item) => sum + Math.abs(item.quantity || 0),
             0,
           );
-          const totalWeight = tx.items.reduce(
-            (sum, item) => sum + Math.abs(item.weightKg || 0),
-            0,
-          );
+          const totalWeight = tx.items.reduce((sum, item) => sum + Math.abs(item.weightKg || 0), 0);
           return (
             <article
               className="ops-card ops-transaction-card"
@@ -134,14 +131,14 @@ export default function WarehouseTransactions() {
               tabIndex={0}
               onClick={() => setSelected(tx)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") setSelected(tx);
+                if (event.key === 'Enter' || event.key === ' ') setSelected(tx);
               }}
             >
               <div className="ops-card-top">
                 <div className="ops-transaction-heading">
                   <div className="ops-card-code">{tx.transactionCode}</div>
                   <div className="ops-card-meta">
-                    <span>{new Date(tx.performedAt).toLocaleString("vi-VN")}</span>
+                    <span>{new Date(tx.performedAt).toLocaleString('vi-VN')}</span>
                     <span>{tx.performedBy}</span>
                   </div>
                 </div>
@@ -165,7 +162,7 @@ export default function WarehouseTransactions() {
                 <div>
                   <Weight size={18} />
                   <span>Khối lượng</span>
-                  <strong>{totalWeight.toLocaleString("vi-VN")} kg</strong>
+                  <strong>{totalWeight.toLocaleString('vi-VN')} kg</strong>
                 </div>
               </div>
 
@@ -190,11 +187,7 @@ export default function WarehouseTransactions() {
 
       {filtered.length > PAGE_SIZE && (
         <div className="ops-list-pagination">
-          <Pagination
-            currentPage={page}
-            totalPages={pages}
-            onPageChange={setPage}
-          />
+          <Pagination currentPage={page} totalPages={pages} onPageChange={setPage} />
         </div>
       )}
 
@@ -217,7 +210,7 @@ export default function WarehouseTransactions() {
                 <span className="ops-pagehead-kicker">Chi tiết giao dịch</span>
                 <h2 id="transaction-detail-title">{selected.transactionCode}</h2>
                 <div className="ops-card-meta">
-                  <span>{new Date(selected.performedAt).toLocaleString("vi-VN")}</span>
+                  <span>{new Date(selected.performedAt).toLocaleString('vi-VN')}</span>
                   <span>{selected.performedBy}</span>
                 </div>
               </div>
@@ -245,19 +238,23 @@ export default function WarehouseTransactions() {
                   <div className="ops-kv-grid">
                     <div className="ops-kv">
                       <span>Số lượng</span>
-                      <strong>{item.quantityBefore} → {item.quantityAfter}</strong>
+                      <strong>
+                        {item.quantityBefore} → {item.quantityAfter}
+                      </strong>
                     </div>
                     <div className="ops-kv">
                       <span>Khối lượng</span>
-                      <strong>{item.weightBefore} → {item.weightAfter} kg</strong>
+                      <strong>
+                        {item.weightBefore} → {item.weightAfter} kg
+                      </strong>
                     </div>
                     <div className="ops-kv ops-transaction-location">
                       <span>Vị trí nguồn</span>
-                      <strong>{item.sourceLocationCode || "Khu tiếp nhận"}</strong>
+                      <strong>{item.sourceLocationCode || 'Khu tiếp nhận'}</strong>
                     </div>
                     <div className="ops-kv ops-transaction-location">
                       <span>Vị trí đích</span>
-                      <strong>{item.destinationLocationCode || "Khu xuất kho"}</strong>
+                      <strong>{item.destinationLocationCode || 'Khu xuất kho'}</strong>
                     </div>
                   </div>
                   {item.donationRequestCodes.length > 0 && (

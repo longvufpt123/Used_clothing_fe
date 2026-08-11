@@ -67,44 +67,70 @@ export const AppRoutes: React.FC = () => {
         path="/"
         element={
           <RoleRoute role="Donor">
-            <MainLayout><Home /></MainLayout>
+            <MainLayout>
+              <Home />
+            </MainLayout>
           </RoleRoute>
         }
       />
       <Route
         path="/products"
         element={
-          <RoleRoute role="Donor"><MainLayout><Products /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Products />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/map"
         element={
-          <RoleRoute role="Donor"><MainLayout><Map /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Map />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/leaderboard"
         element={
-          <RoleRoute role="Donor"><MainLayout><Leaderboard /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Leaderboard />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/account"
         element={
-          <RoleRoute role="Donor"><MainLayout><Account /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Account />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/profile"
         element={
-          <RoleRoute role="Donor"><MainLayout><Profile /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Profile />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
         path="/my-orders"
         element={
-          <RoleRoute role="Donor"><MainLayout><MyOrders /></MainLayout></RoleRoute>
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <MyOrders />
+            </MainLayout>
+          </RoleRoute>
         }
       />
       <Route
@@ -117,28 +143,187 @@ export const AppRoutes: React.FC = () => {
       />
 
       {/* Back-office pages */}
-      <Route path="/admin" element={<RoleRoute role="Admin"><Dashboard /></RoleRoute>} />
-      <Route path="/admin/users" element={<RoleRoute role="Admin"><Users /></RoleRoute>} />
-      <Route path="/admin/schedule" element={<RoleRoute role="Admin"><CollectionSchedule /></RoleRoute>} />
-      <Route path="/admin/classification" element={<RoleRoute role="Admin"><DetailedClassification /></RoleRoute>} />
-      <Route path="/admin/inventory" element={<RoleRoute role="Admin"><CharityInventory /></RoleRoute>} />
-      <Route path="/admin/campaigns" element={<RoleRoute role="Admin"><Campaigns /></RoleRoute>} />
-      <Route path="/admin/profile" element={<RoleRoute role="Admin"><AdminLayout><StaffProfile /></AdminLayout></RoleRoute>} />
+      <Route
+        path="/admin"
+        element={
+          <RoleRoute role="Admin">
+            <Dashboard />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RoleRoute role="Admin">
+            <Users />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/schedule"
+        element={
+          <RoleRoute role="Admin">
+            <CollectionSchedule />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/classification"
+        element={
+          <RoleRoute role="Admin">
+            <DetailedClassification />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/inventory"
+        element={
+          <RoleRoute role="Admin">
+            <CharityInventory />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/campaigns"
+        element={
+          <RoleRoute role="Admin">
+            <Campaigns />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/profile"
+        element={
+          <RoleRoute role="Admin">
+            <AdminLayout>
+              <StaffProfile />
+            </AdminLayout>
+          </RoleRoute>
+        }
+      />
 
-      <Route path="/manager" element={<RoleRoute role="Manager"><ManagerDashboard /></RoleRoute>} />
-      <Route path="/manager/users" element={<RoleRoute role="Manager"><ManagerUsers /></RoleRoute>} />
-      <Route path="/manager/schedule" element={<RoleRoute role="Manager"><ManagerCollectionSchedule /></RoleRoute>} />
-      <Route path="/manager/shifts" element={<RoleRoute role="Manager"><ManagerShiftCalendar /></RoleRoute>} />
-      <Route path="/manager/dispatch" element={<RoleRoute role="Manager"><ManagerDispatchOperations /></RoleRoute>} />
-      <Route path="/manager/inventory" element={<RoleRoute role="Manager"><ManagerCharityInventory /></RoleRoute>} />
-      <Route path="/manager/campaigns" element={<RoleRoute role="Manager"><ManagerCampaigns /></RoleRoute>} />
-      <Route path="/manager/categories" element={<RoleRoute role="Manager"><ManagerCategories /></RoleRoute>} />
-      <Route path="/manager/condition-criteria" element={<RoleRoute role="Manager"><ManagerConditionCriteria /></RoleRoute>} />
-      <Route path="/manager/profile" element={<RoleRoute role="Manager"><AdminLayout><StaffProfile /></AdminLayout></RoleRoute>} />
-      <Route path="/manager/distributions" element={<RoleRoute role="Manager"><AdminLayout><DistributionPortal mode="manager" /></AdminLayout></RoleRoute>} />
-      <Route path="/organization/distributions" element={<RoleRoute role="CharityOrganization"><OrganizationShell><DistributionPortal mode="organization" /></OrganizationShell></RoleRoute>} />
-      <Route path="/organization/distributions/:requestId" element={<RoleRoute role="CharityOrganization"><OrganizationShell><DistributionPortal mode="organization" /></OrganizationShell></RoleRoute>} />
-      <Route path="/organization/profile" element={<RoleRoute role="CharityOrganization"><OrganizationShell><StaffProfile /></OrganizationShell></RoleRoute>} />
+      <Route
+        path="/manager"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerDashboard />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/users"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerUsers />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/schedule"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerCollectionSchedule />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/shifts"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerShiftCalendar />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/dispatch"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerDispatchOperations />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/inventory"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerCharityInventory />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/campaigns"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerCampaigns />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/categories"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerCategories />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/condition-criteria"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerConditionCriteria />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/profile"
+        element={
+          <RoleRoute role="Manager">
+            <AdminLayout>
+              <StaffProfile />
+            </AdminLayout>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/distributions"
+        element={
+          <RoleRoute role="Manager">
+            <AdminLayout>
+              <DistributionPortal mode="manager" />
+            </AdminLayout>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/organization/distributions"
+        element={
+          <RoleRoute role="CharityOrganization">
+            <OrganizationShell>
+              <DistributionPortal mode="organization" />
+            </OrganizationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/organization/distributions/:requestId"
+        element={
+          <RoleRoute role="CharityOrganization">
+            <OrganizationShell>
+              <DistributionPortal mode="organization" />
+            </OrganizationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/organization/profile"
+        element={
+          <RoleRoute role="CharityOrganization">
+            <OrganizationShell>
+              <StaffProfile />
+            </OrganizationShell>
+          </RoleRoute>
+        }
+      />
 
       {/* Receiving Staff pages */}
       <Route
@@ -176,7 +361,9 @@ export const AppRoutes: React.FC = () => {
         path="/receiving/profile"
         element={
           <RoleRoute role="ReceivingStaff">
-            <ReceivingShell><StaffProfile /></ReceivingShell>
+            <ReceivingShell>
+              <StaffProfile />
+            </ReceivingShell>
           </RoleRoute>
         }
       />
@@ -186,7 +373,9 @@ export const AppRoutes: React.FC = () => {
         path="/classification"
         element={
           <RoleRoute role="ClassificationStaff">
-            <ClassificationShell><ClassificationDashboard /></ClassificationShell>
+            <ClassificationShell>
+              <ClassificationDashboard />
+            </ClassificationShell>
           </RoleRoute>
         }
       />
@@ -194,7 +383,9 @@ export const AppRoutes: React.FC = () => {
         path="/classification/classify/:batchId"
         element={
           <RoleRoute role="ClassificationStaff">
-            <ClassificationShell><ClassifyBatch /></ClassificationShell>
+            <ClassificationShell>
+              <ClassifyBatch />
+            </ClassificationShell>
           </RoleRoute>
         }
       />
@@ -202,7 +393,9 @@ export const AppRoutes: React.FC = () => {
         path="/classification/confirm/:batchId"
         element={
           <RoleRoute role="ClassificationStaff">
-            <ClassificationShell><ConfirmBatch /></ClassificationShell>
+            <ClassificationShell>
+              <ConfirmBatch />
+            </ClassificationShell>
           </RoleRoute>
         }
       />
@@ -210,7 +403,9 @@ export const AppRoutes: React.FC = () => {
         path="/classification/batches/:batchId"
         element={
           <RoleRoute role="ClassificationStaff">
-            <ClassificationShell><ClassifiedBatchDetail /></ClassificationShell>
+            <ClassificationShell>
+              <ClassifiedBatchDetail />
+            </ClassificationShell>
           </RoleRoute>
         }
       />
@@ -224,15 +419,44 @@ export const AppRoutes: React.FC = () => {
           </RoleRoute>
         }
       />
-      <Route path="/classification/groups" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatches /></ClassificationShell></RoleRoute>} />
-      <Route path="/classification/warehouse-handoffs" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatches view="sent" /></ClassificationShell></RoleRoute>} />
-      <Route path="/classification/groups/:groupId" element={<RoleRoute role="ClassificationStaff"><ClassificationShell><GroupedBatchDetail /></ClassificationShell></RoleRoute>} />
+      <Route
+        path="/classification/groups"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <GroupedBatches />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/classification/warehouse-handoffs"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <GroupedBatches view="sent" />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/classification/groups/:groupId"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <GroupedBatchDetail />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
 
       <Route
         path="/classification/profile"
         element={
           <RoleRoute role="ClassificationStaff">
-            <ClassificationShell><StaffProfile /></ClassificationShell>
+            <ClassificationShell>
+              <StaffProfile />
+            </ClassificationShell>
           </RoleRoute>
         }
       />
@@ -242,7 +466,9 @@ export const AppRoutes: React.FC = () => {
         path="/warehouse"
         element={
           <RoleRoute role="WarehouseStaff">
-            <WarehouseShell><WarehouseDashboard /></WarehouseShell>
+            <WarehouseShell>
+              <WarehouseDashboard />
+            </WarehouseShell>
           </RoleRoute>
         }
       />
@@ -250,7 +476,9 @@ export const AppRoutes: React.FC = () => {
         path="/warehouse/receive/:batchId"
         element={
           <RoleRoute role="WarehouseStaff">
-            <WarehouseShell><ReceiveBatch /></WarehouseShell>
+            <WarehouseShell>
+              <ReceiveBatch />
+            </WarehouseShell>
           </RoleRoute>
         }
       />
@@ -258,20 +486,69 @@ export const AppRoutes: React.FC = () => {
         path="/warehouse/storage/:batchId"
         element={
           <RoleRoute role="WarehouseStaff">
-            <WarehouseShell><StorageAlloc /></WarehouseShell>
+            <WarehouseShell>
+              <StorageAlloc />
+            </WarehouseShell>
           </RoleRoute>
         }
       />
-      <Route path="/warehouse/inventory" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><WarehouseInventoryPage /></WarehouseShell></RoleRoute>} />
-      <Route path="/warehouse/transactions" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><WarehouseTransactions /></WarehouseShell></RoleRoute>} />
-      <Route path="/warehouse/areas" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><WarehouseAreas /></WarehouseShell></RoleRoute>} />
-      <Route path="/warehouse/profile" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><StaffProfile /></WarehouseShell></RoleRoute>} />
-      <Route path="/warehouse/distributions" element={<RoleRoute role="WarehouseStaff"><WarehouseShell><DistributionPortal mode="warehouse" /></WarehouseShell></RoleRoute>} />
+      <Route
+        path="/warehouse/inventory"
+        element={
+          <RoleRoute role="WarehouseStaff">
+            <WarehouseShell>
+              <WarehouseInventoryPage />
+            </WarehouseShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/warehouse/transactions"
+        element={
+          <RoleRoute role="WarehouseStaff">
+            <WarehouseShell>
+              <WarehouseTransactions />
+            </WarehouseShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/warehouse/areas"
+        element={
+          <RoleRoute role="WarehouseStaff">
+            <WarehouseShell>
+              <WarehouseAreas />
+            </WarehouseShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/warehouse/profile"
+        element={
+          <RoleRoute role="WarehouseStaff">
+            <WarehouseShell>
+              <StaffProfile />
+            </WarehouseShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/warehouse/distributions"
+        element={
+          <RoleRoute role="WarehouseStaff">
+            <WarehouseShell>
+              <DistributionPortal mode="warehouse" />
+            </WarehouseShell>
+          </RoleRoute>
+        }
+      />
       <Route
         path="/warehouse/distribute/:requestId"
         element={
           <RoleRoute role="WarehouseStaff">
-            <WarehouseShell><DistributePrep /></WarehouseShell>
+            <WarehouseShell>
+              <DistributePrep />
+            </WarehouseShell>
           </RoleRoute>
         }
       />
@@ -279,16 +556,15 @@ export const AppRoutes: React.FC = () => {
         path="/warehouse/tracking/:trackingCode"
         element={
           <RoleRoute role="WarehouseStaff">
-            <WarehouseShell><WarehouseTracking /></WarehouseShell>
+            <WarehouseShell>
+              <WarehouseTracking />
+            </WarehouseShell>
           </RoleRoute>
         }
       />
 
       {/* Fallback redirect */}
-      <Route
-        path="*"
-        element={<RoleHomeRedirect />}
-      />
+      <Route path="*" element={<RoleHomeRedirect />} />
     </Routes>
   );
 };

@@ -17,7 +17,7 @@ export const Account: React.FC = () => {
     .split(' ')
     .filter(Boolean)
     .slice(-2)
-    .map(part => part[0])
+    .map((part) => part[0])
     .join('')
     .toUpperCase();
 
@@ -26,7 +26,11 @@ export const Account: React.FC = () => {
       <section className="account-hero glass">
         <div className="account-identity">
           <div className="account-avatar">
-            {user?.avatarUrl ? <img src={user.avatarUrl} alt={displayName} /> : <span>{initials || 'RT'}</span>}
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt={displayName} />
+            ) : (
+              <span>{initials || 'RT'}</span>
+            )}
           </div>
           <div>
             <span className="section-subtitle">Tài khoản của tôi</span>
@@ -88,7 +92,9 @@ export const Account: React.FC = () => {
           <p className="account-note">
             Điểm số sẽ được cập nhật khi backend cung cấp dữ liệu tổng hợp đóng góp của tài khoản.
           </p>
-          <Link to="/leaderboard" className="account-text-link">Xem bảng vàng</Link>
+          <Link to="/leaderboard" className="account-text-link">
+            Xem bảng vàng
+          </Link>
         </div>
       </section>
     </div>

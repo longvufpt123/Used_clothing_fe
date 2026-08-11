@@ -9,6 +9,6 @@ export const adminService = {
   updateProductStock: async (productId: number, quantity: number) => {
     console.log(`[Admin Service] Updated product ${productId} stock to ${quantity}`);
     return { success: true };
-  }
+  },
 };
 export default adminService;

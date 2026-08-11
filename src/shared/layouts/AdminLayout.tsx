@@ -8,9 +8,7 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export const AdminLayout: React.FC<AdminLayoutProps> = ({
-  children,
-}) => {
+export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -31,7 +29,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         />
       )}
       <div className="admin-layout-main">
-        <button type="button" className="admin-floating-menu" onClick={() => setIsMobileMenuOpen(true)} aria-label="Mở menu quản trị"><Menu size={20}/></button>
+        <button
+          type="button"
+          className="admin-floating-menu"
+          onClick={() => setIsMobileMenuOpen(true)}
+          aria-label="Mở menu quản trị"
+        >
+          <Menu size={20} />
+        </button>
         <main className="admin-content-area">{children}</main>
       </div>
     </div>

@@ -27,7 +27,12 @@ export const Select: React.FC<SelectProps> = ({
       return (
         <>
           {text.slice(0, -1)}
-          <span className="required-asterisk" style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}>*</span>
+          <span
+            className="required-asterisk"
+            style={{ color: 'var(--color-danger, #ef4444)', marginLeft: '2px' }}
+          >
+            *
+          </span>
         </>
       );
     }

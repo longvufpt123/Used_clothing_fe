@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ChevronLeft,
-  Truck,
-  CheckCircle,
-  Package,
-  Scale,
-} from 'lucide-react';
+import { ChevronLeft, Truck, CheckCircle, Package, Scale } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import {
   confirmHandoffToWarehouse,
@@ -52,7 +46,7 @@ export const HandoffBatch: React.FC = () => {
       tshirts: acc.tshirts + (i.charityTshirts || 0),
       pants: acc.pants + (i.charityPants || 0),
     }),
-    { jackets: 0, tshirts: 0, pants: 0 }
+    { jackets: 0, tshirts: 0, pants: 0 },
   );
   const recycle = batch.items.reduce((s, i) => s + (i.recycleWeightKg || 0), 0);
 
@@ -89,10 +83,7 @@ export const HandoffBatch: React.FC = () => {
           <CheckCircle size={22} strokeWidth={1.75} />
           <div>
             <strong>Bàn giao thành công</strong>
-            <p>
-Lô {batch.code} đang được chuyển đến kho. Kho sẽ thấy lô ở tab
-               Chờ nhập kho.
-            </p>
+            <p>Lô {batch.code} đang được chuyển đến kho. Kho sẽ thấy lô ở tab Chờ nhập kho.</p>
           </div>
         </div>
       )}
@@ -161,7 +152,12 @@ Lô {batch.code} đang được chuyển đến kho. Kho sẽ thấy lô ở tab
               'Xe / pallet sẵn sàng chuyển kho',
             ].map((line) => (
               <li key={line} className="ops-checklist-item">
-                <CheckCircle size={16} strokeWidth={1.75} color="var(--color-primary)" style={{ marginTop: 2, flexShrink: 0 }} />
+                <CheckCircle
+                  size={16}
+                  strokeWidth={1.75}
+                  color="var(--color-primary)"
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
                 {line}
               </li>
             ))}

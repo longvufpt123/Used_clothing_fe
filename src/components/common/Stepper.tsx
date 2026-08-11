@@ -16,10 +16,10 @@ export const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
 
         return (
           <React.Fragment key={idx}>
-            <div className={`stepper-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
-              <div className="step-badge">
-                {isCompleted ? <Check size={16} /> : idx + 1}
-              </div>
+            <div
+              className={`stepper-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
+            >
+              <div className="step-badge">{isCompleted ? <Check size={16} /> : idx + 1}</div>
               <span className="step-label">{step}</span>
             </div>
             {idx < steps.length - 1 && (

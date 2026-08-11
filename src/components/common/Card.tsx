@@ -6,8 +6,8 @@ type ProductCondition = 'Mới nguyên' | 'Như mới' | 'Tốt' | 'Khá';
 const CONDITION_CLASS_NAMES: Record<ProductCondition, string> = {
   'Mới nguyên': 'brand-new',
   'Như mới': 'like-new',
-  'Tốt': 'good',
-  'Khá': 'fair',
+  Tốt: 'good',
+  Khá: 'fair',
 };
 
 interface CardProps {
@@ -32,9 +32,7 @@ export const Card: React.FC<CardProps> = ({
       <div className="card-image-wrapper">
         <img src={image} alt={title} className="card-image" loading="lazy" />
         {condition && (
-<span className={`badge badge-${CONDITION_CLASS_NAMES[condition]}`}>
-             {condition}
-           </span>
+          <span className={`badge badge-${CONDITION_CLASS_NAMES[condition]}`}>{condition}</span>
         )}
       </div>
       <div className="card-content">

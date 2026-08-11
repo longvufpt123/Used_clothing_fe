@@ -38,13 +38,16 @@ export const BatchDetail: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    receivingService.getMyBatch(id).then((currentBatch) => {
-      setBatch(currentBatch);
-      setRequests(currentBatch.requests);
-    }).catch(() => {
-      toast.error('Lô hàng không tồn tại.');
-      navigate('/receiving');
-    });
+    receivingService
+      .getMyBatch(id)
+      .then((currentBatch) => {
+        setBatch(currentBatch);
+        setRequests(currentBatch.requests);
+      })
+      .catch(() => {
+        toast.error('Lô hàng không tồn tại.');
+        navigate('/receiving');
+      });
   }, [id, navigate, toast]);
 
   useEffect(() => {
@@ -72,24 +75,40 @@ export const BatchDetail: React.FC = () => {
   const pagedRequests = filteredRequests.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const batchBadge =
-    batch.status === 'Receiving' ? 'pending' : batch.status === 'Completed' ? 'stored' : 'classified';
+    batch.status === 'Receiving'
+      ? 'pending'
+      : batch.status === 'Completed'
+        ? 'stored'
+        : 'classified';
   const batchBadgeText =
     batch.status === 'Receiving'
       ? 'Đang đi gom'
       : batch.status === 'Completed'
-      ? 'Đã gom xong'
-      : 'Bàn giao phân loại';
+        ? 'Đã gom xong'
+        : 'Bàn giao phân loại';
 
   const filters: { key: StatusFilter; label: string; count: number }[] = [
     { key: 'all', label: 'Tất cả', count: requests.length },
-    { key: 'pending', label: 'Chờ xử lý', count: requests.filter((r) => r.status === 'Pending').length },
-    { key: 'received', label: 'Đã thu nhận', count: requests.filter((r) => r.status === 'Received').length },
+    {
+      key: 'pending',
+      label: 'Chờ xử lý',
+      count: requests.filter((r) => r.status === 'Pending').length,
+    },
+    {
+      key: 'received',
+      label: 'Đã thu nhận',
+      count: requests.filter((r) => r.status === 'Received').length,
+    },
     {
       key: 'rescheduled',
       label: 'Hẹn lại',
       count: requests.filter((r) => r.status === 'Rescheduled').length,
     },
-    { key: 'canceled', label: 'Đã hủy', count: requests.filter((r) => r.status === 'Canceled').length },
+    {
+      key: 'canceled',
+      label: 'Đã hủy',
+      count: requests.filter((r) => r.status === 'Canceled').length,
+    },
   ];
 
   return (
@@ -136,7 +155,11 @@ export const BatchDetail: React.FC = () => {
         <div className="rcv-team-summary" style={{ marginBottom: 14 }}>
           <Users size={16} />
           <strong>{batch.teamName || 'Receiving team'}</strong>
-          <span>{batch.teamMembers.map(member => `${member.fullName} (${member.phoneNumber})`).join(' · ')}</span>
+          <span>
+            {batch.teamMembers
+              .map((member) => `${member.fullName} (${member.phoneNumber})`)
+              .join(' · ')}
+          </span>
         </div>
         <RouteMap batch={batch} />
       </section>
@@ -187,17 +210,17 @@ export const BatchDetail: React.FC = () => {
               const badge = isPending
                 ? 'pending'
                 : isReceived
-                ? 'stored'
-                : isRescheduled
-                ? 'classified'
-                : 'canceled';
+                  ? 'stored'
+                  : isRescheduled
+                    ? 'classified'
+                    : 'canceled';
               const badgeText = isPending
                 ? 'Chờ xử lý'
                 : isReceived
-                ? 'Đã thu gom'
-                : isRescheduled
-                ? 'Đã hẹn lại'
-                : 'Đã hủy';
+                  ? 'Đã thu gom'
+                  : isRescheduled
+                    ? 'Đã hẹn lại'
+                    : 'Đã hủy';
 
               return (
                 <article
@@ -288,20 +311,34 @@ export const BatchDetail: React.FC = () => {
 
         {filteredRequests.length > pageSize && (
           <nav className="rcv-pagination" aria-label="Phân trang đơn quyên góp">
-            <button type="button" disabled={safePage === 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))}>
+            <button
+              type="button"
+              disabled={safePage === 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            >
               <ChevronLeft size={15} /> Trước
             </button>
             <div className="rcv-page-numbers">
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
-                <button key={page} type="button" className={page === safePage ? 'active' : ''}
-                  aria-current={page === safePage ? 'page' : undefined} onClick={() => setCurrentPage(page)}>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  className={page === safePage ? 'active' : ''}
+                  aria-current={page === safePage ? 'page' : undefined}
+                  onClick={() => setCurrentPage(page)}
+                >
                   {page}
                 </button>
               ))}
             </div>
-            <span>Trang {safePage}/{totalPages} · {filteredRequests.length} đơn</span>
-            <button type="button" disabled={safePage === totalPages}
-              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}>
+            <span>
+              Trang {safePage}/{totalPages} · {filteredRequests.length} đơn
+            </span>
+            <button
+              type="button"
+              disabled={safePage === totalPages}
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            >
               Sau <ChevronRight size={15} />
             </button>
           </nav>

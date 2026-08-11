@@ -13,10 +13,7 @@ import {
   ShieldCheck,
   UserRound,
 } from 'lucide-react';
-import {
-  getCurrentUserProfileApi,
-  type CurrentUserProfile,
-} from '@/services/authService';
+import { getCurrentUserProfileApi, type CurrentUserProfile } from '@/services/authService';
 import '@/styles/ops-shared.css';
 import './Profile.css';
 
@@ -99,7 +96,9 @@ export const StaffProfile: React.FC = () => {
         <div className="staff-profile-identity">
           <span>{roleLabels[profile.role] || profile.role}</span>
           <h2>{profile.fullName}</h2>
-          <p><AtSign size={15} /> {profile.userName}</p>
+          <p>
+            <AtSign size={15} /> {profile.userName}
+          </p>
         </div>
         <div className="staff-profile-state">
           <BadgeCheck size={18} />
@@ -111,12 +110,27 @@ export const StaffProfile: React.FC = () => {
         <section className="ops-panel staff-profile-panel">
           <div className="staff-profile-panel-title">
             <UserRound size={19} />
-            <div><span>Thông tin chung</span><h3>Thông tin cá nhân</h3></div>
+            <div>
+              <span>Thông tin chung</span>
+              <h3>Thông tin cá nhân</h3>
+            </div>
           </div>
           <div className="staff-profile-fields">
-            <div><Mail size={17} /><span>Email</span><strong>{profile.email}</strong></div>
-            <div><Phone size={17} /><span>Số điện thoại</span><strong>{profile.phoneNumber}</strong></div>
-            <div><Home size={17} /><span>Địa chỉ</span><strong>{profile.address || 'Chưa cập nhật'}</strong></div>
+            <div>
+              <Mail size={17} />
+              <span>Email</span>
+              <strong>{profile.email}</strong>
+            </div>
+            <div>
+              <Phone size={17} />
+              <span>Số điện thoại</span>
+              <strong>{profile.phoneNumber}</strong>
+            </div>
+            <div>
+              <Home size={17} />
+              <span>Địa chỉ</span>
+              <strong>{profile.address || 'Chưa cập nhật'}</strong>
+            </div>
             <div>
               <CalendarDays size={17} />
               <span>Ngày tạo tài khoản</span>
@@ -132,19 +146,29 @@ export const StaffProfile: React.FC = () => {
         <section className="ops-panel staff-profile-panel">
           <div className="staff-profile-panel-title">
             <Building2 size={19} />
-            <div><span>Phân công hiện tại</span><h3>Nơi làm việc</h3></div>
+            <div>
+              <span>Phân công hiện tại</span>
+              <h3>Nơi làm việc</h3>
+            </div>
           </div>
           <div className="staff-profile-warehouse">
-            <span className="staff-profile-warehouse-icon"><Building2 size={24} /></span>
+            <span className="staff-profile-warehouse-icon">
+              <Building2 size={24} />
+            </span>
             <div>
               <span>Kho phụ trách</span>
               <strong>{profile.warehouseName || 'Chưa được phân kho'}</strong>
-              <p><MapPin size={14} /> {profile.warehouseAddress || 'Chưa có địa chỉ kho'}</p>
+              <p>
+                <MapPin size={14} /> {profile.warehouseAddress || 'Chưa có địa chỉ kho'}
+              </p>
             </div>
           </div>
           <div className="staff-profile-role">
             <ShieldCheck size={18} />
-            <div><span>Vai trò hệ thống</span><strong>{roleLabels[profile.role] || profile.role}</strong></div>
+            <div>
+              <span>Vai trò hệ thống</span>
+              <strong>{roleLabels[profile.role] || profile.role}</strong>
+            </div>
           </div>
         </section>
       </div>
@@ -152,7 +176,10 @@ export const StaffProfile: React.FC = () => {
       <section className="ops-panel staff-profile-panel">
         <div className="staff-profile-panel-title">
           <ShieldCheck size={19} />
-          <div><span>Bảo mật</span><h3>Trạng thái xác minh</h3></div>
+          <div>
+            <span>Bảo mật</span>
+            <h3>Trạng thái xác minh</h3>
+          </div>
         </div>
         <div className="staff-profile-verifications">
           <div className={profile.emailConfirmed ? 'verified' : ''}>

@@ -9,12 +9,7 @@ interface RatingProps {
   onChange?: (value: number) => void;
 }
 
-export const Rating: React.FC<RatingProps> = ({
-  value,
-  max = 5,
-  size = 18,
-  onChange,
-}) => {
+export const Rating: React.FC<RatingProps> = ({ value, max = 5, size = 18, onChange }) => {
   const stars = Array.from({ length: max }, (_, i) => i + 1);
 
   return (

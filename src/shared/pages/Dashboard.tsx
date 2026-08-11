@@ -4,7 +4,18 @@ import Table from '@/components/common/Table';
 import Badge from '@/components/common/Badge';
 import Skeleton from '@/components/common/Skeleton';
 import { useToast } from '@/context/ToastContext';
-import { ShieldAlert, Check, RefreshCw, Heart, TrendingUp, Package, Inbox, Download, FileText, Loader2 } from 'lucide-react';
+import {
+  ShieldAlert,
+  Check,
+  RefreshCw,
+  Heart,
+  TrendingUp,
+  Package,
+  Inbox,
+  Download,
+  FileText,
+  Loader2,
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -27,8 +38,6 @@ interface DonationInventory {
   weight: string;
   status: 'pending' | 'charity' | 'recycle' | 'distributed';
 }
-
-
 
 // Lượng vải thu gom 7 ngày gần nhất (kg) — dữ liệu vận hành mô phỏng
 const COLLECTION_TREND = [
@@ -58,21 +67,24 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 600);
-    
+
     import('@/services/managerService').then(({ managerService }) => {
-      managerService.getInventoriesSummary().then((invItems) => {
-        if (invItems && invItems.length > 0) {
-          const mapped: DonationInventory[] = invItems.map((item, idx) => ({
-            id: idx + 10,
-            code: item.itemCode || `RT-2026-${800 + idx}`,
-            name: 'Đơn thu gom thực tế',
-            category: 'Quần áo tổng hợp',
-            weight: `${item.quantity * 0.5 || 10} kg`,
-            status: idx % 2 === 0 ? 'charity' : 'recycle',
-          }));
-          setInventory(mapped);
-        }
-      }).catch(() => {});
+      managerService
+        .getInventoriesSummary()
+        .then((invItems) => {
+          if (invItems && invItems.length > 0) {
+            const mapped: DonationInventory[] = invItems.map((item, idx) => ({
+              id: idx + 10,
+              code: item.itemCode || `RT-2026-${800 + idx}`,
+              name: 'Đơn thu gom thực tế',
+              category: 'Quần áo tổng hợp',
+              weight: `${item.quantity * 0.5 || 10} kg`,
+              status: idx % 2 === 0 ? 'charity' : 'recycle',
+            }));
+            setInventory(mapped);
+          }
+        })
+        .catch(() => {});
     });
 
     return () => clearTimeout(t);
@@ -85,9 +97,15 @@ export const Dashboard: React.FC = () => {
 
     const steps = [
       { p: 25, t: 'Đang thu thập các chỉ số phân tích dữ liệu...' },
-      { p: 55, t: type === 'excel' ? 'Đang kết cấu bảng tính dạng CSV (UTF-8 BOM)...' : 'Đang định dạng phân trang tài liệu in ấn PDF...' },
+      {
+        p: 55,
+        t:
+          type === 'excel'
+            ? 'Đang kết cấu bảng tính dạng CSV (UTF-8 BOM)...'
+            : 'Đang định dạng phân trang tài liệu in ấn PDF...',
+      },
       { p: 85, t: 'Đang đóng gói và gửi lệnh tải file...' },
-      { p: 100, t: 'Hoàn tất kết xuất!' }
+      { p: 100, t: 'Hoàn tất kết xuất!' },
     ];
 
     let currentStep = 0;
@@ -105,7 +123,11 @@ export const Dashboard: React.FC = () => {
             triggerPdfPrint();
           }
           setExportType(null);
-          toast.success(type === 'excel' ? 'Báo cáo Excel đã được xuất thành công!' : 'Đã mở hộp thoại in báo cáo PDF!');
+          toast.success(
+            type === 'excel'
+              ? 'Báo cáo Excel đã được xuất thành công!'
+              : 'Đã mở hộp thoại in báo cáo PDF!',
+          );
         }, 500);
       }
     }, 400);
@@ -144,10 +166,10 @@ export const Dashboard: React.FC = () => {
         item.status === 'pending'
           ? 'Chờ phân loại'
           : item.status === 'charity'
-          ? 'Từ thiện (Sẵn sàng)'
-          : item.status === 'recycle'
-          ? 'Tái chế (Xé sợi)'
-          : 'Đã phân phối';
+            ? 'Từ thiện (Sẵn sàng)'
+            : item.status === 'recycle'
+              ? 'Tái chế (Xé sợi)'
+              : 'Đã phân phối';
       csvContent += `${item.code};${item.name};${item.category};${item.weight};${statusText}\n`;
     });
 
@@ -177,7 +199,7 @@ export const Dashboard: React.FC = () => {
           return { ...item, status: newStatus };
         }
         return item;
-      })
+      }),
     );
 
     const code = inventory.find((i) => i.id === id)?.code;
@@ -193,8 +215,8 @@ export const Dashboard: React.FC = () => {
     key === 'charity'
       ? 'var(--color-primary)'
       : key === 'recycle'
-      ? 'var(--color-info)'
-      : 'var(--color-warning)';
+        ? 'var(--color-info)'
+        : 'var(--color-warning)';
 
   const columns = [
     { header: 'ID', accessor: 'id' as const },
@@ -263,12 +285,29 @@ export const Dashboard: React.FC = () => {
   return (
     <AdminLayout role="admin">
       <div className="admin-dashboard">
-        <div className="admin-page-header no-print-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '24px' }}>
+        <div
+          className="admin-page-header no-print-flex"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: '16px',
+            borderBottom: '1px solid var(--color-border)',
+            paddingBottom: '16px',
+            marginBottom: '24px',
+          }}
+        >
           <div>
             <h2 className="dashboard-title">Bảng tổng quan hoạt động</h2>
-            <p className="dashboard-subtitle">Theo dõi lượng quần áo tiếp nhận, điều phối phân loại và bàn giao từ thiện.</p>
+            <p className="dashboard-subtitle">
+              Theo dõi lượng quần áo tiếp nhận, điều phối phân loại và bàn giao từ thiện.
+            </p>
           </div>
-          <div className="dashboard-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div
+            className="dashboard-actions"
+            style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
+          >
             <button
               onClick={() => handleStartExport('excel')}
               className="premium-export-btn"
@@ -285,7 +324,10 @@ export const Dashboard: React.FC = () => {
               title="Xuất báo cáo định dạng PDF"
             >
               <span>Xuất Báo cáo PDF</span>
-              <div className="export-btn-icon-circle" style={{ background: 'rgba(255,255,255,0.2)' }}>
+              <div
+                className="export-btn-icon-circle"
+                style={{ background: 'rgba(255,255,255,0.2)' }}
+              >
                 <FileText size={13} strokeWidth={2} />
               </div>
             </button>
@@ -335,16 +377,35 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="chart-body">
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={COLLECTION_TREND} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <AreaChart
+                  data={COLLECTION_TREND}
+                  margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="collectionFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
                       <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="day" stroke="var(--color-text-muted)" tickLine={false} axisLine={false} fontSize={12} />
-                  <YAxis stroke="var(--color-text-muted)" tickLine={false} axisLine={false} fontSize={12} width={44} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--color-border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    stroke="var(--color-text-muted)"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                  />
+                  <YAxis
+                    stroke="var(--color-text-muted)"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                    width={44}
+                  />
                   <RTooltip
                     cursor={{ stroke: 'var(--color-border-strong)' }}
                     contentStyle={{
@@ -376,10 +437,29 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="chart-body">
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={CLASSIFY_BREAKDOWN} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="label" stroke="var(--color-text-muted)" tickLine={false} axisLine={false} fontSize={12} />
-                  <YAxis stroke="var(--color-text-muted)" tickLine={false} axisLine={false} fontSize={12} width={44} />
+                <BarChart
+                  data={CLASSIFY_BREAKDOWN}
+                  margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--color-border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="label"
+                    stroke="var(--color-text-muted)"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                  />
+                  <YAxis
+                    stroke="var(--color-text-muted)"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                    width={44}
+                  />
                   <RTooltip
                     cursor={{ fill: 'var(--color-primary-light)' }}
                     contentStyle={{
@@ -407,7 +487,9 @@ export const Dashboard: React.FC = () => {
           <div className="section-header-dashboard">
             <div>
               <h3>Danh sách hàng tiếp nhận cần phân loại</h3>
-              <p>Danh sách các đơn quần áo cũ vừa thu gom về kho. Cần phân loại tình trạng vải dệt.</p>
+              <p>
+                Danh sách các đơn quần áo cũ vừa thu gom về kho. Cần phân loại tình trạng vải dệt.
+              </p>
             </div>
             <div className="inventory-filters">
               <Badge variant="warning">Chờ xử lý: {pendingCount}</Badge>
@@ -437,7 +519,9 @@ export const Dashboard: React.FC = () => {
             <div className="export-modal-card">
               <div className="export-modal-header">
                 <h3>Đang kết xuất dữ liệu</h3>
-                <span className="export-modal-type-badge">{exportType === 'excel' ? 'EXCEL (CSV)' : 'TÀI LIỆU PDF'}</span>
+                <span className="export-modal-type-badge">
+                  {exportType === 'excel' ? 'EXCEL (CSV)' : 'TÀI LIỆU PDF'}
+                </span>
               </div>
               <div className="export-modal-body">
                 <div className="export-spinner-container">
