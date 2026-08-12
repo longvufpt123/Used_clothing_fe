@@ -7,6 +7,7 @@ import {
   type WarehouseInventory,
 } from '@/services/warehouseService';
 import Pagination from '@/components/common/Pagination';
+import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
 
 export default function WarehouseInventoryPage() {
@@ -145,7 +146,7 @@ export default function WarehouseInventoryPage() {
                 </div>
               </div>
               <span className={`ops-badge ${item.status === 'Available' ? 'done' : 'pending'}`}>
-                {item.status}
+                {getStatusLabel(item.status)}
               </span>
             </div>
             <h3>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUserProfileApi, type CurrentUserProfile } from '@/services/authService';
 import '@/styles/ops-shared.css';
+import { getStatusLabel } from '@/utils/statusLabels';
 import './Profile.css';
 
 const roleLabels: Record<string, string> = {
@@ -102,7 +103,7 @@ export const StaffProfile: React.FC = () => {
         </div>
         <div className="staff-profile-state">
           <BadgeCheck size={18} />
-          {profile.status === 'Active' ? 'Tài khoản đang hoạt động' : profile.status}
+          {profile.status === 'Active' ? 'Tài khoản đang hoạt động' : getStatusLabel(profile.status)}
         </div>
       </section>
 

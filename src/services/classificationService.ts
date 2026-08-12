@@ -9,6 +9,15 @@ export interface ClassificationBatchSummary {
   status: string;
   donationRequests: number;
   classifiedItems: number;
+  countedItemCount?: number | null;
+  countedTotalWeight?: number | null;
+  countedAt?: string | null;
+  classificationAreaName?: string | null;
+  classifiedAreaPlacedAt?: string | null;
+  classificationTeamId?: string | null;
+  classificationTeamName?: string | null;
+  teamStatus?: string | null;
+  currentAreaName?: string | null;
 }
 export interface ClassifiedItem {
   id: string;
@@ -24,8 +33,16 @@ export interface ClassifiedItem {
   imageUrls: string[];
   notes?: string;
   classifiedAt: string;
+  fabricTypeId?: string | null;
+  garmentGroupId?: string | null;
+  clothingTypeId?: string | null;
+  genderId?: string | null;
+  targetUserId?: string | null;
+  sizeId?: string | null;
+  answers: { questionId: string; answerId: string }[];
 }
 export interface ClassificationBatchDetail extends ClassificationBatchSummary {
+  countingNotes?: string | null;
   items: ClassifiedItem[];
 }
 export interface ConditionOption {
@@ -80,7 +97,10 @@ export interface GroupedClassifiedBatch {
   conditionGrade: 'A' | 'B' | 'C';
   processingDirection: string;
   totalItem: number;
+  totalWeight: number;
   status: string;
+  classificationAreaName?: string | null;
+  placedInClassificationAreaAt?: string | null;
   donationRequestCodes: string[];
 }
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
@@ -89,6 +109,46 @@ export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
 export interface BulkWarehouseHandoffResult {
   sent: number;
   skipped: number;
+}
+
+export interface ClassificationManagementBoard {
+  warehouses: { id: string; name: string; address: string }[];
+  staff: {
+    id: string;
+    fullName: string;
+    userName: string;
+    phoneNumber: string;
+    warehouseId?: string | null;
+  }[];
+  teams: {
+    id: string;
+    shiftId: string;
+    teamName: string;
+    status: string;
+    shiftDate: string;
+    startTime: string;
+    endTime: string;
+    warehouseId: string;
+    warehouseName: string;
+    startedAt?: string | null;
+    completedAt?: string | null;
+    members: { id: string; fullName: string; phoneNumber: string }[];
+    assignedBatches: number;
+    completedBatches: number;
+  }[];
+  batches: {
+    id: string;
+    batchCode: string;
+    status: string;
+    warehouseId: string;
+    warehouseName: string;
+    totalWeight: number;
+    donationRequests: number;
+    teamId?: string | null;
+    teamName?: string | null;
+    currentAreaName?: string | null;
+    sentAt?: string | null;
+  }[];
 }
 
 export const classificationService = {
@@ -101,13 +161,30 @@ export const classificationService = {
   startBatch: (id: string) => apiClient.post(`/classification-operations/batches/${id}/start`),
   confirmReceipt: (id: string) =>
     apiClient.post(`/classification-operations/batches/${id}/confirm-receipt`),
+  countBatch: (id: string, payload: { itemCount: number; totalWeightKg: number; notes?: string }) =>
+    apiClient.put(`/classification-operations/batches/${id}/count`, payload),
   classifyItem: (id: string, payload: ClassifyItemPayload) =>
     apiClient.post<unknown, ClassifiedItem>(
       `/classification-operations/batches/${id}/items`,
       payload,
     ),
+  updateItem: (batchId: string, itemId: string, payload: ClassifyItemPayload) =>
+    apiClient.put<unknown, ClassifiedItem>(
+      `/classification-operations/batches/${batchId}/items/${itemId}`,
+      payload,
+    ),
+  deleteItem: (batchId: string, itemId: string) =>
+    apiClient.delete(`/classification-operations/batches/${batchId}/items/${itemId}`),
   completeBatch: (id: string) =>
     apiClient.post(`/classification-operations/batches/${id}/complete`),
+  startTeam: (id: string) => apiClient.post(`/classification-operations/teams/${id}/start`),
+  completeTeam: (id: string) => apiClient.post(`/classification-operations/teams/${id}/complete`),
+  getManagementBoard: (warehouseId?: string, date?: string) =>
+    apiClient.get<unknown, ClassificationManagementBoard>('/classification-management/board', {
+      params: { warehouseId, date },
+    }),
+  assignBatch: (batchId: string, teamId: string) =>
+    apiClient.post(`/classification-management/batches/${batchId}/assign`, { teamId }),
   getGroupedBatches: (date?: string) =>
     apiClient.get<unknown, GroupedClassifiedBatch[]>('/classification-operations/grouped-batches', {
       params: { date },

@@ -25,11 +25,16 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
           pending: batches.filter(
             (b) =>
               b.status === 'PendingConfirmation' ||
-              b.status === 'PendingClassification' ||
+              b.status === 'AwaitingClassificationCount' ||
+              b.status === 'ReadyForClassification' ||
               b.status === 'Classifying',
           ).length,
-          classified: batches.filter((b) => b.status === 'Classified').length,
-          grouped: groupedBatches.filter((batch) => batch.status === 'Open').length,
+          classified: batches.filter(
+            (b) => b.status === 'Classified' || b.status === 'InClassifiedArea',
+          ).length,
+          grouped: groupedBatches.filter(
+            (batch) => batch.status === 'Open' && batch.placedInClassificationAreaAt,
+          ).length,
           sentToWarehouse: groupedBatches.filter((batch) => batch.status !== 'Open').length,
         });
       } catch {
@@ -69,7 +74,7 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
     },
     {
       to: '/classification/groups',
-      label: 'Batch đã gom nhóm',
+      label: 'Khu vực đồ đã phân loại',
       icon: Boxes,
       count: counts.grouped,
       matchPrefixes: ['/classification/groups'],

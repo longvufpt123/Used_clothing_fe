@@ -31,10 +31,12 @@ const selectedMarker = L.divIcon({
 export default function AddressSearchMap({
   value,
   onChange,
+  onLocationChange,
   required,
 }: {
   value: string;
   onChange: (address: string) => void;
+  onLocationChange?: (location: { lat: number; lon: number } | null) => void;
   required?: boolean;
 }) {
   const [results, setResults] = useState<AddressResult[]>([]);
@@ -103,6 +105,7 @@ export default function AddressSearchMap({
     };
     skipNextSearch.current = true;
     setSelected(point);
+    onLocationChange?.({ lat: point.lat, lon: point.lon });
     onChange(point.address);
     setResults([]);
     setMessage('');
@@ -112,6 +115,7 @@ export default function AddressSearchMap({
   const clear = () => {
     onChange('');
     setSelected(null);
+    onLocationChange?.(null);
     setResults([]);
     setMessage('');
     setOpen(false);
@@ -132,6 +136,7 @@ export default function AddressSearchMap({
           onChange={(event) => {
             onChange(event.target.value);
             setSelected(null);
+            onLocationChange?.(null);
             setOpen(true);
           }}
         />

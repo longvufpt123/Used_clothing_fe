@@ -367,11 +367,8 @@ export const Dashboard: React.FC = () => {
         <div className="ops-section-head">
           <div>
             <span className="rcv-section-kicker">Phân công hiện tại</span>
-            <h2 id="receiving-team-title">Thông tin team của tôi</h2>
+            <h2 id="receiving-team-title">Thông tin nhóm của tôi</h2>
           </div>
-          <span>
-            {filteredAssignedTeams.length}/{assignedTeams.length} team / ca
-          </span>
         </div>
 
         <div className="rcv-team-filter">
@@ -424,7 +421,7 @@ export const Dashboard: React.FC = () => {
                     <Users size={21} />
                   </span>
                   <div>
-                    <span>Receiving team</span>
+                    <span>Nhóm tiếp nhận</span>
                     <h3>{team.teamName || 'Chưa đặt tên team'}</h3>
                   </div>
                   <span className="rcv-member-count">{team.members.length} thành viên</span>

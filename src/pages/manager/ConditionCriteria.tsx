@@ -105,7 +105,7 @@ export default function ConditionCriteria() {
           <div className="ops-pagehead-main">
             <span className="ops-pagehead-kicker">Cấu hình phân loại</span>
             <h1>Tiêu chí đánh giá tình trạng</h1>
-            <p>Quản lý các câu hỏi A/B/C mà Classification Staff sử dụng khi kiểm tra từng item.</p>
+            <p>Quản lý các câu hỏi A/B/C mà Nhân viên phân loại sử dụng khi phân loại.</p>
           </div>
           <button className="ops-btn ops-btn-primary" onClick={create}>
             <Plus size={16} /> Thêm tiêu chí

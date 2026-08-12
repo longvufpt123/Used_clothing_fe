@@ -21,6 +21,7 @@ import ManagerDashboard from '@/pages/manager/Dashboard';
 import ManagerCollectionSchedule from '@/pages/manager/CollectionSchedule';
 import ManagerShiftCalendar from '@/pages/manager/ShiftCalendar';
 import ManagerDispatchOperations from '@/pages/manager/DispatchOperations';
+import ManagerClassificationDispatch from '@/pages/manager/ClassificationDispatch';
 import ManagerCharityInventory from '@/pages/manager/CharityInventory';
 import ManagerCampaigns from '@/pages/manager/Campaigns';
 import ManagerUsers from '@/pages/manager/Users';
@@ -247,6 +248,14 @@ export const AppRoutes: React.FC = () => {
         element={
           <RoleRoute role="Manager">
             <ManagerCharityInventory />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/manager/classification-dispatch"
+        element={
+          <RoleRoute role="Manager">
+            <ManagerClassificationDispatch />
           </RoleRoute>
         }
       />

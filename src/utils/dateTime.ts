@@ -11,6 +11,14 @@ export const parseUtcTimestamp = (value: string | null | undefined): Date | null
   return Number.isNaN(result.getTime()) ? null : result;
 };
 
+/** Parse a SQL datetime2 value stored as Vietnam local wall-clock time. */
+export const parseVietnamTimestamp = (value: string | null | undefined): Date | null => {
+  if (!value) return null;
+  const normalized = HAS_TIME_ZONE.test(value) ? value : `${value}+07:00`;
+  const result = new Date(normalized);
+  return Number.isNaN(result.getTime()) ? null : result;
+};
+
 export const vietnamDateKeyFromUtc = (value: string | null | undefined): string => {
   const date = parseUtcTimestamp(value);
   if (!date) return '';

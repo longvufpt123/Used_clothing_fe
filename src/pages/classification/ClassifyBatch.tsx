@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, CheckCircle, ImagePlus, Save, X } from 'lucide-react';
+import { ChevronLeft, CheckCircle, ImagePlus, Pencil, Save, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import {
   classificationService,
   type ClassificationBatchDetail,
   type ClassificationCatalog,
+  type ClassifiedItem,
 } from '@/services/classificationService';
 import { uploadImages } from '@/utils/uploadImages';
+import { getStatusLabel } from '@/utils/statusLabels';
+import {
+  getProcessingDirectionClass,
+  getProcessingDirectionLabel,
+} from '@/utils/processingDirection';
 import '@/styles/ops-shared.css';
 
 const empty = {
@@ -29,6 +36,10 @@ export default function ClassifyBatch() {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<ClassifiedItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const load = async () => {
     if (!batchId) return;
     try {
@@ -83,27 +94,36 @@ export default function ClassifyBatch() {
       toast.error('Vui lòng trả lời đầy đủ các bước.');
       return;
     }
-    if (!images.length) {
+    if (!images.length && !existingImages.length) {
       toast.error('Vui lòng tải lên ít nhất một hình ảnh của item.');
       return;
     }
     setSaving(true);
     try {
-      const imageUrls = await uploadImages(
+      const uploadedImageUrls = await uploadImages(
         images.map((x) => x.file),
         'classified-items',
       );
-      const item = await classificationService.classifyItem(batchId, {
+      const payload = {
         ...form,
-        imageUrls,
+        imageUrls: [...existingImages, ...uploadedImageUrls],
         answers: catalog.conditionQuestions.map((q) => ({
           questionId: q.id,
           answerId: form.answers[q.id],
         })),
-      });
-      toast.success(`Đã lưu ${item.itemCode} — Loại ${item.conditionGrade}.`);
+      };
+      const item = editingItemId
+        ? await classificationService.updateItem(batchId, editingItemId, payload)
+        : await classificationService.classifyItem(batchId, payload);
+      toast.success(
+        editingItemId
+          ? `Đã cập nhật ${item.itemCode}.`
+          : `Đã lưu ${item.itemCode} — Loại ${item.conditionGrade}.`,
+      );
       images.forEach((x) => URL.revokeObjectURL(x.preview));
       setImages([]);
+      setExistingImages([]);
+      setEditingItemId(null);
       setForm(empty);
       await load();
     } catch (e: any) {
@@ -112,17 +132,58 @@ export default function ClassifyBatch() {
       setSaving(false);
     }
   };
+  const editItem = (item: ClassifiedItem) => {
+    setEditingItemId(item.id);
+    setExistingImages(item.imageUrls ?? []);
+    setImages([]);
+    setForm({
+      fabricTypeId: item.fabricTypeId ?? '',
+      garmentGroupId: item.garmentGroupId ?? '',
+      clothingTypeId: item.clothingTypeId ?? '',
+      genderId: item.genderId ?? '',
+      targetUserId: item.targetUserId ?? '',
+      sizeId: item.sizeId ?? '',
+      notes: item.notes ?? '',
+      answers: Object.fromEntries((item.answers ?? []).map((x) => [x.questionId, x.answerId])),
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const cancelEdit = () => {
+    images.forEach((x) => URL.revokeObjectURL(x.preview));
+    setImages([]);
+    setExistingImages([]);
+    setEditingItemId(null);
+    setForm(empty);
+  };
+  const deleteItem = async () => {
+    if (!batchId || !pendingDeleteItem || deleting) return;
+    setDeleting(true);
+    try {
+      await classificationService.deleteItem(batchId, pendingDeleteItem.id);
+      if (editingItemId === pendingDeleteItem.id) cancelEdit();
+      toast.success(`Đã xóa ${pendingDeleteItem.itemCode}. Bạn có thể phân loại lại item này.`);
+      setPendingDeleteItem(null);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Không thể xóa item đã phân loại.');
+    } finally {
+      setDeleting(false);
+    }
+  };
   const complete = async () => {
     if (!batchId) return;
     try {
       await classificationService.completeBatch(batchId);
-      toast.success('Đã hoàn tất Intake Batch.');
+      toast.success('Đã hoàn tất và đưa batch vào khu vực đồ đã phân loại.');
       nav('/classification');
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không thể hoàn tất batch.');
     }
   };
   if (!batch || !catalog) return <div className="ops-page">Đang tải...</div>;
+  const countedItemCount = batch.countedItemCount ?? 0;
+  const isClassificationComplete =
+    countedItemCount > 0 && batch.items.length >= countedItemCount;
   return (
     <div className="ops-page">
       <div className="ops-nav">
@@ -131,31 +192,39 @@ export default function ClassifyBatch() {
         </button>
         <div className="ops-title-row">
           <h1>{batch.batchCode}</h1>
-          <span className="ops-badge pending">{batch.status}</span>
+          <span className="ops-badge pending">{getStatusLabel(batch.status)}</span>
         </div>
       </div>
       <div className="ops-panel glass">
-        <span className="ops-panel-label">Tiến độ</span>
+        <span className="ops-panel-label">Bước 2 · Tiến hành phân loại</span>
         <h2>{batch.routeName}</h2>
         <div className="ops-kv-grid">
           <div className="ops-kv">
-            <span>Khối lượng</span>
-            <strong>{batch.totalWeight} kg</strong>
+            <span>Kiểm đếm thực tế</span>
+            <strong>{batch.countedItemCount ?? 0} món · {batch.countedTotalWeight ?? 0} kg</strong>
           </div>
           <div className="ops-kv">
             <span>Đơn quyên góp</span>
             <strong>{batch.donationRequests}</strong>
           </div>
           <div className="ops-kv">
-            <span>Item đã phân loại</span>
-            <strong>{batch.items.length}</strong>
+            <span>Tiến độ phân loại</span>
+            <strong>{batch.items.length}/{batch.countedItemCount ?? 0} món</strong>
           </div>
         </div>
       </div>
+      {!isClassificationComplete || editingItemId ? (
       <div className="ops-form-grid two-col">
         <section className="ops-panel glass">
           <span className="ops-panel-label">Thuộc tính định danh</span>
-          <h2>Item mới #{batch.items.length + 1}</h2>
+          <div className="ops-section-head">
+            <h2>{editingItemId ? 'Chỉnh sửa item đã phân loại' : `Item mới #${batch.items.length + 1}`}</h2>
+            {editingItemId && (
+              <button type="button" className="ops-btn ops-btn-secondary" onClick={cancelEdit}>
+                <X size={16} /> Hủy chỉnh sửa
+              </button>
+            )}
+          </div>
           {[
             ['Loại vải', 'fabricTypeId', catalog.fabricTypes],
             ['Nhóm trang phục', 'garmentGroupId', catalog.garmentGroups],
@@ -210,6 +279,22 @@ export default function ClassifyBatch() {
                 ))}
               </div>
             )}
+            {existingImages.length > 0 && (
+              <div className="ops-image-grid">
+                {existingImages.map((url) => (
+                  <div className="ops-image-preview" key={url}>
+                    <img src={url} alt="Ảnh item hiện tại" />
+                    <button
+                      type="button"
+                      aria-label="Xóa ảnh"
+                      onClick={() => setExistingImages((current) => current.filter((x) => x !== url))}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="ops-field">
             <label>Ghi chú</label>
@@ -249,21 +334,31 @@ export default function ClassifyBatch() {
               disabled={saving}
               onClick={save}
             >
-              <Save size={16} /> {saving ? 'Đang lưu...' : 'Lưu item và phân loại tự động'}
+              <Save size={16} />{' '}
+              {saving ? 'Đang lưu...' : editingItemId ? 'Lưu thay đổi' : 'Lưu item và phân loại tự động'}
             </button>
           </div>
         </section>
       </div>
+      ) : (
+        <section className="ops-panel glass ops-classification-complete">
+          <CheckCircle size={38} />
+          <div>
+            <span className="ops-panel-label">Bước 2 đã hoàn tất</span>
+            <h2>Đã phân loại xong {countedItemCount}/{countedItemCount} món</h2>
+            <p>
+              Không còn item nào cần phân loại. Hãy kiểm tra danh sách bên dưới và hoàn tất
+              batch để đưa hàng vào khu vực đồ đã phân loại.
+            </p>
+          </div>
+          <button className="ops-btn ops-btn-primary" onClick={complete}>
+            <CheckCircle size={16} /> Hoàn tất &amp; chuyển sang khu vực đồ đã phân loại
+          </button>
+        </section>
+      )}
       <section className="ops-panel glass">
         <div className="ops-section-head">
-          <h2>Item đã hoàn thành</h2>
-          <button
-            className="ops-btn ops-btn-secondary"
-            disabled={!batch.items.length}
-            onClick={complete}
-          >
-            <CheckCircle size={16} /> Hoàn tất batch
-          </button>
+          <h2>Đã hoàn thành phân loại</h2>
         </div>
         <div className="ops-item-list">
           {batch.items.map((i) => (
@@ -279,12 +374,44 @@ export default function ClassifyBatch() {
                   {i.fabricType} · {i.clothingType} · {i.gender} · {i.targetUser} · {i.size}
                 </span>
               </div>
-              <span className="ops-badge done">{i.processingDirection}</span>
+              <span
+                className={`ops-badge processing-${getProcessingDirectionClass(i.processingDirection)}`}
+              >
+                {getProcessingDirectionLabel(i.processingDirection)}
+              </span>
+              <div className="ops-item-actions">
+                <button type="button" className="ops-icon-btn" onClick={() => editItem(i)} title="Chỉnh sửa">
+                  <Pencil size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="ops-icon-btn danger"
+                  onClick={() => setPendingDeleteItem(i)}
+                  title="Xóa"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))}
           {!batch.items.length && <p>Chưa có item nào được phân loại.</p>}
         </div>
       </section>
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteItem)}
+        title="Xóa kết quả phân loại"
+        message={
+          pendingDeleteItem
+            ? `Bạn có chắc muốn xóa ${pendingDeleteItem.itemCode}?`
+            : ''
+        }
+        confirmText="Xóa"
+        cancelText="Đóng"
+        tone="danger"
+        isLoading={deleting}
+        onConfirm={deleteItem}
+        onCancel={() => setPendingDeleteItem(null)}
+      />
     </div>
   );
 }

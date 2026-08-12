@@ -25,6 +25,7 @@ import Pagination from '@/components/common/Pagination';
 import apiClient from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { getStatusLabel } from '@/utils/statusLabels';
 import './MyOrders.css';
 
 interface DonorRequestSearchApiResponse {
@@ -224,7 +225,7 @@ export const MyOrders: React.FC = () => {
     () =>
       Array.from(
         new Map(
-          (orders || []).map((order) => [order.status, order.statusText || order.status]),
+          (orders || []).map((order) => [order.status, getStatusLabel(order.status)]),
         ).entries(),
       ).sort((a, b) => a[1].localeCompare(b[1], 'vi')),
     [orders],
@@ -594,7 +595,7 @@ export const MyOrders: React.FC = () => {
                     </div>
                     <div className="order-header-actions">
                       <span className={`order-status ${getStatusToneClass(order.status)}`}>
-                        {order.statusText}
+                        {getStatusLabel(order.status)}
                       </span>
                       {isModifiable && !isEditing && (
                         <div className="order-actions">
@@ -854,7 +855,7 @@ export const MyOrders: React.FC = () => {
               </button>
             </header>
             <span className={`order-status ${getStatusToneClass(selectedOrder.status)}`}>
-              {selectedOrder.statusText}
+              {getStatusLabel(selectedOrder.status)}
             </span>
             <div className="order-detail-grid">
               <div>

@@ -86,10 +86,10 @@ export const Team: React.FC = () => {
       <header className="ops-pagehead">
         <div className="ops-pagehead-main">
           <span className="ops-pagehead-kicker">Nhân sự tiếp nhận</span>
-          <h1>Team của tôi</h1>
+          <h1>Nhóm của tôi</h1>
           <p>
             Xem thành viên đồng hành, thông tin liên hệ, ca làm việc, kho xuất phát và các lô thu
-            gom mà team đang phụ trách.
+            gom mà nhóm đang phụ trách.
           </p>
         </div>
       </header>
@@ -105,9 +105,6 @@ export const Team: React.FC = () => {
             onChange={(event) => setTeamDate(event.target.value)}
           />
         </div>
-        <span className="rcv-team-filter-result">
-          {filteredTeams.length}/{teams.length} team
-        </span>
         {teamDate && (
           <button
             type="button"
@@ -152,7 +149,7 @@ export const Team: React.FC = () => {
                   <Users size={24} />
                 </span>
                 <div>
-                  <span>Receiving team</span>
+                  <span>Nhóm tiếp nhận</span>
                   <h2>{team.teamName || 'Chưa đặt tên team'}</h2>
                 </div>
                 <span

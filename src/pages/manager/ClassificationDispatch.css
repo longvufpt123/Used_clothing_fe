@@ -1,0 +1,336 @@
+.classification-dispatch {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.classification-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.classification-day-card {
+  max-width: none;
+  height: fit-content;
+  align-self: start;
+}
+
+.classification-dispatch .manager-workday-list {
+  align-items: start;
+}
+
+.classification-dispatch .manager-workday-shifts {
+  flex: 0 0 auto;
+}
+
+.classification-shift-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.classification-shift-list .manager-day-shift + .manager-day-shift {
+  border-top: 0;
+  border-left: 1px solid var(--color-border);
+}
+
+.classification-shift-team-names {
+  display: grid;
+  gap: 5px;
+}
+
+.classification-shift-team-names > span {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 2px;
+  border-bottom: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+}
+
+.classification-shift-team-names b {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.classification-shift-team-names small {
+  color: var(--color-text-muted);
+}
+
+.classification-empty-inline {
+  grid-column: 1 / -1;
+  min-height: 120px;
+}
+
+.classification-list-toolbar,
+.classification-batch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-secondary);
+}
+
+.classification-list-toolbar > label,
+.classification-batch-toolbar > label {
+  display: flex;
+  min-width: min(380px, 100%);
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+}
+
+.classification-list-toolbar svg,
+.classification-batch-toolbar svg {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+}
+
+.classification-list-toolbar input,
+.classification-batch-toolbar input {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.classification-list-toolbar > span,
+.classification-batch-toolbar > span {
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.classification-batch-toolbar select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.classification-team-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.classification-team-grid > .ops-empty,
+.classification-batch-grid > .ops-empty {
+  grid-column: 1 / -1;
+}
+
+.classification-team-card,
+.classification-batch-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 14px;
+  background: linear-gradient(155deg, var(--color-bg-secondary), var(--color-bg-primary));
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.classification-team-card:hover,
+.classification-batch-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+}
+
+.classification-team-card .ops-card-top,
+.classification-batch-card .ops-card-top {
+  align-items: flex-start;
+}
+
+.classification-team-card .ops-card-top > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.classification-team-card .ops-card-top strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classification-team-card .ops-card-top small {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+}
+
+.classification-member-row {
+  display: grid;
+  gap: 7px;
+}
+
+.classification-member-row > span {
+  display: grid;
+  gap: 2px;
+  padding: 8px 9px;
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+  font-size: 0.72rem;
+}
+
+.classification-member-row small {
+  color: var(--color-text-muted);
+}
+
+.classification-team-load,
+.classification-assigned-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: var(--color-primary-light);
+  color: var(--color-text-secondary);
+  font-size: 0.74rem;
+}
+
+.classification-team-load strong,
+.classification-assigned-team strong {
+  color: var(--color-primary);
+}
+
+.classification-batch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.classification-batch-card .ops-card-code {
+  overflow: hidden;
+  color: var(--color-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classification-batch-card > p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+}
+
+.classification-batch-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.classification-batch-metrics > span {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+}
+
+.classification-batch-metrics small {
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+}
+
+.classification-card-action {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.classification-card-action label {
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.classification-card-action select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.classification-card-action small {
+  color: var(--color-warning);
+  font-size: 0.68rem;
+}
+
+.classification-modal-head {
+  align-items: flex-start;
+}
+
+.classification-modal-head p {
+  margin-top: 5px;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+}
+
+.classification-modal-staff-list {
+  max-height: 310px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.classification-modal-staff-list em {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.classification-spin {
+  animation: classificationRotate 0.8s linear infinite;
+}
+
+@keyframes classificationRotate {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1500px) {
+  .classification-team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1050px) {
+  .classification-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .classification-team-grid,
+  .classification-batch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .classification-summary,
+  .classification-shift-list,
+  .classification-team-grid,
+  .classification-batch-grid { grid-template-columns: 1fr; }
+  .classification-shift-list .manager-day-shift + .manager-day-shift {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+  .classification-list-toolbar,
+  .classification-batch-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .classification-list-toolbar > label,
+  .classification-batch-toolbar > label { min-width: 0; }
+}

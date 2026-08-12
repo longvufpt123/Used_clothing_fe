@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Search,
   PlusCircle,
@@ -40,22 +40,33 @@ interface UploadedImage {
   previewUrl: string;
 }
 
-interface WarehouseOption {
-  id: string;
-  address: string;
-}
-
 interface CreateDonationPayload {
   pickupDate: string;
   description: string;
   imageUrls: string[];
   estimateWeight: number;
   pickupAddress: string;
-  warehouseId: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
   contactName: string;
   contactPhoneNumber: string;
   deliveryMethod: 'StaffPickup' | 'DonorDropOff';
+  warehouseId?: string;
 }
+
+interface WarehouseOption {
+  id: string;
+  warehouseName: string;
+  address: string;
+}
+
+const PICKUP_TIME_OPTIONS = Array.from({ length: 19 }, (_, index) => {
+  const totalMinutes = 8 * 60 + index * 30;
+  const hour = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+  const minute = String(totalMinutes % 60).padStart(2, '0');
+  const value = `${hour}:${minute}`;
+  return { value, label: value };
+});
 
 interface DonorRequestSearchApiResponse {
   id: string;
@@ -83,7 +94,6 @@ interface CreateDonationResponse {
 }
 
 const MAX_DONATION_IMAGES = 5;
-const PICKUP_CUTOFF_MINUTES = 11 * 60;
 
 const toLocalDateInputValue = (date: Date) => {
   const year = date.getFullYear();
@@ -91,7 +101,6 @@ const toLocalDateInputValue = (date: Date) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
 const getVietnamNow = () =>
   new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
 
@@ -99,8 +108,7 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 const getEarliestPickupDate = () => {
   const date = getVietnamNow();
-  const currentMinutes = date.getHours() * 60 + date.getMinutes();
-  if (currentMinutes >= PICKUP_CUTOFF_MINUTES) {
+  if (date.getHours() * 60 + date.getMinutes() >= 17 * 60) {
     date.setDate(date.getDate() + 1);
   }
   while (isWeekend(date)) {
@@ -115,6 +123,18 @@ const isPickupDateInputWeekend = (value: string) => {
   if (!value) return false;
   const [year, month, day] = value.split('-').map(Number);
   return isWeekend(new Date(year, month - 1, day));
+};
+
+const getAvailablePickupTimes = (pickupDate: string) => {
+  const vietnamNow = getVietnamNow();
+  const today = toLocalDateInputValue(vietnamNow);
+  const currentMinutes = vietnamNow.getHours() * 60 + vietnamNow.getMinutes();
+
+  return PICKUP_TIME_OPTIONS.filter((option) => {
+    if (pickupDate !== today) return true;
+    const [hour, minute] = option.value.split(':').map(Number);
+    return hour * 60 + minute > currentMinutes;
+  });
 };
 
 const estimateWeightByOption: Record<string, number> = {
@@ -212,7 +232,6 @@ const INITIAL_DONATIONS: DonationRequest[] = [
 export const Products: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const showToastError = toast.error;
   const [activeTab, setActiveTab] = useState<'register' | 'tracker'>('register');
   const [, setDonations] = useState<DonationRequest[]>(INITIAL_DONATIONS);
 
@@ -226,13 +245,28 @@ export const Products: React.FC = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<'StaffPickup' | 'DonorDropOff'>(
     'StaffPickup',
   );
-  const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
+  const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
+  const [pickupLocation, setPickupLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [selectedPickupTime, setSelectedPickupTime] = useState('');
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<UploadedImage[]>([]);
-  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
-  const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const availablePickupTimes = useMemo(() => getAvailablePickupTimes(pickupDate), [pickupDate]);
+
+  useEffect(() => {
+    apiClient
+      .get<unknown, WarehouseOption[]>('/warehouses')
+      .then((data) => setWarehouses((data || []).filter((warehouse: any) => warehouse.isActive !== false)))
+      .catch(() => toast.error('Không thể tải danh sách kho tiếp nhận.'));
+  }, [toast]);
+
+  useEffect(() => {
+    if (!availablePickupTimes.some((option) => option.value === selectedPickupTime)) {
+      setSelectedPickupTime('');
+    }
+  }, [pickupDate, selectedPickupTime, availablePickupTimes]);
 
   // Tracking states
   const [searchPhone, setSearchPhone] = useState('');
@@ -258,42 +292,6 @@ export const Products: React.FC = () => {
     { value: 'recycle', label: 'Cũ rách, mục hỏng (Dành để tái chế dệt lại)' },
     { value: 'mixed', label: 'Hỗn hợp (Có cả đồ từ thiện và đồ tái chế)' },
   ];
-  const warehouseOptions = warehouses.map((warehouse) => ({
-    value: warehouse.id,
-    label: warehouse.address,
-  }));
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadWarehouses = async () => {
-      setWarehouseLoading(true);
-      try {
-        const data = await apiClient.get<unknown, WarehouseOption[]>('/warehouses');
-        if (!isMounted) {
-          return;
-        }
-
-        setWarehouses(data);
-        setWarehouseId((prev) => prev || data[0]?.id || '');
-      } catch {
-        if (isMounted) {
-          showToastError('Khong the tai danh sach kho nhan hang.');
-        }
-      } finally {
-        if (isMounted) {
-          setWarehouseLoading(false);
-        }
-      }
-    };
-
-    loadWarehouses();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [showToastError]);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith('image/'));
@@ -391,8 +389,10 @@ export const Products: React.FC = () => {
     if (
       !name ||
       !phone ||
-      !warehouseId ||
-      (deliveryMethod === 'StaffPickup' && (!address || !pickupDate))
+      !pickupDate ||
+      !selectedPickupTime ||
+      (deliveryMethod === 'StaffPickup' && (!address || !pickupLocation)) ||
+      (deliveryMethod === 'DonorDropOff' && !warehouseId)
     ) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
       return;
@@ -416,7 +416,7 @@ export const Products: React.FC = () => {
         conditionOptions.find((o) => o.value === condition)?.label || 'Còn tốt';
 
       const payload: CreateDonationPayload = {
-        pickupDate: `${pickupDate}T00:00:00`,
+        pickupDate: `${pickupDate}T${selectedPickupTime}:00`,
         description: [
           `Nguoi quyen gop: ${name}`,
           `So dien thoai: ${phone}`,
@@ -429,11 +429,16 @@ export const Products: React.FC = () => {
           .join('\n'),
         imageUrls,
         estimateWeight: estimateWeightByOption[weight] ?? 0,
-        pickupAddress: deliveryMethod === 'StaffPickup' ? address : '',
-        warehouseId,
+        pickupAddress:
+          deliveryMethod === 'DonorDropOff'
+            ? warehouses.find((warehouse) => warehouse.id === warehouseId)?.address || ''
+            : address,
+        pickupLatitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lat : 0,
+        pickupLongitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lon : 0,
         contactName: name.trim(),
         contactPhoneNumber: phone.trim(),
         deliveryMethod,
+        warehouseId: deliveryMethod === 'DonorDropOff' ? warehouseId : undefined,
       };
 
       const response = await apiClient.post<unknown, CreateDonationResponse>(
@@ -448,10 +453,7 @@ export const Products: React.FC = () => {
         category: selectedCategoryLabel,
         weight: selectedWeightLabel,
         condition: selectedConditionLabel,
-        address:
-          deliveryMethod === 'StaffPickup'
-            ? payload.pickupAddress
-            : warehouses.find((x) => x.id === warehouseId)?.address || 'Kho tiếp nhận đã chọn',
+        address: payload.pickupAddress,
         imageUrls,
         status: 'pending',
         statusText:
@@ -467,7 +469,10 @@ export const Products: React.FC = () => {
       setName('');
       setPhone('');
       setAddress('');
+      setPickupLocation(null);
+      setSelectedPickupTime('');
       setDeliveryMethod('StaffPickup');
+      setWarehouseId('');
       setPickupDate(getDefaultPickupDate());
       setNotes('');
       images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
@@ -605,7 +610,7 @@ export const Products: React.FC = () => {
               </div>
 
               <Select
-                label="Tình trạng quần áo cũ"
+                label="Tình trạng quần áo"
                 options={conditionOptions}
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
@@ -621,20 +626,43 @@ export const Products: React.FC = () => {
                   { value: 'DonorDropOff', label: 'Tôi sẽ tự mang quần áo đến kho' },
                 ]}
                 value={deliveryMethod}
-                onChange={(e) =>
-                  setDeliveryMethod(e.target.value as 'StaffPickup' | 'DonorDropOff')
-                }
+                onChange={(e) => {
+                  const method = e.target.value as 'StaffPickup' | 'DonorDropOff';
+                  setDeliveryMethod(method);
+                  if (method === 'StaffPickup') setWarehouseId('');
+                  else {
+                    setAddress('');
+                    setPickupLocation(null);
+                  }
+                }}
               />
 
               {deliveryMethod === 'StaffPickup' ? (
-                <AddressSearchMap value={address} onChange={setAddress} required />
+                <AddressSearchMap
+                  value={address}
+                  onChange={setAddress}
+                  onLocationChange={setPickupLocation}
+                  required
+                />
               ) : (
                 <div className="input-wrapper">
-                  <label className="input-label">Địa chỉ gửi hàng</label>
-                  <div className="custom-input" style={{ padding: '12px 14px' }}>
-                    {warehouses.find((x) => x.id === warehouseId)?.address ||
-                      'Vui lòng chọn kho tiếp nhận bên dưới'}
-                  </div>
+                  <label className="input-label" htmlFor="dropoff-warehouse">
+                    Kho tiếp nhận *
+                  </label>
+                  <select
+                    id="dropoff-warehouse"
+                    className="custom-input"
+                    value={warehouseId}
+                    onChange={(event) => setWarehouseId(event.target.value)}
+                    required
+                  >
+                    <option value="">Chọn kho bạn sẽ mang quần áo đến</option>
+                    {warehouses.map((warehouse) => (
+                      <option value={warehouse.id} key={warehouse.id}>
+                        {warehouse.warehouseName} — {warehouse.address}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -650,25 +678,30 @@ export const Products: React.FC = () => {
                   onChange={setPickupDate}
                   required
                 />
-                <Select
-                  label="Kho tiếp nhận *"
-                  options={
-                    warehouseOptions.length > 0
-                      ? warehouseOptions
-                      : [
-                          {
-                            value: '',
-                            label: warehouseLoading
-                              ? 'Dang tai danh sach kho...'
-                              : 'Khong co kho tiep nhan',
-                          },
-                        ]
-                  }
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
-                  disabled={warehouseLoading || warehouseOptions.length === 0}
-                  required
-                />
+                <div className="input-wrapper">
+                  <label className="input-label" htmlFor="pickup-time">
+                    Giờ tiếp nhận *
+                  </label>
+                  <select
+                    id="pickup-time"
+                    className="custom-input"
+                    value={selectedPickupTime}
+                    onChange={(event) => setSelectedPickupTime(event.target.value)}
+                    required
+                  >
+                    <option value="">Chọn giờ tiếp nhận</option>
+                    {availablePickupTimes.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="input-helper-text">
+                    {availablePickupTimes.length > 0
+                      ? 'Chọn giờ trong giờ hành chính, từ 08:00 đến 17:00.'
+                      : 'Hôm nay đã hết giờ tiếp nhận. Vui lòng chọn ngày làm việc tiếp theo.'}
+                  </small>
+                </div>
               </div>
 
               <div className="input-wrapper">
@@ -724,7 +757,7 @@ export const Products: React.FC = () => {
                 type="submit"
                 isLoading={loading}
                 className="submit-donation-btn"
-                disabled={warehouseLoading || warehouseOptions.length === 0}
+                disabled={!selectedPickupTime}
               >
                 Xác nhận Quyên góp <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </Button>

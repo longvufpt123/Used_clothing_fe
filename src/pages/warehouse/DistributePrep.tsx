@@ -9,6 +9,7 @@ import {
   type DistributionRequest,
 } from '@/utils/warehouseMockDb';
 import '@/styles/ops-shared.css';
+import { getStatusLabel } from '@/utils/statusLabels';
 
 export const DistributePrep: React.FC = () => {
   const { requestId } = useParams<{ requestId: string }>();
@@ -96,11 +97,7 @@ export const DistributePrep: React.FC = () => {
         <div className="ops-title-row">
           <h1>Gom hàng & đóng gói</h1>
           <span className={`ops-badge ${req.status.toLowerCase()}`}>
-            {req.status === 'Pending'
-              ? 'Chờ gom'
-              : req.status === 'Prepared'
-                ? 'Đã đóng gói'
-                : 'Đã gửi'}
+            {getStatusLabel(req.status)}
           </span>
         </div>
       </div>

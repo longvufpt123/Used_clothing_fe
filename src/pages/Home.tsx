@@ -34,7 +34,7 @@ const PROCESS_STEPS = [
 
 const DONATION_GUIDE = [
   'Quần áo khô, sạch và không có vật sắc nhọn bên trong.',
-  'Giày dép, chăn mỏng và phụ kiện còn nguyên vẹn được tiếp nhận cùng quần áo.',
+  'Chăn mỏng và phụ kiện còn nguyên vẹn được tiếp nhận cùng quần áo.',
   'Đồ rách hoặc quá cũ vẫn hữu ích nếu được tách riêng cho mục đích tái chế.',
 ] as const;
 
@@ -61,7 +61,7 @@ export const Home: React.FC = () => {
               </Button>
             </div>
             <p className="home-action-note">
-              Bạn chọn cách bàn giao. Hệ thống hướng dẫn phần còn lại.
+              CHO ĐI LÀ SẼ CÒN NHẬN LẠI!
             </p>
           </div>
 
@@ -108,10 +108,10 @@ export const Home: React.FC = () => {
       <section className="home-ledger" aria-labelledby="ledger-title">
         <div className="container home-ledger-layout">
           <div className="home-ledger-intro">
-            <p className="home-kicker">Từ yêu cầu đến bàn giao</p>
+            <p className="home-kicker">Từ yêu cầu quyên góp đến hướng xử lí</p>
             <h2 id="ledger-title">Theo dõi từng bước từ lúc gửi yêu cầu đến khi bàn giao.</h2>
             <p>
-              ReThreads ghi nhận các bước tiếp nhận, phân loại và điều hướng đồ vào luồng xử lý phù
+              ReThreads ghi nhận tiếp nhận, phân loại và điều hướng đồ vào luồng xử lý phù
               hợp.
             </p>
           </div>

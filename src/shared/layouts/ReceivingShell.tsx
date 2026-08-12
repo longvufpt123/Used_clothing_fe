@@ -49,7 +49,7 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ childr
     },
     {
       to: '/receiving/team',
-      label: 'Team của tôi',
+      label: 'Nhóm của tôi',
       icon: Users,
       count: counts.teams,
       groupLabel: 'NHÂN SỰ',
