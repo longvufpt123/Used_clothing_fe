@@ -1,36 +1,73 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, ClipboardList, Package, Scale } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, ClipboardList, Package, Play, Scale, Square } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
   classificationService,
   type ClassificationBatchSummary,
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
+import { getStatusLabel } from '@/utils/statusLabels';
+
+const PENDING_STATUSES = new Set([
+  'PendingConfirmation',
+  'AssignedToClassification',
+  'AwaitingClassificationCount',
+  'ReadyForClassification',
+  'Classifying',
+]);
+const CLASSIFIED_STATUSES = new Set(['Classified', 'InClassifiedArea']);
 
 export default function ClassificationDashboard() {
   const [batches, setBatches] = useState<ClassificationBatchSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teamBusy, setTeamBusy] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedTab = searchParams.get('tab');
   const toast = useToast();
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     classificationService
       .getBatches()
       .then(setBatches)
-      .catch(() => toast.error('Không tải được danh sách Intake Batch.'))
+      .catch(() => toast.error('Không tải được danh sách lô hàng.'))
       .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load();
   }, [toast]);
+  const currentTeam = batches.find((batch) => batch.teamStatus === 'InProgress') ?? batches[0];
+  const changeTeamStatus = async (complete = false) => {
+    if (!currentTeam?.classificationTeamId) return;
+    setTeamBusy(true);
+    try {
+      if (complete) await classificationService.completeTeam(currentTeam.classificationTeamId);
+      else await classificationService.startTeam(currentTeam.classificationTeamId);
+      toast.success(complete ? 'Đã kết thúc ca phân loại.' : 'Đã bắt đầu ca phân loại.');
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật ca phân loại.');
+    } finally {
+      setTeamBusy(false);
+    }
+  };
+  const visibleBatches = batches.filter((batch) => {
+    if (selectedTab === 'classified') return CLASSIFIED_STATUSES.has(batch.status);
+    if (selectedTab === 'pending') return PENDING_STATUSES.has(batch.status);
+    return true;
+  });
   const open = async (b: ClassificationBatchSummary) => {
     try {
-      if (b.status === 'Classified') {
+      if (CLASSIFIED_STATUSES.has(b.status)) {
         navigate(`/classification/batches/${b.id}`);
         return;
       }
-      if (b.status === 'PendingConfirmation') {
+      if (b.status === 'AssignedToClassification' || b.status === 'PendingConfirmation' || b.status === 'AwaitingClassificationCount') {
         navigate(`/classification/confirm/${b.id}`);
         return;
       }
-      if (b.status === 'PendingClassification') await classificationService.startBatch(b.id);
+      if (b.status === 'ReadyForClassification') await classificationService.startBatch(b.id);
       navigate(`/classification/classify/${b.id}`);
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không thể bắt đầu phân loại.');
@@ -43,41 +80,66 @@ export default function ClassificationDashboard() {
           <span className="ops-pagehead-kicker">Bộ phận Phân loại</span>
           <h1>Phân loại từng vật phẩm</h1>
           <p>
-            Chọn Intake Batch được chuyển từ bộ phận tiếp nhận và đánh giá từng món theo tiêu chí A,
+            Chọn lô hàng được chuyển từ bộ phận tiếp nhận và đánh giá từng món theo tiêu chí A,
             B, C.
           </p>
         </div>
       </header>
+      {currentTeam && (
+        <section className="ops-panel glass" style={{ marginBottom: 20 }}>
+          <div className="ops-section-head">
+            <div>
+              <h2>{currentTeam.classificationTeamName || 'Team phân loại'}</h2>
+              <span>Trạng thái ca: {getStatusLabel(currentTeam.teamStatus || 'Scheduled')}</span>
+            </div>
+            {currentTeam.teamStatus === 'Scheduled' ? (
+              <button className="btn btn-primary" disabled={teamBusy} onClick={() => changeTeamStatus()}>
+                <Play size={16} /> Bắt đầu ca phân loại
+              </button>
+            ) : currentTeam.teamStatus === 'InProgress' ? (
+              <button className="btn btn-danger" disabled={teamBusy} onClick={() => changeTeamStatus(true)}>
+                <Square size={16} /> Kết thúc ca
+              </button>
+            ) : null}
+          </div>
+        </section>
+      )}
       <div className="ops-stats">
         <div className="ops-stat-card">
-          <span className="ops-stat-label">Intake Batch</span>
+          <span className="ops-stat-label">Lô hàng</span>
           <div className="ops-stat-value">
             <Package size={18} />
-            {batches.length}
+            {visibleBatches.length}
           </div>
         </div>
         <div className="ops-stat-card">
           <span className="ops-stat-label">Đang phân loại</span>
           <div className="ops-stat-value">
             <ClipboardList size={18} />
-            {batches.filter((x) => x.status === 'Classifying').length}
+            {visibleBatches.filter((x) => x.status === 'Classifying').length}
           </div>
         </div>
         <div className="ops-stat-card">
           <span className="ops-stat-label">Tổng khối lượng</span>
           <div className="ops-stat-value">
             <Scale size={18} />
-            {batches.reduce((s, x) => s + x.totalWeight, 0).toFixed(1)} kg
+            {visibleBatches.reduce((s, x) => s + x.totalWeight, 0).toFixed(1)} kg
           </div>
         </div>
       </div>
       <section>
         <div className="ops-section-head">
-          <h2>Danh sách Intake Batch</h2>
+          <h2>
+            {selectedTab === 'classified'
+              ? 'Danh sách lô hàng đã phân loại'
+              : selectedTab === 'pending'
+                ? 'Danh sách lô hàng chờ phân loại'
+                : 'Danh sách lô hàng'}
+          </h2>
           <span>{loading ? 'Đang tải...' : 'Chọn một lô để bắt đầu'}</span>
         </div>
         <div className="ops-list">
-          {batches.map((b) => (
+          {visibleBatches.map((b) => (
             <article
               key={b.id}
               className="ops-card"
@@ -93,7 +155,9 @@ export default function ClassificationDashboard() {
                     <span>{b.totalWeight} kg</span>
                   </div>
                 </div>
-                <span className={`ops-badge ${b.status.toLowerCase()}`}>{b.status}</span>
+                <span className={`ops-badge ${b.status.toLowerCase()}`}>
+                  {getStatusLabel(b.status)}
+                </span>
               </div>
               <h3>{b.routeName || 'Tuyến tiếp nhận'}</h3>
               <div className="ops-card-footer">
@@ -101,16 +165,25 @@ export default function ClassificationDashboard() {
                   Đã phân loại: <strong>{b.classifiedItems}</strong> món · {b.donationRequests} đơn
                 </span>
                 <span className="ops-card-action">
-                  {b.status === 'Classified' ? 'Xem chi tiết' : 'Mở lô'} <ArrowRight size={14} />
+                  {CLASSIFIED_STATUSES.has(b.status) ? 'Xem chi tiết' : 'Mở lô'}{' '}
+                  <ArrowRight size={14} />
                 </span>
               </div>
             </article>
           ))}
-          {!loading && batches.length === 0 && (
+          {!loading && visibleBatches.length === 0 && (
             <div className="ops-empty">
               <ClipboardList size={36} />
-              <h4>Chưa có Intake Batch</h4>
-              <p>Batch được gửi sang phân loại sẽ xuất hiện tại đây.</p>
+              <h4>
+                {selectedTab === 'classified'
+                  ? 'Chưa có lô hàng đã phân loại'
+                  : 'Chưa có lô hàng'}
+              </h4>
+              <p>
+                {selectedTab === 'classified'
+                  ? 'Các lô hoàn tất phân loại sẽ xuất hiện tại đây.'
+                  : 'Batch được gửi sang phân loại sẽ xuất hiện tại đây.'}
+              </p>
             </div>
           )}
         </div>

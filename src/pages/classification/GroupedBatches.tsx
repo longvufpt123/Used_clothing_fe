@@ -8,6 +8,7 @@ import {
   type GroupedClassifiedBatch,
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
+import { getProcessingDirectionLabel } from '@/utils/processingDirection';
 
 const localDateValue = () => {
   const now = new Date();
@@ -46,11 +47,14 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
     loadGroups();
   }, [date]);
 
-  const openGroups = useMemo(() => groups.filter((group) => group.status === 'Open'), [groups]);
+  const openGroups = useMemo(
+    () => groups.filter((group) => group.status === 'Open' && group.placedInClassificationAreaAt),
+    [groups],
+  );
   const visibleGroups = useMemo(
     () =>
       view === 'open'
-        ? groups.filter((group) => group.status === 'Open')
+        ? groups.filter((group) => group.status === 'Open' && group.placedInClassificationAreaAt)
         : groups.filter((group) => group.status !== 'Open'),
     [groups, view],
   );
@@ -82,14 +86,14 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
       <header className="ops-pagehead">
         <div className="ops-pagehead-main">
           <span className="ops-pagehead-kicker">
-            {view === 'open' ? 'Batch tổng hợp theo thuộc tính' : 'Lịch sử bàn giao kho'}
+            {view === 'open' ? 'Bước 3 · Khu vực đồ đã phân loại' : 'Lịch sử bàn giao kho'}
           </span>
           <h1>
-            {view === 'open' ? 'Classified Batch chưa gửi kho' : 'Classified Batch đã gửi sang kho'}
+            {view === 'open' ? 'Đồ đã phân loại chờ gửi kho' : 'Classified Batch đã gửi sang kho'}
           </h1>
           <p>
             {view === 'open'
-              ? 'Các item cùng thuộc tính được gom chung và đang chờ bàn giao cho bộ phận kho.'
+              ? 'Các item đã kiểm đếm và phân loại đủ được gom chung, đặt tại khu vực đồ đã phân loại và chờ bàn giao kho.'
               : 'Theo dõi các batch đã bàn giao và trạng thái xử lý hiện tại tại bộ phận kho.'}
           </p>
         </div>
@@ -195,7 +199,7 @@ export default function GroupedBatches({ view = 'open' }: GroupedBatchesProps) {
                   <span>{group.gender}</span>
                   <span>{group.targetUser}</span>
                   <span>Size {group.size}</span>
-                  <span>{group.processingDirection}</span>
+                  <span>{getProcessingDirectionLabel(group.processingDirection)}</span>
                 </div>
                 <div className="ops-card-footer">
                   <span>

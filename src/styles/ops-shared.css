@@ -445,6 +445,32 @@
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
+.ops-badge.processing-charity {
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.ops-badge.processing-recycling {
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.ops-badge.processing-disposal {
+  border: 1px solid rgba(239, 68, 68, 0.36);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+[data-theme='dark'] .ops-badge.processing-recycling {
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .ops-badge.processing-disposal {
+  color: #fb7185;
+}
+
 /* Checklist used on receive / handoff panels */
 .ops-checklist {
   list-style: none;
@@ -1641,4 +1667,71 @@
 .ops-inventory-card .ops-actions .ops-btn {
   flex: 1 1 0;
   justify-content: center;
+}
+
+.ops-classification-complete {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-card));
+}
+
+.ops-classification-complete > svg {
+  color: var(--color-primary);
+}
+
+.ops-classification-complete h2,
+.ops-classification-complete p {
+  margin: 4px 0 0;
+}
+
+.ops-classification-complete p {
+  color: var(--color-text-secondary);
+}
+
+.ops-item-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.ops-icon-btn {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.ops-icon-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+.ops-icon-btn.danger {
+  color: var(--color-danger, #ef4444);
+}
+
+.ops-icon-btn.danger:hover {
+  border-color: var(--color-danger, #ef4444);
+  background: color-mix(in srgb, var(--color-danger, #ef4444) 10%, var(--color-bg-secondary));
+}
+
+@media (max-width: 760px) {
+  .ops-classification-complete {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ops-classification-complete .ops-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
 }

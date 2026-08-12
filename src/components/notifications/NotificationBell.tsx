@@ -2,12 +2,12 @@ import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService, type AppNotification } from '@/services/notificationService';
-import { parseUtcTimestamp } from '@/utils/dateTime';
+import { parseVietnamTimestamp } from '@/utils/dateTime';
 import './NotificationBell.css';
 import './NotificationBellPosition.css';
 
 const timeText = (value: string) => {
-  const date = parseUtcTimestamp(value);
+  const date = parseVietnamTimestamp(value);
   return date
     ? new Intl.DateTimeFormat('vi-VN', {
         timeZone: 'Asia/Ho_Chi_Minh',

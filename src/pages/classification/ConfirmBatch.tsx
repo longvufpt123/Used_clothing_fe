@@ -27,15 +27,26 @@ export const ConfirmBatch: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+  const [itemCount, setItemCount] = useState('');
+  const [countedWeight, setCountedWeight] = useState('');
+  const [countingNotes, setCountingNotes] = useState('');
   const [checks, setChecks] = useState({ seals: false, weight: false, items: false });
 
   useEffect(() => {
     if (!batchId) return;
     classificationService
       .getBatch(batchId)
-      .then((data) => {
+      .then(async (data) => {
         if (data.status !== 'PendingConfirmation') {
-          if (data.status === 'PendingClassification' || data.status === 'Classifying') {
+          if (data.status === 'AwaitingClassificationCount') {
+            setConfirmed(true);
+            setBatch(data);
+            return;
+          }
+          if (data.status === 'ReadyForClassification' || data.status === 'Classifying') {
+            if (data.status === 'ReadyForClassification') {
+              await classificationService.startBatch(data.id);
+            }
             toast.info('Lô hàng này đã được xác nhận trước đó.');
             navigate(`/classification/classify/${data.id}`);
           } else {
@@ -47,7 +58,7 @@ export const ConfirmBatch: React.FC = () => {
         setBatch(data);
       })
       .catch(() => {
-        toast.error('Không tải được thông tin Intake Batch.');
+        toast.error('Không tải được thông tin lô hàng.');
         navigate('/classification');
       })
       .finally(() => setLoadingBatch(false));
@@ -72,7 +83,9 @@ export const ConfirmBatch: React.FC = () => {
       await classificationService.confirmReceipt(batchId);
       setProgress(100);
       setConfirmed(true);
-      setBatch((current) => (current ? { ...current, status: 'PendingClassification' } : current));
+      setBatch((current) =>
+        current ? { ...current, status: 'AwaitingClassificationCount' } : current,
+      );
       toast.success(`Đã xác nhận nhận lô hàng ${batch.batchCode} thành công.`);
     } catch (error: any) {
       setProgress(0);
@@ -83,7 +96,32 @@ export const ConfirmBatch: React.FC = () => {
     }
   };
 
-  if (loadingBatch) return <div className="ops-page">Đang tải Intake Batch...</div>;
+  const handleCountAndContinue = async () => {
+    if (!batchId || submitting) return;
+    const quantity = Number(itemCount);
+    const weight = Number(countedWeight);
+    if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isFinite(weight) || weight <= 0) {
+      toast.error('Số lượng phải là số nguyên dương và tổng kg phải lớn hơn 0.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await classificationService.countBatch(batchId, {
+        itemCount: quantity,
+        totalWeightKg: weight,
+        notes: countingNotes.trim() || undefined,
+      });
+      await classificationService.startBatch(batchId);
+      toast.success(`Đã ghi nhận ${quantity} món, tổng ${weight} kg.`);
+      navigate(`/classification/classify/${batchId}`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể lưu biên bản kiểm đếm.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loadingBatch) return <div className="ops-page">Đang tải lô hàng...</div>;
   if (!batch) return null;
 
   return (
@@ -205,7 +243,7 @@ export const ConfirmBatch: React.FC = () => {
             <p style={{ fontSize: '.84rem', color: 'var(--color-text-muted)', marginBottom: 16 }}>
               Kiểm tra trạng thái kiện hàng thực tế trước khi xác nhận vào hệ thống.
             </p>
-            <ul className="interactive-checklist">
+            {!confirmed && <ul className="interactive-checklist">
               {[
                 [
                   'seals',
@@ -217,7 +255,7 @@ export const ConfirmBatch: React.FC = () => {
                 ],
                 [
                   'items',
-                  `Số lượng và mã Intake Batch trùng khớp với biên bản ${batch.donationRequests} đơn.`,
+                  `Số lượng và mã lô hàng trùng khớp với biên bản ${batch.donationRequests} đơn.`,
                 ],
               ].map(([key, text]) => (
                 <li
@@ -233,7 +271,32 @@ export const ConfirmBatch: React.FC = () => {
                   <div className="checklist-text">{text}</div>
                 </li>
               ))}
-            </ul>
+            </ul>}
+            {confirmed && (
+              <div className="classification-count-form">
+                <div className="ops-field">
+                  <label htmlFor="countedItems">Số lượng quần áo thực tế *</label>
+                  <input id="countedItems" type="number" min="1" step="1" value={itemCount}
+                    onChange={(event) => setItemCount(event.target.value)} placeholder="Ví dụ: 42 món" />
+                </div>
+                <div className="ops-field">
+                  <label htmlFor="countedWeight">Tổng khối lượng thực tế (kg) *</label>
+                  <input id="countedWeight" type="number" min="0.01" step="0.01"
+                    value={countedWeight} onChange={(event) => setCountedWeight(event.target.value)}
+                    placeholder="Ví dụ: 18.5 kg" />
+                </div>
+                <div className="ops-field">
+                  <label htmlFor="countingNotes">Ghi chú chênh lệch / tình trạng lô</label>
+                  <textarea id="countingNotes" value={countingNotes}
+                    onChange={(event) => setCountingNotes(event.target.value)}
+                    placeholder="Ghi rõ nếu số kg thực tế khác biên bản bàn giao..." />
+                </div>
+                <div className="classification-count-comparison">
+                  <span>Khối lượng Receiving bàn giao</span>
+                  <strong>{batch.totalWeight} kg</strong>
+                </div>
+              </div>
+            )}
             <div style={{ marginTop: 'auto', paddingTop: 28 }}>
               {submitting && (
                 <div className="confirm-progress-container">
@@ -263,13 +326,16 @@ export const ConfirmBatch: React.FC = () => {
                   <button
                     type="button"
                     className="premium-btn-island"
-                    onClick={() => navigate(`/classification/classify/${batch.id}`)}
+                    disabled={submitting}
+                    onClick={handleCountAndContinue}
                     style={{
                       background: 'var(--color-text-primary)',
                       color: 'var(--color-bg-primary)',
                     }}
                   >
-                    <span style={{ color: 'var(--color-bg-primary)' }}>Tiến hành phân loại</span>
+                    <span style={{ color: 'var(--color-bg-primary)' }}>
+                      {submitting ? 'Đang lưu kiểm đếm...' : 'Lưu kiểm đếm & bắt đầu phân loại'}
+                    </span>
                     <div
                       className="btn-icon-island"
                       style={{

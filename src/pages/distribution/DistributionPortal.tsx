@@ -22,6 +22,7 @@ import {
   type DistributionRequest,
 } from '@/services/distributionService';
 import { useToast } from '@/context/ToastContext';
+import { getStatusLabel } from '@/utils/statusLabels';
 import ghnAdministrative from '@/ghnAdministrative.json';
 import './DistributionPortal.css';
 import './ProductCatalogModal.css';
@@ -362,7 +363,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               ? 'Duyệt yêu cầu phân phối'
               : 'Xuất kho & giao hàng GHN'}
         </h1>
-        <p>Theo dõi minh bạch từ Classified Batch đến tổ chức tiếp nhận.</p>
+        <p>Theo dõi minh bạch các đơn đã phân loại đến tổ chức tiếp nhận.</p>
       </header>
       {mode === 'organization' && organizationView === 'catalog' && (
         <>
@@ -538,7 +539,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <option value="">Tất cả trạng thái</option>
               {requestStatuses.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {getStatusLabel(status)}
                 </option>
               ))}
             </select>
@@ -598,7 +599,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                     {r.organizationName} → {r.warehouseName}
                   </h3>
                 </div>
-                <span>{r.status}</span>
+                <span>{getStatusLabel(r.status)}</span>
               </div>
               <p>
                 {r.recipientName} · {r.recipientPhone} · {r.toAddress}
@@ -606,7 +607,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <div className="request-summary-meta">
                 <span>{r.items.length} batch</span>
                 {r.issueSlipCode && <span>Đã lập phiếu xuất</span>}
-                {r.ghnOrderCode && <span>GHN: {r.ghnStatus}</span>}
+                {r.ghnOrderCode && <span>GHN: {getStatusLabel(r.ghnStatus)}</span>}
               </div>
               <b className="request-summary-link">Xem chi tiết →</b>
             </article>
@@ -671,7 +672,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <X />
               </button>
             </header>
-            <span className="distribution-detail-status">{detailRequest.status}</span>
+            <span className="distribution-detail-status">{getStatusLabel(detailRequest.status)}</span>
             <div className="request-lines">
               {detailRequest.items.map((item) => (
                 <div key={item.id}>
@@ -703,7 +704,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <div className="ghn-state">
                 <Truck />
                 <b>{detailRequest.ghnOrderCode}</b>
-                <span>{detailRequest.ghnStatus}</span>
+                <span>{getStatusLabel(detailRequest.ghnStatus)}</span>
               </div>
             )}
             {detailRequest.shipmentHistory?.length > 0 && (
@@ -712,7 +713,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   <div key={i}>
                     <i />
                     <span>
-                      <b>{h.status}</b>
+                      <b>{getStatusLabel(h.status)}</b>
                       <small>
                         {new Date(h.occurredAt).toLocaleString('vi-VN')} · {h.description}
                       </small>

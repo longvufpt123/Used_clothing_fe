@@ -9,6 +9,7 @@ import {
 } from '@/services/warehouseService';
 import Pagination from '@/components/common/Pagination';
 import '@/styles/ops-shared.css';
+import { getStatusLabel } from '@/utils/statusLabels';
 
 type Tab = 'inbound' | 'putaway' | 'stored';
 const labels: Record<string, string> = {
@@ -180,7 +181,7 @@ export default function WarehouseDashboard() {
                   </div>
                 </div>
                 <span className={`ops-badge ${batch.status === 'Stored' ? 'done' : 'pending'}`}>
-                  {labels[batch.status] || batch.status}
+                  {labels[batch.status] || getStatusLabel(batch.status)}
                 </span>
               </div>
               <h3>

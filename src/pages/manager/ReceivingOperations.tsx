@@ -17,6 +17,7 @@ import { receivingService } from '@/services/receivingService';
 import type { ManagerReceivingSetup, ManagerShiftOverview } from '@/services/receivingService';
 import DispatchPanel from './DispatchPanel';
 import '@/styles/ops-shared.css';
+import { getStatusLabel } from '@/utils/statusLabels';
 import './ReceivingOperations.css';
 
 const today = () => {
@@ -305,7 +306,7 @@ export default function ReceivingOperations() {
                   <span
                     className={`ops-badge ${shift.status === 'InProgress' ? 'stored' : shift.status === 'Completed' ? 'done' : 'pending'}`}
                   >
-                    {shiftStatus[shift.status] || shift.status}
+                    {shiftStatus[shift.status] || getStatusLabel(shift.status)}
                   </span>
                 </div>
                 <div className="manager-shift-meta">
@@ -348,7 +349,8 @@ export default function ReceivingOperations() {
                 </div>
                 {shift.intakeBatchStatus && (
                   <small>
-                    Trạng thái lô: {batchStatus[shift.intakeBatchStatus] || shift.intakeBatchStatus}
+                    Trạng thái lô:{' '}
+                    {batchStatus[shift.intakeBatchStatus] || getStatusLabel(shift.intakeBatchStatus)}
                   </small>
                 )}
                 {shift.team && shift.status === 'Scheduled' && (

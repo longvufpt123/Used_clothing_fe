@@ -30,7 +30,7 @@ export const HandoffBatch: React.FC = () => {
       setBatch(b);
       return;
     }
-    if (b.status !== 'Classified') {
+    if (b.status !== 'InClassifiedArea') {
       toast.warning('Chỉ bàn giao lô đã phân loại xong.');
       navigate('/classification');
       return;

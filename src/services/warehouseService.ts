@@ -30,6 +30,7 @@ export interface WarehouseAreaLayout {
   id: string;
   areaName: string;
   description?: string;
+  areaType: 'Storage' | 'Receiving' | 'Unclassified' | 'Classified' | string;
   capacityKg: number;
   currentWeightKg: number;
   groups: {
@@ -40,6 +41,18 @@ export interface WarehouseAreaLayout {
     currentWeightKg: number;
   }[];
   locations: WarehouseLocationLayout[];
+  intakeBatches: {
+    id: string;
+    batchCode: string;
+    status: string;
+    totalWeight: number;
+    intakeDate: string;
+    donationRequests: number;
+    teamName?: string;
+    groupName?: string;
+    warehouseReceivedAt?: string;
+    warehouseReceivedBy?: string;
+  }[];
 }
 export interface WarehouseLayout {
   warehouseId: string;

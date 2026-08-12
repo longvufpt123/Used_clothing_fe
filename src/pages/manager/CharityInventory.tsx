@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/shared/layouts/AdminLayout';
 import { useToast } from '@/context/ToastContext';
+import { getStatusLabel } from '@/utils/statusLabels';
 import { receivingService } from '@/services/receivingService';
 import {
   warehouseService,
@@ -462,7 +463,7 @@ export default function ManagerWarehouseControl() {
             <span className="ops-pagehead-kicker">Warehouse Control Center</span>
             <h1>Quản lý nhập – xuất – tồn kho</h1>
             <p>
-              Theo dõi xuyên suốt từ Intake Batch, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi
+              Theo dõi xuyên suốt từ lô hàng, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi
               giao dịch phát sinh.
             </p>
           </div>
@@ -1261,6 +1262,29 @@ function LayoutView({
             <div className="warehouse-capacity">
               <i style={{ width: `${Math.min(100, used)}%` }} />
             </div>
+            {area.areaType !== 'Storage' && (
+              <div className="warehouse-group-list">
+                {(area.intakeBatches ?? []).map((batch) => (
+                  <div className="warehouse-group-row" key={batch.id}>
+                    <span>
+                      <Archive size={14} />
+                      <b>{batch.batchCode}</b>
+                      <small>
+                        {getStatusLabel(batch.status)} · {batch.totalWeight.toFixed(1)} kg ·{' '}
+                        {batch.donationRequests} đơn
+                      </small>
+                    </span>
+                    <span className="warehouse-staging-meta">
+                      {batch.groupName && <small>Vị trí: {batch.groupName}</small>}
+                      {batch.warehouseReceivedAt && <small>Nhập lúc: {new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</small>}
+                      {batch.warehouseReceivedBy && <small>Thực hiện: {batch.warehouseReceivedBy}</small>}
+                      {batch.teamName && <small>{batch.teamName}</small>}
+                    </span>
+                  </div>
+                ))}
+                {!area.intakeBatches?.length && <small>Chưa có lô hàng trong khu này.</small>}
+              </div>
+            )}
             <div className="warehouse-group-head">
               <span>
                 DÃY TRONG KHU VỰC · Đã phân bổ {allocated}/{area.capacityKg} kg
@@ -1412,10 +1436,10 @@ function IntakeCard({ item, onOpen }: { item: WarehouseIntakeTrace; onOpen: () =
     <article className="warehouse-record-card">
       <header>
         <div>
-          <span>INTAKE BATCH</span>
+          <span>LÔ HÀNG</span>
           <strong>{item.batchCode}</strong>
         </div>
-        <b>{item.status}</b>
+        <b>{getStatusLabel(item.status)}</b>
       </header>
       <p>{item.routeName || 'Không có tên tuyến'}</p>
       <div className="warehouse-record-kpis">
@@ -1455,7 +1479,7 @@ function BatchCard({
           <span>CLASSIFIED / INBOUND</span>
           <strong>{item.batchCode}</strong>
         </div>
-        <b className={item.status}>{statusLabel[item.status] || item.status}</b>
+        <b className={item.status}>{statusLabel[item.status] || getStatusLabel(item.status)}</b>
       </header>
       <h3>
         {item.clothingType} · {item.fabricType}
@@ -1515,7 +1539,7 @@ function InventoryCard({
           <span>INVENTORY SKU</span>
           <strong>{item.sku}</strong>
         </div>
-        <b>{statusLabel[item.status] || item.status}</b>
+        <b>{statusLabel[item.status] || getStatusLabel(item.status)}</b>
       </header>
       <h3>
         {item.clothingType} · {item.fabricType}
@@ -1575,7 +1599,7 @@ function TransactionCard({ item, onOpen }: { item: WarehouseTransaction; onOpen:
           <b>{item.items.length}</b> dòng hàng
         </span>
         <span>
-          <b>{item.status}</b> trạng thái
+          <b>{getStatusLabel(item.status)}</b> trạng thái
         </span>
         <span>
           <b>{item.referenceType || 'Nội bộ'}</b> tham chiếu
@@ -1668,7 +1692,7 @@ function DetailModal({
           <>
             <div className="warehouse-detail-grid">
               <span>
-                Trạng thái<b>{statusLabel[d.status] || d.status}</b>
+                Trạng thái<b>{statusLabel[d.status] || getStatusLabel(d.status)}</b>
               </span>
               <span>
                 Phân loại
@@ -1849,7 +1873,7 @@ function DetailModal({
                 </b>
               </span>
               <span>
-                Trạng thái<b>{d.status}</b>
+                Trạng thái<b>{getStatusLabel(d.status)}</b>
               </span>
             </div>
           </>

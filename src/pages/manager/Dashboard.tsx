@@ -236,7 +236,7 @@ export default function ManagerDashboard() {
               <ClipboardList size={21} />
             </div>
             <div>
-              <span>Donation Request</span>
+              <span>Yêu cầu từ thiện</span>
               <strong>{data?.totalDonationRequests ?? '—'}</strong>
               <small>Tổng đơn quyên góp</small>
             </div>
@@ -246,7 +246,7 @@ export default function ManagerDashboard() {
               <Boxes size={21} />
             </div>
             <div>
-              <span>Intake Batch</span>
+              <span>Tổng số lô hàng</span>
               <strong>{data?.totalIntakeBatches ?? '—'}</strong>
               <small>Tổng lô tiếp nhận</small>
             </div>
@@ -256,9 +256,9 @@ export default function ManagerDashboard() {
               <PackageCheck size={21} />
             </div>
             <div>
-              <span>Classified Batch</span>
+              <span>Tổng lô đã phân loại</span>
               <strong>{data?.totalClassifiedBatches ?? '—'}</strong>
-              <small>Tổng lô đã gom nhóm</small>
+              <small>Tổng lô đã phân loại</small>
             </div>
           </article>
           <article className="manager-summary-card warehouse-summary">
@@ -278,12 +278,12 @@ export default function ManagerDashboard() {
 
         <section className="manager-chart-grid">
           <ChartCard
-            title="Trạng thái Donation Request"
+            title="Trạng thái của các yêu cầu từ thiện"
             subtitle="Số lượng đơn theo tiến độ tiếp nhận"
             data={data?.donationRequestPipeline}
           />
           <ChartCard
-            title="Tiến độ Intake Batch"
+            title="Tiến độ các lô hàng"
             subtitle="Các lô đang thu gom và đã hoàn tất"
             data={data?.intakeBatchPipeline}
           />
@@ -293,7 +293,7 @@ export default function ManagerDashboard() {
             data={data?.classificationPipeline}
           />
           <ChartCard
-            title="Luồng batch trong kho"
+            title="Trạng thái các lô trong kho"
             subtitle="Gom nhóm, chờ nhập, đã nhập và đã xuất"
             data={data?.warehouseBatchPipeline}
           />
@@ -304,7 +304,7 @@ export default function ManagerDashboard() {
             <div className="manager-chart-heading">
               <div>
                 <h2>Hoạt động 7 ngày gần nhất</h2>
-                <p>Đơn quyên góp và số batch nhập/xuất theo ngày</p>
+                <p>Đơn quyên góp và số lô nhập/xuất theo ngày</p>
               </div>
               <Activity size={20} />
             </div>
@@ -382,7 +382,7 @@ export default function ManagerDashboard() {
               <TrendingUp size={22} />
               <div>
                 <span>Nhập kho</span>
-                <strong>{data?.warehouseFlow.inboundTransactions ?? 0} batch</strong>
+                <strong>{data?.warehouseFlow.inboundTransactions ?? 0} lô</strong>
               </div>
               <b>{data?.warehouseFlow.inboundWeightKg ?? 0} kg</b>
             </div>
@@ -390,7 +390,7 @@ export default function ManagerDashboard() {
               <TrendingDown size={22} />
               <div>
                 <span>Xuất kho</span>
-                <strong>{data?.warehouseFlow.outboundTransactions ?? 0} batch</strong>
+                <strong>{data?.warehouseFlow.outboundTransactions ?? 0} lô</strong>
               </div>
               <b>{data?.warehouseFlow.outboundWeightKg ?? 0} kg</b>
             </div>

@@ -54,6 +54,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
         { label: 'Ca làm việc', path: `${basePath}/shifts`, icon: <Truck size={18} /> },
         { label: 'Điều phối tiếp nhận', path: `${basePath}/dispatch`, icon: <Users size={18} /> },
+        {
+          label: 'Điều phối phân loại',
+          path: `${basePath}/classification-dispatch`,
+          icon: <ClipboardCheck size={18} />,
+        },
         { label: 'Quản lý tài khoản', path: `${basePath}/users`, icon: <Users size={18} /> },
         { label: 'Quản lý kho bãi', path: `${basePath}/inventory`, icon: <Archive size={18} /> },
         {

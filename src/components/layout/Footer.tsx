@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
           <h3>ReThreads</h3>
           <p>
             Hệ thống tiếp nhận, phân loại và xử lý quần áo cũ vì cộng đồng và môi trường. Đưa quần
-            áo cũ tái chế thành sợi hoặc giặt là sạch sẽ trao tặng người có hoàn cảnh khó khăn.
+            áo cũ tái chế hoặc giặt là sạch sẽ trao tặng người có hoàn cảnh khó khăn.
           </p>
         </div>
         <div className="footer-links">

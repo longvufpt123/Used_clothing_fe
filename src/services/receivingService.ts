@@ -38,8 +38,29 @@ export interface ReceivingBatch {
   teamName: string;
   warehouseAddress: string;
   teamMembers: TeamMember[];
-  status: 'Planned' | 'Receiving' | 'Completed' | 'SentToClassification';
+  totalWeight: number;
+  warehouseReceivedAt?: string | null;
+  warehouseReceivedBy?: string | null;
+  currentAreaName?: string | null;
+  currentGroupName?: string | null;
+  receivingGroups: ReceivingStagingGroup[];
+  status:
+    | 'Planned'
+    | 'Receiving'
+    | 'Completed'
+    | 'ReceivedAtWarehouse'
+    | 'AwaitingClassificationAssignment'
+    | 'AssignedToClassification'
+    | 'SentToClassification';
   requests: ReceivingRequest[];
+}
+export interface ReceivingStagingGroup {
+  id: string;
+  groupName: string;
+  areaName: string;
+  capacityKg: number;
+  currentKg: number;
+  availableKg: number;
 }
 interface ApiRequest {
   id: string;
@@ -70,6 +91,12 @@ interface ApiBatch {
   teamName: string;
   warehouseAddress: string;
   teamMembers: TeamMember[];
+  totalWeight: number;
+  warehouseReceivedAt?: string | null;
+  warehouseReceivedBy?: string | null;
+  currentAreaName?: string | null;
+  currentGroupName?: string | null;
+  receivingGroups: ReceivingStagingGroup[];
   status: ReceivingBatch['status'];
   requests: ApiRequest[];
 }
@@ -93,6 +120,8 @@ export interface DispatchTeam {
   shiftName: string;
   shiftDate: string;
   shiftTime: string;
+  startTime: string;
+  endTime: string;
   warehouseId: string;
   members: TeamMember[];
 }
@@ -268,6 +297,10 @@ export const receivingService = {
   startBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/start`),
   completeShift: (id: string) => apiClient.post(`/receiving-operations/my-shifts/${id}/complete`),
   completeBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/complete`),
+  receiveAtWarehouse: (id: string, areaGroupId: string) =>
+    apiClient.post(`/receiving-operations/my-batches/${id}/receive-at-warehouse`, {
+      areaGroupId,
+    }),
   sendToClassification: (id: string) =>
     apiClient.post(`/receiving-operations/my-batches/${id}/send-to-classification`),
   confirmPickup: (

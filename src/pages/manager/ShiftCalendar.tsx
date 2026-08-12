@@ -19,6 +19,7 @@ import type { ManagerReceivingSetup, ManagerShiftOverview } from '@/services/rec
 import { useToast } from '@/context/ToastContext';
 import '@/styles/ops-shared.css';
 import './ShiftCalendar.css';
+import { getStatusLabel } from '@/utils/statusLabels';
 import './ShiftDetail.css';
 
 const iso = (date: Date) => {
@@ -554,10 +555,10 @@ export default function ShiftCalendar() {
                       {shift.warehouseName}
                     </p>
                     <small>
-                      {shift.teams.length} team · {shift.assignedRequests} đơn
+                      {shift.teams.length} nhóm · {shift.assignedRequests} đơn
                     </small>
                   </div>
-                  <b className={shift.status}>{statusLabel[shift.status] || shift.status}</b>
+                  <b className={shift.status}>{statusLabel[shift.status] || getStatusLabel(shift.status)}</b>
                 </article>
               ))}
               {!loading && !selectedShifts.length && (
@@ -914,7 +915,7 @@ export default function ShiftCalendar() {
                 Kho: <strong>{setup.warehouses.find((x) => x.id === warehouseId)?.name}</strong>
               </p>
               <div className="teams-delete-warning">
-                Các ca đã có team, đơn phân công, Intake Batch hoặc đã bắt đầu sẽ được giữ lại để
+                Các ca đã có nhóm, đơn phân công, lô nhập hoặc đã bắt đầu sẽ được giữ lại để
                 bảo toàn lịch sử vận hành.
               </div>
               <div className="teams-year-actions">
@@ -1016,16 +1017,16 @@ export default function ShiftCalendar() {
                     </div>
                     <div>
                       <span>Trạng thái</span>
-                      <strong>{statusLabel[detailShift.status] || detailShift.status}</strong>
+                      <strong>{statusLabel[detailShift.status] || getStatusLabel(detailShift.status)}</strong>
                     </div>
                   </div>
                   <section className="teams-detail-section">
                     <div className="teams-detail-section-title">
                       <div>
                         <span>01</span>
-                        <h3>Receiving Teams & Intake Batches</h3>
+                        <h3>Nhóm tiếp nhận & Lô hàng</h3>
                       </div>
-                      <b>{detailShift.teams.length} team</b>
+                      <b>{detailShift.teams.length} nhóm</b>
                     </div>
                     {detailShift.teams.length ? (
                       <div className="manager-multi-team-list">
@@ -1056,16 +1057,16 @@ export default function ShiftCalendar() {
                             <div className="manager-team-batch">
                               <CalendarDays size={18} />
                               <div>
-                                <span>{team.intakeBatchCode || 'Chưa có Intake Batch'}</span>
+                                <span>{team.intakeBatchCode || 'Chưa có lô hàng'}</span>
                                 <small>{team.intakeBatchRoute || 'Chưa có tuyến'}</small>
                               </div>
-                              <b>{team.intakeBatchStatus || '—'}</b>
+                              <b>{getStatusLabel(team.intakeBatchStatus, '—')}</b>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="teams-detail-empty">Ca này chưa có Receiving Team.</div>
+                      <div className="teams-detail-empty">Ca này chưa có nhóm tiếp nhận.</div>
                     )}
                   </section>
                 </>
@@ -1074,8 +1075,8 @@ export default function ShiftCalendar() {
                 <div className="teams-delete-confirm">
                   <strong>Xóa ca “{detailShift.shiftName}”?</strong>
                   <span>
-                    Ca sẽ biến mất khỏi lịch. Chỉ có thể xóa ca chưa có team, đơn phân công hoặc
-                    intake batch.
+                    Ca sẽ biến mất khỏi lịch. Chỉ có thể xóa ca chưa có nhóm, đơn phân công hoặc
+                    lô nhập.
                   </span>
                   <div>
                     <button

@@ -15,7 +15,6 @@ import {
 import { receivingService } from '@/services/receivingService';
 import type { DispatchBoard } from '@/services/receivingService';
 import { useToast } from '@/context/ToastContext';
-import { vietnamDateKeyFromUtc } from '@/utils/dateTime';
 import './DispatchPanel.css';
 
 const normalize = (value: string) =>
@@ -24,6 +23,24 @@ const normalize = (value: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+
+const formatAppointment = (value?: string) => {
+  if (!value) return 'Chưa có';
+
+  const [datePart, timePart = ''] = value.split('T');
+  const [year, month, day] = datePart.split('-');
+  const time = timePart.slice(0, 5);
+
+  return `${time ? `${time} - ` : ''}${day}/${month}/${year}`;
+};
+
+const isAppointmentWithinShift = (appointment?: string, startTime?: string, endTime?: string) => {
+  if (!appointment || !startTime || !endTime) return false;
+  const appointmentTime = appointment.split('T')[1]?.slice(0, 5);
+  const start = startTime.slice(0, 5);
+  const end = endTime.slice(0, 5);
+  return !!appointmentTime && !!start && !!end && appointmentTime >= start && appointmentTime < end;
+};
 const pageItems = (page: number, total: number): (number | string)[] => {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   if (page <= 4) return [1, 2, 3, 4, 5, 'end', total];
@@ -31,7 +48,19 @@ const pageItems = (page: number, total: number): (number | string)[] => {
   return [1, 'start', page - 1, page, page + 1, 'end', total];
 };
 
-export default function DispatchPanel() {
+type DispatchPanelProps = {
+  warehouseId?: string;
+  hideWarehouseFilter?: boolean;
+  onWarehouseChange?: (warehouseId: string) => void;
+  onAssigned?: () => void | Promise<void>;
+};
+
+export default function DispatchPanel({
+  warehouseId: sharedWarehouseId,
+  hideWarehouseFilter = false,
+  onWarehouseChange,
+  onAssigned,
+}: DispatchPanelProps = {}) {
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const [board, setBoard] = useState<DispatchBoard>({ requests: [], teams: [] });
@@ -44,6 +73,7 @@ export default function DispatchPanel() {
   const [page, setPage] = useState(1);
   const [focusedRequestId, setFocusedRequestId] = useState<string>();
   const pageSize = 8;
+  const activeWarehouseFilter = sharedWarehouseId ?? warehouseFilter;
   const load = () =>
     receivingService
       .getDispatchBoard()
@@ -58,7 +88,8 @@ export default function DispatchPanel() {
     if (!requestId || !board.requests.length) return;
     const request = board.requests.find((x) => x.id === requestId);
     if (!request) return;
-    setWarehouseFilter(request.warehouseId);
+    if (sharedWarehouseId === undefined) setWarehouseFilter(request.warehouseId);
+    else if (request.warehouseId !== sharedWarehouseId) onWarehouseChange?.(request.warehouseId);
     setDateFilter(request.scheduledDate?.slice(0, 10) || '');
     setMethodFilter(request.deliveryMethod);
     setSearch(request.code);
@@ -66,7 +97,7 @@ export default function DispatchPanel() {
     setFocusedRequestId(requestId);
     const timer = window.setTimeout(() => setFocusedRequestId(undefined), 4000);
     return () => window.clearTimeout(timer);
-  }, [board.requests, searchParams]);
+  }, [board.requests, searchParams, sharedWarehouseId, onWarehouseChange]);
 
   const teamMap = useMemo(() => new Map(board.teams.map((t) => [t.id, t])), [board.teams]);
   const warehouses = useMemo(
@@ -80,16 +111,16 @@ export default function DispatchPanel() {
     const query = normalize(search);
     return board.requests.filter(
       (x) =>
-        (!warehouseFilter || x.warehouseId === warehouseFilter) &&
+        (!activeWarehouseFilter || x.warehouseId === activeWarehouseFilter) &&
         (!dateFilter || x.scheduledDate?.slice(0, 10) === dateFilter) &&
         (!methodFilter || x.deliveryMethod === methodFilter) &&
         (!query ||
           normalize(`${x.code} ${x.contactName} ${x.phoneNumber} ${x.address}`).includes(query)),
     );
-  }, [board.requests, warehouseFilter, dateFilter, methodFilter, search]);
+  }, [board.requests, activeWarehouseFilter, dateFilter, methodFilter, search]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-  useEffect(() => setPage(1), [warehouseFilter, dateFilter, methodFilter, search]);
+  useEffect(() => setPage(1), [activeWarehouseFilter, dateFilter, methodFilter, search]);
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -101,6 +132,7 @@ export default function DispatchPanel() {
       await receivingService.assignRequest(requestId, teamId);
       toast.success('Đã phân công đơn cho receiving team.');
       await load();
+      await onAssigned?.();
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không thể phân công đơn.');
     } finally {
@@ -119,23 +151,25 @@ export default function DispatchPanel() {
           {filtered.length} / {board.requests.length} đơn
         </strong>
       </div>
-      <div className="dispatch-filters">
-        <div>
-          <Warehouse size={15} />
-          <label htmlFor="dispatch-warehouse">Kho</label>
-          <select
-            id="dispatch-warehouse"
-            value={warehouseFilter}
-            onChange={(e) => setWarehouseFilter(e.target.value)}
-          >
-            <option value="">Tất cả kho</option>
-            {warehouses.map((x) => (
-              <option value={x.id} key={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className={`dispatch-filters${hideWarehouseFilter ? ' without-warehouse' : ''}`}>
+        {!hideWarehouseFilter && (
+          <div>
+            <Warehouse size={15} />
+            <label htmlFor="dispatch-warehouse">Kho</label>
+            <select
+              id="dispatch-warehouse"
+              value={warehouseFilter}
+              onChange={(e) => setWarehouseFilter(e.target.value)}
+            >
+              <option value="">Tất cả kho</option>
+              {warehouses.map((x) => (
+                <option value={x.id} key={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <CalendarDays size={15} />
           <label htmlFor="dispatch-date">Ngày hẹn</label>
@@ -197,10 +231,7 @@ export default function DispatchPanel() {
                   t.warehouseId === request.warehouseId &&
                   !!request.scheduledDate &&
                   t.shiftDate.slice(0, 10) === request.scheduledDate.slice(0, 10) &&
-                  !(
-                    vietnamDateKeyFromUtc(request.createdAt) ===
-                      request.scheduledDate.slice(0, 10) && Number(t.shiftTime.slice(0, 2)) < 12
-                  ) &&
+                  isAppointmentWithinShift(request.scheduledDate, t.startTime, t.endTime) &&
                   (request.deliveryMethod === 'DonorDropOff'
                     ? t.teamType === 'ReceivingWarehouse'
                     : t.teamType !== 'ReceivingWarehouse'),
@@ -234,10 +265,7 @@ export default function DispatchPanel() {
                     <strong>{request.warehouseName}</strong>
                   </div>
                   <small>
-                    <CalendarDays size={13} /> Ngày hẹn:{' '}
-                    {request.scheduledDate
-                      ? new Date(request.scheduledDate).toLocaleDateString('vi-VN')
-                      : 'Chưa có'}
+                    <CalendarDays size={13} /> Ngày giờ hẹn: {formatAppointment(request.scheduledDate)}
                   </small>
                   {request.deliveryMethod === 'DonorDropOff' ? (
                     <div className="dispatch-dropoff-policy">

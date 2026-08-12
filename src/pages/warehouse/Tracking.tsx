@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MapPin, Package, Truck, Home } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { getDistributionByTracking, type DistributionRequest } from '@/utils/warehouseMockDb';
+import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
 
 export const WarehouseTracking: React.FC = () => {
@@ -75,7 +76,7 @@ export const WarehouseTracking: React.FC = () => {
         <div className="ops-title-row">
           <h1>Theo dõi vận đơn GHN</h1>
           <span className={`ops-badge ${dist.status.toLowerCase()}`}>
-            {dist.ghnStatus || dist.status}
+            {getStatusLabel(dist.ghnStatus || dist.status)}
           </span>
         </div>
       </div>

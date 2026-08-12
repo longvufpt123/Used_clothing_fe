@@ -4,6 +4,7 @@ export type ClassificationBatchStatus =
   | 'PendingConfirmation'
   | 'PendingClassification'
   | 'Classified'
+  | 'InClassifiedArea'
   | 'SendingToWarehouse';
 
 export interface ClassificationItem {

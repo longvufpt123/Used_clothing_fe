@@ -31,6 +31,7 @@ import type {
 import { useToast } from '@/context/ToastContext';
 import DispatchPanel from './DispatchPanel';
 import RouteMap from '@/pages/receiving/RouteMap';
+import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
 import './ReceivingOperations.css';
 import './ShiftDetail.css';
@@ -406,7 +407,7 @@ export default function DispatchOperations() {
           <div className="ops-pagehead-main">
             <span className="ops-pagehead-kicker">Receiving Dispatch</span>
             <h1>Điều phối tiếp nhận</h1>
-            <p>Quản lý ca, nhiều team, tuyến thu gom, intake batch và phân bổ đơn cân bằng.</p>
+            <p>Quản lý ca, nhiều nhóm, tuyến thu gom, lô hàng và phân bổ đơn cân bằng.</p>
           </div>
           <button className="ops-btn ops-btn-secondary" onClick={() => load()} disabled={loading}>
             <RefreshCw size={16} /> Làm mới
@@ -414,11 +415,11 @@ export default function DispatchOperations() {
         </header>
         <div className="ops-stats">
           <div className="ops-stat-card">
-            <span className="ops-stat-label">Team đã xếp lịch</span>
+            <span className="ops-stat-label">Nhóm đã xếp lịch</span>
             <strong className="ops-stat-value">{stats.teams}</strong>
           </div>
           <div className="ops-stat-card">
-            <span className="ops-stat-label">Ca chưa có team</span>
+            <span className="ops-stat-label">Ca chưa có nhóm</span>
             <strong className="ops-stat-value">{stats.withoutTeam}</strong>
           </div>
           <div className="ops-stat-card">
@@ -434,7 +435,7 @@ export default function DispatchOperations() {
         <section>
           <div className="ops-section-head">
             <div>
-              <span className="ops-panel-label">QUẢN LÝ TEAM</span>
+              <span className="ops-panel-label">QUẢN LÝ NHÓM VÀ LỊCH TIẾP NHẬN</span>
               <h2>Lịch tiếp nhận theo ngày</h2>
             </div>
             <span>
@@ -529,7 +530,7 @@ export default function DispatchOperations() {
                           <span
                             className={`ops-badge ${shift.status === 'InProgress' ? 'stored' : 'pending'}`}
                           >
-                            {shiftStatus[shift.status] || shift.status}
+                            {shiftStatus[shift.status] || getStatusLabel(shift.status)}
                           </span>
                         </div>
                         <div className="manager-compact-team-row">
@@ -624,12 +625,19 @@ export default function DispatchOperations() {
         <section>
           <div className="ops-section-head">
             <div>
-              <span className="ops-panel-label">ASSIGN THỦ CÔNG</span>
-              <h2>Donation Request chờ điều phối</h2>
+              <span className="ops-panel-label">ĐIỀU PHỐI THỦ CÔNG</span>
+              <h2>Yêu cầu từ thiện chờ điều phối</h2>
             </div>
             <span>Chọn team đúng kho và đúng ngày</span>
           </div>
-          <DispatchPanel key={`${stats.teams}-${stats.assigned}`} />
+          <DispatchPanel
+            warehouseId={warehouseFilter}
+            hideWarehouseFilter
+            onWarehouseChange={setWarehouseFilter}
+            onAssigned={async () => {
+              await load(detailShift?.id);
+            }}
+          />
         </section>
 
         {detailShift && (
@@ -792,7 +800,7 @@ export default function DispatchOperations() {
                             </div>
                             <div>
                               <span className={`manager-team-status ${team.status.toLowerCase()}`}>
-                                {teamStatus[team.status] || team.status}
+                                {teamStatus[team.status] || getStatusLabel(team.status)}
                               </span>
                               <button
                                 className="manager-collapse-team"
@@ -903,7 +911,7 @@ export default function DispatchOperations() {
                                 <div className="manager-team-audit">
                                   <div>
                                     <span>Trạng thái</span>
-                                    <strong>{teamStatus[team.status] || team.status}</strong>
+                                    <strong>{teamStatus[team.status] || getStatusLabel(team.status)}</strong>
                                   </div>
                                   <div>
                                     <span>Bắt đầu lúc</span>
@@ -941,7 +949,7 @@ export default function DispatchOperations() {
                                     <span>{team.intakeBatchCode || 'Chưa tạo Intake Batch'}</span>
                                     <small>{team.intakeBatchRoute || 'Chưa có tuyến'}</small>
                                   </div>
-                                  <b>{team.intakeBatchStatus || '—'}</b>
+                                  <b>{getStatusLabel(team.intakeBatchStatus, '—')}</b>
                                 </div>
                                 {team.teamType !== 'ReceivingWarehouse' && (
                                   <button
@@ -964,7 +972,7 @@ export default function DispatchOperations() {
                                           {request.contactName} · {request.phoneNumber}
                                         </small>
                                         <small>{request.address}</small>
-                                        <small>Trạng thái: {request.status}</small>
+                                        <small>Trạng thái: {getStatusLabel(request.status)}</small>
                                       </span>
                                       {team.teamType !== 'ReceivingWarehouse' &&
                                       team.status === 'Scheduled' ? (
@@ -981,7 +989,9 @@ export default function DispatchOperations() {
                                           ))}
                                         </select>
                                       ) : (
-                                        <b className="manager-request-status">{request.status}</b>
+                                        <b className="manager-request-status">
+                                          {getStatusLabel(request.status)}
+                                        </b>
                                       )}
                                     </div>
                                   ))}

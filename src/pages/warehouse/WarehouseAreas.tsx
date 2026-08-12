@@ -23,6 +23,7 @@ import type {
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/common/Modal';
 import Pagination from '@/components/common/Pagination';
+import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
 import '@/pages/distribution/ProductCatalogModal.css';
 import './WarehouseAreas.css';
@@ -222,7 +223,13 @@ export default function WarehouseAreas() {
             const visibleLocations = area.locations.filter((location) =>
               filteredLocationIds.has(location.id),
             );
-            if (!visibleLocations.length) return null;
+            const visibleBatches = (area.intakeBatches ?? []).filter((batch) => {
+              const keyword = search.trim().toLowerCase();
+              return !keyword || batch.batchCode.toLowerCase().includes(keyword)
+                || getStatusLabel(batch.status).toLowerCase().includes(keyword)
+                || (batch.teamName ?? '').toLowerCase().includes(keyword);
+            });
+            if (!visibleLocations.length && !visibleBatches.length && area.areaType === 'Storage') return null;
             return (
               <article className="warehouse-area" key={area.id}>
                 <button
@@ -249,6 +256,24 @@ export default function WarehouseAreas() {
                 </div>
                 {open && (
                   <div className="warehouse-area-body">
+                    {area.areaType !== 'Storage' && (
+                      <div className="ops-list">
+                        {visibleBatches.map((batch) => (
+                          <article className="ops-card" key={batch.id}>
+                            <div className="ops-card-top">
+                              <strong className="ops-card-code">{batch.batchCode}</strong>
+                              <span className="ops-badge pending">{getStatusLabel(batch.status)}</span>
+                            </div>
+                            <p>{batch.totalWeight.toFixed(1)} kg · {batch.donationRequests} đơn quyên góp</p>
+                            {batch.groupName && <small>Vị trí: {batch.groupName}</small>}
+                            {batch.warehouseReceivedAt && <small>Ngày nhập: {new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</small>}
+                            {batch.warehouseReceivedBy && <small>Người nhập: {batch.warehouseReceivedBy}</small>}
+                            {batch.teamName && <small>Team phân loại: {batch.teamName}</small>}
+                          </article>
+                        ))}
+                        {!visibleBatches.length && <div className="ops-empty">Chưa có Intake Batch trong khu này.</div>}
+                      </div>
+                    )}
                     {area.groups.length > 0 && (
                       <div className="warehouse-groups">
                         {area.groups.map((group) => (
@@ -261,7 +286,7 @@ export default function WarehouseAreas() {
                         ))}
                       </div>
                     )}
-                    <div className="warehouse-location-grid">
+                    {area.areaType === 'Storage' && <div className="warehouse-location-grid">
                       {visibleLocations.map((location) => {
                         const load = percent(location.currentWeightKg, location.capacityKg);
                         return (
@@ -273,7 +298,7 @@ export default function WarehouseAreas() {
                           >
                             <div>
                               <b>{location.locationCode}</b>
-                              <span>{location.status}</span>
+                              <span>{getStatusLabel(location.status)}</span>
                             </div>
                             <p>
                               Hàng {location.aisleCode} · Kệ {location.rackCode} · Tầng{' '}
@@ -293,7 +318,7 @@ export default function WarehouseAreas() {
                           </button>
                         );
                       })}
-                    </div>
+                    </div>}
                   </div>
                 )}
               </article>
