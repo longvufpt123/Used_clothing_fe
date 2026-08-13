@@ -67,15 +67,13 @@ export default function ClassificationDispatch() {
   const [staffSearch, setStaffSearch] = useState('');
   const [batchSearch, setBatchSearch] = useState('');
   const [batchStatus, setBatchStatus] = useState('all');
-  const [teamSearch, setTeamSearch] = useState('');
-  const [teamPage, setTeamPage] = useState(1);
   const [dayPage, setDayPage] = useState(1);
   const [batchPage, setBatchPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [assigningId, setAssigningId] = useState('');
+  const [detailShiftId, setDetailShiftId] = useState<string | null>(null);
   const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
-  const teamPageSize = 5;
   const batchPageSize = 6;
 
   const load = useCallback(async () => {
@@ -106,10 +104,9 @@ export default function ClassificationDispatch() {
   }, [load]);
 
   useEffect(() => {
-    setTeamPage(1);
     setDayPage(1);
     setBatchPage(1);
-  }, [warehouseId, dateFilter, yearFilter, batchSearch, batchStatus, teamSearch]);
+  }, [warehouseId, dateFilter, yearFilter, batchSearch, batchStatus]);
 
   const selectedWarehouse = board?.warehouses.find((item) => item.id === warehouseId);
   const allWarehouseTeams = useMemo(
@@ -154,26 +151,6 @@ export default function ClassificationDispatch() {
   useEffect(() => {
     if (dayPage > dayPages) setDayPage(dayPages);
   }, [dayPage, dayPages]);
-  const filteredTeams = useMemo(() => {
-    const keyword = teamSearch.trim().toLocaleLowerCase('vi');
-    return teams.filter(
-      (team) =>
-        !keyword ||
-        team.teamName.toLocaleLowerCase('vi').includes(keyword) ||
-        team.members.some(
-          (member) =>
-            member.fullName.toLocaleLowerCase('vi').includes(keyword) ||
-            member.phoneNumber.includes(keyword),
-        ),
-    );
-  }, [teamSearch, teams]);
-  const teamPages = Math.max(1, Math.ceil(filteredTeams.length / teamPageSize));
-  const safeTeamPage = Math.min(teamPage, teamPages);
-  const pagedTeams = filteredTeams.slice(
-    (safeTeamPage - 1) * teamPageSize,
-    safeTeamPage * teamPageSize,
-  );
-
   const filteredBatches = useMemo(() => {
     const keyword = batchSearch.trim().toLocaleLowerCase('vi');
     return (
@@ -197,6 +174,11 @@ export default function ClassificationDispatch() {
     safeBatchPage * batchPageSize,
   );
   const detailTeam = board?.teams.find((team) => team.id === detailTeamId) ?? null;
+  const detailShift = shifts.find((shift) => shift.id === detailShiftId) ?? null;
+  const detailShiftTeams = allWarehouseTeams.filter((team) => team.shiftId === detailShiftId);
+  const detailShiftBatches = board?.batches.filter(
+    (batch) => batch.teamId && detailShiftTeams.some((team) => team.id === batch.teamId),
+  ) ?? [];
   const detailTeamBatches = useMemo(
     () => board?.batches.filter((batch) => batch.teamId === detailTeamId) ?? [],
     [board, detailTeamId],
@@ -404,7 +386,20 @@ export default function ClassificationDispatch() {
                         0,
                       );
                       return (
-                        <section className="manager-day-shift" key={shift.id}>
+                        <section
+                          className="manager-day-shift classification-clickable-shift"
+                          key={shift.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setDetailShiftId(shift.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setDetailShiftId(shift.id);
+                            }
+                          }}
+                          aria-label={`Xem chi tiết ${shift.shiftName}`}
+                        >
                           <div className="manager-shift-head">
                             <div>
                               <strong>{shift.shiftName}</strong>
@@ -425,7 +420,12 @@ export default function ClassificationDispatch() {
                             </span>
                             {shift.status === 'Scheduled' && (
                               <div className="manager-shift-team-actions">
-                                <button onClick={() => openCreateTeam(shift)}>
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openCreateTeam(shift);
+                                  }}
+                                >
                                   <UserPlus size={14} /> Team
                                 </button>
                               </div>
@@ -436,7 +436,10 @@ export default function ClassificationDispatch() {
                               <button
                                 type="button"
                                 key={team.id}
-                                onClick={() => setDetailTeamId(team.id)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setDetailTeamId(team.id);
+                                }}
                                 aria-label={`Xem chi tiết ${team.teamName}`}
                               >
                                 <span>{team.teamName}</span>
@@ -463,51 +466,6 @@ export default function ClassificationDispatch() {
             <Pagination current={safeDayPage} total={dayPages} setPage={setDayPage} />
           )}
         </section>
-        <section>
-          <div className="ops-section-head">
-            <div>
-              <span className="ops-panel-label">PHÂN CÔNG HIỆN TẠI</span>
-              <h2>Nhóm phân loại trong ngày</h2>
-            </div>
-            <span>{filteredTeams.length} team phù hợp</span>
-          </div>
-          <div className="classification-list-toolbar">
-            <label><Search size={16} /><input value={teamSearch} onChange={(event) => setTeamSearch(event.target.value)} placeholder="Tìm team, nhân viên hoặc số điện thoại..." /></label>
-            <span>{filteredTeams.length ? (safeTeamPage - 1) * teamPageSize + 1 : 0}–{Math.min(safeTeamPage * teamPageSize, filteredTeams.length)} / {filteredTeams.length}</span>
-          </div>
-          <div className="classification-team-grid">
-            {pagedTeams.map((team) => (
-              <article
-                className="classification-team-card"
-                key={team.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setDetailTeamId(team.id)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setDetailTeamId(team.id);
-                  }
-                }}
-                aria-label={`Xem chi tiết ${team.teamName}`}
-              >
-                <div className="ops-card-top">
-                  <div><strong>{team.teamName}</strong><small>{shortTime(team.startTime)}–{shortTime(team.endTime)}</small></div>
-                  <span className={`ops-badge ${team.status === 'InProgress' ? 'stored' : 'pending'}`}>{getStatusLabel(team.status)}</span>
-                </div>
-                <div className="classification-member-row">
-                  {team.members.map((member) => <span key={member.id}><b>{member.fullName}</b><small>{member.phoneNumber}</small></span>)}
-                </div>
-                <div className="classification-team-load"><span>Tiến độ lô</span><strong>{team.completedBatches}/{team.assignedBatches}</strong></div>
-              </article>
-            ))}
-            {!pagedTeams.length && <div className="ops-empty">Không có team phân loại phù hợp.</div>}
-          </div>
-          {teamPages > 1 && (
-            <Pagination current={safeTeamPage} total={teamPages} setPage={setTeamPage} />
-          )}
-        </section>
-
         <section>
           <div className="ops-section-head">
             <div>
@@ -551,6 +509,145 @@ export default function ClassificationDispatch() {
           </div>
           {batchPages > 1 && <Pagination current={safeBatchPage} total={batchPages} setPage={setBatchPage} />}
         </section>
+
+        {detailShift && (
+          <div
+            className="manager-modal-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setDetailShiftId(null);
+            }}
+          >
+            <section
+              className="ops-panel teams-shift-detail manager-multi-detail classification-shift-detail"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="classification-shift-detail-title"
+            >
+              <div className="teams-detail-head">
+                <div>
+                  <span>CHI TIẾT CA · {detailShiftTeams.length} TEAM PHÂN LOẠI</span>
+                  <h2 id="classification-shift-detail-title">{detailShift.shiftName}</h2>
+                  <p>{formatDate(detailShift.shiftDate)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDetailShiftId(null)}
+                  aria-label="Đóng chi tiết ca"
+                >
+                  <X />
+                </button>
+              </div>
+
+              <div className="teams-detail-summary">
+                <div>
+                  <span>Thời gian</span>
+                  <strong>
+                    <Clock3 size={16} />
+                    {shortTime(detailShift.startTime)}–{shortTime(detailShift.endTime)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Kho phụ trách</span>
+                  <strong>
+                    <Warehouse size={16} />
+                    {detailShift.warehouseName}
+                  </strong>
+                </div>
+                <div>
+                  <span>Tổng tải</span>
+                  <strong>
+                    {detailShiftTeams.length} team · {detailShiftBatches.length} lô
+                  </strong>
+                </div>
+              </div>
+
+              <div className="classification-shift-detail-command">
+                <div>
+                  <span>Trạng thái ca</span>
+                  <strong>{getStatusLabel(detailShift.status)}</strong>
+                </div>
+                {detailShift.status === 'Scheduled' && (
+                  <button
+                    type="button"
+                    className="ops-btn ops-btn-secondary"
+                    onClick={() => {
+                      setDetailShiftId(null);
+                      openCreateTeam(detailShift);
+                    }}
+                  >
+                    <UserPlus size={15} /> Thêm team phân loại
+                  </button>
+                )}
+              </div>
+
+              <section className="teams-detail-section">
+                <div className="teams-detail-section-title">
+                  <div>
+                    <span>01</span>
+                    <h3>Team trong ca</h3>
+                  </div>
+                  <b>{detailShiftTeams.length} team</b>
+                </div>
+                <div className="classification-shift-team-grid">
+                  {detailShiftTeams.map((team) => (
+                    <button
+                      type="button"
+                      className="classification-shift-team-card"
+                      key={team.id}
+                      onClick={() => {
+                        setDetailShiftId(null);
+                        setDetailTeamId(team.id);
+                      }}
+                    >
+                      <div className="classification-shift-team-card-head">
+                        <div>
+                          <Users size={18} />
+                          <span>
+                            <strong>{team.teamName}</strong>
+                            <small>{team.members.length} thành viên</small>
+                          </span>
+                        </div>
+                        <span
+                          className={`ops-badge ${team.status === 'InProgress' ? 'stored' : 'pending'}`}
+                        >
+                          {getStatusLabel(team.status)}
+                        </span>
+                      </div>
+                      <div className="classification-shift-team-members">
+                        {team.members.map((member) => (
+                          <span key={member.id}>
+                            <b>{member.fullName}</b>
+                            <small>{member.phoneNumber}</small>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="classification-shift-team-progress">
+                        <span>Tiến độ lô</span>
+                        <strong>{team.completedBatches}/{team.assignedBatches} lô</strong>
+                      </div>
+                      <small className="classification-shift-team-link">Xem chi tiết team →</small>
+                    </button>
+                  ))}
+                  {!detailShiftTeams.length && (
+                    <div className="teams-detail-empty">
+                      Ca này chưa có team phân loại. Manager có thể tạo team ngay trong chi tiết ca.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <div className="teams-detail-actions">
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-primary"
+                  onClick={() => setDetailShiftId(null)}
+                >
+                  Đóng chi tiết
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
 
         {createShift && (
           <div className="manager-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeCreateTeam()}>

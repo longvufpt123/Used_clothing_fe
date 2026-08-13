@@ -234,7 +234,7 @@ export default function DispatchPanel({
                   isAppointmentWithinShift(request.scheduledDate, t.startTime, t.endTime) &&
                   (request.deliveryMethod === 'DonorDropOff'
                     ? t.teamType === 'ReceivingWarehouse'
-                    : t.teamType !== 'ReceivingWarehouse'),
+                    : t.teamType === 'Receiving' || t.teamType === 'ReceivingPickup'),
               );
               const selected = teamMap.get(selectedTeams[request.id]);
               return (
