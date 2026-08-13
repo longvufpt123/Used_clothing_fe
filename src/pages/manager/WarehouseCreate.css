@@ -22,6 +22,16 @@
   resize: vertical;
 }
 
+.warehouse-create-modal .warehouse-modal-actions {
+  align-items: center;
+}
+
+.warehouse-create-modal .warehouse-delete-button {
+  margin-right: auto;
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
 @media (max-width: 600px) {
   .warehouse-head-actions {
     width: 100%;

@@ -23,6 +23,7 @@ import { useToast } from '@/context/ToastContext';
 import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
 import './ReceivingOperations.css';
+import './ShiftDetail.css';
 import './ClassificationDispatch.css';
 
 const localDate = () => {
@@ -73,6 +74,7 @@ export default function ClassificationDispatch() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [assigningId, setAssigningId] = useState('');
+  const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
   const teamPageSize = 5;
   const batchPageSize = 6;
 
@@ -193,6 +195,11 @@ export default function ClassificationDispatch() {
   const pagedBatches = filteredBatches.slice(
     (safeBatchPage - 1) * batchPageSize,
     safeBatchPage * batchPageSize,
+  );
+  const detailTeam = board?.teams.find((team) => team.id === detailTeamId) ?? null;
+  const detailTeamBatches = useMemo(
+    () => board?.batches.filter((batch) => batch.teamId === detailTeamId) ?? [],
+    [board, detailTeamId],
   );
 
   const eligibleTeams = allWarehouseTeams.filter((team) => {
@@ -426,7 +433,15 @@ export default function ClassificationDispatch() {
                           </div>
                           <div className="classification-shift-team-names">
                             {shiftTeams.map((team) => (
-                              <span key={team.id}>{team.teamName}<b>{team.assignedBatches} lô</b></span>
+                              <button
+                                type="button"
+                                key={team.id}
+                                onClick={() => setDetailTeamId(team.id)}
+                                aria-label={`Xem chi tiết ${team.teamName}`}
+                              >
+                                <span>{team.teamName}</span>
+                                <b>{team.assignedBatches} lô</b>
+                              </button>
                             ))}
                             {!shiftTeams.length && <small>Chưa có nhóm trong ca này.</small>}
                           </div>
@@ -462,7 +477,20 @@ export default function ClassificationDispatch() {
           </div>
           <div className="classification-team-grid">
             {pagedTeams.map((team) => (
-              <article className="classification-team-card" key={team.id}>
+              <article
+                className="classification-team-card"
+                key={team.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setDetailTeamId(team.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setDetailTeamId(team.id);
+                  }
+                }}
+                aria-label={`Xem chi tiết ${team.teamName}`}
+              >
                 <div className="ops-card-top">
                   <div><strong>{team.teamName}</strong><small>{shortTime(team.startTime)}–{shortTime(team.endTime)}</small></div>
                   <span className={`ops-badge ${team.status === 'InProgress' ? 'stored' : 'pending'}`}>{getStatusLabel(team.status)}</span>
@@ -555,6 +583,146 @@ export default function ClassificationDispatch() {
             </section>
           </div>
         )}
+
+        {detailTeam && (
+          <div
+            className="manager-modal-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setDetailTeamId(null);
+            }}
+          >
+            <section
+              className="ops-panel teams-shift-detail classification-team-detail"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="classification-team-detail-title"
+            >
+              <div className="teams-detail-head">
+                <div>
+                  <span>CHI TIẾT TEAM PHÂN LOẠI</span>
+                  <h2 id="classification-team-detail-title">{detailTeam.teamName}</h2>
+                  <p>{formatDate(detailTeam.shiftDate)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDetailTeamId(null)}
+                  aria-label="Đóng chi tiết team"
+                >
+                  <X />
+                </button>
+              </div>
+
+              <div className="teams-detail-summary">
+                <div>
+                  <span>Thời gian</span>
+                  <strong>
+                    <Clock3 size={16} />
+                    {shortTime(detailTeam.startTime)}–{shortTime(detailTeam.endTime)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Kho phụ trách</span>
+                  <strong>
+                    <Warehouse size={16} />
+                    {detailTeam.warehouseName}
+                  </strong>
+                </div>
+                <div>
+                  <span>Trạng thái</span>
+                  <strong>{getStatusLabel(detailTeam.status)}</strong>
+                </div>
+              </div>
+
+              <section className="teams-detail-section">
+                <div className="teams-detail-section-title">
+                  <div>
+                    <span>01</span>
+                    <h3>Thành viên team</h3>
+                  </div>
+                  <b>{detailTeam.members.length} thành viên</b>
+                </div>
+                <div className="teams-detail-members">
+                  {detailTeam.members.map((member, index) => (
+                    <div key={member.id}>
+                      <span>
+                        {member.fullName
+                          .split(/\s+/)
+                          .filter(Boolean)
+                          .slice(-2)
+                          .map((part) => part[0])
+                          .join('')
+                          .toUpperCase()}
+                      </span>
+                      <div>
+                        <strong>{member.fullName}</strong>
+                        <a href={`tel:${member.phoneNumber}`}>{member.phoneNumber}</a>
+                        <small>Thành viên {index + 1}</small>
+                      </div>
+                    </div>
+                  ))}
+                  {!detailTeam.members.length && (
+                    <div className="teams-detail-empty">Team chưa có thành viên.</div>
+                  )}
+                </div>
+              </section>
+
+              <section className="teams-detail-section">
+                <div className="teams-detail-section-title">
+                  <div>
+                    <span>02</span>
+                    <h3>Intake Batch được phân công</h3>
+                  </div>
+                  <b>
+                    {detailTeam.completedBatches}/{detailTeam.assignedBatches} lô hoàn thành
+                  </b>
+                </div>
+                <div className="classification-detail-batches">
+                  {detailTeamBatches.map((batch) => (
+                    <article className="teams-detail-batch" key={batch.id}>
+                      <div className="teams-detail-batch-code">
+                        <PackageCheck size={18} />
+                        <div>
+                          <span>INTAKE BATCH</span>
+                          <strong>{batch.batchCode}</strong>
+                        </div>
+                        <b>{getStatusLabel(batch.status)}</b>
+                      </div>
+                      <div className="teams-detail-batch-grid">
+                        <div>
+                          <span>Khu vực hiện tại</span>
+                          <strong>{batch.currentAreaName || 'Chưa ghi nhận'}</strong>
+                        </div>
+                        <div>
+                          <span>Khối lượng</span>
+                          <strong>{batch.totalWeight.toFixed(1)} kg</strong>
+                        </div>
+                        <div>
+                          <span>Đơn nguồn</span>
+                          <strong>{batch.donationRequests} đơn</strong>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                  {!detailTeamBatches.length && (
+                    <div className="teams-detail-empty">
+                      Team chưa được phân công Intake Batch nào.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <div className="teams-detail-actions">
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-primary"
+                  onClick={() => setDetailTeamId(null)}
+                >
+                  Đóng chi tiết
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
@@ -569,4 +737,3 @@ function Pagination({ current, total, setPage }: { current: number; total: numbe
     </nav>
   );
 }
-

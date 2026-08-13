@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Calendar,
   Layers,
-  Sparkles,
   Users,
   Clock3,
   MapPin,
@@ -58,7 +57,7 @@ export const Dashboard: React.FC = () => {
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [teamDate, setTeamDate] = useState(getLocalDateValue);
   const [isShiftActive, setIsShiftActive] = useState(false);
-  const [isTransferringId, setIsTransferringId] = useState<string | null>(null);
+  const [batchShiftFilter, setBatchShiftFilter] = useState<'all' | 'morning' | 'afternoon'>('all');
   const [dropOffBoard, setDropOffBoard] = useState<WarehouseDropOffBoard>({
     dutyContexts: [],
     requests: [],
@@ -170,23 +169,6 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSendToClassification = async (batchId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsTransferringId(batchId);
-    try {
-      await receivingService.sendToClassification(batchId);
-      const data = await receivingService.getMyBatches();
-      setBatches(data);
-      setRequests(data.flatMap((batch) => batch.requests));
-      toast.success('Đã gửi Intake Batch sang bộ phận Phân loại.');
-      setActiveTab('transferring');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể gửi Intake Batch.');
-    } finally {
-      setIsTransferringId(null);
-    }
-  };
-
   const totalWeight = requests
     .filter((r) => r.status === 'Received' && r.actualWeight)
     .reduce((sum, r) => sum + (r.actualWeight || 0), 0);
@@ -275,11 +257,18 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const shiftPeriod = (batch: ReceivingBatch) => {
+    const normalized = batch.shiftName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (normalized.includes('chieu')) return 'afternoon';
+    if (normalized.includes('sang')) return 'morning';
+    return Number(batch.startTime.slice(0, 2)) < 12 ? 'morning' : 'afternoon';
+  };
   const filteredBatches = batches.filter((batch) => {
+    if (batchShiftFilter !== 'all' && shiftPeriod(batch) !== batchShiftFilter) return false;
     if (activeTab === 'receiving')
       return batch.status === 'Receiving' || batch.status === 'Planned';
     if (activeTab === 'completed') return batch.status === 'Completed';
-    return batch.status === 'SentToClassification';
+    return ['AwaitingClassificationAssignment', 'AssignedToClassification', 'SentToClassification'].includes(batch.status);
   });
 
   const getBatchProgress = (batchId: string) => {
@@ -603,9 +592,9 @@ export const Dashboard: React.FC = () => {
       <section id="receiving-batch-list" className="rcv-batch-list-section">
         <div className="ops-section-head">
           <h2>Tuyến lô tiếp nhận</h2>
-          <span>Lọc theo trạng thái thu gom</span>
         </div>
 
+        <div className="rcv-batch-filter-row">
         <div className="ops-tabs" role="tablist">
           <button
             type="button"
@@ -643,9 +632,19 @@ export const Dashboard: React.FC = () => {
             <Layers size={15} strokeWidth={2} />
             Đang chuyển đi
             <span className="ops-tab-count">
-              {batches.filter((b) => b.status === 'SentToClassification').length}
+              {batches.filter((b) => ['AwaitingClassificationAssignment', 'AssignedToClassification', 'SentToClassification'].includes(b.status)).length}
             </span>
           </button>
+        </div>
+          <label className="rcv-shift-filter">
+            <Clock3 size={15} />
+            <span>Ca làm</span>
+            <select value={batchShiftFilter} onChange={(event) => setBatchShiftFilter(event.target.value as typeof batchShiftFilter)}>
+              <option value="all">Tất cả ca</option>
+              <option value="morning">Ca sáng</option>
+              <option value="afternoon">Ca chiều</option>
+            </select>
+          </label>
         </div>
 
         <div className="ops-list">
@@ -730,18 +729,12 @@ export const Dashboard: React.FC = () => {
                       <button
                         type="button"
                         className="rcv-handoff-btn"
-                        onClick={(e) => handleSendToClassification(batch.id, e)}
-                        disabled={isTransferringId !== null}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/receiving/receiving-area?batchId=${batch.id}`);
+                        }}
                       >
-                        {isTransferringId === batch.id ? (
-                          <>
-                            <span className="ops-spinner" /> Đang chuyển giao...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={14} /> Gửi đi phân loại <ArrowRight size={14} />
-                          </>
-                        )}
+                        <Warehouse size={14} /> Xếp vào Khu nhận đồ <ArrowRight size={14} />
                       </button>
                     ) : (
                       <>

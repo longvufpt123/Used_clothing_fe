@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Truck, CheckCircle, Layers, Users } from 'lucide-react';
+import { Truck, CheckCircle, Layers, Users, Warehouse } from 'lucide-react';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
 import { receivingService } from '@/services/receivingService';
 
@@ -7,7 +7,7 @@ import { receivingService } from '@/services/receivingService';
  * Receiving console frame. Counts are loaded from the receiving API.
  */
 export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [counts, setCounts] = useState({ receiving: 0, completed: 0, transferring: 0, teams: 0 });
+  const [counts, setCounts] = useState({ receiving: 0, completed: 0, staging: 0, transferring: 0, teams: 0 });
 
   useEffect(() => {
     const refresh = async () => {
@@ -17,11 +17,12 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ childr
           receiving: batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned')
             .length,
           completed: batches.filter((b) => b.status === 'Completed').length,
-          transferring: batches.filter((b) => b.status === 'SentToClassification').length,
+          staging: batches.filter((b) => b.status === 'Completed' || b.status === 'ReceivedAtWarehouse').length,
+          transferring: batches.filter((b) => ['AwaitingClassificationAssignment', 'AssignedToClassification', 'SentToClassification'].includes(b.status)).length,
           teams: new Set(batches.map((b) => `${b.shiftId}-${b.teamName}`)).size,
         });
       } catch {
-        setCounts({ receiving: 0, completed: 0, transferring: 0, teams: 0 });
+        setCounts({ receiving: 0, completed: 0, staging: 0, transferring: 0, teams: 0 });
       }
     };
     refresh();
@@ -40,6 +41,12 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ childr
       label: 'Đã gom xong',
       icon: CheckCircle,
       count: counts.completed,
+    },
+    {
+      to: '/receiving/receiving-area',
+      label: 'Khu nhận đồ',
+      icon: Warehouse,
+      count: counts.staging,
     },
     {
       to: '/receiving?tab=transferring',

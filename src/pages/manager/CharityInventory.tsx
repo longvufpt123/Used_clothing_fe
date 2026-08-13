@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
+  AlertTriangle,
   Archive,
   ArrowDownToLine,
   ArrowRightLeft,
   ArrowUpFromLine,
   Boxes,
   Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -33,6 +36,7 @@ import {
   type WarehouseIntakeTrace,
   type WarehouseInventory,
   type WarehouseLayout,
+  type WarehouseDetails,
   type WarehouseTransaction,
 } from '@/services/warehouseService';
 import '@/styles/ops-shared.css';
@@ -150,6 +154,9 @@ export default function ManagerWarehouseControl() {
   const [locationEditor, setLocationEditor] = useState<LocationEditor | null>(null);
   const [deleteLocationConfirm, setDeleteLocationConfirm] = useState(false);
   const [warehouseEditorOpen, setWarehouseEditorOpen] = useState(false);
+  const [editingWarehouseId, setEditingWarehouseId] = useState<string | null>(null);
+  const [warehouseDetails, setWarehouseDetails] = useState<WarehouseDetails | null>(null);
+  const [deleteWarehouseConfirm, setDeleteWarehouseConfirm] = useState(false);
   const [savingWarehouse, setSavingWarehouse] = useState(false);
   const [warehouseForm, setWarehouseForm] = useState<WarehouseForm>({
     warehouseName: '',
@@ -163,7 +170,10 @@ export default function ManagerWarehouseControl() {
   const loadWarehouses = async (preferredId?: string) => {
     const data = await receivingService.getManagerWarehouses();
     setWarehouses(data);
-    setWarehouseId((current) => preferredId || current || data[0]?.id || '');
+    setWarehouseId((current) => {
+      const candidate = preferredId || current;
+      return data.some((item) => item.id === candidate) ? candidate : data[0]?.id || '';
+    });
   };
   useEffect(() => {
     loadWarehouses().catch(() => toast.error('Không tải được danh sách kho.'));
@@ -455,6 +465,100 @@ export default function ManagerWarehouseControl() {
     }
   };
 
+  const emptyWarehouseForm = (): WarehouseForm => ({
+    warehouseName: '', address: '', phoneNumber: '', email: '', description: '',
+    totalCapacityKg: 15000,
+  });
+
+  const openCreateWarehouse = () => {
+    setEditingWarehouseId(null);
+    setWarehouseDetails(null);
+    setDeleteWarehouseConfirm(false);
+    setWarehouseForm(emptyWarehouseForm());
+    setWarehouseEditorOpen(true);
+  };
+
+  const openEditWarehouse = async () => {
+    if (!warehouseId) return;
+    setSavingWarehouse(true);
+    try {
+      const data = await warehouseService.warehouse(warehouseId);
+      setWarehouseDetails(data);
+      setEditingWarehouseId(data.id);
+      setDeleteWarehouseConfirm(false);
+      setWarehouseForm({
+        warehouseName: data.warehouseName,
+        address: data.address,
+        phoneNumber: data.phoneNumber || '',
+        email: data.email || '',
+        description: data.description || '',
+        totalCapacityKg: data.totalCapacityKg,
+      });
+      setWarehouseEditorOpen(true);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Không thể tải thông tin kho.');
+    } finally {
+      setSavingWarehouse(false);
+    }
+  };
+
+  const updateWarehouse = async () => {
+    if (!editingWarehouseId) return;
+    const warehouseName = warehouseForm.warehouseName.trim();
+    const address = warehouseForm.address.trim();
+    if (warehouseName.length < 3 || warehouseName.length > 150) {
+      toast.warning('Tên kho phải có từ 3 đến 150 ký tự.');
+      return;
+    }
+    if (address.length < 10 || address.length > 500) {
+      toast.warning('Địa chỉ kho phải có từ 10 đến 500 ký tự.');
+      return;
+    }
+    const minimumCapacity = Math.max(
+      warehouseDetails?.allocatedAreaCapacityKg || 0,
+      warehouseDetails?.currentWeightKg || 0,
+    );
+    if (warehouseForm.totalCapacityKg < minimumCapacity) {
+      toast.warning(`Sức chứa kho không thể thấp hơn ${minimumCapacity} kg đang phân bổ hoặc lưu trữ.`);
+      return;
+    }
+    setSavingWarehouse(true);
+    try {
+      await warehouseService.updateWarehouse(editingWarehouseId, {
+        warehouseName,
+        address,
+        phoneNumber: warehouseForm.phoneNumber.trim() || undefined,
+        email: warehouseForm.email.trim() || undefined,
+        description: warehouseForm.description.trim() || undefined,
+        totalCapacityKg: warehouseForm.totalCapacityKg,
+      });
+      await loadWarehouses(editingWarehouseId);
+      await load();
+      setWarehouseEditorOpen(false);
+      toast.success('Đã cập nhật thông tin kho.');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Không thể cập nhật kho.');
+    } finally {
+      setSavingWarehouse(false);
+    }
+  };
+
+  const deleteWarehouse = async () => {
+    if (!editingWarehouseId) return;
+    setSavingWarehouse(true);
+    try {
+      await warehouseService.deleteWarehouse(editingWarehouseId);
+      setWarehouseEditorOpen(false);
+      setDeleteWarehouseConfirm(false);
+      await loadWarehouses();
+      toast.success('Đã xóa kho.');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Không thể xóa kho đang có dữ liệu liên quan.');
+    } finally {
+      setSavingWarehouse(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="ops-page manager-warehouse">
@@ -470,10 +574,18 @@ export default function ManagerWarehouseControl() {
           <div className="warehouse-head-actions">
             <button
               className="ops-btn ops-btn-primary"
-              onClick={() => setWarehouseEditorOpen(true)}
+              onClick={openCreateWarehouse}
             >
               <Plus size={16} />
               Thêm kho
+            </button>
+            <button
+              className="ops-btn ops-btn-secondary"
+              onClick={() => void openEditWarehouse()}
+              disabled={!warehouseId || savingWarehouse}
+            >
+              <Pencil size={16} />
+              Chỉnh sửa kho
             </button>
             <button className="ops-btn ops-btn-secondary" onClick={load} disabled={loading}>
               <RefreshCw size={16} />
@@ -687,9 +799,13 @@ export default function ManagerWarehouseControl() {
             >
               <header>
                 <div>
-                  <span>THÊM KHO MỚI</span>
-                  <h2>Thông tin kho vận hành</h2>
-                  <p>Sau khi tạo, hệ thống sẽ khởi tạo sơ đồ lưu trữ theo tổng sức chứa đã nhập.</p>
+                  <span>{editingWarehouseId ? 'CHỈNH SỬA KHO' : 'THÊM KHO MỚI'}</span>
+                  <h2>{editingWarehouseId ? 'Cập nhật kho vận hành' : 'Thông tin kho vận hành'}</h2>
+                  <p>
+                    {editingWarehouseId
+                      ? 'Cập nhật tên, địa chỉ, liên hệ và sức chứa vật lý của kho.'
+                      : 'Sau khi tạo, hệ thống sẽ khởi tạo sơ đồ lưu trữ theo tổng sức chứa đã nhập.'}
+                  </p>
                 </div>
                 <button onClick={() => setWarehouseEditorOpen(false)} disabled={savingWarehouse}>
                   <X />
@@ -715,7 +831,11 @@ export default function ManagerWarehouseControl() {
                     <input
                       required
                       type="number"
-                      min={1}
+                      min={Math.max(
+                        1,
+                        warehouseDetails?.allocatedAreaCapacityKg || 0,
+                        warehouseDetails?.currentWeightKg || 0,
+                      )}
                       max={10000000}
                       step={100}
                       value={warehouseForm.totalCapacityKg}
@@ -774,13 +894,24 @@ export default function ManagerWarehouseControl() {
                   />
                 </label>
                 <div className="warehouse-capacity-rule">
-                  <b>Cấu trúc khởi tạo</b>
+                  <b>{editingWarehouseId ? 'Quy tắc sức chứa' : 'Cấu trúc khởi tạo'}</b>
                   <span>
-                    Tổng sức chứa được chia đều cho 3 khu: từ thiện, tái chế và tiêu hủy. Manager có
-                    thể chỉnh lại từng khu vực, dãy và vị trí sau khi tạo.
+                    {editingWarehouseId
+                      ? `Không thể giảm dưới ${Math.max(warehouseDetails?.allocatedAreaCapacityKg || 0, warehouseDetails?.currentWeightKg || 0)} kg đang phân bổ hoặc lưu trữ.`
+                      : 'Tổng sức chứa là giới hạn cho toàn bộ khu vực, dãy và vị trí được tạo trong kho.'}
                   </span>
                 </div>
                 <div className="warehouse-modal-actions">
+                  {editingWarehouseId && (
+                    <button
+                      className="ops-btn teams-danger-btn warehouse-delete-button"
+                      onClick={() => setDeleteWarehouseConfirm(true)}
+                      disabled={savingWarehouse}
+                    >
+                      <Trash2 size={16} />
+                      Xóa kho
+                    </button>
+                  )}
                   <button
                     className="ops-btn ops-btn-secondary"
                     onClick={() => setWarehouseEditorOpen(false)}
@@ -790,15 +921,28 @@ export default function ManagerWarehouseControl() {
                   </button>
                   <button
                     className="ops-btn ops-btn-primary"
-                    onClick={createWarehouse}
+                    onClick={editingWarehouseId ? updateWarehouse : createWarehouse}
                     disabled={savingWarehouse}
                   >
-                    {savingWarehouse ? 'Đang tạo kho...' : 'Tạo kho'}
+                    {savingWarehouse
+                      ? 'Đang lưu...'
+                      : editingWarehouseId
+                        ? 'Lưu thay đổi'
+                        : 'Tạo kho'}
                   </button>
                 </div>
               </div>
             </section>
           </div>
+        )}
+        {deleteWarehouseConfirm && (
+          <WarehouseDeleteConfirmModal
+            title={`Xóa kho “${warehouseForm.warehouseName}”?`}
+            message="Chỉ xóa được kho không có nhân viên, ca làm, yêu cầu, batch hoặc hàng tồn. Các khu vực cấu hình rỗng của kho sẽ được xóa theo."
+            pending={savingWarehouse}
+            onCancel={() => setDeleteWarehouseConfirm(false)}
+            onConfirm={() => void deleteWarehouse()}
+          />
         )}
         {detail && (
           <DetailModal
@@ -911,32 +1055,17 @@ export default function ManagerWarehouseControl() {
                   </div>
                 </div>
               </div>
-              {deleteLayoutConfirm && (
-                <div className="warehouse-delete-confirm">
-                  <strong>Xác nhận xóa {layoutEditor.kind === 'area' ? 'khu vực' : 'dãy'}?</strong>
-                  <p>
-                    Chỉ xóa được khi không còn hàng tồn. Các vị trí trống bên trong sẽ được ngừng
-                    hoạt động.
-                  </p>
-                  <div>
-                    <button
-                      className="ops-btn ops-btn-secondary"
-                      onClick={() => setDeleteLayoutConfirm(false)}
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      className="ops-btn teams-danger-solid"
-                      onClick={deleteLayoutEntity}
-                      disabled={savingLayout}
-                    >
-                      Xác nhận xóa
-                    </button>
-                  </div>
-                </div>
-              )}
             </section>
           </div>
+        )}
+        {deleteLayoutConfirm && layoutEditor && (
+          <WarehouseDeleteConfirmModal
+            title={`Xóa ${layoutEditor.kind === 'area' ? 'khu vực' : 'dãy'} “${layoutEditor.name}”?`}
+            message="Chỉ xóa được khi không còn hàng tồn hoặc Intake Batch. Các vị trí trống bên trong sẽ được ngừng hoạt động."
+            pending={savingLayout}
+            onCancel={() => setDeleteLayoutConfirm(false)}
+            onConfirm={() => void deleteLayoutEntity()}
+          />
         )}
         {locationEditor && (
           <div
@@ -1117,28 +1246,80 @@ export default function ManagerWarehouseControl() {
                   </div>
                 </div>
               </div>
-              {deleteLocationConfirm && (
-                <div className="warehouse-delete-confirm">
-                  <strong>Xác nhận xóa location?</strong>
-                  <p>Chỉ xóa được khi location không còn Inventory.</p>
-                  <div>
-                    <button
-                      className="ops-btn ops-btn-secondary"
-                      onClick={() => setDeleteLocationConfirm(false)}
-                    >
-                      Hủy
-                    </button>
-                    <button className="ops-btn teams-danger-solid" onClick={deleteLocation}>
-                      Xác nhận xóa
-                    </button>
-                  </div>
-                </div>
-              )}
             </section>
           </div>
         )}
+        {deleteLocationConfirm && locationEditor && (
+          <WarehouseDeleteConfirmModal
+            title={`Xóa vị trí “${locationEditor.locationCode}”?`}
+            message="Chỉ xóa được khi vị trí không còn hàng tồn hoặc Intake Batch."
+            pending={savingLayout}
+            onCancel={() => setDeleteLocationConfirm(false)}
+            onConfirm={() => void deleteLocation()}
+          />
+        )}
       </div>
     </AdminLayout>
+  );
+}
+
+function WarehouseDeleteConfirmModal({
+  title,
+  message,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  message: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !pending) onCancel();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onCancel, pending]);
+
+  return createPortal(
+    <div
+      className="warehouse-confirm-overlay"
+      role="presentation"
+      onMouseDown={() => !pending && onCancel()}
+    >
+      <section
+        className="warehouse-confirm-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="warehouse-delete-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header>
+          <span className="warehouse-confirm-icon"><AlertTriangle /></span>
+          <div>
+            <small>XÁC NHẬN XÓA</small>
+            <h2 id="warehouse-delete-title">{title}</h2>
+          </div>
+          <button type="button" onClick={onCancel} disabled={pending} aria-label="Đóng">
+            <X />
+          </button>
+        </header>
+        <p>{message}</p>
+        <footer>
+          <button className="ops-btn ops-btn-secondary" type="button" onClick={onCancel} disabled={pending}>
+            Hủy
+          </button>
+          <button className="ops-btn teams-danger-solid" type="button" onClick={onConfirm} disabled={pending}>
+            <Trash2 size={16} />
+            {pending ? 'Đang xóa...' : 'Xác nhận xóa'}
+          </button>
+        </footer>
+      </section>
+    </div>,
+    document.body,
   );
 }
 
@@ -1153,6 +1334,8 @@ function LayoutView({
   onEdit: (x: LayoutEditor) => void;
   onEditLocation: (x: LocationEditor) => void;
 }) {
+  const [expandedAreaIds, setExpandedAreaIds] = useState<Set<string>>(new Set());
+
   if (!layout)
     return (
       <div className="ops-empty">
@@ -1229,14 +1412,24 @@ function LayoutView({
           ? Math.round((area.currentWeightKg / area.capacityKg) * 100)
           : 0;
         const allocated = area.groups.reduce((sum, x) => sum + x.capacityKg, 0);
+        const expanded = expandedAreaIds.has(area.id);
+        const isStagingArea = area.areaType !== 'Storage';
+        const toggleArea = () => {
+          setExpandedAreaIds((current) => {
+            const next = new Set(current);
+            if (next.has(area.id)) next.delete(area.id);
+            else next.add(area.id);
+            return next;
+          });
+        };
         return (
-          <section className="warehouse-area-card" key={area.id}>
+          <section className={`warehouse-area-card ${expanded ? 'expanded' : 'collapsed'}`} key={area.id}>
             <header>
-              <div>
+              <button className="warehouse-area-summary" onClick={toggleArea} type="button">
                 <span>KHU VỰC</span>
                 <h3>{area.areaName}</h3>
                 <p>{area.description}</p>
-              </div>
+              </button>
               <div className="warehouse-area-actions">
                 <b>
                   {area.currentWeightKg}/{area.capacityKg} kg
@@ -1257,8 +1450,18 @@ function LayoutView({
                   <Pencil />
                   Sửa
                 </button>
+                <button
+                  className="warehouse-area-toggle"
+                  onClick={toggleArea}
+                  title={expanded ? 'Thu gọn khu vực' : 'Mở rộng khu vực'}
+                  type="button"
+                >
+                  <ChevronDown className={expanded ? 'expanded' : ''} />
+                </button>
               </div>
             </header>
+            {expanded && (
+              <div className="warehouse-area-content">
             <div className="warehouse-capacity">
               <i style={{ width: `${Math.min(100, used)}%` }} />
             </div>
@@ -1323,8 +1526,10 @@ function LayoutView({
                         <Archive size={14} />
                         <b>{group.groupName}</b>
                         <small>
-                          {group.currentWeightKg}/{group.capacityKg} kg · {groupLocations.length}{' '}
-                          location
+                          {isStagingArea
+                            ? `${groupLocations.reduce((sum, location) => sum + location.itemQuantity, 0)} batch · `
+                            : ''}
+                          {group.currentWeightKg}/{group.capacityKg} kg · {groupLocations.length} location
                         </small>
                       </span>
                       <div>
@@ -1383,7 +1588,7 @@ function LayoutView({
                             <MapPin size={14} />
                             <strong>{location.locationCode}</strong>
                             <small>
-                              {location.itemQuantity} item · {location.currentWeightKg}/
+                              {location.itemQuantity} {isStagingArea ? 'batch' : 'item'} · {location.currentWeightKg}/
                               {location.capacityKg} kg
                             </small>
                           </button>
@@ -1425,6 +1630,8 @@ function LayoutView({
               })}
               {!area.groups.length && <small>Chưa có dãy trong khu vực này.</small>}
             </div>
+              </div>
+            )}
           </section>
         );
       })}

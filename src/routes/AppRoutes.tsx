@@ -35,6 +35,7 @@ import ReceivingDashboard from '@/pages/receiving/Dashboard';
 import ReceivingBatchDetail from '@/pages/receiving/BatchDetail';
 import ReceivingProcessRequest from '@/pages/receiving/ProcessRequest';
 import ReceivingTeam from '@/pages/receiving/Team';
+import ReceivingArea from '@/pages/receiving/ReceivingArea';
 import RoleRoute, { RoleHomeRedirect } from '@/routes/RoleRoute';
 import StaffProfile from '@/pages/staff/Profile';
 
@@ -341,6 +342,16 @@ export const AppRoutes: React.FC = () => {
           <RoleRoute role="ReceivingStaff">
             <ReceivingShell>
               <ReceivingDashboard />
+            </ReceivingShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/receiving/receiving-area"
+        element={
+          <RoleRoute role="ReceivingStaff">
+            <ReceivingShell>
+              <ReceivingArea />
             </ReceivingShell>
           </RoleRoute>
         }

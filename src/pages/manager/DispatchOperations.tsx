@@ -539,7 +539,7 @@ export default function DispatchOperations() {
                             <strong>{shift.teams.length} team</strong>
                             <small>{shift.assignedRequests} đơn</small>
                           </span>
-                          {shift.status === 'Scheduled' && (
+                          {(shift.status === 'Scheduled' || shift.status === 'InProgress') && (
                             <div className="manager-shift-team-actions">
                               <button
                                 onClick={(e) => {
@@ -740,7 +740,9 @@ export default function DispatchOperations() {
                     <button
                       className="ops-btn ops-btn-secondary"
                       onClick={() => openCreateTeam(detailShift)}
-                      disabled={detailShift.status !== 'Scheduled'}
+                      disabled={
+                        detailShift.status !== 'Scheduled' && detailShift.status !== 'InProgress'
+                      }
                     >
                       <UserPlus size={15} /> Thêm pickup team
                     </button>
@@ -749,7 +751,10 @@ export default function DispatchOperations() {
                         <button
                           className="ops-btn ops-btn-secondary"
                           onClick={() => openCreateTeam(detailShift, 'ReceivingWarehouse')}
-                          disabled={detailShift.status !== 'Scheduled'}
+                          disabled={
+                            detailShift.status !== 'Scheduled' &&
+                            detailShift.status !== 'InProgress'
+                          }
                         >
                           <Warehouse size={15} /> Tạo team trực kho
                         </button>

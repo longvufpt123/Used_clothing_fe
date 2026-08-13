@@ -149,9 +149,32 @@
 }
 .warehouse-area-card > header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+.warehouse-area-summary {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+.warehouse-area-content {
+  padding-top: 12px;
+}
+.warehouse-area-card.collapsed {
+  padding-block: 13px;
+}
+.warehouse-area-card.collapsed .warehouse-area-summary p {
+  overflow: hidden;
+  max-width: 720px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .warehouse-area-card header span,
 .warehouse-record-card header span,
@@ -192,6 +215,20 @@
   font-size: 0.62rem;
   font-weight: 800;
   cursor: pointer;
+}
+.warehouse-area-actions .warehouse-area-toggle {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+}
+.warehouse-area-toggle svg {
+  width: 15px;
+  transition: transform 160ms ease;
+}
+.warehouse-area-toggle svg.expanded {
+  transform: rotate(180deg);
 }
 .warehouse-area-actions svg,
 .warehouse-group-head svg,
@@ -751,25 +788,123 @@
 .warehouse-layout-editor-actions .teams-danger-btn {
   color: #ef4444;
 }
-.warehouse-delete-confirm {
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+.warehouse-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(6px);
+}
+.warehouse-confirm-modal {
+  width: min(520px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+  animation: warehouse-confirm-enter 160ms ease-out;
+}
+.warehouse-confirm-modal > header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+.warehouse-confirm-modal header small {
+  color: #ef4444;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+}
+.warehouse-confirm-modal h2 {
+  margin: 4px 0 0;
+  color: var(--color-text-primary);
+  font-size: 1.08rem;
+  line-height: 1.35;
+}
+.warehouse-confirm-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+.warehouse-confirm-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.warehouse-confirm-modal header > button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: rgba(239, 68, 68, 0.06);
-}
-.warehouse-delete-confirm p {
+  background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  font-size: 0.68rem;
+  cursor: pointer;
 }
-.warehouse-delete-confirm > div {
+.warehouse-confirm-modal header > button:hover {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #ef4444;
+}
+.warehouse-confirm-modal > p {
+  margin: 0;
+  padding: 20px 24px;
+  color: var(--color-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+.warehouse-confirm-modal > footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
+  padding: 16px 24px 22px;
+  border-top: 1px solid var(--color-border);
 }
-.warehouse-delete-confirm .teams-danger-solid {
+.warehouse-confirm-modal .teams-danger-solid {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-color: #dc2626;
   background: #dc2626;
   color: #fff;
+}
+.warehouse-confirm-modal .teams-danger-solid:hover:not(:disabled) {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+@keyframes warehouse-confirm-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (max-width: 560px) {
+  .warehouse-confirm-modal > header {
+    padding: 18px;
+  }
+  .warehouse-confirm-modal > p {
+    padding: 18px;
+  }
+  .warehouse-confirm-modal > footer {
+    padding: 14px 18px 18px;
+  }
+  .warehouse-confirm-modal > footer .ops-btn {
+    flex: 1;
+  }
 }
 @media (max-width: 1250px) {
   .warehouse-location-grid {

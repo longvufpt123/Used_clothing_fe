@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Archive, ArrowRight, Boxes, PackageCheck, Scale, Search, Warehouse } from 'lucide-react';
+import { Archive, ArrowRight, Boxes, PackageCheck, Search, Warehouse } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -123,9 +123,19 @@ export default function WarehouseDashboard() {
         </div>
         <div className="ops-stat-card">
           <span className="ops-stat-label">Sử dụng sức chứa</span>
-          <div className="ops-stat-value">
-            <Scale size={18} />
-            {stats?.capacityUsedPercent || 0}%
+          <div className="ops-stat-value">{stats?.capacityUsedPercent || 0}%</div>
+          <span className="ops-stat-foot">
+            {(stats?.currentWeightKg || 0).toFixed(1)} / {(stats?.capacityKg || 0).toFixed(1)} kg
+          </span>
+          <div
+            className="ops-capacity-progress"
+            role="progressbar"
+            aria-label="Mức sử dụng sức chứa kho"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={stats?.capacityUsedPercent || 0}
+          >
+            <span style={{ width: `${Math.min(100, stats?.capacityUsedPercent || 0)}%` }} />
           </div>
         </div>
       </div>

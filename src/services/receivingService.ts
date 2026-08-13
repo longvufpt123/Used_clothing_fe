@@ -36,6 +36,7 @@ export interface ReceivingBatch {
   startTime: string;
   endTime: string;
   teamName: string;
+  warehouseName: string;
   warehouseAddress: string;
   teamMembers: TeamMember[];
   totalWeight: number;
@@ -43,6 +44,7 @@ export interface ReceivingBatch {
   warehouseReceivedBy?: string | null;
   currentAreaName?: string | null;
   currentGroupName?: string | null;
+  currentLocationCode?: string | null;
   receivingGroups: ReceivingStagingGroup[];
   status:
     | 'Planned'
@@ -61,6 +63,19 @@ export interface ReceivingStagingGroup {
   capacityKg: number;
   currentKg: number;
   availableKg: number;
+  locations: ReceivingStagingLocation[];
+}
+export interface ReceivingStagingLocation {
+  id: string;
+  locationCode: string;
+  aisleCode: string;
+  rackCode: string;
+  shelfCode: string;
+  binCode: string;
+  capacityKg: number;
+  currentKg: number;
+  availableKg: number;
+  status: string;
 }
 interface ApiRequest {
   id: string;
@@ -89,6 +104,7 @@ interface ApiBatch {
   startTime: string;
   endTime: string;
   teamName: string;
+  warehouseName: string;
   warehouseAddress: string;
   teamMembers: TeamMember[];
   totalWeight: number;
@@ -96,6 +112,7 @@ interface ApiBatch {
   warehouseReceivedBy?: string | null;
   currentAreaName?: string | null;
   currentGroupName?: string | null;
+  currentLocationCode?: string | null;
   receivingGroups: ReceivingStagingGroup[];
   status: ReceivingBatch['status'];
   requests: ApiRequest[];
@@ -297,9 +314,10 @@ export const receivingService = {
   startBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/start`),
   completeShift: (id: string) => apiClient.post(`/receiving-operations/my-shifts/${id}/complete`),
   completeBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/complete`),
-  receiveAtWarehouse: (id: string, areaGroupId: string) =>
+  receiveAtWarehouse: (id: string, areaGroupId: string, storageLocationId: string) =>
     apiClient.post(`/receiving-operations/my-batches/${id}/receive-at-warehouse`, {
       areaGroupId,
+      storageLocationId,
     }),
   sendToClassification: (id: string) =>
     apiClient.post(`/receiving-operations/my-batches/${id}/send-to-classification`),

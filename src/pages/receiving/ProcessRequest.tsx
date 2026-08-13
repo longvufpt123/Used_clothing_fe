@@ -142,12 +142,20 @@ export const ProcessRequest: React.FC = () => {
         notes: `[${actualCategory} - ${actualCondition}] ${actualNotes}`,
         imageUrls,
       });
+      const refreshedBatch = await receivingService.getMyBatch(request.batchId);
       receiptImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       setReceiptImages([]);
+      toast.success('Tiếp nhận đơn quyên góp thành công!');
+
+      if (refreshedBatch.status === 'Completed') {
+        setIsSubmitting(false);
+        navigate('/receiving?tab=completed', { replace: true });
+        return;
+      }
+
       setSubmittedStatus('Received');
       setIsSubmitted(true);
       setIsSubmitting(false);
-      toast.success('Tiếp nhận đơn quyên góp thành công!');
     } catch (error: any) {
       setIsSubmitting(false);
       toast.error(error?.response?.data?.message || 'Không thể xác nhận thu nhận.');
