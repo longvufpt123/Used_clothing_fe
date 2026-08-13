@@ -227,6 +227,78 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.warehouse-staging-batch {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 12px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+.warehouse-staging-batch header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.warehouse-staging-batch header > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.warehouse-staging-batch header span {
+  color: var(--color-primary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.warehouse-staging-batch header strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.warehouse-staging-batch header > b {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.warehouse-staging-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 13px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+}
+.warehouse-staging-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.warehouse-staging-batch dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 5px 10px;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+}
+.warehouse-staging-batch dt {
+  color: var(--color-text-muted);
+}
+.warehouse-staging-batch dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .warehouse-batch-compact-footer {
   display: flex;
   align-items: center;

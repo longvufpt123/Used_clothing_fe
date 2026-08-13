@@ -37,7 +37,6 @@ export const BatchDetail: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [handoffBusy, setHandoffBusy] = useState(false);
-  const [selectedReceivingGroupId, setSelectedReceivingGroupId] = useState('');
   const pageSize = 3;
 
   const refreshBatch = async () => {
@@ -49,20 +48,7 @@ export const BatchDetail: React.FC = () => {
 
   const receiveAtWarehouse = async () => {
     if (!id) return;
-    if (!selectedReceivingGroupId) {
-      toast.error('Vui lòng chọn dãy trong Khu nhận đồ.');
-      return;
-    }
-    setHandoffBusy(true);
-    try {
-      await receivingService.receiveAtWarehouse(id, selectedReceivingGroupId);
-      await refreshBatch();
-      toast.success('Đã nhập Intake Batch vào Khu nhận đồ.');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể nhập lô vào Khu nhận đồ.');
-    } finally {
-      setHandoffBusy(false);
-    }
+    navigate(`/receiving/receiving-area?batchId=${id}`);
   };
 
   const sendToClassification = async () => {
@@ -192,30 +178,16 @@ export const BatchDetail: React.FC = () => {
               <div><span className="ops-panel-label">Bàn giao vào kho</span><h3>Chọn dãy trong Khu nhận đồ</h3></div>
               <strong>{batch.totalWeight.toFixed(1)} kg</strong>
             </div>
-            <div className="receiving-putaway__groups">
-              {batch.receivingGroups.map((group) => {
-                const selected = selectedReceivingGroupId === group.id;
-                const canFit = group.availableKg >= batch.totalWeight;
-                return (
-                  <button key={group.id} type="button" className={`receiving-putaway__group ${selected ? 'selected' : ''}`}
-                    disabled={!canFit || handoffBusy} onClick={() => setSelectedReceivingGroupId(group.id)}>
-                    <strong>{group.groupName}</strong>
-                    <small>{group.currentKg.toFixed(1)}/{group.capacityKg.toFixed(1)} kg</small>
-                    <div className="ops-cap-track"><div className="ops-cap-fill" style={{ width: `${Math.min(100, (group.currentKg / group.capacityKg) * 100)}%` }} /></div>
-                    <em>{canFit ? `Còn ${group.availableKg.toFixed(1)} kg` : 'Không đủ sức chứa'}</em>
-                  </button>
-                );
-              })}
-            </div>
-            <button className="btn btn-primary" disabled={handoffBusy || !selectedReceivingGroupId} onClick={receiveAtWarehouse}>
-              <Warehouse size={17} /> Xác nhận nhập Khu nhận đồ
+            <p>Chọn đầy đủ khu vực, dãy và vị trí cụ thể tại màn hình vận hành Khu nhận đồ.</p>
+            <button className="btn btn-primary" onClick={receiveAtWarehouse}>
+              <Warehouse size={17} /> Mở màn hình Khu nhận đồ
             </button>
           </div>
         )}
         {batch.status !== 'Completed' && batch.warehouseReceivedAt && (
           <div className="receiving-receipt">
             <div><span>Mã Intake Batch</span><strong>{batch.code}</strong></div>
-            <div><span>Vị trí nhập</span><strong>{batch.currentAreaName} · {batch.currentGroupName}</strong></div>
+            <div><span>Vị trí nhập</span><strong>{batch.currentAreaName} · {batch.currentGroupName} · {batch.currentLocationCode}</strong></div>
             <div><span>Ngày nhập kho</span><strong>{new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</strong></div>
             <div><span>Tổng khối lượng</span><strong>{batch.totalWeight.toFixed(1)} kg</strong></div>
             <div><span>Người thực hiện</span><strong>{batch.warehouseReceivedBy || 'Receiving Staff'}</strong></div>

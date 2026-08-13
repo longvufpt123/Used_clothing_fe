@@ -9,6 +9,8 @@ export interface WarehouseDashboard {
   inventorySkuCount: number;
   availableWeightKg: number;
   capacityUsedPercent: number;
+  currentWeightKg: number;
+  capacityKg: number;
 }
 export interface WarehouseLocationLayout {
   id: string;
@@ -49,6 +51,9 @@ export interface WarehouseAreaLayout {
     intakeDate: string;
     donationRequests: number;
     teamName?: string;
+    storageLocationId?: string;
+    currentStorageLocationId?: string;
+    locationCode?: string;
     groupName?: string;
     warehouseReceivedAt?: string;
     warehouseReceivedBy?: string;
@@ -61,6 +66,17 @@ export interface WarehouseLayout {
   capacityKg: number;
   currentWeightKg: number;
   areas: WarehouseAreaLayout[];
+}
+export interface WarehouseDetails {
+  id: string;
+  warehouseName: string;
+  address: string;
+  phoneNumber?: string;
+  email?: string;
+  description?: string;
+  totalCapacityKg: number;
+  currentWeightKg: number;
+  allocatedAreaCapacityKg: number;
 }
 export interface WarehouseBatch {
   id: string;
@@ -241,6 +257,20 @@ export const warehouseService = {
     description?: string;
     totalCapacityKg: number;
   }) => apiClient.post<unknown, { id: string }>('/warehouse-operations/warehouses', data),
+  warehouse: (id: string) =>
+    apiClient.get<unknown, WarehouseDetails>(`/warehouse-operations/warehouses/${id}`),
+  updateWarehouse: (
+    id: string,
+    data: {
+      warehouseName: string;
+      address: string;
+      phoneNumber?: string;
+      email?: string;
+      description?: string;
+      totalCapacityKg: number;
+    },
+  ) => apiClient.put(`/warehouse-operations/warehouses/${id}`, data),
+  deleteWarehouse: (id: string) => apiClient.delete(`/warehouse-operations/warehouses/${id}`),
   dashboard: (warehouseId?: string) =>
     apiClient.get<unknown, WarehouseDashboard>('/warehouse-operations/dashboard', {
       params: { warehouseId },

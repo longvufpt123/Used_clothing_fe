@@ -193,6 +193,23 @@
   font-weight: 500;
 }
 
+.ops-capacity-progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  margin-top: auto;
+  border-radius: 999px;
+  background: var(--color-bg-tertiary);
+}
+
+.ops-capacity-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), #34d399);
+  transition: width var(--transition-normal);
+}
+
 .ops-section-head {
   display: flex;
   flex-wrap: wrap;
