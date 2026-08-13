@@ -65,6 +65,12 @@ const pages = (page: number, total: number): (number | string)[] => {
   if (page >= total - 3) return [1, 'start', total - 4, total - 3, total - 2, total - 1, total];
   return [1, 'start', page - 1, page, page + 1, 'end', total];
 };
+const isReceivingTeam = (team: ManagerTeamOverview) =>
+  team.teamType === 'Receiving' ||
+  team.teamType === 'ReceivingPickup' ||
+  team.teamType === 'ReceivingWarehouse';
+const isPickupTeam = (team: ManagerTeamOverview) =>
+  team.teamType === 'Receiving' || team.teamType === 'ReceivingPickup';
 
 export default function DispatchOperations() {
   const toast = useToast();
@@ -124,7 +130,14 @@ export default function DispatchOperations() {
             }),
           ])
         : [[], []];
-      const data: ManagerReceivingSetup = { warehouses, receivingStaff, shifts };
+      const data: ManagerReceivingSetup = {
+        warehouses,
+        receivingStaff,
+        shifts: shifts.map((shift) => ({
+          ...shift,
+          teams: shift.teams.filter(isReceivingTeam),
+        })),
+      };
       setSetup(data);
       setWarehouseFilter((current) => current || selectedWarehouse);
       if (detailId) setDetailShift(data.shifts.find((x) => x.id === detailId) || null);
@@ -235,7 +248,7 @@ export default function DispatchOperations() {
     setTeamName(
       type === 'ReceivingWarehouse'
         ? `Team trực kho · ${shift.shiftName}`
-        : `Team ${shift.teams.filter((x) => x.teamType !== 'ReceivingWarehouse').length + 1} · ${shift.shiftName}`,
+        : `Team ${shift.teams.filter(isPickupTeam).length + 1} · ${shift.shiftName}`,
     );
     setStaffIds([]);
     setStaffSearch('');
@@ -346,7 +359,7 @@ export default function DispatchOperations() {
         )
         .flatMap((shift) =>
           shift.teams
-            .filter((team) => team.teamType !== 'ReceivingWarehouse' && team.status === 'Scheduled')
+            .filter((team) => isPickupTeam(team) && team.status === 'Scheduled')
             .map((team) => ({
               ...team,
               shiftName: shift.shiftName,
@@ -956,7 +969,7 @@ export default function DispatchOperations() {
                                   </div>
                                   <b>{getStatusLabel(team.intakeBatchStatus, '—')}</b>
                                 </div>
-                                {team.teamType !== 'ReceivingWarehouse' && (
+                                {isPickupTeam(team) && (
                                   <button
                                     className="ops-btn ops-btn-secondary manager-route-toggle"
                                     onClick={() => setRouteTeamId(team.id)}
@@ -979,7 +992,7 @@ export default function DispatchOperations() {
                                         <small>{request.address}</small>
                                         <small>Trạng thái: {getStatusLabel(request.status)}</small>
                                       </span>
-                                      {team.teamType !== 'ReceivingWarehouse' &&
+                                      {isPickupTeam(team) &&
                                       team.status === 'Scheduled' ? (
                                         <select
                                           value={team.id}
