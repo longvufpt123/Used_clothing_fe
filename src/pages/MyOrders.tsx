@@ -15,6 +15,7 @@ import {
   XCircle,
   FilterX,
   Search,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import AddressSearchMap from '@/components/common/AddressSearchMap';
@@ -26,6 +27,7 @@ import apiClient from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getStatusLabel } from '@/utils/statusLabels';
+import DonationChatDialog from '@/components/chat/DonationChatDialog';
 import './MyOrders.css';
 
 interface DonorRequestSearchApiResponse {
@@ -44,6 +46,9 @@ interface DonorRequestSearchApiResponse {
   status: string;
   statusText: string;
   createdAt?: string | null;
+  receivingTeamName?: string | null;
+  estimatedPickupAt?: string | null;
+  receivingStaff?: { id: string; fullName: string; phoneNumber: string }[];
 }
 
 interface WarehouseOption {
@@ -194,6 +199,7 @@ export const MyOrders: React.FC = () => {
   const [pendingCancelOrder, setPendingCancelOrder] =
     useState<DonorRequestSearchApiResponse | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<DonorRequestSearchApiResponse | null>(null);
+  const [chatOrder, setChatOrder] = useState<DonorRequestSearchApiResponse | null>(null);
   const [searchCode, setSearchCode] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
@@ -830,6 +836,10 @@ export const MyOrders: React.FC = () => {
           )}
         </section>
       )}
+      {chatOrder && (
+        <DonationChatDialog requestId={chatOrder.id} requestCode={chatOrder.code}
+          participantLabel={chatOrder.receivingTeamName || 'Đội tiếp nhận'} onClose={() => setChatOrder(null)} />
+      )}
       {filteredOrders.length > pageSize && (
         <div className="orders-pagination">
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
@@ -896,6 +906,17 @@ export const MyOrders: React.FC = () => {
                 <strong>{selectedOrder.pickupAddress}</strong>
               </div>
             </div>
+            {selectedOrder.status === 'ReceivingStaffAssigned' && selectedOrder.receivingStaff && selectedOrder.receivingStaff.length > 0 && (
+              <section className="assigned-receiving-card">
+                <div>
+                  <span>Nhân viên tiếp nhận</span>
+                  <strong>{selectedOrder.receivingTeamName || 'Đội tiếp nhận'}</strong>
+                  <p>{selectedOrder.receivingStaff.map((staff) => `${staff.fullName} · ${staff.phoneNumber}`).join(' • ')}</p>
+                  <small>Giờ dự kiến đến lấy: {selectedOrder.estimatedPickupAt ? new Date(selectedOrder.estimatedPickupAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Đang cập nhật'}</small>
+                </div>
+                <Button type="button" onClick={() => setChatOrder(selectedOrder)}><MessageCircle size={17} /> Chat với nhân viên</Button>
+              </section>
+            )}
             {selectedOrder.imageUrls && selectedOrder.imageUrls.length > 0 && (
               <div className="order-detail-images">
                 <h3>

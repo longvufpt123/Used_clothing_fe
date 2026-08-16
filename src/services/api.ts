@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { clearAuthSession } from '@/utils/authSession';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -25,22 +26,7 @@ apiClient.interceptors.request.use(
   },
 );
 
-// Flag to prevent infinite loop during token refreshing
-let isRefreshing = false;
-let failedQueue: any[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-// Response Interceptor: Refresh Token Rotation on 401
+// The backend currently issues an access token only. A 401 therefore ends the local session.
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response.data;
@@ -62,68 +48,8 @@ apiClient.interceptors.response.use(
       originalRequest.url?.includes('/auth/refresh') ||
       originalRequest.url?.includes('/auth/verify-registration');
 
-    // If 401 Unauthorized and NOT an auth endpoint, attempt to refresh token
-    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      if (isRefreshing) {
-        // Queue this request while refreshing is in progress
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return apiClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        isRefreshing = false;
-        processQueue(error, null);
-        console.warn('[API Client] No refresh token found. Logging out...');
-        localStorage.removeItem('accessToken');
-        return Promise.reject(error);
-      }
-
-      try {
-        // Attempt to call backend refresh token rotation API
-        const refreshResponse = await axios.post<{ accessToken: string; refreshToken: string }>(
-          `${API_BASE_URL}/auth/refresh`,
-          { refreshToken },
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data;
-
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        }
-
-        processQueue(null, accessToken);
-        isRefreshing = false;
-
-        // Retry the original request
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        isRefreshing = false;
-
-        console.error('[API Client] Refresh token expired or invalid. Clearing credentials...');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-
-        return Promise.reject(refreshError);
-      }
+    if (status === 401 && !isAuthEndpoint) {
+      clearAuthSession();
     }
 
     return Promise.reject(error);

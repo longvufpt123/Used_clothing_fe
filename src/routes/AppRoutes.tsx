@@ -68,11 +68,9 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/"
         element={
-          <RoleRoute role="Donor">
-            <MainLayout>
-              <Home />
-            </MainLayout>
-          </RoleRoute>
+          <MainLayout>
+            <Home />
+          </MainLayout>
         }
       />
       <Route

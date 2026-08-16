@@ -159,7 +159,7 @@ export const Login: React.FC = () => {
         userName: response.userName,
         avatarUrl: response.avatarUrl,
         role: response.role.trim(),
-      });
+      }, response.expiredAt);
       toast.success('Đăng nhập thành công!');
 
       // Redirect based on role
