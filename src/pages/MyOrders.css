@@ -351,6 +351,7 @@
 
 .btn-danger {
   color: #dc2626;
+  padding: 10px;
 }
 
 .btn-danger:hover {
@@ -913,6 +914,9 @@
   margin-top: 18px;
 }
 
+.assigned-receiving-card{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:16px;border:1px solid #08a47c55;border-radius:13px;background:#08a47c0d}
+.assigned-receiving-card>div{display:flex;min-width:0;flex-direction:column;gap:5px}.assigned-receiving-card span{color:var(--color-text-muted);font-size:.72rem;font-weight:800;text-transform:uppercase}.assigned-receiving-card p{margin:0;color:var(--color-text-primary);line-height:1.45}.assigned-receiving-card small{color:var(--color-text-muted)}.assigned-receiving-card button{display:flex;flex:0 0 auto;align-items:center;gap:7px}
+
 .order-detail-images h3 {
   display: flex;
   align-items: center;
@@ -970,4 +974,5 @@
   .order-detail-modal > footer {
     flex-direction: column;
   }
+  .assigned-receiving-card{align-items:stretch;flex-direction:column}.assigned-receiving-card button{justify-content:center}
 }

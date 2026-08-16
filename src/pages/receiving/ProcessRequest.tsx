@@ -12,6 +12,7 @@ import {
   XCircle,
   Clock,
   ArrowRight,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -22,6 +23,7 @@ import type { ReceivingRequest } from '@/services/receivingService';
 import { uploadImages } from '@/utils/uploadImages';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
+import DonationChatDialog from '@/components/chat/DonationChatDialog';
 
 type ReceiptImage = {
   file: File;
@@ -34,6 +36,7 @@ export const ProcessRequest: React.FC = () => {
   const toast = useToast();
 
   const [request, setRequest] = useState<ReceivingRequest | null>(null);
+  const [showChat, setShowChat] = useState(false);
 
   // Form input states
   const [actualWeight, setActualWeight] = useState('');
@@ -223,9 +226,14 @@ export const ProcessRequest: React.FC = () => {
           <div className="ops-title-row">
             <h1>Xử lý đơn {request.code}</h1>
             <span className="ops-badge pending">Chờ xử lý</span>
+            <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setShowChat(true)}>
+              <MessageCircle size={16} /> Chat với donor
+            </button>
           </div>
         </div>
       )}
+      {showChat && <DonationChatDialog requestId={request.id} requestCode={request.code}
+        participantLabel={request.donorName} onClose={() => setShowChat(false)} />}
 
       {!isSubmitted ? (
         <div className="ops-form-grid two-col">

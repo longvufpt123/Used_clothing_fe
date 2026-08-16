@@ -37,7 +37,11 @@ export const ConfirmBatch: React.FC = () => {
     classificationService
       .getBatch(batchId)
       .then(async (data) => {
-        if (data.status !== 'PendingConfirmation') {
+        // Backend currently hands a new batch to classification with
+        // AssignedToClassification. PendingConfirmation is kept for older data.
+        const isWaitingForReceipt =
+          data.status === 'AssignedToClassification' || data.status === 'PendingConfirmation';
+        if (!isWaitingForReceipt) {
           if (data.status === 'AwaitingClassificationCount') {
             setConfirmed(true);
             setBatch(data);
