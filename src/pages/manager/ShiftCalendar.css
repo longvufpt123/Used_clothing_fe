@@ -401,7 +401,7 @@
 }
 .teams-schedule-times {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
   margin-top: 14px;
 }
@@ -466,7 +466,24 @@
   box-shadow: 0 -10px 24px color-mix(in srgb, var(--color-bg-secondary) 88%, transparent);
 }
 .teams-schedule-times {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.teams-add-shift {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  margin-top: 10px;
+  padding: 9px 13px;
+  border: 1px dashed var(--color-primary);
+  border-radius: 9px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 750;
+  cursor: pointer;
+}
+.teams-add-shift:hover {
+  border-style: solid;
 }
 .teams-schedule-times > div {
   min-width: 0;
@@ -523,6 +540,17 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-primary);
+}
+
+/* The month form is taller than the viewport. Its action row must remain in
+   normal document flow so it never covers holidays, preview, or note fields. */
+.teams-month-modal .teams-year-actions {
+  position: static;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--color-border);
+  background: transparent;
+  box-shadow: none;
 }
 .teams-month-modal .teams-month-year strong {
   min-width: 64px;

@@ -8,13 +8,14 @@ import { useAuth } from '@/context/AuthContext';
 import './DonationChatDialog.css';
 
 interface Props {
-  requestId: string;
-  requestCode: string;
+  requestId?: string;
+  requestCode?: string;
+  directUserId?: string;
   participantLabel: string;
   onClose: () => void;
 }
 
-export default function DonationChatDialog({ requestId, requestCode, participantLabel, onClose }: Props) {
+export default function DonationChatDialog({ requestId, requestCode, directUserId, participantLabel, onClose }: Props) {
   const [messages, setMessages] = useState<DonationChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -26,11 +27,13 @@ export default function DonationChatDialog({ requestId, requestCode, participant
 
   const loadMessages = useCallback(async (showError = false) => {
     try {
-      setMessages(await donationChatService.getMessages(requestId));
+      setMessages(directUserId
+        ? await donationChatService.getDirectMessages(directUserId)
+        : await donationChatService.getMessages(requestId!));
     } catch (error: any) {
       if (showError) toastRef.current.error(error?.response?.data?.message || 'Không thể tải cuộc trò chuyện.');
     }
-  }, [requestId]);
+  }, [requestId, directUserId]);
 
   useEffect(() => {
     let disposed = false;
@@ -51,13 +54,13 @@ export default function DonationChatDialog({ requestId, requestCode, participant
         ? current : [...current, message]);
     });
     connection.onreconnected(() => {
-      if (!disposed) void connection.invoke('JoinRequest', requestId);
+      if (!disposed && requestId) void connection.invoke('JoinRequest', requestId);
     });
     const startTimer = window.setTimeout(() => {
       if (disposed) return;
       void connection.start()
         .then(() => {
-          if (!disposed) return connection.invoke('JoinRequest', requestId);
+          if (!disposed && requestId) return connection.invoke('JoinRequest', requestId);
           return undefined;
         })
         .catch(() => {
@@ -76,12 +79,25 @@ export default function DonationChatDialog({ requestId, requestCode, participant
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    if (!directUserId) return;
+    const refresh = (event: Event) => {
+      const detail = (event as CustomEvent<{ participantId?: string }>).detail;
+      if (detail?.participantId === directUserId) void loadMessages();
+    };
+    window.addEventListener('chat:message', refresh);
+    return () => window.removeEventListener('chat:message', refresh);
+  }, [directUserId, loadMessages]);
+
   const send = async () => {
     const message = draft.trim();
     if (!message || sending) return;
     setSending(true);
     try {
-      await donationChatService.sendMessage(requestId, message);
+      if (directUserId) {
+        await donationChatService.sendDirectMessage(directUserId, message);
+        await loadMessages();
+      } else await donationChatService.sendMessage(requestId!, message);
       setDraft('');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể gửi tin nhắn.');
@@ -94,7 +110,7 @@ export default function DonationChatDialog({ requestId, requestCode, participant
     <div className="donation-chat-overlay">
       <section className="donation-chat-dialog">
         <header>
-          <div><MessageCircle size={20} /><span><strong>{participantLabel}</strong><small>{requestCode}</small></span></div>
+          <div><MessageCircle size={20} /><span><strong>{participantLabel}</strong>{requestCode && <small>{requestCode}</small>}</span></div>
           <button type="button" onClick={onClose} aria-label="Đóng trò chuyện"><X size={19} /></button>
         </header>
         <div className="donation-chat-messages">

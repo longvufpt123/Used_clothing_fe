@@ -60,6 +60,7 @@ export default function ShiftCalendar() {
   const [warehouseId, setWarehouseId] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [dayOpen, setDayOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
   const [holidays, setHolidays] = useState('');
@@ -69,7 +70,10 @@ export default function ShiftCalendar() {
     morningEndTime: '11:00',
     afternoonStartTime: '13:00',
     afternoonEndTime: '17:00',
+    eveningStartTime: '18:00',
+    eveningEndTime: '22:00',
   });
+  const [eveningShiftEnabled, setEveningShiftEnabled] = useState(false);
   const [creatingYear, setCreatingYear] = useState(false);
   const [monthOpen, setMonthOpen] = useState(false);
   const [monthYear, setMonthYear] = useState(new Date().getFullYear());
@@ -162,6 +166,11 @@ export default function ShiftCalendar() {
           startTime: `${scheduleTimes.afternoonStartTime}:00`,
           endTime: `${scheduleTimes.afternoonEndTime}:00`,
         },
+        ...(eveningShiftEnabled ? [{
+          name: 'Ca tối',
+          startTime: `${scheduleTimes.eveningStartTime}:00`,
+          endTime: `${scheduleTimes.eveningEndTime}:00`,
+        }] : []),
       ];
       await receivingService.generateShifts({
         warehouseId,
@@ -173,12 +182,27 @@ export default function ShiftCalendar() {
         shiftDefinitions,
       });
       toast.success('Đã tạo ca sáng và ca chiều.');
+      setDayOpen(false);
       await load();
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không thể tạo ca.');
     } finally {
       setCreating(false);
     }
+  };
+  const requestDay = () => {
+    if (!warehouseId) return toast.warning('Chọn kho.');
+    if (scheduleTimes.morningStartTime >= scheduleTimes.morningEndTime)
+      return toast.warning('Giờ kết thúc ca sáng phải sau giờ bắt đầu.');
+    if (scheduleTimes.afternoonStartTime >= scheduleTimes.afternoonEndTime)
+      return toast.warning('Giờ kết thúc ca chiều phải sau giờ bắt đầu.');
+    if (scheduleTimes.morningEndTime > scheduleTimes.afternoonStartTime)
+      return toast.warning('Ca sáng phải kết thúc trước khi ca chiều bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.eveningStartTime >= scheduleTimes.eveningEndTime)
+      return toast.warning('Giờ kết thúc ca tối phải sau giờ bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.afternoonEndTime > scheduleTimes.eveningStartTime)
+      return toast.warning('Ca chiều phải kết thúc trước khi ca tối bắt đầu.');
+    void createDay();
   };
   const holidayDates = () =>
     holidays
@@ -194,6 +218,10 @@ export default function ShiftCalendar() {
       return toast.warning('Giờ kết thúc ca chiều phải sau giờ bắt đầu.');
     if (scheduleTimes.morningEndTime > scheduleTimes.afternoonStartTime)
       return toast.warning('Ca sáng phải kết thúc trước khi ca chiều bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.eveningStartTime >= scheduleTimes.eveningEndTime)
+      return toast.warning('Giờ kết thúc ca tối phải sau giờ bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.afternoonEndTime > scheduleTimes.eveningStartTime)
+      return toast.warning('Ca chiều phải kết thúc trước khi ca tối bắt đầu.');
     if (dates.some((x) => !new RegExp(`^${year}-\\d{2}-\\d{2}$`).test(x)))
       return toast.warning(`Ngày phải có dạng ${year}-MM-DD.`);
     void createYear();
@@ -212,6 +240,11 @@ export default function ShiftCalendar() {
           startTime: `${scheduleTimes.afternoonStartTime}:00`,
           endTime: `${scheduleTimes.afternoonEndTime}:00`,
         },
+        ...(eveningShiftEnabled ? [{
+          name: 'Ca tối',
+          startTime: `${scheduleTimes.eveningStartTime}:00`,
+          endTime: `${scheduleTimes.eveningEndTime}:00`,
+        }] : []),
       ];
       const result = await receivingService.generateShifts({
         warehouseId,
@@ -274,8 +307,8 @@ export default function ShiftCalendar() {
       }
       working++;
     }
-    return { working, holidays, shifts: working * 2 };
-  }, [monthYear, monthIndex, monthHolidays, workingDays]);
+    return { working, holidays, shifts: working * (eveningShiftEnabled ? 3 : 2) };
+  }, [monthYear, monthIndex, monthHolidays, workingDays, eveningShiftEnabled]);
   const requestMonth = () => {
     const dates = monthHolidayDates();
     if (!warehouseId) return toast.warning('Chọn kho.');
@@ -286,6 +319,10 @@ export default function ShiftCalendar() {
       return toast.warning('Giờ kết thúc ca chiều phải sau giờ bắt đầu.');
     if (scheduleTimes.morningEndTime > scheduleTimes.afternoonStartTime)
       return toast.warning('Ca sáng phải kết thúc trước khi ca chiều bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.eveningStartTime >= scheduleTimes.eveningEndTime)
+      return toast.warning('Giờ kết thúc ca tối phải sau giờ bắt đầu.');
+    if (eveningShiftEnabled && scheduleTimes.afternoonEndTime > scheduleTimes.eveningStartTime)
+      return toast.warning('Ca chiều phải kết thúc trước khi ca tối bắt đầu.');
     if (dates.some((x) => !new RegExp(`^${monthYear}-\\d{2}-\\d{2}$`).test(x)))
       return toast.warning(`Ngày lễ phải có dạng ${monthYear}-MM-DD.`);
     void createMonth();
@@ -305,6 +342,11 @@ export default function ShiftCalendar() {
           startTime: `${scheduleTimes.afternoonStartTime}:00`,
           endTime: `${scheduleTimes.afternoonEndTime}:00`,
         },
+        ...(eveningShiftEnabled ? [{
+          name: 'Ca tối',
+          startTime: `${scheduleTimes.eveningStartTime}:00`,
+          endTime: `${scheduleTimes.eveningEndTime}:00`,
+        }] : []),
       ];
       const result = await receivingService.generateShifts({
         warehouseId,
@@ -527,9 +569,9 @@ export default function ShiftCalendar() {
                 </span>
                 <h3>{new Date(`${selected}T00:00:00`).toLocaleDateString('vi-VN')}</h3>
               </div>
-              <button onClick={createDay} disabled={creating || !warehouseId}>
+              <button onClick={() => setDayOpen(true)} disabled={creating || !warehouseId}>
                 <Plus size={16} />
-                {creating ? 'Đang tạo' : 'Tạo 2 ca'}
+                Tạo ca
               </button>
             </div>
             <div className="teams-agenda-list">
@@ -571,6 +613,73 @@ export default function ShiftCalendar() {
             </div>
           </aside>
         </div>
+        {dayOpen && (
+          <div
+            className="manager-modal-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !creating) setDayOpen(false);
+            }}
+          >
+            <section className="ops-panel teams-year-modal teams-day-modal" role="dialog" aria-modal="true">
+              <span className="ops-panel-label">LỊCH THEO NGÀY</span>
+              <h2>Tạo ca làm việc cho một ngày</h2>
+              <p>
+                Cấu hình hai ca cho ngày{' '}
+                <strong>{new Date(`${selected}T00:00:00`).toLocaleDateString('vi-VN')}</strong>.
+                Ca trùng giờ đã tồn tại sẽ được bỏ qua.
+              </p>
+              <div className="ops-field">
+                <label>Kho</label>
+                <select value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}>
+                  {setup.warehouses.map((warehouse) => (
+                    <option value={warehouse.id} key={warehouse.id}>{warehouse.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="ops-field">
+                <label>Ngày áp dụng</label>
+                <input type="date" value={selected} readOnly />
+              </div>
+              <div className="teams-schedule-times">
+                <div>
+                  <strong>Ca sáng</strong>
+                  <label>Bắt đầu<input type="time" value={scheduleTimes.morningStartTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, morningStartTime: event.target.value })} /></label>
+                  <label>Kết thúc<input type="time" value={scheduleTimes.morningEndTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, morningEndTime: event.target.value })} /></label>
+                </div>
+                <div>
+                  <strong>Ca chiều</strong>
+                  <label>Bắt đầu<input type="time" value={scheduleTimes.afternoonStartTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, afternoonStartTime: event.target.value })} /></label>
+                  <label>Kết thúc<input type="time" value={scheduleTimes.afternoonEndTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, afternoonEndTime: event.target.value })} /></label>
+                </div>
+                {eveningShiftEnabled && <div>
+                  <strong>Ca tối</strong>
+                  <label>Bắt đầu<input type="time" value={scheduleTimes.eveningStartTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, eveningStartTime: event.target.value })} /></label>
+                  <label>Kết thúc<input type="time" value={scheduleTimes.eveningEndTime}
+                    onChange={(event) => setScheduleTimes({ ...scheduleTimes, eveningEndTime: event.target.value })} /></label>
+                </div>}
+              </div>
+              <button type="button" className="teams-add-shift" onClick={() => setEveningShiftEnabled((value) => !value)}>
+                {eveningShiftEnabled ? <><X size={16} /> Bỏ ca tối</> : <><Plus size={16} /> Thêm ca tối</>}
+              </button>
+              <div className="teams-year-note">
+                Sẽ tạo {eveningShiftEnabled ? 3 : 2} ca: {scheduleTimes.morningStartTime}–{scheduleTimes.morningEndTime}, {' '}
+                {scheduleTimes.afternoonStartTime}–{scheduleTimes.afternoonEndTime}
+                {eveningShiftEnabled && ` và ${scheduleTimes.eveningStartTime}–${scheduleTimes.eveningEndTime}`}.
+              </div>
+              <div className="teams-year-actions">
+                <button className="ops-btn ops-btn-secondary" onClick={() => setDayOpen(false)} disabled={creating}>Hủy</button>
+                <button className="ops-btn ops-btn-primary" onClick={requestDay} disabled={creating || !warehouseId}>
+                  {creating ? 'Đang tạo...' : `Xác nhận tạo ${eveningShiftEnabled ? 3 : 2} ca`}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
         {monthOpen && (
           <div
             className="manager-modal-backdrop"
@@ -709,7 +818,17 @@ export default function ShiftCalendar() {
                     />
                   </label>
                 </div>
+                {eveningShiftEnabled && <div>
+                  <strong>Ca tối</strong>
+                  <label>Bắt đầu<input type="time" value={scheduleTimes.eveningStartTime}
+                    onChange={(e) => setScheduleTimes({ ...scheduleTimes, eveningStartTime: e.target.value })} /></label>
+                  <label>Kết thúc<input type="time" value={scheduleTimes.eveningEndTime}
+                    onChange={(e) => setScheduleTimes({ ...scheduleTimes, eveningEndTime: e.target.value })} /></label>
+                </div>}
               </div>
+              <button type="button" className="teams-add-shift" onClick={() => setEveningShiftEnabled((value) => !value)}>
+                {eveningShiftEnabled ? <><X size={16} /> Bỏ ca tối</> : <><Plus size={16} /> Thêm ca tối</>}
+              </button>
               <div className="ops-field">
                 <label>Ngày lễ bổ sung trong tháng</label>
                 <textarea
@@ -868,7 +987,17 @@ export default function ShiftCalendar() {
                     />
                   </label>
                 </div>
+                {eveningShiftEnabled && <div>
+                  <strong>Ca tối</strong>
+                  <label>Bắt đầu<input type="time" value={scheduleTimes.eveningStartTime}
+                    onChange={(e) => setScheduleTimes({ ...scheduleTimes, eveningStartTime: e.target.value })} /></label>
+                  <label>Kết thúc<input type="time" value={scheduleTimes.eveningEndTime}
+                    onChange={(e) => setScheduleTimes({ ...scheduleTimes, eveningEndTime: e.target.value })} /></label>
+                </div>}
               </div>
+              <button type="button" className="teams-add-shift" onClick={() => setEveningShiftEnabled((value) => !value)}>
+                {eveningShiftEnabled ? <><X size={16} /> Bỏ ca tối</> : <><Plus size={16} /> Thêm ca tối</>}
+              </button>
               <div className="ops-field">
                 <label>Ngày lễ bổ sung</label>
                 <textarea
