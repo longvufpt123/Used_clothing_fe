@@ -10,7 +10,18 @@ export interface DonationChatMessage {
   isMine: boolean;
 }
 
+export interface DonationChatConversation {
+  requestId: string;
+  requestCode: string;
+  participantLabel: string;
+  avatarUrl: string | null;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+}
+
 export const donationChatService = {
+  getConversations: () =>
+    apiClient.get<unknown, DonationChatConversation[]>('/donation-chat/conversations'),
   getMessages: (requestId: string) =>
     apiClient.get<unknown, DonationChatMessage[]>(`/donation-chat/${requestId}`),
   sendMessage: (requestId: string, message: string) =>

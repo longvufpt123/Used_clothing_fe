@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { donationChatService } from '@/services/donationChatService';
 import type { DonationChatMessage } from '@/services/donationChatService';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 import './DonationChatDialog.css';
 
 interface Props {
@@ -17,23 +19,62 @@ export default function DonationChatDialog({ requestId, requestCode, participant
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const toast = useToast();
+  const { user } = useAuth();
   const endRef = useRef<HTMLDivElement>(null);
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   const loadMessages = useCallback(async (showError = false) => {
     try {
       setMessages(await donationChatService.getMessages(requestId));
     } catch (error: any) {
-      if (showError) toast.error(error?.response?.data?.message || 'Không thể tải cuộc trò chuyện.');
+      if (showError) toastRef.current.error(error?.response?.data?.message || 'Không thể tải cuộc trò chuyện.');
     }
-  }, [requestId, toast]);
+  }, [requestId]);
 
   useEffect(() => {
+    let disposed = false;
     void loadMessages(true);
-    const timer = window.setInterval(() => void loadMessages(), 5000);
-    return () => window.clearInterval(timer);
-  }, [loadMessages]);
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    const hubBase = apiBase.replace(/\/api\/?$/, '');
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${hubBase}/hubs/donation-chat`, {
+        accessTokenFactory: () => localStorage.getItem('accessToken') || '',
+      })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build();
+    connection.on('MessageReceived', (incoming: DonationChatMessage) => {
+      if (disposed) return;
+      const message = { ...incoming, isMine: incoming.senderId === user?.userId };
+      setMessages((current) => current.some((item) => item.id === message.id)
+        ? current : [...current, message]);
+    });
+    connection.onreconnected(() => {
+      if (!disposed) void connection.invoke('JoinRequest', requestId);
+    });
+    const startTimer = window.setTimeout(() => {
+      if (disposed) return;
+      void connection.start()
+        .then(() => {
+          if (!disposed) return connection.invoke('JoinRequest', requestId);
+          return undefined;
+        })
+        .catch(() => {
+          if (!disposed) toastRef.current.error('Không thể kết nối trò chuyện realtime.');
+        });
+    }, 0);
+    return function disconnectChat(): void {
+      disposed = true;
+      window.clearTimeout(startTimer);
+      connection.off('MessageReceived');
+      void connection.stop();
+    };
+  }, [loadMessages, requestId, user?.userId]);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const send = async () => {
     const message = draft.trim();
@@ -42,7 +83,6 @@ export default function DonationChatDialog({ requestId, requestCode, participant
     try {
       await donationChatService.sendMessage(requestId, message);
       setDraft('');
-      await loadMessages();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể gửi tin nhắn.');
     } finally {
@@ -51,8 +91,8 @@ export default function DonationChatDialog({ requestId, requestCode, participant
   };
 
   return (
-    <div className="donation-chat-overlay" onMouseDown={onClose}>
-      <section className="donation-chat-dialog" onMouseDown={(event) => event.stopPropagation()}>
+    <div className="donation-chat-overlay">
+      <section className="donation-chat-dialog">
         <header>
           <div><MessageCircle size={20} /><span><strong>{participantLabel}</strong><small>{requestCode}</small></span></div>
           <button type="button" onClick={onClose} aria-label="Đóng trò chuyện"><X size={19} /></button>

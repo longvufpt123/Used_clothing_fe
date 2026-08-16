@@ -1,10 +1,11 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
-import AppRoutes from './routes/AppRoutes';
-import ScrollToTop from './routes/ScrollToTop';
+import { ToastProvider } from '@/context/ToastContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { AuthProvider } from '@/context/AuthContext';
+import AppRoutes from '@/routes/AppRoutes';
+import ScrollToTop from '@/routes/ScrollToTop';
+import DonationChatRealtime from '@/components/chat/DonationChatRealtime';
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <ToastProvider>
           <AuthProvider>
             <AppRoutes />
+            <DonationChatRealtime />
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>
