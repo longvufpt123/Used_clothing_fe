@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HttpTransportType, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { MessageCircle, Search, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -43,7 +43,11 @@ export default function DonationChatRealtime() {
     if (!user) return; let disposed = false;
     const api = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
     const connection = new HubConnectionBuilder().withUrl(`${api.replace(/\/api\/?$/, '')}/hubs/donation-chat`,
-      { accessTokenFactory: () => localStorage.getItem('accessToken') || '' })
+      {
+        accessTokenFactory: () => localStorage.getItem('accessToken') || '',
+        transport: HttpTransportType.WebSockets,
+        skipNegotiation: true,
+      })
       .withAutomaticReconnect().configureLogging(LogLevel.Warning).build();
     connection.on('ChatNotification', (n: ChatNotice) => {
       if (disposed || n.senderId === user.userId) return;

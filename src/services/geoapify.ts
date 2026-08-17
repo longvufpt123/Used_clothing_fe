@@ -1,5 +1,6 @@
 const apiKey = () => {
-  const value = import.meta.env.VITE_GEOAPIFY_API_KEY?.trim();
+  const value = import.meta.env.VITE_GEOAPIFY_API_KEY?.trim()
+    || '1214154afc9748c9b2ef8efc53789676';
   if (!value) throw new Error('Thiếu VITE_GEOAPIFY_API_KEY trong file .env.');
   return value;
 };
