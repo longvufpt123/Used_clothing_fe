@@ -1,0 +1,87 @@
+name: Frontend deployment check
+
+on:
+  push:
+    branches:
+      - main
+      - chore/format-frontend-source
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: Vercel URL to smoke test (optional)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-deployment-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Type check and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: https://deployment-check.invalid/api
+          VITE_GEOAPIFY_API_KEY: deployment-check-placeholder
+        run: npm run build
+
+      - name: Upload production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke-test:
+    name: Smoke test Vercel deployment
+    needs: build
+    if: ${{ inputs.deployment_url != '' || vars.VERCEL_DEPLOYMENT_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DEPLOYMENT_URL: ${{ inputs.deployment_url || vars.VERCEL_DEPLOYMENT_URL }}
+
+    steps:
+      - name: Wait for deployment and check response
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${DEPLOYMENT_URL%/}"
+
+          for attempt in {1..12}; do
+            status="$(curl --location --silent --show-error --output /tmp/rethreads-home.html \
+              --write-out '%{http_code}' --max-time 20 "$url" || true)"
+
+            if [[ "$status" =~ ^[23] ]]; then
+              echo "Deployment is reachable: $url (HTTP $status)"
+              grep -qi '<div[^>]*id="root"' /tmp/rethreads-home.html
+              exit 0
+            fi
+
+            echo "Attempt $attempt/12 returned HTTP ${status:-000}; retrying in 10 seconds..."
+            sleep 10
+          done
+
+          echo "Deployment did not become healthy: $url"
+          exit 1
