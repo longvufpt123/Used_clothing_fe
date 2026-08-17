@@ -11,6 +11,11 @@ interface WorkdayDatePickerProps {
   min?: string;
   required?: boolean;
   onChange: (value: string) => void;
+  disabledDates?: string[];
+  availableDates?: string[];
+  availabilityLoading?: boolean;
+  onMonthChange?: (month: Date) => void;
+  footer?: string;
 }
 
 const parseLocalDate = (value?: string) => {
@@ -32,11 +37,21 @@ export default function WorkdayDatePicker({
   min,
   required,
   onChange,
+  disabledDates = [],
+  availableDates,
+  availabilityLoading = false,
+  onMonthChange,
+  footer = 'Ngày tiếp nhận phụ thuộc vào ca làm việc của kho gần nhất.',
 }: WorkdayDatePickerProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const selected = useMemo(() => parseLocalDate(value), [value]);
   const minimum = useMemo(() => parseLocalDate(min), [min]);
+  const disabledDateValues = useMemo(
+    () => disabledDates.map(parseLocalDate).filter((date): date is Date => Boolean(date)),
+    [disabledDates],
+  );
+  const availableDateSet = useMemo(() => new Set(availableDates || []), [availableDates]);
 
   useEffect(() => {
     const close = (event: MouseEvent) => {
@@ -72,13 +87,20 @@ export default function WorkdayDatePicker({
             selected={selected}
             defaultMonth={selected || minimum}
             startMonth={minimum}
-            disabled={[{ dayOfWeek: [0, 6] }, ...(minimum ? [{ before: minimum }] : [])]}
+            disabled={[
+              ...disabledDateValues,
+              ...(minimum ? [{ before: minimum }] : []),
+              ...(availableDates
+                ? [(date: Date) => !availableDateSet.has(formatInputDate(date))]
+                : []),
+            ]}
+            onMonthChange={onMonthChange}
             onSelect={(date) => {
               if (!date) return;
               onChange(formatInputDate(date));
               setOpen(false);
             }}
-            footer="Chỉ tiếp nhận từ Thứ Hai đến Thứ Sáu."
+            footer={availabilityLoading ? 'Đang tải lịch ca của kho...' : footer}
           />
         </div>
       )}

@@ -60,13 +60,18 @@ interface WarehouseOption {
   address: string;
 }
 
-const PICKUP_TIME_OPTIONS = Array.from({ length: 19 }, (_, index) => {
-  const totalMinutes = 8 * 60 + index * 30;
-  const hour = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
-  const minute = String(totalMinutes % 60).padStart(2, '0');
-  const value = `${hour}:${minute}`;
-  return { value, label: value };
-});
+interface PickupWindow {
+  shiftId: string;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  label: string;
+}
+
+interface PickupAvailability {
+  warehouseId: string;
+  windows: PickupWindow[];
+}
 
 interface DonorRequestSearchApiResponse {
   id: string;
@@ -104,37 +109,27 @@ const toLocalDateInputValue = (date: Date) => {
 const getVietnamNow = () =>
   new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
 
-const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
-
 const getEarliestPickupDate = () => {
   const date = getVietnamNow();
-  if (date.getHours() * 60 + date.getMinutes() >= 17 * 60) {
-    date.setDate(date.getDate() + 1);
-  }
-  while (isWeekend(date)) {
-    date.setDate(date.getDate() + 1);
-  }
   return toLocalDateInputValue(date);
 };
 
 const getDefaultPickupDate = getEarliestPickupDate;
 
-const isPickupDateInputWeekend = (value: string) => {
-  if (!value) return false;
-  const [year, month, day] = value.split('-').map(Number);
-  return isWeekend(new Date(year, month - 1, day));
-};
-
-const getAvailablePickupTimes = (pickupDate: string) => {
+const getAvailablePickupTimes = (pickupDate: string, windows: PickupWindow[]) => {
   const vietnamNow = getVietnamNow();
   const today = toLocalDateInputValue(vietnamNow);
   const currentMinutes = vietnamNow.getHours() * 60 + vietnamNow.getMinutes();
-
-  return PICKUP_TIME_OPTIONS.filter((option) => {
-    if (pickupDate !== today) return true;
-    const [hour, minute] = option.value.split(':').map(Number);
-    return hour * 60 + minute > currentMinutes;
+  const values = new Set<string>();
+  windows.forEach((window) => {
+    const [startHour, startMinute] = window.startTime.split(':').map(Number);
+    const [endHour, endMinute] = window.endTime.split(':').map(Number);
+    for (let minute = startHour * 60 + startMinute; minute < endHour * 60 + endMinute; minute += 30) {
+      if (pickupDate === today && minute <= currentMinutes) continue;
+      values.add(`${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`);
+    }
   });
+  return [...values].sort().map((value) => ({ value, label: value }));
 };
 
 const estimateWeightByOption: Record<string, number> = {
@@ -253,7 +248,15 @@ export const Products: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(false);
-  const availablePickupTimes = useMemo(() => getAvailablePickupTimes(pickupDate), [pickupDate]);
+  const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
+  const [loadingPickupWindows, setLoadingPickupWindows] = useState(false);
+  const [availablePickupDates, setAvailablePickupDates] = useState<string[] | undefined>();
+  const [loadingPickupDates, setLoadingPickupDates] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => `${getDefaultPickupDate().slice(0, 7)}-01`);
+  const availablePickupTimes = useMemo(
+    () => getAvailablePickupTimes(pickupDate, pickupWindows),
+    [pickupDate, pickupWindows],
+  );
 
   useEffect(() => {
     apiClient
@@ -261,6 +264,67 @@ export const Products: React.FC = () => {
       .then((data) => setWarehouses((data || []).filter((warehouse: any) => warehouse.isActive !== false)))
       .catch(() => toast.error('Không thể tải danh sách kho tiếp nhận.'));
   }, [toast]);
+
+  useEffect(() => {
+    const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
+    if (!pickupDate || !hasTarget) {
+      setPickupWindows([]);
+      return;
+    }
+    const params = new URLSearchParams({ date: pickupDate });
+    if (deliveryMethod === 'StaffPickup' && pickupLocation) {
+      params.set('latitude', String(pickupLocation.lat));
+      params.set('longitude', String(pickupLocation.lon));
+    } else {
+      params.set('warehouseId', warehouseId);
+    }
+    let cancelled = false;
+    setLoadingPickupWindows(true);
+    apiClient.get<unknown, PickupAvailability>(`/donor-requests/pickup-windows?${params}`)
+      .then((result) => {
+        if (!cancelled) setPickupWindows(result.windows || []);
+      })
+      .catch(() => {
+        if (!cancelled) setPickupWindows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPickupWindows(false);
+      });
+    return () => { cancelled = true; };
+  }, [deliveryMethod, pickupDate, pickupLocation, warehouseId]);
+
+  useEffect(() => {
+    const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
+    if (!hasTarget) {
+      setAvailablePickupDates(undefined);
+      return;
+    }
+    const params = new URLSearchParams({ month: calendarMonth });
+    if (deliveryMethod === 'StaffPickup' && pickupLocation) {
+      params.set('latitude', String(pickupLocation.lat));
+      params.set('longitude', String(pickupLocation.lon));
+    } else {
+      params.set('warehouseId', warehouseId);
+    }
+    let cancelled = false;
+    setLoadingPickupDates(true);
+    apiClient.get<unknown, string[]>(`/donor-requests/pickup-dates?${params}`)
+      .then((dates) => {
+        if (cancelled) return;
+        const normalizedDates = (dates || []).map((date) => date.slice(0, 10));
+        setAvailablePickupDates(normalizedDates);
+        if (pickupDate.startsWith(calendarMonth.slice(0, 7)) && !normalizedDates.includes(pickupDate)) {
+          setPickupDate(normalizedDates[0] || '');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAvailablePickupDates([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPickupDates(false);
+      });
+    return () => { cancelled = true; };
+  }, [calendarMonth, deliveryMethod, pickupLocation, warehouseId]);
 
   useEffect(() => {
     if (!availablePickupTimes.some((option) => option.value === selectedPickupTime)) {
@@ -395,11 +459,6 @@ export const Products: React.FC = () => {
       (deliveryMethod === 'DonorDropOff' && !warehouseId)
     ) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
-      return;
-    }
-
-    if (deliveryMethod === 'StaffPickup' && isPickupDateInputWeekend(pickupDate)) {
-      toast.error('Chỉ nhận hàng từ Thứ 2 đến Thứ 6. Vui lòng chọn ngày khác.');
       return;
     }
 
@@ -676,6 +735,10 @@ export const Products: React.FC = () => {
                   value={pickupDate}
                   min={getEarliestPickupDate()}
                   onChange={setPickupDate}
+                  availableDates={availablePickupDates}
+                  availabilityLoading={loadingPickupDates}
+                  onMonthChange={(month) => setCalendarMonth(toLocalDateInputValue(new Date(month.getFullYear(), month.getMonth(), 1)))}
+                  footer="Chọn ngày có ca tiếp nhận tại kho. Cuối tuần vẫn khả dụng nếu kho có ca."
                   required
                 />
                 <div className="input-wrapper">
@@ -687,6 +750,7 @@ export const Products: React.FC = () => {
                     className="custom-input"
                     value={selectedPickupTime}
                     onChange={(event) => setSelectedPickupTime(event.target.value)}
+                    disabled={loadingPickupWindows || availablePickupTimes.length === 0}
                     required
                   >
                     <option value="">Chọn giờ tiếp nhận</option>
@@ -697,9 +761,11 @@ export const Products: React.FC = () => {
                     ))}
                   </select>
                   <small className="input-helper-text">
-                    {availablePickupTimes.length > 0
-                      ? 'Chọn giờ trong giờ hành chính, từ 08:00 đến 17:00.'
-                      : 'Hôm nay đã hết giờ tiếp nhận. Vui lòng chọn ngày làm việc tiếp theo.'}
+                    {loadingPickupWindows
+                      ? 'Đang kiểm tra ca làm việc của kho...'
+                      : availablePickupTimes.length > 0
+                        ? `Các giờ khả dụng theo ${pickupWindows.length} ca làm việc của kho.`
+                        : 'Ngày này không có ca tiếp nhận còn khả dụng tại kho đã chọn hoặc kho gần nhất.'}
                   </small>
                 </div>
               </div>
