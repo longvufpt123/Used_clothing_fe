@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   ChevronLeft,
   ChevronRight,
   Eye,
+  Download,
   ImageOff,
   PackageCheck,
   Pencil,
@@ -53,10 +54,21 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DistributionRequest | null>(null);
   const [detailRequest, setDetailRequest] = useState<DistributionRequest | null>(null);
+  const [issueSlipRequest, setIssueSlipRequest] = useState<DistributionRequest | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const issueSlipRef = useRef<HTMLElement | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<DistributionRequest | null>(null);
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
   const [ghnTarget, setGhnTarget] = useState<DistributionRequest | null>(null);
   const [ghnSubmitting, setGhnSubmitting] = useState(false);
   const [ghnErrors, setGhnErrors] = useState<Record<string, string>>({});
   const [ghnForm, setGhnForm] = useState({
+    fromName: '',
+    fromPhone: '',
+    fromAddress: '',
+    fromProvinceId: '',
+    fromDistrictId: '',
+    fromWardCode: '',
     provinceId: '',
     provinceName: '',
     paymentTypeId: '1',
@@ -291,10 +303,92 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     }
   };
 
+  const decideRequest = async (request: DistributionRequest, approved: boolean) => {
+    if (decisionSubmitting) return;
+    setDecisionSubmitting(true);
+    try {
+      await distributionService.approve(
+        request.id,
+        approved,
+        approved ? undefined : 'Không phù hợp nhu cầu hiện tại',
+      );
+      toast.success(approved ? 'Đã duyệt yêu cầu phân phối.' : 'Đã từ chối yêu cầu phân phối.');
+      setRejectTarget(null);
+      setDetailRequest(null);
+      await load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Thao tác thất bại.');
+    } finally {
+      setDecisionSubmitting(false);
+    }
+  };
+
+  const downloadIssueSlipPdf = async () => {
+    if (!issueSlipRequest || !issueSlipRef.current || pdfExporting) return;
+    setPdfExporting(true);
+    try {
+      await document.fonts.ready;
+      const [{ toPng }, { jsPDF }] = await Promise.all([
+        import('html-to-image'),
+        import('jspdf'),
+      ]);
+      const element = issueSlipRef.current;
+      const image = await toPng(element, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        style: {
+          maxHeight: 'none',
+          overflow: 'visible',
+          color: '#0f172a',
+          background: '#ffffff',
+        },
+        filter: (node) =>
+          !(node instanceof Element && node.hasAttribute('data-html2canvas-ignore')),
+      });
+      const imageSize = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const preview = new Image();
+        preview.onload = () => resolve({ width: preview.naturalWidth, height: preview.naturalHeight });
+        preview.onerror = () => reject(new Error('Không thể đọc ảnh phiếu xuất.'));
+        preview.src = image;
+      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const margin = 10;
+      const imageWidth = 210 - margin * 2;
+      const pageHeight = 297 - margin * 2;
+      const imageHeight = (imageSize.height * imageWidth) / imageSize.width;
+      let remainingHeight = imageHeight;
+      let imageY = margin;
+      pdf.addImage(image, 'PNG', margin, imageY, imageWidth, imageHeight);
+      remainingHeight -= pageHeight;
+      while (remainingHeight > 0) {
+        pdf.addPage();
+        imageY = margin - (imageHeight - remainingHeight);
+        pdf.addImage(image, 'PNG', margin, imageY, imageWidth, imageHeight);
+        remainingHeight -= pageHeight;
+      }
+      pdf.save(`${issueSlipRequest.issueSlipCode || 'phieu-xuat-kho'}.pdf`);
+      toast.success('Đã tải phiếu xuất kho PDF.');
+    } catch (error) {
+      console.error('Issue slip PDF export failed:', error);
+      toast.error('Không thể tạo file PDF. Vui lòng thử lại.');
+    } finally {
+      setPdfExporting(false);
+    }
+  };
+
   const openGhnForm = (request: DistributionRequest) => {
     setGhnTarget(request);
     setGhnErrors({});
     setGhnForm({
+      fromName: request.warehouseName,
+      fromPhone: request.warehousePhone || '',
+      fromAddress: request.warehouseAddress || '',
+      fromProvinceId: '',
+      fromDistrictId: '',
+      fromWardCode: '',
       provinceId: '',
       provinceName: '',
       paymentTypeId: '1',
@@ -314,6 +408,20 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       ),
     [ghnForm.provinceId],
   );
+  const ghnPickupDistricts = useMemo(
+    () =>
+      ghnAdministrative.districts.filter(
+        (district) => String(district.provinceId) === ghnForm.fromProvinceId,
+      ),
+    [ghnForm.fromProvinceId],
+  );
+  const ghnPickupWards = useMemo(
+    () =>
+      ghnAdministrative.wards.filter(
+        (ward) => String(ward.districtId) === ghnForm.fromDistrictId,
+      ),
+    [ghnForm.fromDistrictId],
+  );
   const ghnWards = useMemo(
     () =>
       ghnAdministrative.wards.filter((ward) => String(ward.districtId) === ghnForm.toDistrictId),
@@ -324,6 +432,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     if (!ghnTarget) return;
     const errors: Record<string, string> = {};
     const districtId = Number(ghnForm.toDistrictId);
+    const fromDistrictId = Number(ghnForm.fromDistrictId);
+    if (!ghnForm.fromName.trim()) errors.fromName = 'Vui lòng nhập tên điểm lấy hàng.';
+    if (!ghnForm.fromPhone.trim()) errors.fromPhone = 'Vui lòng nhập số điện thoại điểm lấy hàng.';
+    if (!ghnForm.fromAddress.trim()) errors.fromAddress = 'Vui lòng nhập địa chỉ lấy hàng.';
+    if (!ghnForm.fromProvinceId) errors.fromProvinceId = 'Vui lòng chọn tỉnh/thành của điểm lấy.';
+    if (!Number.isInteger(fromDistrictId) || fromDistrictId <= 0)
+      errors.fromDistrictId = 'Vui lòng chọn quận/huyện của điểm lấy.';
+    if (!ghnForm.fromWardCode) errors.fromWardCode = 'Vui lòng chọn phường/xã của điểm lấy.';
     if (!ghnForm.provinceId) errors.provinceId = 'Vui lòng chọn tỉnh/thành phố trong danh sách.';
     if (!ghnForm.toDistrictId.trim() || !Number.isInteger(districtId) || districtId <= 0)
       errors.toDistrictId = 'Vui lòng chọn quận/huyện trong danh sách.';
@@ -339,6 +455,11 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         paymentTypeId: Number(ghnForm.paymentTypeId),
         serviceTypeId: Number(ghnForm.serviceTypeId),
         requiredNote: ghnForm.requiredNote,
+        fromName: ghnForm.fromName.trim(),
+        fromPhone: ghnForm.fromPhone.trim(),
+        fromAddress: ghnForm.fromAddress.trim(),
+        fromDistrictId,
+        fromWardCode: ghnForm.fromWardCode,
         toDistrictId: districtId,
         toWardCode: ghnForm.toWardCode.trim(),
       });
@@ -599,7 +720,11 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                     {r.organizationName} → {r.warehouseName}
                   </h3>
                 </div>
-                <span>{getStatusLabel(r.status)}</span>
+                <span
+                  className={`distribution-request-status distribution-request-status--${r.status}`}
+                >
+                  {getStatusLabel(r.status)}
+                </span>
               </div>
               <p>
                 {r.recipientName} · {r.recipientPhone} · {r.toAddress}
@@ -692,12 +817,17 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             </div>
             {detailRequest.issueSlipCode && (
               <div className="issue-slip">
-                <b>Phiếu xuất: {detailRequest.issueSlipCode}</b>
-                <span>
-                  Xuất lúc{' '}
-                  {detailRequest.warehouseIssuedAt &&
-                    new Date(detailRequest.warehouseIssuedAt).toLocaleString('vi-VN')}
-                </span>
+                <div>
+                  <b>Phiếu xuất: {detailRequest.issueSlipCode}</b>
+                  <span>
+                    Xuất lúc{' '}
+                    {detailRequest.warehouseIssuedAt &&
+                      new Date(detailRequest.warehouseIssuedAt).toLocaleString('vi-VN')}
+                  </span>
+                </div>
+                <button type="button" onClick={() => setIssueSlipRequest(detailRequest)}>
+                  Xem phiếu xuất
+                </button>
               </div>
             )}
             {detailRequest.ghnOrderCode && (
@@ -746,10 +876,17 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               )}
               {mode === 'manager' && detailRequest.status === 'PendingManagerApproval' && (
                 <>
-                  <button onClick={() => action(detailRequest.id, 'approve')}>
+                  <button
+                    disabled={decisionSubmitting}
+                    onClick={() => decideRequest(detailRequest, true)}
+                  >
                     <Check /> Duyệt
                   </button>
-                  <button className="danger" onClick={() => action(detailRequest.id, 'reject')}>
+                  <button
+                    className="danger"
+                    disabled={decisionSubmitting}
+                    onClick={() => setRejectTarget(detailRequest)}
+                  >
                     <X /> Từ chối
                   </button>
                 </>
@@ -776,6 +913,147 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               )}
               <button className="secondary" onClick={() => setDetailRequest(null)}>
                 Đóng
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {issueSlipRequest && (
+        <div className="product-modal-backdrop" onMouseDown={() => setIssueSlipRequest(null)}>
+          <section
+            ref={issueSlipRef}
+            className="distribution-detail-modal issue-slip-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="issue-slip-detail-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <b>PHIẾU XUẤT KHO</b>
+                <h2 id="issue-slip-detail-title">{issueSlipRequest.issueSlipCode}</h2>
+                <p>
+                  Yêu cầu phân phối {issueSlipRequest.code} ·{' '}
+                  {issueSlipRequest.warehouseIssuedAt
+                    ? new Date(issueSlipRequest.warehouseIssuedAt).toLocaleString('vi-VN')
+                    : 'Chưa có thời gian xuất'}
+                </p>
+              </div>
+              <button
+                data-html2canvas-ignore
+                aria-label="Đóng phiếu xuất"
+                onClick={() => setIssueSlipRequest(null)}
+              >
+                <X />
+              </button>
+            </header>
+            <div className="issue-slip-information">
+              <div>
+                <span>Kho xuất</span>
+                <strong>{issueSlipRequest.warehouseName}</strong>
+              </div>
+              <div>
+                <span>Nhân viên thực hiện</span>
+                <strong>{issueSlipRequest.issuedBy || 'Chưa cập nhật'}</strong>
+              </div>
+              <div>
+                <span>Tổ chức nhận</span>
+                <strong>{issueSlipRequest.organizationName}</strong>
+              </div>
+              <div>
+                <span>Người nhận</span>
+                <strong>
+                  {issueSlipRequest.recipientName} · {issueSlipRequest.recipientPhone}
+                </strong>
+              </div>
+              <div className="wide">
+                <span>Địa chỉ giao hàng</span>
+                <strong>{issueSlipRequest.toAddress}</strong>
+              </div>
+            </div>
+            <h3 className="issue-slip-items-title">Hàng hóa xuất kho</h3>
+            <div className="issue-slip-items">
+              {issueSlipRequest.items.map((item) => (
+                <div key={item.id}>
+                  <PackageCheck />
+                  <span>
+                    <b>{item.sku}</b>
+                    <small>
+                      {item.batchCode} · {item.clothingType} · {item.fabricType} · Size {item.size}
+                    </small>
+                  </span>
+                  <strong>
+                    {item.issuedQuantity || item.approvedQuantity} item ·{' '}
+                    {item.issuedWeight || item.requestedWeight} kg
+                  </strong>
+                </div>
+              ))}
+            </div>
+            <div className="issue-slip-total">
+              <span>Tổng cộng</span>
+              <strong>
+                {issueSlipRequest.items.reduce(
+                  (total, item) => total + (item.issuedQuantity || item.approvedQuantity),
+                  0,
+                )}{' '}
+                item ·{' '}
+                {issueSlipRequest.items
+                  .reduce(
+                    (total, item) => total + (item.issuedWeight || item.requestedWeight),
+                    0,
+                  )
+                  .toFixed(2)}{' '}
+                kg
+              </strong>
+            </div>
+            <div className="request-actions">
+              <button
+                data-html2canvas-ignore
+                disabled={pdfExporting}
+                onClick={downloadIssueSlipPdf}
+              >
+                <Download /> {pdfExporting ? 'Đang tạo PDF...' : 'Tải PDF'}
+              </button>
+              <button
+                data-html2canvas-ignore
+                className="secondary"
+                onClick={() => setIssueSlipRequest(null)}
+              >
+                Đóng
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {rejectTarget && (
+        <div
+          className="product-modal-backdrop"
+          onMouseDown={() => !decisionSubmitting && setRejectTarget(null)}
+        >
+          <section
+            className="delete-request-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="reject-request-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <span>
+              <X />
+            </span>
+            <h2 id="reject-request-title">Xác nhận từ chối {rejectTarget.code}?</h2>
+            <p>
+              Yêu cầu sẽ bị từ chối và tổ chức sẽ không thể tiếp tục quy trình phân phối này.
+            </p>
+            <div>
+              <button disabled={decisionSubmitting} onClick={() => setRejectTarget(null)}>
+                Quay lại
+              </button>
+              <button
+                className="danger"
+                disabled={decisionSubmitting}
+                onClick={() => decideRequest(rejectTarget, false)}
+              >
+                <X /> {decisionSubmitting ? 'Đang từ chối...' : 'Xác nhận từ chối'}
               </button>
             </div>
           </section>
@@ -852,118 +1130,155 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 createGhnShipment();
               }}
             >
-              <label className={`ghn-admin-field ${ghnErrors.provinceId ? 'invalid' : ''}`}>
+              <div className="ghn-form-section-title">
+                <b>Điểm GHN đến lấy hàng</b>
+              </div>
+              <label className={ghnErrors.fromName ? 'invalid' : ''}>
+                <span>Tên điểm lấy hàng <b>*</b></span>
+                <input
+                  value={ghnForm.fromName}
+                  onChange={(event) => setGhnForm((current) => ({ ...current, fromName: event.target.value }))}
+                />
+                {ghnErrors.fromName && <small>{ghnErrors.fromName}</small>}
+              </label>
+              <label className={ghnErrors.fromPhone ? 'invalid' : ''}>
+                <span>Số điện thoại điểm lấy <b>*</b></span>
+                <input
+                  value={ghnForm.fromPhone}
+                  onChange={(event) => setGhnForm((current) => ({ ...current, fromPhone: event.target.value }))}
+                />
+                {ghnErrors.fromPhone && <small>{ghnErrors.fromPhone}</small>}
+              </label>
+              <label className={`wide ${ghnErrors.fromAddress ? 'invalid' : ''}`}>
+                <span>Địa chỉ chi tiết điểm lấy <b>*</b></span>
+                <input
+                  value={ghnForm.fromAddress}
+                  onChange={(event) => setGhnForm((current) => ({ ...current, fromAddress: event.target.value }))}
+                />
+                {ghnErrors.fromAddress && <small>{ghnErrors.fromAddress}</small>}
+              </label>
+              <label className={ghnErrors.fromProvinceId ? 'invalid' : ''}>
+                <span>Tỉnh/thành điểm lấy <b>*</b></span>
+                <select
+                  value={ghnForm.fromProvinceId}
+                  onChange={(event) => setGhnForm((current) => ({
+                    ...current,
+                    fromProvinceId: event.target.value,
+                    fromDistrictId: '',
+                    fromWardCode: '',
+                  }))}
+                >
+                  <option value="">Chọn tỉnh/thành phố</option>
+                  {ghnAdministrative.provinces.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+                {ghnErrors.fromProvinceId && <small>{ghnErrors.fromProvinceId}</small>}
+              </label>
+              <label className={ghnErrors.fromDistrictId ? 'invalid' : ''}>
+                <span>Quận/huyện điểm lấy <b>*</b></span>
+                <select
+                  disabled={!ghnForm.fromProvinceId}
+                  value={ghnForm.fromDistrictId}
+                  onChange={(event) => setGhnForm((current) => ({
+                    ...current,
+                    fromDistrictId: event.target.value,
+                    fromWardCode: '',
+                  }))}
+                >
+                  <option value="">Chọn quận/huyện</option>
+                  {ghnPickupDistricts.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+                {ghnErrors.fromDistrictId && <small>{ghnErrors.fromDistrictId}</small>}
+              </label>
+              <label className={ghnErrors.fromWardCode ? 'invalid' : ''}>
+                <span>Phường/xã điểm lấy <b>*</b></span>
+                <select
+                  disabled={!ghnForm.fromDistrictId}
+                  value={ghnForm.fromWardCode}
+                  onChange={(event) => setGhnForm((current) => ({ ...current, fromWardCode: event.target.value }))}
+                >
+                  <option value="">Chọn phường/xã</option>
+                  {ghnPickupWards.map((item) => <option key={`${item.districtId}-${item.code}`} value={item.code}>{item.name}</option>)}
+                </select>
+                {ghnErrors.fromWardCode && <small>{ghnErrors.fromWardCode}</small>}
+              </label>
+              <div className="ghn-form-section-title">
+                <b>Địa chỉ giao đến</b>
+                <span>Chọn mã hành chính tương ứng với địa chỉ người nhận phía trên.</span>
+              </div>
+              <label className={ghnErrors.provinceId ? 'invalid' : ''}>
                 <span>
                   Tỉnh/thành phố <b>*</b>
                 </span>
-                <div>
-                  <Search />
-                  <input
-                    list="ghn-provinces"
-                    value={ghnForm.provinceName}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const province = ghnAdministrative.provinces.find(
-                        (item) => `${item.name} — ${item.id}` === value,
-                      );
-                      setGhnForm((current) => ({
-                        ...current,
-                        provinceName: value,
-                        provinceId: province ? String(province.id) : '',
-                        districtName: '',
-                        toDistrictId: '',
-                        wardName: '',
-                        toWardCode: '',
-                      }));
-                      setGhnErrors((current) => ({
-                        ...current,
-                        provinceId: '',
-                        toDistrictId: '',
-                        toWardCode: '',
-                      }));
-                    }}
-                    placeholder="Tìm tỉnh/thành phố..."
-                    autoComplete="off"
-                  />
-                </div>
-                <datalist id="ghn-provinces">
+                <select
+                  value={ghnForm.provinceId}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const province = ghnAdministrative.provinces.find((item) => String(item.id) === value);
+                    setGhnForm((current) => ({
+                      ...current,
+                      provinceId: value,
+                      provinceName: province?.name || '',
+                      toDistrictId: '',
+                      districtName: '',
+                      toWardCode: '',
+                      wardName: '',
+                    }));
+                    setGhnErrors((current) => ({ ...current, provinceId: '', toDistrictId: '', toWardCode: '' }));
+                  }}
+                >
+                  <option value="">Chọn tỉnh/thành phố</option>
                   {ghnAdministrative.provinces.map((item) => (
-                    <option key={item.id} value={`${item.name} — ${item.id}`} />
+                    <option key={item.id} value={item.id}>{item.name}</option>
                   ))}
-                </datalist>
+                </select>
                 {ghnErrors.provinceId && <small>{ghnErrors.provinceId}</small>}
               </label>
-              <label className={`ghn-admin-field ${ghnErrors.toDistrictId ? 'invalid' : ''}`}>
+              <label className={ghnErrors.toDistrictId ? 'invalid' : ''}>
                 <span>
                   Quận/huyện <b>*</b>
                 </span>
-                <div>
-                  <Search />
-                  <input
-                    list="ghn-districts"
-                    disabled={!ghnForm.provinceId}
-                    value={ghnForm.districtName}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const district = ghnDistricts.find(
-                        (item) => `${item.name} — ${item.id}` === value,
-                      );
-                      setGhnForm((current) => ({
-                        ...current,
-                        districtName: value,
-                        toDistrictId: district ? String(district.id) : '',
-                        wardName: '',
-                        toWardCode: '',
-                      }));
-                      setGhnErrors((current) => ({ ...current, toDistrictId: '', toWardCode: '' }));
-                    }}
-                    placeholder={
-                      ghnForm.provinceId ? 'Tìm quận/huyện...' : 'Chọn tỉnh/thành phố trước'
-                    }
-                    autoComplete="off"
-                  />
-                </div>
-                <datalist id="ghn-districts">
+                <select
+                  disabled={!ghnForm.provinceId}
+                  value={ghnForm.toDistrictId}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const district = ghnDistricts.find((item) => String(item.id) === value);
+                    setGhnForm((current) => ({
+                      ...current,
+                      toDistrictId: value,
+                      districtName: district?.name || '',
+                      toWardCode: '',
+                      wardName: '',
+                    }));
+                    setGhnErrors((current) => ({ ...current, toDistrictId: '', toWardCode: '' }));
+                  }}
+                >
+                  <option value="">Chọn quận/huyện</option>
                   {ghnDistricts.map((item) => (
-                    <option key={item.id} value={`${item.name} — ${item.id}`} />
+                    <option key={item.id} value={item.id}>{item.name}</option>
                   ))}
-                </datalist>
+                </select>
                 {ghnErrors.toDistrictId && <small>{ghnErrors.toDistrictId}</small>}
               </label>
-              <label className={`ghn-admin-field ${ghnErrors.toWardCode ? 'invalid' : ''}`}>
+              <label className={ghnErrors.toWardCode ? 'invalid' : ''}>
                 <span>
                   Phường/xã <b>*</b>
                 </span>
-                <div>
-                  <Search />
-                  <input
-                    list="ghn-wards"
-                    disabled={!ghnForm.toDistrictId}
-                    value={ghnForm.wardName}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const ward = ghnWards.find((item) => `${item.name} — ${item.code}` === value);
-                      setGhnForm((current) => ({
-                        ...current,
-                        wardName: value,
-                        toWardCode: ward?.code || '',
-                      }));
-                      setGhnErrors((current) => ({ ...current, toWardCode: '' }));
-                    }}
-                    placeholder={
-                      ghnForm.toDistrictId ? 'Tìm phường/xã...' : 'Chọn quận/huyện trước'
-                    }
-                    autoComplete="off"
-                  />
-                </div>
-                <datalist id="ghn-wards">
+                <select
+                  disabled={!ghnForm.toDistrictId}
+                  value={ghnForm.toWardCode}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const ward = ghnWards.find((item) => item.code === value);
+                    setGhnForm((current) => ({ ...current, toWardCode: value, wardName: ward?.name || '' }));
+                    setGhnErrors((current) => ({ ...current, toWardCode: '' }));
+                  }}
+                >
+                  <option value="">Chọn phường/xã</option>
                   {ghnWards.map((item) => (
-                    <option
-                      key={`${item.districtId}-${item.code}`}
-                      value={`${item.name} — ${item.code}`}
-                    />
+                    <option key={`${item.districtId}-${item.code}`} value={item.code}>{item.name}</option>
                   ))}
-                </datalist>
+                </select>
                 {ghnErrors.toWardCode && <small>{ghnErrors.toWardCode}</small>}
               </label>
               <label className={ghnErrors.paymentTypeId ? 'invalid' : ''}>

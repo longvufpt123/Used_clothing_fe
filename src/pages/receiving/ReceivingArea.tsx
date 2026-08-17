@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
-import type { ReceivingBatch } from '@/services/receivingService';
+import type { ReceivingBatch, ReceivingLocationBatch } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './ReceivingArea.css';
 
@@ -77,6 +77,8 @@ export const ReceivingArea: React.FC = () => {
   const [locationId, setLocationId] = useState('');
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [selectedLocationCode, setSelectedLocationCode] = useState<string | null>(null);
+  const [locationBatches, setLocationBatches] = useState<ReceivingLocationBatch[]>([]);
+  const [locationBatchesLoading, setLocationBatchesLoading] = useState(false);
   const [detailBatch, setDetailBatch] = useState<ReceivingBatch | null>(null);
   const [requestPage, setRequestPage] = useState(1);
   const pageSize = 6;
@@ -153,13 +155,18 @@ export const ReceivingArea: React.FC = () => {
   const safePage = Math.min(page, totalPages);
   const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const locationBatches = useMemo(
-    () =>
-      selectedLocationCode
-        ? filtered.filter((batch) => batch.currentLocationCode === selectedLocationCode)
-        : [],
-    [filtered, selectedLocationCode],
-  );
+  const openLocation = async (locationId: string, locationCode: string) => {
+    setSelectedLocationCode(locationCode);
+    setLocationBatches([]);
+    setLocationBatchesLoading(true);
+    try {
+      setLocationBatches(await receivingService.getLocationBatches(locationId));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể tải các batch tại vị trí.');
+    } finally {
+      setLocationBatchesLoading(false);
+    }
+  };
 
   const requestTotalPages = detailBatch
     ? Math.max(1, Math.ceil(detailBatch.requests.length / requestPageSize))
@@ -414,9 +421,10 @@ export const ReceivingArea: React.FC = () => {
           ) : (
             receivingGroups.map((group) => {
               const expanded = openGroups.has(group.id);
-              const groupBatchCount = filtered.filter(
-                (batch) => batch.currentGroupName === group.groupName,
-              ).length;
+              const groupBatchCount = group.locations.reduce(
+                (total, location) => total + location.batchCount,
+                0,
+              );
               return (
                 <article className="receiving-storage-group" key={group.id}>
                   <button
@@ -440,24 +448,21 @@ export const ReceivingArea: React.FC = () => {
                   {expanded && (
                     <div className="receiving-storage-locations">
                       {group.locations.map((location) => {
-                        const stored = filtered.filter(
-                          (batch) => batch.currentLocationCode === location.locationCode,
-                        );
                         return (
                           <button
-                            className={`receiving-storage-location ${stored.length ? 'occupied' : ''}`}
+                            className={`receiving-storage-location ${location.batchCount ? 'occupied' : ''}`}
                             key={location.id}
-                            onClick={() => setSelectedLocationCode(location.locationCode)}
+                            onClick={() => void openLocation(location.id, location.locationCode)}
                           >
                             <MapPin size={16} />
                             <span>
                               <strong>{location.locationCode}</strong>
                               <small>
-                                {stored.length} batch · {location.currentKg.toFixed(1)}/
+                                {location.batchCount} batch · {location.currentKg.toFixed(1)}/
                                 {location.capacityKg.toFixed(1)} kg
                               </small>
                             </span>
-                            <em>{stored.length}</em>
+                            <em>{location.batchCount}</em>
                           </button>
                         );
                       })}
@@ -514,7 +519,11 @@ export const ReceivingArea: React.FC = () => {
               </button>
             </header>
             <div className="receiving-location-batches">
-              {locationBatches.length === 0 ? (
+              {locationBatchesLoading ? (
+                <div className="ops-empty compact">
+                  <span className="ops-spinner" /> Đang tải batch...
+                </div>
+              ) : locationBatches.length === 0 ? (
                 <div className="ops-empty compact">
                   <Package size={34} />
                   <h3>Vị trí đang trống</h3>
@@ -528,7 +537,10 @@ export const ReceivingArea: React.FC = () => {
                     <Package size={19} />
                     <button
                       className="receiving-location-batch__detail"
-                      onClick={() => openBatchDetail(batch)}
+                      onClick={() => {
+                        const myBatch = batches.find((item) => item.id === batch.id);
+                        if (myBatch) openBatchDetail(myBatch);
+                      }}
                     >
                       <strong>{batch.code}</strong>
                       <small>
@@ -536,12 +548,20 @@ export const ReceivingArea: React.FC = () => {
                       </small>
                     </button>
                     <div className="receiving-location-batch__actions">
-                      <button onClick={() => openBatchDetail(batch)}>Xem chi tiết</button>
-                      {batch.status === 'ReceivedAtWarehouse' && (
+                      {batch.canManage && (
+                        <button onClick={() => {
+                          const myBatch = batches.find((item) => item.id === batch.id);
+                          if (myBatch) openBatchDetail(myBatch);
+                        }}>Xem chi tiết</button>
+                      )}
+                      {batch.canManage && batch.status === 'ReceivedAtWarehouse' && (
                         <button
                           className="send"
                           disabled={busy}
-                          onClick={() => void sendToClassification(batch)}
+                          onClick={() => {
+                            const myBatch = batches.find((item) => item.id === batch.id);
+                            if (myBatch) void sendToClassification(myBatch);
+                          }}
                         >
                           <Send size={14} /> {busy ? 'Đang gửi...' : 'Gửi đi phân loại'}
                         </button>

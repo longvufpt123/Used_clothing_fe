@@ -45,6 +45,10 @@ interface DonorRequestSearchApiResponse {
   warehouseAddress: string;
   status: string;
   statusText: string;
+  deliveryMethod?: string;
+  dropOffMethod?: string | null;
+  carrierName?: string | null;
+  trackingCode?: string | null;
   createdAt?: string | null;
   receivingTeamName?: string | null;
   estimatedPickupAt?: string | null;
@@ -102,6 +106,14 @@ const estimateWeightByOption: Record<string, number> = {
   '5-10': 7.5,
   '10-20': 15,
   'over-20': 25,
+};
+
+const getReceivingMethodLabel = (order: DonorRequestSearchApiResponse) => {
+  if (order.deliveryMethod === 'StaffPickup') return 'Nhân viên đến lấy tại địa chỉ donor';
+  if (order.dropOffMethod === 'ThirdPartyDelivery') return 'Gửi qua dịch vụ vận chuyển khác';
+  if (order.dropOffMethod === 'SelfDelivery') return 'Donor tự mang đến kho';
+  if (order.deliveryMethod === 'DonorDropOff') return 'Donor chủ động gửi đến kho';
+  return 'Đang cập nhật';
 };
 
 const getDescriptionValue = (description: string | undefined, label: string) => {
@@ -200,6 +212,9 @@ export const MyOrders: React.FC = () => {
     useState<DonorRequestSearchApiResponse | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<DonorRequestSearchApiResponse | null>(null);
   const [chatOrder, setChatOrder] = useState<DonorRequestSearchApiResponse | null>(null);
+  const [shippingOrder, setShippingOrder] = useState<DonorRequestSearchApiResponse | null>(null);
+  const [shippingForm, setShippingForm] = useState({ carrierName: '', trackingCode: '', expectedArrivalAt: '' });
+  const [savingShipping, setSavingShipping] = useState(false);
   const [searchCode, setSearchCode] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
@@ -275,6 +290,38 @@ export const MyOrders: React.FC = () => {
       }
     } finally {
       if (!silent) setLoading(false);
+    }
+  };
+
+  const openShippingForm = (order: DonorRequestSearchApiResponse) => {
+    setShippingOrder(order);
+    setShippingForm({
+      carrierName: order.carrierName || '',
+      trackingCode: order.trackingCode || '',
+      expectedArrivalAt: order.pickupDate ? order.pickupDate.slice(0, 16) : '',
+    });
+  };
+
+  const saveShippingInfo = async () => {
+    if (!shippingOrder || !shippingForm.carrierName.trim() || !shippingForm.trackingCode.trim()
+        || !shippingForm.expectedArrivalAt) {
+      toast.warning('Vui lòng nhập đầy đủ thông tin vận chuyển.');
+      return;
+    }
+    setSavingShipping(true);
+    try {
+      await apiClient.patch(`/donor-requests/${shippingOrder.id}/shipping-info`, {
+        carrierName: shippingForm.carrierName.trim(),
+        trackingCode: shippingForm.trackingCode.trim(),
+        expectedArrivalAt: shippingForm.expectedArrivalAt,
+      });
+      toast.success('Đã cập nhật thông tin vận chuyển.');
+      setShippingOrder(null);
+      await loadMyOrders(true);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật thông tin vận chuyển.');
+    } finally {
+      setSavingShipping(false);
     }
   };
 
@@ -601,10 +648,18 @@ export const MyOrders: React.FC = () => {
                     </div>
                     <div className="order-header-actions">
                       <span className={`order-status ${getStatusToneClass(order.status)}`}>
-                        {getStatusLabel(order.status)}
+                        {order.dropOffMethod === 'ThirdPartyDelivery' && !order.pickupDate
+                          && canModifyOrder(order.status)
+                          ? 'Cần cập nhật thông tin vận chuyển'
+                          : getStatusLabel(order.status)}
                       </span>
                       {isModifiable && !isEditing && (
                         <div className="order-actions">
+                          {order.dropOffMethod === 'ThirdPartyDelivery' && (
+                            <Button className="shipping-action-btn" type="button" variant="outline" size="sm" onClick={() => openShippingForm(order)}>
+                              <Truck size={15} /> {order.trackingCode ? 'Sửa vận chuyển' : 'Cập nhật vận chuyển'}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="outline"
@@ -791,6 +846,10 @@ export const MyOrders: React.FC = () => {
                           <strong>Kho tiếp nhận</strong>
                           <span>{order.warehouseAddress}</span>
                         </div>
+                        <div>
+                          <strong>Phương thức tiếp nhận</strong>
+                          <span>{getReceivingMethodLabel(order)}</span>
+                        </div>
                       </div>
 
                       <div className="order-address">
@@ -902,6 +961,22 @@ export const MyOrders: React.FC = () => {
                 <strong>{selectedOrder.warehouseAddress}</strong>
               </div>
               <div className="wide">
+                <span>Phương thức tiếp nhận</span>
+                <strong>{getReceivingMethodLabel(selectedOrder)}</strong>
+              </div>
+              {selectedOrder.dropOffMethod === 'ThirdPartyDelivery' && (
+                <>
+                  <div>
+                    <span>Đơn vị vận chuyển</span>
+                    <strong>{selectedOrder.carrierName || 'Chưa cập nhật'}</strong>
+                  </div>
+                  <div>
+                    <span>Mã vận đơn</span>
+                    <strong>{selectedOrder.trackingCode || 'Chưa cập nhật'}</strong>
+                  </div>
+                </>
+              )}
+              <div className="wide">
                 <span>Địa chỉ lấy hàng</span>
                 <strong>{selectedOrder.pickupAddress}</strong>
               </div>
@@ -968,6 +1043,35 @@ export const MyOrders: React.FC = () => {
             </footer>
           </section>
         </div>
+      )}
+
+      {shippingOrder && createPortal(
+        <div className="edit-order-overlay" onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !savingShipping) setShippingOrder(null);
+        }}>
+          <section className="edit-order-form shipping-info-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="edit-order-modal-header">
+              <div><span>THÔNG TIN VẬN CHUYỂN</span><h2>{shippingOrder.code}</h2></div>
+              <button type="button" onClick={() => setShippingOrder(null)}><X size={20} /></button>
+            </header>
+            <div className="shipping-info-fields">
+              <label>Đơn vị vận chuyển *<input className="custom-input" value={shippingForm.carrierName}
+                onChange={(e) => setShippingForm({ ...shippingForm, carrierName: e.target.value })}
+                placeholder="VD: GHN, GHTK, Viettel Post..." /></label>
+              <label>Mã vận đơn *<input className="custom-input" value={shippingForm.trackingCode}
+                onChange={(e) => setShippingForm({ ...shippingForm, trackingCode: e.target.value.toUpperCase() })}
+                placeholder="Mã để Receiving Team đối chiếu" /></label>
+              <label>Thời gian dự kiến đến kho *<input className="custom-input" type="datetime-local"
+                value={shippingForm.expectedArrivalAt}
+                onChange={(e) => setShippingForm({ ...shippingForm, expectedArrivalAt: e.target.value })} /></label>
+              <small>Thời gian phải nằm trong một ca tiếp nhận đang mở của kho.</small>
+            </div>
+            <footer className="edit-form-actions">
+              <Button type="button" variant="outline" onClick={() => setShippingOrder(null)}>Hủy</Button>
+              <Button type="button" isLoading={savingShipping} onClick={saveShippingInfo}><Save size={16} /> Lưu vận chuyển</Button>
+            </footer>
+          </section>
+        </div>, document.body,
       )}
 
       <ConfirmDialog

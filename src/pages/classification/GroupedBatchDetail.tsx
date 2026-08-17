@@ -48,6 +48,8 @@ export default function GroupedBatchDetail() {
   }, [selectedItem]);
 
   if (!group) return <div className="ops-page">Đang tải...</div>;
+  const isPlaced = Boolean(group.placedInClassificationAreaAt);
+  const backPath = isPlaced ? '/classification/groups' : '/classification?tab=classified';
 
   const sendToWarehouse = async () => {
     setSending(true);
@@ -67,13 +69,17 @@ export default function GroupedBatchDetail() {
   return (
     <div className="ops-page">
       <div className="ops-nav">
-        <button className="ops-back" onClick={() => nav('/classification/groups')}>
+        <button className="ops-back" onClick={() => nav(backPath)}>
           <ChevronLeft size={16} /> Quay lại
         </button>
         <div className="ops-title-row">
           <h1>{group.batchCode}</h1>
           <span className="ops-badge classified">
-            {group.status === 'Open' ? `Nhãn ${group.conditionGrade}` : 'Đã gửi kho'}
+            {group.status !== 'Open'
+              ? 'Đã gửi kho'
+              : isPlaced
+                ? `Nhãn ${group.conditionGrade}`
+                : 'Chờ nhập kho đồ đã phân loại'}
           </span>
         </div>
       </div>
@@ -108,7 +114,7 @@ export default function GroupedBatchDetail() {
         </div>
       </section>
 
-      <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>
+      {isPlaced && <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>
         <button
           className="ops-btn ops-btn-primary"
           type="button"
@@ -122,7 +128,7 @@ export default function GroupedBatchDetail() {
               ? 'Bàn giao sang Kho'
               : 'Đã bàn giao sang Kho'}
         </button>
-      </div>
+      </div>}
 
       <section style={{ marginTop: 20 }}>
         <div className="ops-section-head">

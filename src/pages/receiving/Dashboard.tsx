@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
+import { getReceivingBatchPresentation } from '@/services/receivingService';
 import type {
   ReceivingBatch,
   ReceivingRequest,
@@ -33,9 +34,16 @@ import '@/styles/ops-shared.css';
 import './Dashboard.css';
 
 type TabKey = 'receiving' | 'completed' | 'transferring';
-
-const setShiftActive = (active: boolean) =>
-  localStorage.setItem('receiving_shift_active', String(active));
+type AssignedTeamView = {
+  teamName: string;
+  teamType: 'ReceivingPickup' | 'ReceivingWarehouse';
+  shiftName: string;
+  shiftDate: string;
+  startTime: string;
+  endTime: string;
+  warehouseAddress: string;
+  members: ReceivingBatch['teamMembers'];
+};
 
 const isTab = (v: string | null): v is TabKey =>
   v === 'receiving' || v === 'completed' || v === 'transferring';
@@ -92,10 +100,14 @@ export const Dashboard: React.FC = () => {
         setBatches(data);
         setDropOffBoard(dropOffData);
         setRequests(data.flatMap((batch) => batch.requests));
-        const active = data.some((batch) => batch.shiftStatus === 'InProgress');
+        const today = getLocalDateValue();
+        const active = data.some((batch) =>
+          batch.shiftStatus === 'InProgress' && batch.teamStatus === 'InProgress'
+            && batch.date.slice(0, 10) === today)
+          || dropOffData.dutyContexts.some((context) =>
+            context.shiftStatus === 'InProgress' && context.teamStatus === 'InProgress'
+              && context.shiftDate.slice(0, 10) === today);
         setIsShiftActive(active);
-        setShiftActive(active);
-        window.dispatchEvent(new Event('storage'));
       })
       .catch(() => toast.error('Không thể tải tuyến thu gom được phân công.'));
   }, []);
@@ -103,10 +115,30 @@ export const Dashboard: React.FC = () => {
   const reloadDropOffs = async () =>
     setDropOffBoard(await receivingService.getMyWarehouseDropOffs());
 
+  const reloadShiftState = async () => {
+    const [data, dropOffData] = await Promise.all([
+      receivingService.getMyBatches(), receivingService.getMyWarehouseDropOffs(),
+    ]);
+    setBatches(data);
+    setDropOffBoard(dropOffData);
+    setRequests(data.flatMap((batch) => batch.requests));
+    const today = getLocalDateValue();
+    setIsShiftActive(data.some((batch) =>
+      batch.shiftStatus === 'InProgress' && batch.teamStatus === 'InProgress'
+        && batch.date.slice(0, 10) === today)
+      || dropOffData.dutyContexts.some((context) =>
+        context.shiftStatus === 'InProgress' && context.teamStatus === 'InProgress'
+          && context.shiftDate.slice(0, 10) === today));
+  };
+
+  useEffect(() => {
+    const refreshFromApi = () => { void reloadShiftState(); };
+    window.addEventListener('focus', refreshFromApi);
+    return () => window.removeEventListener('focus', refreshFromApi);
+  }, []);
+
   const handleToggleShift = async () => {
     const nextState = !isShiftActive;
-    setShiftActive(nextState);
-    setIsShiftActive(nextState);
 
     if (nextState) {
       const now = new Date();
@@ -116,9 +148,13 @@ export const Dashboard: React.FC = () => {
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const scheduledToday = batches.filter(
         (batch) =>
-          batch.shiftStatus === 'Scheduled' &&
+          batch.teamStatus === 'Scheduled' &&
           batch.date.slice(0, 10) === localDate &&
           (batch.status === 'Planned' || batch.status === 'Receiving'),
+      );
+      const scheduledWarehouseTeams = dropOffBoard.dutyContexts.filter(
+        (context) => context.teamStatus === 'Scheduled'
+          && context.shiftDate.slice(0, 10) === localDate,
       );
       const targetShiftId = (
         scheduledToday.find(
@@ -126,46 +162,44 @@ export const Dashboard: React.FC = () => {
             batch.startTime.slice(0, 5) <= currentTime && currentTime <= batch.endTime.slice(0, 5),
         ) || scheduledToday[0]
       )?.shiftId;
-      if (!targetShiftId) {
-        setShiftActive(false);
+      const targetWarehouseTeam = scheduledWarehouseTeams.find(
+        (context) => context.startTime.slice(0, 5) <= currentTime
+          && currentTime <= context.endTime.slice(0, 5),
+      ) || scheduledWarehouseTeams[0];
+      if (!targetShiftId && !targetWarehouseTeam) {
         setIsShiftActive(false);
         return toast.warning('Không có ca làm được phân công cho hôm nay.');
       }
-      await Promise.all(
-        scheduledToday
-          .filter((batch) => batch.shiftId === targetShiftId)
-          .map((batch) => receivingService.startBatch(batch.id)),
-      );
-      setBatches((current) =>
-        current.map((batch) =>
-          batch.shiftId === targetShiftId && batch.status === 'Planned'
-            ? { ...batch, status: 'Receiving', shiftStatus: 'InProgress' }
-            : batch,
-        ),
-      );
+      if (targetShiftId) {
+        await Promise.all(
+          scheduledToday
+            .filter((batch) => batch.shiftId === targetShiftId)
+            .map((batch) => receivingService.startBatch(batch.id)),
+        );
+      } else {
+        await receivingService.startTeam(targetWarehouseTeam!.teamId);
+      }
       toast.success('Bắt đầu ca làm việc thành công! Trạng thái đơn đã sẵn sàng.');
-      await reloadDropOffs();
+      await reloadShiftState();
       // Update UI to reload indicators
-      window.dispatchEvent(new Event('storage')); // trigger header update
     } else {
       const shiftIds = [
         ...new Set(
-          batches
-            .filter((batch) => batch.shiftStatus === 'InProgress')
-            .map((batch) => batch.shiftId),
+          [
+            ...batches
+            .filter((batch) => batch.teamStatus === 'InProgress'
+                && batch.date.slice(0, 10) === getLocalDateValue())
+              .map((batch) => batch.shiftId),
+            ...dropOffBoard.dutyContexts
+              .filter((context) => context.teamStatus === 'InProgress'
+                && context.shiftDate.slice(0, 10) === getLocalDateValue())
+              .map((context) => context.shiftId),
+          ],
         ),
       ];
       await Promise.all(shiftIds.map((shiftId) => receivingService.completeShift(shiftId)));
-      setBatches((current) =>
-        current.map((batch) =>
-          shiftIds.includes(batch.shiftId)
-            ? { ...batch, status: 'Completed', shiftStatus: 'Completed' }
-            : batch,
-        ),
-      );
       toast.info('Đã kết thúc ca làm việc.');
-      await reloadDropOffs();
-      window.dispatchEvent(new Event('storage'));
+      await reloadShiftState();
     }
   };
 
@@ -177,22 +211,35 @@ export const Dashboard: React.FC = () => {
   const totalCount = requests.length;
   const completionPct = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
-  const assignedTeams = Array.from(
-    new Map(
-      batches.map((batch) => [
-        `${batch.shiftId}-${batch.teamName}`,
-        {
-          teamName: batch.teamName,
-          shiftName: batch.shiftName,
-          shiftDate: batch.date,
-          startTime: batch.startTime,
-          endTime: batch.endTime,
-          warehouseAddress: batch.warehouseAddress,
-          members: batch.teamMembers,
-        },
-      ]),
-    ).values(),
-  );
+  const assignedTeamEntries: Array<[string, AssignedTeamView]> = [
+    ...batches.map((batch) => [
+      `${batch.shiftId}-${batch.teamName}`,
+      {
+        teamName: batch.teamName,
+        teamType: 'ReceivingPickup',
+        shiftName: batch.shiftName,
+        shiftDate: batch.date,
+        startTime: batch.startTime,
+        endTime: batch.endTime,
+        warehouseAddress: batch.warehouseAddress,
+        members: batch.teamMembers,
+      },
+    ] as [string, AssignedTeamView]),
+    ...dropOffBoard.dutyContexts.map((context) => [
+      `${context.shiftId}-${context.teamName}`,
+      {
+        teamName: context.teamName,
+        teamType: 'ReceivingWarehouse',
+        shiftName: context.shiftName,
+        shiftDate: context.shiftDate,
+        startTime: context.startTime,
+        endTime: context.endTime,
+        warehouseAddress: context.warehouseAddress,
+        members: context.members,
+      },
+    ] as [string, AssignedTeamView]),
+  ];
+  const assignedTeams = Array.from(new Map(assignedTeamEntries).values());
   const filteredAssignedTeams = teamDate
     ? assignedTeams.filter((team) => team.shiftDate?.slice(0, 10) === teamDate)
     : assignedTeams;
@@ -212,7 +259,7 @@ export const Dashboard: React.FC = () => {
         context.shiftDate.slice(0, 10) === request.expectedDate.slice(0, 10),
     );
     const text =
-      `${request.code} ${request.contactName} ${request.phoneNumber} ${request.description}`
+      `${request.code} ${request.contactName} ${request.phoneNumber} ${request.description} ${request.carrierName || ''} ${request.trackingCode || ''}`
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
@@ -236,7 +283,7 @@ export const Dashboard: React.FC = () => {
       (context) =>
         context.warehouseId === request.warehouseId &&
         context.shiftDate.slice(0, 10) === request.expectedDate.slice(0, 10) &&
-        context.shiftStatus === 'InProgress',
+        context.shiftStatus === 'InProgress' && context.teamStatus === 'InProgress',
     );
   const confirmDropOff = async () => {
     if (!receivingDropOff || dropOffForm.actualWeight <= 0)
@@ -410,7 +457,7 @@ export const Dashboard: React.FC = () => {
                     <Users size={21} />
                   </span>
                   <div>
-                    <span>Nhóm tiếp nhận</span>
+                    <span>{team.teamType === 'ReceivingWarehouse' ? 'Nhóm trực kho' : 'Nhóm tiếp nhận'}</span>
                     <h3>{team.teamName || 'Chưa đặt tên team'}</h3>
                   </div>
                   <span className="rcv-member-count">{team.members.length} thành viên</span>
@@ -472,7 +519,7 @@ export const Dashboard: React.FC = () => {
           <div className="rcv-dropoff-duty">
             {dropOffBoard.dutyContexts.map((context) => (
               <span
-                className={context.shiftStatus === 'InProgress' ? 'active' : ''}
+                className={context.teamStatus === 'InProgress' ? 'active' : ''}
                 key={context.teamId}
               >
                 <Warehouse size={15} />
@@ -480,7 +527,7 @@ export const Dashboard: React.FC = () => {
                 <small>
                   {context.shiftName} · {context.startTime.slice(0, 5)}–
                   {context.endTime.slice(0, 5)} ·{' '}
-                  {context.shiftStatus === 'InProgress' ? 'Đang trực' : 'Chưa bắt đầu'}
+                  {context.teamStatus === 'InProgress' ? 'Đang trực' : 'Chưa bắt đầu'}
                 </small>
               </span>
             ))}
@@ -533,7 +580,7 @@ export const Dashboard: React.FC = () => {
                       <span>{request.code}</span>
                       <h3>{request.contactName}</h3>
                     </div>
-                    <b>Chờ donor đến</b>
+                    <b>{request.dropOffMethod === 'ThirdPartyDelivery' ? 'Chờ đơn vị vận chuyển' : 'Chờ donor đến'}</b>
                   </header>
                   <p>
                     <Phone size={14} />
@@ -546,8 +593,18 @@ export const Dashboard: React.FC = () => {
                   </p>
                   <p>
                     <Calendar size={14} />
-                    Ngày dự kiến: {new Date(request.expectedDate).toLocaleDateString('vi-VN')}
+                    Dự kiến: {new Date(request.expectedDate).toLocaleString('vi-VN', {
+                      dateStyle: 'short', timeStyle: 'short',
+                    })}
                   </p>
+                  {request.dropOffMethod === 'ThirdPartyDelivery' && (
+                    <p>
+                      <Truck size={14} />
+                      {request.trackingCode
+                        ? <>{request.carrierName} · Mã vận đơn: <strong>{request.trackingCode}</strong></>
+                        : <strong>Donor chưa cập nhật mã vận đơn</strong>}
+                    </p>
+                  )}
                   <button
                     disabled={!enabled}
                     onClick={() => {
@@ -556,7 +613,11 @@ export const Dashboard: React.FC = () => {
                     }}
                   >
                     <PackageOpen size={15} />
-                    {enabled ? 'Xác nhận donor đã đến' : 'Bắt đầu ca trực để tiếp nhận'}
+                    {enabled
+                      ? request.dropOffMethod === 'ThirdPartyDelivery'
+                        ? 'Xác nhận đã nhận kiện hàng'
+                        : 'Xác nhận donor đã đến'
+                      : 'Bắt đầu ca trực để tiếp nhận'}
                   </button>
                 </article>
               );
@@ -591,7 +652,7 @@ export const Dashboard: React.FC = () => {
 
       <section id="receiving-batch-list" className="rcv-batch-list-section">
         <div className="ops-section-head">
-          <h2>Tuyến lô tiếp nhận</h2>
+          <h2>Các lô hàng tiếp nhận</h2>
         </div>
 
         <div className="rcv-batch-filter-row">
@@ -659,7 +720,9 @@ export const Dashboard: React.FC = () => {
               const progress = getBatchProgress(batch.id);
               const isCompleted = batch.status === 'Completed';
               const isReceiving = batch.status === 'Receiving' || batch.status === 'Planned';
-              const disabled = !isShiftActive && isReceiving;
+              const batchPresentation = getReceivingBatchPresentation(batch.status);
+              const disabled = (batch.shiftStatus !== 'InProgress'
+                || batch.teamStatus !== 'InProgress') && isReceiving;
 
               return (
                 <article
@@ -689,15 +752,9 @@ export const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <span
-                      className={`ops-badge ${
-                        isReceiving ? 'pending' : isCompleted ? 'classified' : 'stored'
-                      }`}
+                      className={`ops-badge ${batchPresentation.tone}`}
                     >
-                      {isReceiving
-                        ? 'Đang đi gom'
-                        : isCompleted
-                          ? 'Đã gom xong'
-                          : 'Bàn giao phân loại'}
+                      {batchPresentation.label}
                     </span>
                   </div>
 

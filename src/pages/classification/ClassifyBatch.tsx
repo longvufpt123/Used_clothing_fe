@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, CheckCircle, ImagePlus, Pencil, Save, Trash2, X } from 'lucide-react';
+import { ChevronLeft, CheckCircle, ImagePlus, Pencil, Save, Sparkles, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -35,6 +35,8 @@ export default function ClassifyBatch() {
   const [catalog, setCatalog] = useState<ClassificationCatalog | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<{ confidence: number; summary: string } | null>(null);
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -79,6 +81,42 @@ export default function ClassifyBatch() {
       URL.revokeObjectURL(p[index].preview);
       return p.filter((_, i) => i !== index);
     });
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('Không thể đọc hình ảnh.'));
+      reader.readAsDataURL(file);
+    });
+  const analyzeWithAi = async () => {
+    if (!images.length) {
+      toast.error('Vui lòng chọn ít nhất một ảnh mới để AI phân tích.');
+      return;
+    }
+    setAnalyzing(true);
+    setAiResult(null);
+    try {
+      const result = await classificationService.analyzeImages(
+        await Promise.all(images.map((image) => fileToDataUrl(image.file))),
+      );
+      setForm((current) => ({
+        ...current,
+        fabricTypeId: result.fabricTypeId,
+        garmentGroupId: result.garmentGroupId,
+        clothingTypeId: result.clothingTypeId,
+        genderId: result.genderId,
+        targetUserId: result.targetUserId,
+        sizeId: result.sizeId,
+        answers: Object.fromEntries(result.answers.map((answer) => [answer.questionId, answer.answerId])),
+      }));
+      setAiResult({ confidence: result.confidence, summary: result.summary });
+      toast.success('AI đã điền gợi ý. Vui lòng kiểm tra trước khi lưu.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || 'Không thể phân tích ảnh bằng AI.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
   const save = async () => {
     if (
       !batchId ||
@@ -124,6 +162,7 @@ export default function ClassifyBatch() {
       setImages([]);
       setExistingImages([]);
       setEditingItemId(null);
+      setAiResult(null);
       setForm(empty);
       await load();
     } catch (e: any) {
@@ -134,6 +173,7 @@ export default function ClassifyBatch() {
   };
   const editItem = (item: ClassifiedItem) => {
     setEditingItemId(item.id);
+    setAiResult(null);
     setExistingImages(item.imageUrls ?? []);
     setImages([]);
     setForm({
@@ -153,6 +193,7 @@ export default function ClassifyBatch() {
     setImages([]);
     setExistingImages([]);
     setEditingItemId(null);
+    setAiResult(null);
     setForm(empty);
   };
   const deleteItem = async () => {
@@ -293,6 +334,24 @@ export default function ClassifyBatch() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+            <button
+              type="button"
+              className="ops-btn ops-btn-ai"
+              disabled={!images.length || analyzing || saving}
+              onClick={analyzeWithAi}
+            >
+              <Sparkles size={17} />
+              {analyzing ? 'AI đang phân tích...' : 'Phân tích bằng AI'}
+            </button>
+            <small className="ops-ai-hint">
+              AI sẽ tự điền các thuộc tính và nhãn đánh giá; bạn vẫn có thể chỉnh sửa trước khi lưu.
+            </small>
+            {aiResult && (
+              <div className="ops-ai-result" role="status">
+                <strong>Gợi ý AI · Độ tin cậy {Math.round(aiResult.confidence * 100)}%</strong>
+                <span>{aiResult.summary}</span>
               </div>
             )}
           </div>

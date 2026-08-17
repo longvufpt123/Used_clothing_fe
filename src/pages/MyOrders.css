@@ -723,6 +723,12 @@
   font-size: 0.76rem;
 }
 
+.orders-list .order-actions .shipping-action-btn {
+  flex: 0 0 100%;
+  width: 100%;
+  justify-content: center;
+}
+
 .orders-list .order-meta-grid {
   gap: 0;
   border-top: 1px solid var(--color-border);
@@ -975,4 +981,26 @@
     flex-direction: column;
   }
   .assigned-receiving-card{align-items:stretch;flex-direction:column}.assigned-receiving-card button{justify-content:center}
+}
+.shipping-info-modal {
+  max-width: 560px;
+}
+
+.shipping-info-fields {
+  display: grid;
+  gap: 16px;
+  padding: 20px 0;
+}
+
+.shipping-info-fields label {
+  display: grid;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.shipping-info-fields small {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }

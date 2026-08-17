@@ -28,6 +28,8 @@ export interface DistributionRequest {
   code: string;
   organizationName: string;
   warehouseName: string;
+  warehouseAddress: string;
+  warehousePhone?: string;
   recipientName: string;
   recipientPhone: string;
   toAddress: string;

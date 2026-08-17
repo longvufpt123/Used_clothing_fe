@@ -405,6 +405,104 @@
   font-variant-numeric: tabular-nums;
 }
 
+.classification-putaway-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.classification-putaway-actions {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.7fr) minmax(0, 1.6fr);
+  width: 100%;
+}
+
+.classification-putaway-actions .ops-btn {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.classification-location-picker .warehouse-location {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.classification-location-picker .warehouse-location.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-bg-secondary));
+}
+
+.classification-location-picker .warehouse-location:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.classification-stored-location {
+  min-width: 0;
+}
+
+.classification-stored-location-grid > .warehouse-location {
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.classification-stored-location-grid > .warehouse-location.occupied {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-bg-secondary));
+}
+
+.classification-location-detail-modal {
+  width: min(1100px, calc(100vw - 32px));
+}
+
+.classification-location-modal-batches {
+  margin-top: 18px;
+}
+
+.classification-popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.classification-popup-actions .ops-btn {
+  padding: 9px 12px;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.classification-stored-location.occupied > .warehouse-location {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-bg-secondary));
+}
+
+.classification-location-batches {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.classification-location-batches .ops-card {
+  min-width: 0;
+  padding: 16px;
+}
+
+@media (max-width: 1180px) {
+  .classification-putaway-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ops-card-action {
   display: inline-flex;
   align-items: center;
@@ -1279,6 +1377,36 @@
 .ops-image-picker input {
   display: none;
 }
+.ops-btn-ai {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+  color: #fff;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+}
+.ops-btn-ai:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.ops-ai-hint {
+  display: block;
+  margin-top: 7px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+.ops-ai-result {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.08);
+}
+.ops-ai-result strong { color: #7c3aed; }
+.ops-ai-result span { color: var(--color-text-secondary); line-height: 1.45; }
 .ops-image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -1694,6 +1822,17 @@
   border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-card));
 }
+
+.classification-area-body { display: grid; gap: 16px; }
+.classification-aisle { padding: 16px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-bg-secondary); }
+.classification-aisle-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+.classification-aisle-head > div { display: flex; flex-direction: column; gap: 3px; }
+.classification-aisle-head small, .classification-aisle-head > span { color: var(--color-text-secondary); font-size: 0.82rem; }
+.classification-aisle .ops-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.classification-aisle-empty { padding: 20px; text-align: center; color: var(--color-text-secondary); border: 1px dashed var(--color-border); border-radius: 10px; }
+.classification-unassigned { padding: 18px; border: 1px dashed var(--color-warning); border-radius: 14px; }
+.classification-unassigned h3, .classification-unassigned p { margin-top: 0; }
+@media (max-width: 720px) { .classification-aisle-head { align-items: flex-start; flex-direction: column; } }
 
 .ops-classification-complete > svg {
   color: var(--color-primary);

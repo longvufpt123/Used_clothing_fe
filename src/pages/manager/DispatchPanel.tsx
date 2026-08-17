@@ -140,6 +140,8 @@ export default function DispatchPanel({
     }
   };
 
+  if (board.requests.length === 0) return null;
+
   return (
     <section className="dispatch-panel">
       <div className="dispatch-head">
@@ -267,20 +269,18 @@ export default function DispatchPanel({
                   <small>
                     <CalendarDays size={13} /> Ngày giờ hẹn: {formatAppointment(request.scheduledDate)}
                   </small>
-                  {request.deliveryMethod === 'DonorDropOff' ? (
-                    <div className="dispatch-dropoff-policy">
-                      <Warehouse size={15} />
-                      <strong>Không cần phân công trước</strong>
-                    </div>
-                  ) : (
-                    <>
+                  <>
                       <select
                         value={selectedTeams[request.id] || ''}
                         onChange={(e) =>
                           setSelectedTeams((v) => ({ ...v, [request.id]: e.target.value }))
                         }
                       >
-                        <option value="">Chọn receiving team cùng kho</option>
+                        <option value="">
+                          {request.deliveryMethod === 'DonorDropOff'
+                            ? 'Chọn team trực kho'
+                            : 'Chọn receiving team cùng kho'}
+                        </option>
                         {teams.map((team) => (
                           <option value={team.id} key={team.id}>
                             {team.teamName} · {team.shiftName} ·{' '}
@@ -307,8 +307,7 @@ export default function DispatchPanel({
                         <Truck size={15} />
                         {loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
                       </button>
-                    </>
-                  )}
+                  </>
                 </article>
               );
             })}

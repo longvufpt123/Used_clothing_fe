@@ -100,6 +100,75 @@
   background: var(--color-bg-primary);
 }
 
+.warehouse-availability-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: -4px 0 var(--spacing-md);
+  padding: 12px 14px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  margin-top: 10px;
+}
+
+.warehouse-availability-warning > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.warehouse-availability-warning div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.warehouse-availability-warning strong {
+  font-size: 0.9rem;
+}
+
+.warehouse-availability-warning span {
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.warehouse-availability-warning button {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.donation-form select.custom-input {
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
+.selected-warehouse-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 7px 0 14px;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.selected-warehouse-address svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
 [data-theme='light'] .donation-form .address-search-input,
 [data-theme='light'] .donation-form .custom-textarea {
   background: #fff;

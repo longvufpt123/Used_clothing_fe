@@ -154,27 +154,13 @@
   border-top: 1px solid var(--color-border);
 }
 .address-search-marker {
-  background: transparent;
-  border: 0;
-}
-.address-search-marker span {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
   border: 3px solid #fff;
-  border-radius: 50% 50% 50% 0;
+  border-radius: 50%;
   background: #059669;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
-  transform: rotate(-45deg);
-}
-.address-search-marker svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2;
-  transform: rotate(45deg);
+  color: white;
+  box-shadow: 0 3px 12px #0006;
 }
 .address-search-map:not(.has-location) .address-search-map-heading > svg {
   color: var(--color-text-muted);

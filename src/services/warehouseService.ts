@@ -77,6 +77,9 @@ export interface WarehouseDetails {
   totalCapacityKg: number;
   currentWeightKg: number;
   allocatedAreaCapacityKg: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  serviceRadiusKm: number;
 }
 export interface WarehouseBatch {
   id: string;
@@ -256,6 +259,9 @@ export const warehouseService = {
     email?: string;
     description?: string;
     totalCapacityKg: number;
+    latitude?: number;
+    longitude?: number;
+    serviceRadiusKm: number;
   }) => apiClient.post<unknown, { id: string }>('/warehouse-operations/warehouses', data),
   warehouse: (id: string) =>
     apiClient.get<unknown, WarehouseDetails>(`/warehouse-operations/warehouses/${id}`),
@@ -268,6 +274,9 @@ export const warehouseService = {
       email?: string;
       description?: string;
       totalCapacityKg: number;
+      latitude?: number;
+      longitude?: number;
+      serviceRadiusKm: number;
     },
   ) => apiClient.put(`/warehouse-operations/warehouses/${id}`, data),
   deleteWarehouse: (id: string) => apiClient.delete(`/warehouse-operations/warehouses/${id}`),

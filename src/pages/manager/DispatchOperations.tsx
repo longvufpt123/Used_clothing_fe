@@ -264,7 +264,7 @@ export default function DispatchOperations() {
     );
   };
   const createTeam = async () => {
-    if (!teamShift || staffIds.length !== 2) return toast.warning('Chọn đúng 2 Receiving Staff.');
+    if (!teamShift || staffIds.length < 1 || staffIds.length > 2) return toast.warning('Chọn từ 1 đến 2 Receiving Staff.');
     setSavingTeam(true);
     try {
       await receivingService.createTeam(teamShift.id, teamName.trim(), staffIds, teamType);
@@ -298,7 +298,7 @@ export default function DispatchOperations() {
     );
   };
   const saveTeam = async () => {
-    if (!detailShift || !editingTeamId || editTeamStaffIds.length !== 2) return;
+    if (!detailShift || !editingTeamId || editTeamStaffIds.length < 1 || editTeamStaffIds.length > 2) return;
     setSavingTeamMembers(true);
     try {
       await receivingService.updateTeam(editingTeamId, editTeamName.trim(), editTeamStaffIds);
@@ -501,7 +501,10 @@ export default function DispatchOperations() {
           </div>
           <div className="manager-workday-list">
             {pagedDays.map((day) => {
-              const scheduled = day.shifts.find((x) => x.status === 'Scheduled');
+              const dispatchableShift = day.shifts.find((shift) =>
+                (shift.status === 'Scheduled' || shift.status === 'InProgress')
+                  && shift.teams.some((team) => team.status === 'Scheduled'),
+              );
               const teamCount = day.shifts.reduce((sum, x) => sum + x.teams.length, 0);
               const requestCount = day.shifts.reduce((sum, x) => sum + x.assignedRequests, 0);
               return (
@@ -587,11 +590,11 @@ export default function DispatchOperations() {
                       </section>
                     ))}
                   </div>
-                  {scheduled && (
+                  {dispatchableShift && (
                     <div className="manager-workday-footer">
                       <button
                         className="ops-btn ops-btn-primary ops-btn-block"
-                        onClick={() => void autoBalance(scheduled)}
+                        onClick={() => void autoBalance(dispatchableShift)}
                         disabled={!!balancingId}
                       >
                         <Truck size={15} />
@@ -635,23 +638,14 @@ export default function DispatchOperations() {
           )}
         </section>
 
-        <section>
-          <div className="ops-section-head">
-            <div>
-              <span className="ops-panel-label">ĐIỀU PHỐI THỦ CÔNG</span>
-              <h2>Yêu cầu từ thiện chờ điều phối</h2>
-            </div>
-            <span>Chọn team đúng kho và đúng ngày</span>
-          </div>
-          <DispatchPanel
-            warehouseId={warehouseFilter}
-            hideWarehouseFilter
-            onWarehouseChange={setWarehouseFilter}
-            onAssigned={async () => {
-              await load(detailShift?.id);
-            }}
-          />
-        </section>
+        <DispatchPanel
+          warehouseId={warehouseFilter}
+          hideWarehouseFilter
+          onWarehouseChange={setWarehouseFilter}
+          onAssigned={async () => {
+            await load(detailShift?.id);
+          }}
+        />
 
         {detailShift && (
           <div
@@ -776,7 +770,9 @@ export default function DispatchOperations() {
                       className="ops-btn ops-btn-primary"
                       onClick={() => autoBalance(detailShift)}
                       disabled={
-                        detailShift.status !== 'Scheduled' || balancingId === detailShift.id
+                        (detailShift.status !== 'Scheduled' && detailShift.status !== 'InProgress')
+                        || !detailShift.teams.some((team) => team.status === 'Scheduled')
+                        || balancingId === detailShift.id
                       }
                     >
                       <Truck size={15} />
@@ -877,7 +873,7 @@ export default function DispatchOperations() {
                                   )}
                                 </div>
                                 <label>
-                                  Chọn đúng 2 thành viên{' '}
+                                  Chọn từ 1 đến 2 thành viên{' '}
                                   <strong>{editTeamStaffIds.length}/2</strong>
                                 </label>
                                 <div className="manager-staff-list">
@@ -918,7 +914,7 @@ export default function DispatchOperations() {
                                   <button
                                     className="ops-btn ops-btn-primary"
                                     onClick={saveTeam}
-                                    disabled={editTeamStaffIds.length !== 2 || savingTeamMembers}
+                                    disabled={editTeamStaffIds.length < 1 || editTeamStaffIds.length > 2 || savingTeamMembers}
                                   >
                                     <Save size={14} /> Lưu team
                                   </button>
@@ -1186,7 +1182,7 @@ export default function DispatchOperations() {
                 />
               </div>
               <label className="manager-staff-label">
-                Chọn đúng 2 staff cùng kho <strong>{staffIds.length}/2</strong>
+                Chọn từ 1 đến 2 staff cùng kho <strong>{staffIds.length}/2</strong>
               </label>
               <div className="manager-staff-list">
                 {staffAt(teamShift.warehouseId, staffSearch).map((staff) => {
@@ -1221,7 +1217,7 @@ export default function DispatchOperations() {
               <button
                 className="ops-btn ops-btn-primary ops-btn-block"
                 onClick={createTeam}
-                disabled={savingTeam || staffIds.length !== 2 || !teamName.trim()}
+                disabled={savingTeam || staffIds.length < 1 || staffIds.length > 2 || !teamName.trim()}
               >
                 {teamType === 'ReceivingWarehouse' ? <Warehouse size={16} /> : <Users size={16} />}{' '}
                 {savingTeam

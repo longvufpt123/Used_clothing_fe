@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
+import { getReceivingBatchPresentation } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
@@ -86,6 +87,7 @@ export const BatchDetail: React.FC = () => {
   if (!batch) return null;
 
   const totalCount = requests.length;
+  const requiresPickupRoute = requests.some((request) => request.deliveryMethod === 'StaffPickup');
   const processedCount = requests.filter((r) => r.status !== 'Pending').length;
   const progressPercent = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
@@ -103,18 +105,7 @@ export const BatchDetail: React.FC = () => {
   const safePage = Math.min(currentPage, totalPages);
   const pagedRequests = filteredRequests.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const batchBadge =
-    batch.status === 'Receiving'
-      ? 'pending'
-      : batch.status === 'Completed'
-        ? 'stored'
-        : 'classified';
-  const batchBadgeText =
-    batch.status === 'Receiving'
-      ? 'Đang đi gom'
-      : batch.status === 'Completed'
-        ? 'Đã gom xong'
-        : 'Bàn giao phân loại';
+  const batchPresentation = getReceivingBatchPresentation(batch.status);
 
   const filters: { key: StatusFilter; label: string; count: number }[] = [
     { key: 'all', label: 'Tất cả', count: requests.length },
@@ -148,7 +139,7 @@ export const BatchDetail: React.FC = () => {
         </button>
         <div className="ops-title-row">
           <h1>{batch.code}</h1>
-          <span className={`ops-badge ${batchBadge}`}>{batchBadgeText}</span>
+          <span className={`ops-badge ${batchPresentation.tone}`}>{batchPresentation.label}</span>
         </div>
       </div>
 
@@ -203,7 +194,7 @@ export const BatchDetail: React.FC = () => {
         )}
       </div>
 
-      <section className="ops-panel glass">
+      {requiresPickupRoute && <section className="ops-panel glass">
         <div className="ops-section-head">
           <div>
             <h2>Bản đồ tuyến thu nhận</h2>
@@ -220,7 +211,7 @@ export const BatchDetail: React.FC = () => {
           </span>
         </div>
         <RouteMap batch={batch} />
-      </section>
+      </section>}
 
       <section>
         <div className="ops-section-head">
@@ -288,7 +279,7 @@ export const BatchDetail: React.FC = () => {
                   tabIndex={isPending ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && isPending) {
-                      if (batch.shiftStatus !== 'InProgress') {
+                      if (batch.shiftStatus !== 'InProgress' || batch.teamStatus !== 'InProgress') {
                         toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
                         return;
                       }
@@ -297,7 +288,7 @@ export const BatchDetail: React.FC = () => {
                   }}
                   onClick={() => {
                     if (isPending) {
-                      if (batch.shiftStatus !== 'InProgress') {
+                      if (batch.shiftStatus !== 'InProgress' || batch.teamStatus !== 'InProgress') {
                         toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
                         return;
                       }

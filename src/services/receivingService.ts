@@ -24,6 +24,9 @@ export interface ReceivingRequest {
   actualCondition?: string;
   actualNotes?: string;
   imageUrls?: string[];
+  dropOffMethod?: string | null;
+  carrierName?: string | null;
+  trackingCode?: string | null;
 }
 export interface ReceivingBatch {
   id: string;
@@ -33,6 +36,7 @@ export interface ReceivingBatch {
   shiftId: string;
   shiftName: string;
   shiftStatus: string;
+  teamStatus: string;
   startTime: string;
   endTime: string;
   teamName: string;
@@ -56,6 +60,18 @@ export interface ReceivingBatch {
     | 'SentToClassification';
   requests: ReceivingRequest[];
 }
+
+export const getReceivingBatchPresentation = (status: ReceivingBatch['status']) => {
+  switch (status) {
+    case 'Planned': return { tone: 'pending', label: 'Chưa bắt đầu' };
+    case 'Receiving': return { tone: 'pending', label: 'Đang đi gom' };
+    case 'Completed': return { tone: 'classified', label: 'Đã gom xong' };
+    case 'ReceivedAtWarehouse': return { tone: 'stored', label: 'Đã nhập khu nhận đồ' };
+    case 'AwaitingClassificationAssignment': return { tone: 'pending', label: 'Chờ phân công phân loại' };
+    case 'AssignedToClassification': return { tone: 'classified', label: 'Đã phân công phân loại' };
+    case 'SentToClassification': return { tone: 'classified', label: 'Đã bàn giao phân loại' };
+  }
+};
 export interface ReceivingStagingGroup {
   id: string;
   groupName: string;
@@ -76,6 +92,15 @@ export interface ReceivingStagingLocation {
   currentKg: number;
   availableKg: number;
   status: string;
+  batchCount: number;
+}
+export interface ReceivingLocationBatch {
+  id: string;
+  code: string;
+  route: string;
+  totalWeight: number;
+  status: string;
+  canManage: boolean;
 }
 interface ApiRequest {
   id: string;
@@ -101,6 +126,7 @@ interface ApiBatch {
   shiftId: string;
   shiftName: string;
   shiftStatus: string;
+  teamStatus: string;
   startTime: string;
   endTime: string;
   teamName: string;
@@ -155,10 +181,12 @@ export interface WarehouseDutyContext {
   startTime: string;
   endTime: string;
   shiftStatus: string;
+  teamStatus: string;
   warehouseId: string;
   warehouseName: string;
   warehouseAddress: string;
   intakeBatchId?: string | null;
+  members: TeamMember[];
 }
 export interface WarehouseDropOffItem {
   id: string;
@@ -172,6 +200,9 @@ export interface WarehouseDropOffItem {
   estimateWeight: number;
   status: string;
   imageUrls?: string[];
+  dropOffMethod?: string | null;
+  carrierName?: string | null;
+  trackingCode?: string | null;
 }
 export interface WarehouseDropOffBoard {
   dutyContexts: WarehouseDutyContext[];
@@ -303,6 +334,10 @@ export const receivingService = {
     const data = await apiClient.get<unknown, ApiBatch[]>('/receiving-operations/my-batches');
     return data.map(mapBatch);
   },
+  getLocationBatches: (locationId: string) =>
+    apiClient.get<unknown, ReceivingLocationBatch[]>(
+      `/receiving-operations/receiving-locations/${locationId}/batches`,
+    ),
   async getMyBatch(id: string) {
     const data = await apiClient.get<unknown, ApiBatch>(`/receiving-operations/my-batches/${id}`);
     return mapBatch(data);
@@ -312,6 +347,7 @@ export const receivingService = {
     return batches.flatMap((b) => b.requests).find((r) => r.id === id);
   },
   startBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/start`),
+  startTeam: (id: string) => apiClient.post(`/receiving-operations/my-teams/${id}/start`),
   completeShift: (id: string) => apiClient.post(`/receiving-operations/my-shifts/${id}/complete`),
   completeBatch: (id: string) => apiClient.post(`/receiving-operations/my-batches/${id}/complete`),
   receiveAtWarehouse: (id: string, areaGroupId: string, storageLocationId: string) =>

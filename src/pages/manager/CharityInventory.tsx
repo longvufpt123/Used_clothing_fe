@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import AdminLayout from '@/shared/layouts/AdminLayout';
+import AddressSearchMap from '@/components/common/AddressSearchMap';
 import { useToast } from '@/context/ToastContext';
 import { getStatusLabel } from '@/utils/statusLabels';
 import { receivingService } from '@/services/receivingService';
@@ -77,6 +78,9 @@ type WarehouseForm = {
   email: string;
   description: string;
   totalCapacityKg: number;
+  latitude: number | null;
+  longitude: number | null;
+  serviceRadiusKm: number;
 };
 const tabLabels: Record<Tab, string> = {
   layout: 'Gian & vị trí',
@@ -165,6 +169,9 @@ export default function ManagerWarehouseControl() {
     email: '',
     description: '',
     totalCapacityKg: 15000,
+    latitude: null,
+    longitude: null,
+    serviceRadiusKm: 24,
   });
 
   const loadWarehouses = async (preferredId?: string) => {
@@ -427,8 +434,16 @@ export default function ManagerWarehouseControl() {
       toast.warning('Địa chỉ kho phải là địa chỉ đầy đủ, có từ 10 đến 500 ký tự.');
       return;
     }
+    if (warehouseForm.latitude == null || warehouseForm.longitude == null) {
+      toast.warning('Vui lòng chọn địa chỉ kho từ gợi ý hoặc ghim vị trí trên bản đồ.');
+      return;
+    }
     if (warehouseForm.totalCapacityKg <= 0 || warehouseForm.totalCapacityKg > 10000000) {
       toast.warning('Tổng sức chứa phải lớn hơn 0 và không vượt quá 10.000.000 kg.');
+      return;
+    }
+    if (warehouseForm.serviceRadiusKm < 1 || warehouseForm.serviceRadiusKm > 200) {
+      toast.warning('Bán kính phục vụ phải từ 1 đến 200 km.');
       return;
     }
     setSavingWarehouse(true);
@@ -440,6 +455,9 @@ export default function ManagerWarehouseControl() {
         email: warehouseForm.email.trim() || undefined,
         description: warehouseForm.description.trim() || undefined,
         totalCapacityKg: warehouseForm.totalCapacityKg,
+        latitude: warehouseForm.latitude,
+        longitude: warehouseForm.longitude,
+        serviceRadiusKm: warehouseForm.serviceRadiusKm,
       });
       await loadWarehouses(result.id);
       setWarehouseEditorOpen(false);
@@ -450,6 +468,9 @@ export default function ManagerWarehouseControl() {
         email: '',
         description: '',
         totalCapacityKg: 15000,
+        latitude: null,
+        longitude: null,
+        serviceRadiusKm: 24,
       });
       toast.success('Đã tạo kho mới và chuyển sang cấu hình kho.');
     } catch (e: any) {
@@ -468,6 +489,7 @@ export default function ManagerWarehouseControl() {
   const emptyWarehouseForm = (): WarehouseForm => ({
     warehouseName: '', address: '', phoneNumber: '', email: '', description: '',
     totalCapacityKg: 15000,
+    latitude: null, longitude: null, serviceRadiusKm: 24,
   });
 
   const openCreateWarehouse = () => {
@@ -493,6 +515,9 @@ export default function ManagerWarehouseControl() {
         email: data.email || '',
         description: data.description || '',
         totalCapacityKg: data.totalCapacityKg,
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+        serviceRadiusKm: data.serviceRadiusKm ?? 24,
       });
       setWarehouseEditorOpen(true);
     } catch (e: any) {
@@ -514,6 +539,14 @@ export default function ManagerWarehouseControl() {
       toast.warning('Địa chỉ kho phải có từ 10 đến 500 ký tự.');
       return;
     }
+    if (warehouseForm.latitude == null || warehouseForm.longitude == null) {
+      toast.warning('Vui lòng chọn địa chỉ kho từ gợi ý hoặc ghim vị trí trên bản đồ.');
+      return;
+    }
+    if (warehouseForm.serviceRadiusKm < 1 || warehouseForm.serviceRadiusKm > 200) {
+      toast.warning('Bán kính phục vụ phải từ 1 đến 200 km.');
+      return;
+    }
     const minimumCapacity = Math.max(
       warehouseDetails?.allocatedAreaCapacityKg || 0,
       warehouseDetails?.currentWeightKg || 0,
@@ -531,6 +564,9 @@ export default function ManagerWarehouseControl() {
         email: warehouseForm.email.trim() || undefined,
         description: warehouseForm.description.trim() || undefined,
         totalCapacityKg: warehouseForm.totalCapacityKg,
+        latitude: warehouseForm.latitude,
+        longitude: warehouseForm.longitude,
+        serviceRadiusKm: warehouseForm.serviceRadiusKm,
       });
       await loadWarehouses(editingWarehouseId);
       await load();
@@ -848,17 +884,39 @@ export default function ManagerWarehouseControl() {
                     />
                   </label>
                 </div>
+                <AddressSearchMap
+                  label="Địa chỉ đầy đủ"
+                  required
+                  value={warehouseForm.address}
+                  location={warehouseForm.latitude != null && warehouseForm.longitude != null
+                    ? { lat: warehouseForm.latitude, lon: warehouseForm.longitude }
+                    : null}
+                  onChange={(address) =>
+                    setWarehouseForm((current) => ({ ...current, address }))
+                  }
+                  onLocationChange={(location) =>
+                    setWarehouseForm((current) => ({
+                      ...current,
+                      latitude: location?.lat ?? null,
+                      longitude: location?.lon ?? null,
+                    }))
+                  }
+                />
                 <label>
-                  Địa chỉ đầy đủ *
-                  <textarea
+                  Bán kính phục vụ lấy hàng (km) *
+                  <input
                     required
-                    maxLength={500}
-                    value={warehouseForm.address}
-                    onChange={(e) =>
-                      setWarehouseForm({ ...warehouseForm, address: e.target.value })
-                    }
-                    placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                    type="number"
+                    min={1}
+                    max={200}
+                    step={1}
+                    value={warehouseForm.serviceRadiusKm}
+                    onChange={(e) => setWarehouseForm({
+                      ...warehouseForm,
+                      serviceRadiusKm: Number(e.target.value),
+                    })}
                   />
+                  <small>Địa chỉ ngoài bán kính này sẽ không thể chọn hình thức nhân viên đến lấy.</small>
                 </label>
                 <div className="warehouse-form-row">
                   <label>
