@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { receivingService } from '@/services/receivingService';
-import type { ReceivingBatch } from '@/services/receivingService';
+import type { ReceivingBatch, WarehouseDutyContext } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
 
@@ -25,26 +25,44 @@ const getLocalDateValue = () => {
   return `${year}-${month}-${day}`;
 };
 
+type MyTeamView = {
+  key: string;
+  teamName: string;
+  shiftName: string;
+  shiftDate: string;
+  teamStatus: string;
+  startTime: string;
+  endTime: string;
+  warehouseAddress: string;
+  members: ReceivingBatch['teamMembers'];
+  batches: ReceivingBatch[];
+};
+
 export const Team: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
+  const [dutyContexts, setDutyContexts] = useState<WarehouseDutyContext[]>([]);
   const [loading, setLoading] = useState(true);
   const [teamDate, setTeamDate] = useState(getLocalDateValue);
 
   useEffect(() => {
-    receivingService
-      .getMyBatches()
-      .then(setBatches)
+    Promise.all([
+      receivingService.getMyBatches(),
+      receivingService.getMyWarehouseDropOffs(),
+    ])
+      .then(([batchData, dropOffData]) => {
+        setBatches(batchData);
+        setDutyContexts(dropOffData.dutyContexts);
+      })
       .catch(() => toast.error('Không thể tải thông tin team được phân công.'))
       .finally(() => setLoading(false));
   }, []);
 
   const teams = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          batches.map((batch) => {
+    () => {
+      const entries: Array<[string, MyTeamView]> = [
+          ...batches.map((batch) => {
             const key = `${batch.shiftId}-${batch.teamName}`;
             return [
               key,
@@ -53,7 +71,7 @@ export const Team: React.FC = () => {
                 teamName: batch.teamName,
                 shiftName: batch.shiftName,
                 shiftDate: batch.date,
-                shiftStatus: batch.shiftStatus,
+                teamStatus: batch.teamStatus,
                 startTime: batch.startTime,
                 endTime: batch.endTime,
                 warehouseAddress: batch.warehouseAddress,
@@ -63,11 +81,29 @@ export const Team: React.FC = () => {
                     candidate.shiftId === batch.shiftId && candidate.teamName === batch.teamName,
                 ),
               },
-            ];
+            ] as [string, MyTeamView];
+          }), ...dutyContexts.map((context) => {
+            const key = `${context.shiftId}-${context.teamName}`;
+            return [
+              key,
+              {
+                key,
+                teamName: context.teamName,
+                shiftName: context.shiftName,
+                shiftDate: context.shiftDate,
+                teamStatus: context.teamStatus,
+                startTime: context.startTime,
+                endTime: context.endTime,
+                warehouseAddress: context.warehouseAddress,
+                members: context.members,
+                batches: [],
+              },
+            ] as [string, MyTeamView];
           }),
-        ).values(),
-      ),
-    [batches],
+      ];
+      return Array.from(new Map(entries).values());
+    },
+    [batches, dutyContexts],
   );
 
   const shiftStatusLabel = (status: string) => {
@@ -153,9 +189,9 @@ export const Team: React.FC = () => {
                   <h2>{team.teamName || 'Chưa đặt tên team'}</h2>
                 </div>
                 <span
-                  className={`ops-badge ${team.shiftStatus === 'InProgress' ? 'stored' : 'pending'}`}
+                  className={`ops-badge ${team.teamStatus === 'InProgress' ? 'stored' : 'pending'}`}
                 >
-                  {shiftStatusLabel(team.shiftStatus)}
+                  {shiftStatusLabel(team.teamStatus)}
                 </span>
               </div>
 

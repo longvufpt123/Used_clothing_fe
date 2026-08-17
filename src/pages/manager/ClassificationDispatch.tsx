@@ -186,7 +186,7 @@ export default function ClassificationDispatch() {
 
   const eligibleTeams = allWarehouseTeams.filter((team) => {
     const shiftEnd = new Date(`${team.shiftDate.slice(0, 10)}T${team.endTime}`).getTime();
-    return team.status === 'Scheduled' && team.members.length === 2 && shiftEnd > Date.now();
+    return team.status === 'Scheduled' && team.members.length >= 1 && team.members.length <= 2 && shiftEnd > Date.now();
   });
   const occupiedStaffIds = new Set(
     allWarehouseTeams
@@ -219,8 +219,8 @@ export default function ClassificationDispatch() {
   };
 
   const createTeam = async () => {
-    if (!createShift || staffIds.length !== 2 || !teamName.trim()) {
-      toast.warning('Vui lòng nhập tên team và chọn đúng 2 nhân viên.');
+    if (!createShift || staffIds.length < 1 || staffIds.length > 2 || !teamName.trim()) {
+      toast.warning('Vui lòng nhập tên team và chọn từ 1 đến 2 nhân viên.');
       return;
     }
     setCreating(true);
@@ -657,7 +657,7 @@ export default function ClassificationDispatch() {
                 <button className="manager-close" onClick={closeCreateTeam}><X /></button>
               </div>
               <div className="ops-field"><label>Tên team *</label><input value={teamName} onChange={(event) => setTeamName(event.target.value)} /></div>
-              <div className="manager-staff-label"><span>Chọn đúng 2 thành viên tại {selectedWarehouse?.name}</span><strong>{staffIds.length}/2</strong></div>
+              <div className="manager-staff-label"><span>Chọn từ 1 đến 2 thành viên tại {selectedWarehouse?.name}</span><strong>{staffIds.length}/2</strong></div>
               <div className="manager-staff-search"><Search size={16} /><input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="Tìm tên, username hoặc số điện thoại..." />{staffSearch && <button onClick={() => setStaffSearch('')}><X size={14} /></button>}</div>
               <div className="manager-staff-list classification-modal-staff-list">
                 {availableStaff.map((staff) => {
@@ -676,7 +676,7 @@ export default function ClassificationDispatch() {
                 })}
                 {!availableStaff.length && <div className="ops-empty">Không tìm thấy nhân viên phù hợp.</div>}
               </div>
-              <button className="ops-btn ops-btn-primary ops-btn-block" disabled={creating || staffIds.length !== 2 || !teamName.trim()} onClick={() => void createTeam()}><Users size={16} /> {creating ? 'Đang tạo...' : 'Lưu team phân loại'}</button>
+              <button className="ops-btn ops-btn-primary ops-btn-block" disabled={creating || staffIds.length < 1 || staffIds.length > 2 || !teamName.trim()} onClick={() => void createTeam()}><Users size={16} /> {creating ? 'Đang tạo...' : 'Lưu team phân loại'}</button>
             </section>
           </div>
         )}

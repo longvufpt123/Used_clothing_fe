@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRightLeft, Boxes, Search, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
   warehouseService,
@@ -12,6 +13,7 @@ import '@/styles/ops-shared.css';
 
 export default function WarehouseInventoryPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const [items, setItems] = useState<WarehouseInventory[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -146,13 +148,31 @@ export default function WarehouseInventoryPage() {
                 </div>
               </div>
               <span className={`ops-badge ${item.status === 'Available' ? 'done' : 'pending'}`}>
-                {getStatusLabel(item.status)}
+                {item.reservedQuantity >= item.quantity && item.quantity > 0
+                  ? 'Đã giữ chỗ'
+                  : getStatusLabel(item.status)}
               </span>
             </div>
             <h3>
               {item.clothingType} · {item.fabricType}
             </h3>
             <div className="ops-kv-grid">
+              <div className="ops-kv">
+                <span>Tổng tồn</span>
+                <strong>{item.quantity} item</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Tổng khối lượng</span>
+                <strong>{item.totalWeightKg} kg</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Đã giữ chỗ</span>
+                <strong>{item.reservedQuantity} item</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Khối lượng giữ chỗ</span>
+                <strong>{item.reservedWeightKg} kg</strong>
+              </div>
               <div className="ops-kv">
                 <span>Khả dụng</span>
                 <strong>{item.availableQuantity} item</strong>
@@ -181,14 +201,15 @@ export default function WarehouseInventoryPage() {
                 <ArrowRightLeft size={15} />
                 Điều chuyển
               </button>
-              <button
-                className="ops-btn ops-btn-primary"
-                disabled={item.availableQuantity <= 0}
-                onClick={() => open(item, 'issue')}
-              >
-                <Send size={15} />
-                Xuất kho
-              </button>
+              {item.reservedQuantity > 0 && (
+                <button
+                  className="ops-btn ops-btn-primary"
+                  onClick={() => navigate('/warehouse/distributions')}
+                >
+                  <Send size={15} />
+                  Xuất kho
+                </button>
+              )}
             </div>
           </article>
         ))}

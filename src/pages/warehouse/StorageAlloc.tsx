@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, ChevronLeft, MapPin, PackageOpen, Search, Sparkles } from 'lucide-react';
+import { CheckCircle, ChevronLeft, MapPin, PackageOpen, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -112,9 +112,6 @@ export default function StorageAlloc() {
       <section>
         <div className="ops-section-head">
           <h2>Vị trí đề xuất</h2>
-          <span>
-            <Sparkles size={14} /> Sắp theo độ phù hợp
-          </span>
         </div>
         <div className="ops-list-toolbar">
           <label className="ops-list-search">
@@ -125,7 +122,7 @@ export default function StorageAlloc() {
               placeholder="Tìm mã vị trí, khu vực, hàng, kệ..."
             />
           </label>
-          <span className="ops-list-result">{filtered.length} vị trí · 6 item/trang</span>
+          <span className="ops-list-result">{filtered.length} vị trí</span>
         </div>
         <div className="ops-list">
           {shown.map((location) => (
@@ -146,11 +143,6 @@ export default function StorageAlloc() {
                     <span>Ô {location.binCode}</span>
                   </div>
                 </div>
-                <span
-                  className={`ops-badge ${location.id === locations[0]?.id ? 'done' : 'pending'}`}
-                >
-                  {location.matchScore} điểm
-                </span>
               </div>
               <div className="ops-card-footer">
                 <span>

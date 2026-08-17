@@ -9,6 +9,7 @@ import {
   X,
   XCircle,
   CheckCircle,
+  MapPin,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/common/Input';
@@ -41,7 +42,7 @@ interface UploadedImage {
 }
 
 interface CreateDonationPayload {
-  pickupDate: string;
+  pickupDate?: string | null;
   description: string;
   imageUrls: string[];
   estimateWeight: number;
@@ -52,6 +53,9 @@ interface CreateDonationPayload {
   contactPhoneNumber: string;
   deliveryMethod: 'StaffPickup' | 'DonorDropOff';
   warehouseId?: string;
+  dropOffMethod?: 'SelfDelivery' | 'ThirdPartyDelivery';
+  carrierName?: string;
+  trackingCode?: string;
 }
 
 interface WarehouseOption {
@@ -242,6 +246,9 @@ export const Products: React.FC = () => {
   );
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
+  const [dropOffMethod, setDropOffMethod] = useState<'' | 'SelfDelivery' | 'ThirdPartyDelivery'>('');
+  const [carrierName, setCarrierName] = useState('');
+  const [trackingCode, setTrackingCode] = useState('');
   const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
   const [pickupLocation, setPickupLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [selectedPickupTime, setSelectedPickupTime] = useState('');
@@ -252,6 +259,7 @@ export const Products: React.FC = () => {
   const [loadingPickupWindows, setLoadingPickupWindows] = useState(false);
   const [availablePickupDates, setAvailablePickupDates] = useState<string[] | undefined>();
   const [loadingPickupDates, setLoadingPickupDates] = useState(false);
+  const [warehouseAvailabilityError, setWarehouseAvailabilityError] = useState('');
   const [calendarMonth, setCalendarMonth] = useState(() => `${getDefaultPickupDate().slice(0, 7)}-01`);
   const availablePickupTimes = useMemo(
     () => getAvailablePickupTimes(pickupDate, pickupWindows),
@@ -259,6 +267,10 @@ export const Products: React.FC = () => {
   );
 
   useEffect(() => {
+    if (dropOffMethod === 'ThirdPartyDelivery') {
+      setPickupWindows([]);
+      return;
+    }
     apiClient
       .get<unknown, WarehouseOption[]>('/warehouses')
       .then((data) => setWarehouses((data || []).filter((warehouse: any) => warehouse.isActive !== false)))
@@ -291,12 +303,17 @@ export const Products: React.FC = () => {
         if (!cancelled) setLoadingPickupWindows(false);
       });
     return () => { cancelled = true; };
-  }, [deliveryMethod, pickupDate, pickupLocation, warehouseId]);
+  }, [deliveryMethod, dropOffMethod, pickupDate, pickupLocation, warehouseId]);
 
   useEffect(() => {
+    if (dropOffMethod === 'ThirdPartyDelivery') {
+      setAvailablePickupDates(undefined);
+      return;
+    }
     const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
     if (!hasTarget) {
       setAvailablePickupDates(undefined);
+      setWarehouseAvailabilityError('');
       return;
     }
     const params = new URLSearchParams({ month: calendarMonth });
@@ -311,20 +328,29 @@ export const Products: React.FC = () => {
     apiClient.get<unknown, string[]>(`/donor-requests/pickup-dates?${params}`)
       .then((dates) => {
         if (cancelled) return;
+        setWarehouseAvailabilityError('');
         const normalizedDates = (dates || []).map((date) => date.slice(0, 10));
         setAvailablePickupDates(normalizedDates);
         if (pickupDate.startsWith(calendarMonth.slice(0, 7)) && !normalizedDates.includes(pickupDate)) {
           setPickupDate(normalizedDates[0] || '');
         }
       })
-      .catch(() => {
-        if (!cancelled) setAvailablePickupDates([]);
+      .catch((error: any) => {
+        if (!cancelled) {
+          setAvailablePickupDates([]);
+          if (deliveryMethod === 'StaffPickup') {
+            setWarehouseAvailabilityError(
+              error?.response?.data?.message ||
+              'Không tìm thấy kho có thể phục vụ địa chỉ lấy hàng này.',
+            );
+          }
+        }
       })
       .finally(() => {
         if (!cancelled) setLoadingPickupDates(false);
       });
     return () => { cancelled = true; };
-  }, [calendarMonth, deliveryMethod, pickupLocation, warehouseId]);
+  }, [calendarMonth, deliveryMethod, dropOffMethod, pickupLocation, warehouseId]);
 
   useEffect(() => {
     if (!availablePickupTimes.some((option) => option.value === selectedPickupTime)) {
@@ -453,10 +479,9 @@ export const Products: React.FC = () => {
     if (
       !name ||
       !phone ||
-      !pickupDate ||
-      !selectedPickupTime ||
+      (dropOffMethod !== 'ThirdPartyDelivery' && (!pickupDate || !selectedPickupTime)) ||
       (deliveryMethod === 'StaffPickup' && (!address || !pickupLocation)) ||
-      (deliveryMethod === 'DonorDropOff' && !warehouseId)
+      (deliveryMethod === 'DonorDropOff' && (!warehouseId || !dropOffMethod))
     ) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
       return;
@@ -475,13 +500,18 @@ export const Products: React.FC = () => {
         conditionOptions.find((o) => o.value === condition)?.label || 'Còn tốt';
 
       const payload: CreateDonationPayload = {
-        pickupDate: `${pickupDate}T${selectedPickupTime}:00`,
+        pickupDate: dropOffMethod === 'ThirdPartyDelivery'
+          ? null
+          : `${pickupDate}T${selectedPickupTime}:00`,
         description: [
           `Nguoi quyen gop: ${name}`,
           `So dien thoai: ${phone}`,
           `Loai quan ao: ${selectedCategoryLabel}`,
           `Khoi luong uoc luong: ${selectedWeightLabel}`,
           `Tinh trang: ${selectedConditionLabel}`,
+          deliveryMethod === 'DonorDropOff'
+            ? `Cach gui den kho: ${dropOffMethod === 'SelfDelivery' ? 'Tu mang den kho' : 'Gui qua dich vu van chuyen khac'}`
+            : '',
           notes.trim() ? `Ghi chu: ${notes.trim()}` : '',
         ]
           .filter(Boolean)
@@ -498,6 +528,9 @@ export const Products: React.FC = () => {
         contactPhoneNumber: phone.trim(),
         deliveryMethod,
         warehouseId: deliveryMethod === 'DonorDropOff' ? warehouseId : undefined,
+        dropOffMethod: deliveryMethod === 'DonorDropOff' ? dropOffMethod || undefined : undefined,
+        carrierName: dropOffMethod === 'ThirdPartyDelivery' ? carrierName.trim() : undefined,
+        trackingCode: dropOffMethod === 'ThirdPartyDelivery' ? trackingCode.trim() : undefined,
       };
 
       const response = await apiClient.post<unknown, CreateDonationResponse>(
@@ -518,7 +551,9 @@ export const Products: React.FC = () => {
         statusText:
           deliveryMethod === 'StaffPickup'
             ? 'Chờ điều phối viên liên hệ thu gom'
-            : 'Chờ người quyên góp mang hàng đến kho',
+            : dropOffMethod === 'ThirdPartyDelivery'
+              ? 'Chờ đơn vị vận chuyển giao hàng đến kho'
+              : 'Chờ người quyên góp mang hàng đến kho',
         date: new Date().toISOString().split('T')[0],
       };
 
@@ -532,6 +567,9 @@ export const Products: React.FC = () => {
       setSelectedPickupTime('');
       setDeliveryMethod('StaffPickup');
       setWarehouseId('');
+      setDropOffMethod('');
+      setCarrierName('');
+      setTrackingCode('');
       setPickupDate(getDefaultPickupDate());
       setNotes('');
       images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
@@ -682,25 +720,51 @@ export const Products: React.FC = () => {
                     value: 'StaffPickup',
                     label: 'Nhân viên tiếp nhận đến lấy tại địa chỉ của tôi',
                   },
-                  { value: 'DonorDropOff', label: 'Tôi sẽ tự mang quần áo đến kho' },
+                  { value: 'DonorDropOff', label: 'Tôi sẽ chủ động gửi quần áo đến kho' },
                 ]}
                 value={deliveryMethod}
                 onChange={(e) => {
                   const method = e.target.value as 'StaffPickup' | 'DonorDropOff';
                   setDeliveryMethod(method);
-                  if (method === 'StaffPickup') setWarehouseId('');
+                  setWarehouseAvailabilityError('');
+                  if (method === 'StaffPickup') {
+                    setWarehouseId('');
+                    setDropOffMethod('');
+                    setCarrierName('');
+                    setTrackingCode('');
+                  }
                   else {
                     setAddress('');
                     setPickupLocation(null);
                   }
                 }}
               />
+              {deliveryMethod === 'StaffPickup' && warehouseAvailabilityError && (
+                <div className="warehouse-availability-warning" role="alert">
+                  <XCircle size={19} />
+                  <div>
+                    <strong>Không có kho khả dụng</strong>
+                    <span>{warehouseAvailabilityError}</span>
+                    <button type="button" onClick={() => {
+                      setDeliveryMethod('DonorDropOff');
+                      setWarehouseAvailabilityError('');
+                      setAddress('');
+                      setPickupLocation(null);
+                    }}>
+                      Chuyển sang tự mang đến kho
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {deliveryMethod === 'StaffPickup' ? (
                 <AddressSearchMap
                   value={address}
                   onChange={setAddress}
-                  onLocationChange={setPickupLocation}
+                  onLocationChange={(location) => {
+                    setPickupLocation(location);
+                    setWarehouseAvailabilityError('');
+                  }}
                   required
                 />
               ) : (
@@ -718,14 +782,46 @@ export const Products: React.FC = () => {
                     <option value="">Chọn kho bạn sẽ mang quần áo đến</option>
                     {warehouses.map((warehouse) => (
                       <option value={warehouse.id} key={warehouse.id}>
-                        {warehouse.warehouseName} — {warehouse.address}
+                        {warehouse.warehouseName}
                       </option>
                     ))}
                   </select>
+                  {warehouseId && (
+                    <small className="selected-warehouse-address">
+                      <MapPin size={14} />
+                      {warehouses.find((warehouse) => warehouse.id === warehouseId)?.address}
+                    </small>
+                  )}
+                  <label className="input-label" htmlFor="dropoff-method">
+                    Cách gửi quần áo đến kho *
+                  </label>
+                  <select
+                    id="dropoff-method"
+                    className="custom-input"
+                    value={dropOffMethod}
+                    onChange={(event) => setDropOffMethod(
+                      event.target.value as '' | 'SelfDelivery' | 'ThirdPartyDelivery',
+                    )}
+                    required
+                  >
+                    <option value="">Chọn cách bạn sẽ gửi quần áo</option>
+                    <option value="SelfDelivery">Tôi sẽ tự mang đến kho</option>
+                    <option value="ThirdPartyDelivery">
+                      Tôi sẽ gửi qua dịch vụ vận chuyển khác
+                    </option>
+                  </select>
+                  {dropOffMethod === 'ThirdPartyDelivery' && (
+                    <div className="third-party-shipping-fields">
+                      <small className="input-helper-text">
+                        Sau khi tạo đơn và đặt dịch vụ vận chuyển, bạn sẽ cập nhật đơn vị vận chuyển
+                        và mã vận đơn cùng thời gian dự kiến đến kho trong mục “Đơn của tôi”.
+                      </small>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="form-row">
+              {dropOffMethod !== 'ThirdPartyDelivery' && <div className="form-row">
                 <WorkdayDatePicker
                   label={
                     deliveryMethod === 'StaffPickup'
@@ -765,10 +861,10 @@ export const Products: React.FC = () => {
                       ? 'Đang kiểm tra ca làm việc của kho...'
                       : availablePickupTimes.length > 0
                         ? `Các giờ khả dụng theo ${pickupWindows.length} ca làm việc của kho.`
-                        : 'Ngày này không có ca tiếp nhận còn khả dụng tại kho đã chọn hoặc kho gần nhất.'}
+                        : 'Ngày này không có ca tiếp nhận còn khả dụng tại kho'}
                   </small>
                 </div>
-              </div>
+              </div>}
 
               <div className="input-wrapper">
                 <label className="input-label">Ghi chú thêm (không bắt buộc)</label>
@@ -823,7 +919,6 @@ export const Products: React.FC = () => {
                 type="submit"
                 isLoading={loading}
                 className="submit-donation-btn"
-                disabled={!selectedPickupTime}
               >
                 Xác nhận Quyên góp <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </Button>

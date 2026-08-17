@@ -674,7 +674,7 @@ export default function ShiftCalendar() {
               <div className="teams-year-actions">
                 <button className="ops-btn ops-btn-secondary" onClick={() => setDayOpen(false)} disabled={creating}>Hủy</button>
                 <button className="ops-btn ops-btn-primary" onClick={requestDay} disabled={creating || !warehouseId}>
-                  {creating ? 'Đang tạo...' : `Xác nhận tạo ${eveningShiftEnabled ? 3 : 2} ca`}
+                  {creating ? 'Đang tạo...' : `Xác nhận tạo ca`}
                 </button>
               </div>
             </section>

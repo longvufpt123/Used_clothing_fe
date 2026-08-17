@@ -29,8 +29,8 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
               b.status === 'ReadyForClassification' ||
               b.status === 'Classifying',
           ).length,
-          classified: batches.filter(
-            (b) => b.status === 'Classified' || b.status === 'InClassifiedArea',
+          classified: groupedBatches.filter(
+            (batch) => batch.status === 'Open' && !batch.placedInClassificationAreaAt,
           ).length,
           grouped: groupedBatches.filter(
             (batch) => batch.status === 'Open' && batch.placedInClassificationAreaAt,
@@ -70,7 +70,7 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
       label: 'Đã phân loại',
       icon: CheckCircle,
       count: counts.classified,
-      matchPrefixes: ['/classification/batches'],
+      matchPrefixes: ['/classification/batches', '/classification/classified-groups'],
     },
     {
       to: '/classification/groups',

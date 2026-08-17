@@ -18,6 +18,9 @@ export interface ClassificationBatchSummary {
   classificationTeamName?: string | null;
   teamStatus?: string | null;
   currentAreaName?: string | null;
+  teamShiftDate?: string | null;
+  teamShiftStartTime?: string | null;
+  teamShiftEndTime?: string | null;
 }
 export interface ClassifiedItem {
   id: string;
@@ -112,6 +115,7 @@ export interface GroupedClassifiedBatch {
   status: string;
   classificationAreaName?: string | null;
   placedInClassificationAreaAt?: string | null;
+  storageLocationId?: string | null;
   donationRequestCodes: string[];
 }
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
@@ -229,6 +233,12 @@ export const classificationService = {
     apiClient.get<unknown, GroupedClassifiedBatchDetail>(
       `/classification-operations/grouped-batches/${id}`,
     ),
+  placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string) =>
+    apiClient.post(`/classification-operations/grouped-batches/${id}/place`, {
+      areaId,
+      groupId,
+      storageLocationId,
+    }),
   sendGroupedBatchToWarehouse: (id: string) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/send-to-warehouse`),
   sendGroupedBatchesToWarehouse: (ids: string[]) =>

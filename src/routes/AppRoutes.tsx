@@ -467,6 +467,16 @@ export const AppRoutes: React.FC = () => {
           </RoleRoute>
         }
       />
+      <Route
+        path="/classification/classified-groups/:groupId"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <GroupedBatchDetail />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
 
       <Route
         path="/classification/profile"

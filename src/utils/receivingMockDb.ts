@@ -133,9 +133,6 @@ export const initMockDb = () => {
   if (!localStorage.getItem('receiving_requests')) {
     localStorage.setItem('receiving_requests', JSON.stringify(DEFAULT_REQUESTS));
   }
-  if (localStorage.getItem('receiving_shift_active') === null) {
-    localStorage.setItem('receiving_shift_active', 'false');
-  }
 };
 
 export const getBatches = (): MockBatch[] => {
@@ -189,19 +186,5 @@ export const updateRequestStatus = (
         saveBatches(batches);
       }
     }
-  }
-};
-
-export const getShiftActive = (): boolean => {
-  initMockDb();
-  return localStorage.getItem('receiving_shift_active') === 'true';
-};
-
-export const setShiftActive = (active: boolean) => {
-  localStorage.setItem('receiving_shift_active', active ? 'true' : 'false');
-
-  if (active) {
-    // Optionally set all batches with status Receiving to start if they are pending (simulated)
-    // For our mockup, the shift activation sets the active indicator.
   }
 };

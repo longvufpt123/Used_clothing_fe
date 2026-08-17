@@ -142,8 +142,8 @@ export default function ReceivingOperations() {
       v.includes(id) ? v.filter((x) => x !== id) : v.length < 2 ? [...v, id] : v,
     );
   const createTeam = async () => {
-    if (!teamShift || staffIds.length !== 2)
-      return toast.warning('Team phải có đúng 2 Receiving Staff.');
+    if (!teamShift || staffIds.length < 1 || staffIds.length > 2)
+      return toast.warning('Team phải có từ 1 đến 2 Receiving Staff.');
     if (!teamName.trim()) return toast.warning('Nhập tên team.');
     setSavingTeam(true);
     try {
@@ -293,7 +293,7 @@ export default function ReceivingOperations() {
               <span className="ops-panel-label">Bước 2</span>
               <h2>Lập Receiving Team</h2>
             </div>
-            <span>Mỗi ca một team, mỗi team đúng 2 người</span>
+            <span>Mỗi ca một team, mỗi team từ 1 đến 2 người</span>
           </div>
           <div className="manager-shift-grid">
             {upcoming.map((shift) => (
@@ -403,7 +403,7 @@ export default function ReceivingOperations() {
                 <input value={teamName} onChange={(e) => setTeamName(e.target.value)} />
               </div>
               <label className="manager-staff-label">
-                Chọn đúng 2 Receiving Staff <strong>{staffIds.length}/2</strong>
+                Chọn từ 1 đến 2 Receiving Staff <strong>{staffIds.length}/2</strong>
               </label>
               <div className="manager-staff-list">
                 {setup.receivingStaff.map((staff) => (
@@ -427,7 +427,7 @@ export default function ReceivingOperations() {
                   </button>
                 ))}
               </div>
-              {setup.receivingStaff.length < 2 && (
+              {setup.receivingStaff.length < 1 && (
                 <p className="manager-warning">
                   Cần ít nhất 2 tài khoản Receiving Staff đang active.
                 </p>
@@ -435,7 +435,7 @@ export default function ReceivingOperations() {
               <button
                 className="ops-btn ops-btn-primary ops-btn-block"
                 onClick={createTeam}
-                disabled={savingTeam || staffIds.length !== 2}
+                disabled={savingTeam || staffIds.length < 1 || staffIds.length > 2}
               >
                 <Users size={16} />
                 {savingTeam ? 'Đang tạo...' : 'Xác nhận tạo team'}
