@@ -84,6 +84,17 @@ export interface ClassifyItemPayload {
   notes?: string;
   answers: { questionId: string; answerId: string }[];
 }
+export interface AiClassificationSuggestion {
+  fabricTypeId: string;
+  garmentGroupId: string;
+  clothingTypeId: string;
+  genderId: string;
+  targetUserId: string;
+  sizeId: string;
+  answers: { questionId: string; answerId: string }[];
+  confidence: number;
+  summary: string;
+}
 export interface GroupedClassifiedBatch {
   id: string;
   batchCode: string;
@@ -109,6 +120,22 @@ export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
 export interface BulkWarehouseHandoffResult {
   sent: number;
   skipped: number;
+}
+export interface ClassificationAreaLayout {
+  warehouseId: string;
+  warehouseName: string;
+  areas: {
+    id: string; areaName: string; description?: string; capacityKg: number; currentKg: number;
+    groups: {
+      id: string; groupName: string; description?: string; capacityKg: number; currentKg: number;
+      locations: {
+        id: string; locationCode: string; aisleCode: string; rackCode: string;
+        shelfCode: string; binCode: string; capacityKg: number; currentWeightKg: number; status: string;
+      }[];
+      batches: GroupedClassifiedBatch[];
+    }[];
+  }[];
+  unassignedBatches: GroupedClassifiedBatch[];
 }
 
 export interface ClassificationManagementBoard {
@@ -158,6 +185,11 @@ export const classificationService = {
     apiClient.get<unknown, ClassificationBatchDetail>(`/classification-operations/batches/${id}`),
   getCatalog: () =>
     apiClient.get<unknown, ClassificationCatalog>('/classification-operations/catalog'),
+  analyzeImages: (imageDataUrls: string[]) =>
+    apiClient.post<unknown, AiClassificationSuggestion>(
+      '/classification-operations/analyze-images',
+      { imageDataUrls },
+    ),
   startBatch: (id: string) => apiClient.post(`/classification-operations/batches/${id}/start`),
   confirmReceipt: (id: string) =>
     apiClient.post(`/classification-operations/batches/${id}/confirm-receipt`),
@@ -189,6 +221,10 @@ export const classificationService = {
     apiClient.get<unknown, GroupedClassifiedBatch[]>('/classification-operations/grouped-batches', {
       params: { date },
     }),
+  getClassifiedAreaLayout: (date?: string) =>
+    apiClient.get<unknown, ClassificationAreaLayout>(
+      '/classification-operations/classified-area-layout', { params: { date } },
+    ),
   getGroupedBatch: (id: string) =>
     apiClient.get<unknown, GroupedClassifiedBatchDetail>(
       `/classification-operations/grouped-batches/${id}`,

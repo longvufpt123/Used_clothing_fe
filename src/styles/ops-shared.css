@@ -1279,6 +1279,36 @@
 .ops-image-picker input {
   display: none;
 }
+.ops-btn-ai {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+  color: #fff;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+}
+.ops-btn-ai:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.ops-ai-hint {
+  display: block;
+  margin-top: 7px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+.ops-ai-result {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.08);
+}
+.ops-ai-result strong { color: #7c3aed; }
+.ops-ai-result span { color: var(--color-text-secondary); line-height: 1.45; }
 .ops-image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -1694,6 +1724,17 @@
   border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-card));
 }
+
+.classification-area-body { display: grid; gap: 16px; }
+.classification-aisle { padding: 16px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-bg-secondary); }
+.classification-aisle-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+.classification-aisle-head > div { display: flex; flex-direction: column; gap: 3px; }
+.classification-aisle-head small, .classification-aisle-head > span { color: var(--color-text-secondary); font-size: 0.82rem; }
+.classification-aisle .ops-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.classification-aisle-empty { padding: 20px; text-align: center; color: var(--color-text-secondary); border: 1px dashed var(--color-border); border-radius: 10px; }
+.classification-unassigned { padding: 18px; border: 1px dashed var(--color-warning); border-radius: 14px; }
+.classification-unassigned h3, .classification-unassigned p { margin-top: 0; }
+@media (max-width: 720px) { .classification-aisle-head { align-items: flex-start; flex-direction: column; } }
 
 .ops-classification-complete > svg {
   color: var(--color-primary);

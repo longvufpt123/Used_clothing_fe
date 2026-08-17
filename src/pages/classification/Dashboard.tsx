@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, ClipboardList, Package, Play, Scale, Square } from 'lucide-react';
+import { ArrowRight, Boxes, ChevronDown, ChevronRight, ClipboardList, Layers3, Package, Play, Scale, Square } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
   classificationService,
   type ClassificationBatchSummary,
+  type ClassificationAreaLayout,
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
+import '@/pages/warehouse/WarehouseAreas.css';
 import { getStatusLabel } from '@/utils/statusLabels';
 
 const PENDING_STATUSES = new Set([
@@ -22,6 +24,8 @@ export default function ClassificationDashboard() {
   const [batches, setBatches] = useState<ClassificationBatchSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [teamBusy, setTeamBusy] = useState(false);
+  const [areaLayout, setAreaLayout] = useState<ClassificationAreaLayout | null>(null);
+  const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedTab = searchParams.get('tab');
@@ -37,6 +41,13 @@ export default function ClassificationDashboard() {
   useEffect(() => {
     load();
   }, [toast]);
+  useEffect(() => {
+    if (selectedTab !== 'classified') return;
+    classificationService.getClassifiedAreaLayout().then((data) => {
+      setAreaLayout(data);
+      setExpandedAreas(Object.fromEntries(data.areas.map((area, index) => [area.id, index === 0])));
+    }).catch(() => toast.error('Không tải được sơ đồ khu vực đồ đã phân loại.'));
+  }, [selectedTab, toast]);
   const currentTeam = batches.find((batch) => batch.teamStatus === 'InProgress') ?? batches[0];
   const changeTeamStatus = async (complete = false) => {
     if (!currentTeam?.classificationTeamId) return;
@@ -138,7 +149,41 @@ export default function ClassificationDashboard() {
           </h2>
           <span>{loading ? 'Đang tải...' : 'Chọn một lô để bắt đầu'}</span>
         </div>
-        <div className="ops-list">
+        {selectedTab === 'classified' && areaLayout ? (
+          <div className="warehouse-area-list classification-area-layout">
+            {areaLayout.areas.map((area) => {
+              const expanded = expandedAreas[area.id];
+              const totalBatches = area.groups.reduce((sum, group) => sum + group.batches.length, 0);
+              return <article className="warehouse-area" key={area.id}>
+                <button type="button" className="warehouse-area-head" onClick={() => setExpandedAreas((x) => ({ ...x, [area.id]: !expanded }))}>
+                  <span className="warehouse-area-icon"><Layers3 /></span>
+                  <span className="warehouse-area-title"><b>{area.areaName}</b><small>{area.description || 'Khu vực đồ đã phân loại'}</small></span>
+                  <span className="warehouse-area-cap"><b>{totalBatches} batch</b><small>{area.currentKg.toFixed(1)} / {area.capacityKg.toFixed(1)} kg</small></span>
+                  {expanded ? <ChevronDown /> : <ChevronRight />}
+                </button>
+                <div className="warehouse-cap-track"><span style={{ width: `${area.capacityKg ? Math.min(100, area.currentKg / area.capacityKg * 100) : 0}%` }} /></div>
+                {expanded && <div className="warehouse-area-body classification-area-body">
+                  {area.groups.map((group) => <section className="classification-aisle" key={group.id}>
+                    <div className="classification-aisle-head"><div><strong>{group.groupName}</strong><small>{group.description || 'Dãy chứa đồ đã phân loại'}</small></div><span>{group.batches.length} batch · {group.currentKg.toFixed(1)}/{group.capacityKg.toFixed(1)} kg · {group.locations.length} vị trí</span></div>
+                    <div className="warehouse-location-grid">{group.locations.map((location) => <div className={`warehouse-location ${location.status.toLowerCase()}`} key={location.id}>
+                      <div><b>{location.locationCode}</b><span>{location.status}</span></div>
+                      <p>Hàng {location.aisleCode} · Kệ {location.rackCode} · Tầng {location.shelfCode} · Ô {location.binCode}</p>
+                      <div className="warehouse-location-meter"><span style={{ width: `${location.capacityKg ? Math.min(100, location.currentWeightKg / location.capacityKg * 100) : 0}%` }} /></div>
+                      <small>{location.currentWeightKg.toFixed(1)}/{location.capacityKg.toFixed(1)} kg</small>
+                    </div>)}</div>
+                    <div className="ops-list">{group.batches.map((batch) => <article key={batch.id} className="ops-card" role="button" tabIndex={0} onClick={() => navigate(`/classification/groups/${batch.id}`)}>
+                      <div className="ops-card-top"><div className="ops-card-code">{batch.batchCode}</div><span className={`ops-badge ${batch.conditionGrade === 'A' ? 'done' : batch.conditionGrade === 'B' ? 'pending' : 'classified'}`}>Nhãn {batch.conditionGrade}</span></div>
+                      <h3>{batch.clothingType} · {batch.fabricType}</h3><div className="ops-card-meta"><span>{batch.gender}</span><span>{batch.targetUser}</span><span>Size {batch.size}</span></div>
+                      <div className="ops-card-footer"><span><strong>{batch.totalItem}</strong> item</span><span className="ops-card-action">Xem chi tiết <ArrowRight size={14} /></span></div>
+                    </article>)}{!group.batches.length && <div className="classification-aisle-empty">Dãy hiện đang trống</div>}</div>
+                  </section>)}
+                </div>}
+              </article>;
+            })}
+            {!!areaLayout.unassignedBatches.length && <article className="classification-unassigned"><h3>Chưa xác định dãy</h3><p>{areaLayout.unassignedBatches.length} batch cũ chưa có vị trí.</p></article>}
+            {!areaLayout.areas.length && <div className="ops-empty"><Boxes size={36} /><h4>Chưa cấu hình khu vực và dãy phân loại</h4></div>}
+          </div>
+        ) : <div className="ops-list">
           {visibleBatches.map((b) => (
             <article
               key={b.id}
@@ -186,7 +231,7 @@ export default function ClassificationDashboard() {
               </p>
             </div>
           )}
-        </div>
+        </div>}
       </section>
     </div>
   );
