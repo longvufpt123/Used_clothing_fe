@@ -315,6 +315,7 @@
   outline: 0;
   background: transparent;
   color: var(--color-text-primary);
+  height: 40px;
 }
 .distribution-request-filters > select,
 .distribution-request-filters > input,
