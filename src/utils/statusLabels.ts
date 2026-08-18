@@ -20,7 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
   PendingConfirmation: 'Chờ xác nhận nhận lô', AwaitingClassificationCount: 'Chờ kiểm đếm',
   ReadyForClassification: 'Sẵn sàng phân loại', Classifying: 'Đang phân loại',
   PendingClassification: 'Chờ phân loại',
-  Classified: 'Đã phân loại', InClassifiedArea: 'Đã phân loại', Open: 'Đang mở',
+  Classified: 'Đã phân loại xong', InClassifiedArea: 'Đã phân loại xong', Open: 'Đang mở',
   SendingToWarehouse: 'Đang gửi sang kho', PendingWarehouseReceipt: 'Chờ kho xác nhận',
   SentToWarehouse: 'Đã gửi sang kho',
   WarehouseReceived: 'Kho đã tiếp nhận', PendingStorage: 'Chờ xếp vị trí',

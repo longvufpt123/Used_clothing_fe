@@ -19,6 +19,7 @@ import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useToast } from '@/context/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   loginApi,
@@ -479,6 +480,10 @@ export const Login: React.FC = () => {
                   })}
                   onFocus={() => setFocusedField('password')}
                 />
+
+                <div style={{ textAlign: 'right', marginTop: -8 }}>
+                  <Link to="/forgot-password" className="auth-tab">Quên mật khẩu?</Link>
+                </div>
 
                 <Button type="submit" isLoading={loading} className="login-submit">
                   Đăng nhập hệ thống

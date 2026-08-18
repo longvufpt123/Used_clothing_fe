@@ -4,6 +4,7 @@ import MainLayout from '@/layouts/MainLayout';
 import Home from '@/pages/Home';
 import Products from '@/pages/Products';
 import Login from '@/pages/Login';
+import ForgotPassword from '@/pages/ForgotPassword';
 import Dashboard from '@/pages/admin/Dashboard';
 import Map from '@/pages/Map';
 import Leaderboard from '@/pages/Leaderboard';
@@ -138,6 +139,14 @@ export const AppRoutes: React.FC = () => {
         element={
           <MainLayout>
             <Login />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <MainLayout>
+            <ForgotPassword />
           </MainLayout>
         }
       />

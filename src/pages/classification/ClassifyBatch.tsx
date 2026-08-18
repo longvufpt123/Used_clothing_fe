@@ -72,9 +72,12 @@ export default function ClassifyBatch() {
     if (!files) return;
     const selected = Array.from(files)
       .filter((f) => f.type.startsWith('image/'))
-      .slice(0, 5 - images.length)
+      .slice(0, 1)
       .map((file) => ({ file, preview: URL.createObjectURL(file) }));
-    setImages((p) => [...p, ...selected]);
+    if (!selected.length) return;
+    images.forEach((image) => URL.revokeObjectURL(image.preview));
+    setExistingImages([]);
+    setImages(selected);
   };
   const removeImage = (index: number) =>
     setImages((p) => {
@@ -144,7 +147,7 @@ export default function ClassifyBatch() {
       );
       const payload = {
         ...form,
-        imageUrls: [...existingImages, ...uploadedImageUrls],
+        imageUrls: uploadedImageUrls.length ? [uploadedImageUrls[0]] : existingImages.slice(0, 1),
         answers: catalog.conditionQuestions.map((q) => ({
           questionId: q.id,
           answerId: form.answers[q.id],
@@ -174,7 +177,7 @@ export default function ClassifyBatch() {
   const editItem = (item: ClassifiedItem) => {
     setEditingItemId(item.id);
     setAiResult(null);
-    setExistingImages(item.imageUrls ?? []);
+    setExistingImages((item.imageUrls ?? []).slice(0, 1));
     setImages([]);
     setForm({
       fabricTypeId: item.fabricTypeId ?? '',
@@ -233,7 +236,9 @@ export default function ClassifyBatch() {
         </button>
         <div className="ops-title-row">
           <h1>{batch.batchCode}</h1>
-          <span className="ops-badge pending">{getStatusLabel(batch.status)}</span>
+          <span className={`ops-badge ${isClassificationComplete ? 'done' : 'pending'}`}>
+            {isClassificationComplete ? 'Đã phân loại xong' : getStatusLabel(batch.status)}
+          </span>
         </div>
       </div>
       <div className="ops-panel glass">
@@ -291,17 +296,16 @@ export default function ClassifyBatch() {
             </div>
           ))}
           <div className="ops-field">
-            <label>Hình ảnh item (bắt buộc, tối đa 5 ảnh)</label>
+            <label>Hình ảnh item (bắt buộc, 1 ảnh)</label>
             <label className="ops-image-picker">
               <ImagePlus size={22} />
               <span>Chụp hoặc chọn hình ảnh</span>
-              <small>{images.length}/5 ảnh</small>
+              <small>{images.length || existingImages.length ? 1 : 0}/1 ảnh</small>
               <input
                 type="file"
                 accept="image/*"
                 capture="environment"
-                multiple
-                disabled={images.length >= 5 || saving}
+                disabled={saving}
                 onChange={(e) => {
                   selectImages(e.target.files);
                   e.target.value = '';
@@ -415,16 +419,16 @@ export default function ClassifyBatch() {
           </button>
         </section>
       )}
-      <section className="ops-panel glass">
+      <section className="ops-panel glass classification-completed-items">
         <div className="ops-section-head">
           <h2>Đã hoàn thành phân loại</h2>
         </div>
         <div className="ops-item-list">
           {batch.items.map((i) => (
-            <div className="ops-item-row" key={i.id}>
-              {i.imageUrls?.[0] && (
-                <img className="ops-item-thumb" src={i.imageUrls[0]} alt={i.itemCode} />
-              )}
+            <div className="ops-item-row classification-completed-item" key={i.id}>
+              {i.imageUrls?.[0]
+                ? <img className="ops-item-thumb" src={i.imageUrls[0]} alt={i.itemCode} />
+                : <div className="ops-item-thumb classification-item-placeholder"><ImagePlus size={20} /></div>}
               <div className="ops-item-main">
                 <strong>
                   {i.itemCode} · Loại {i.conditionGrade}

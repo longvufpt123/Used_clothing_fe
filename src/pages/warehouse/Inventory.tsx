@@ -38,9 +38,12 @@ export default function WarehouseInventoryPage() {
   }, []);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const inStockItems = items.filter(
+      (item) => item.quantity > 0 || item.totalWeightKg > 0,
+    );
     return !q
-      ? items
-      : items.filter((item) =>
+      ? inStockItems
+      : inStockItems.filter((item) =>
           [
             item.sku,
             item.batchCode,

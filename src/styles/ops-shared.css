@@ -442,6 +442,40 @@
   opacity: 0.5;
 }
 
+.classification-placement-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--ops-border, #dbe3ee);
+  border-radius: 14px;
+  background: #f8fbfa;
+}
+
+.classification-placement-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.classification-placement-summary span {
+  color: #718096;
+  font-size: 12px;
+}
+
+.classification-placement-summary strong {
+  color: #142033;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 620px) {
+  .classification-placement-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
 .classification-stored-location {
   min-width: 0;
 }
@@ -473,6 +507,12 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.classification-batch-measure {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .classification-popup-actions .ops-btn {
@@ -1442,6 +1482,55 @@
   width: 58px;
   height: 58px;
   flex: 0 0 58px;
+}
+
+.classification-completed-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 120px 84px;
+  align-items: center;
+  gap: 16px;
+  min-height: 84px;
+}
+
+.classification-completed-item .ops-item-main {
+  justify-self: stretch;
+}
+
+.classification-completed-item > .ops-badge {
+  justify-self: center;
+  white-space: nowrap;
+}
+
+.classification-completed-item .ops-item-actions {
+  display: flex;
+  justify-self: end;
+  gap: 8px;
+}
+
+.classification-item-placeholder {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  border-radius: 10px;
+}
+
+@media (max-width: 720px) {
+  .classification-completed-item {
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    gap: 10px 12px;
+  }
+
+  .classification-completed-item > .ops-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .classification-completed-item .ops-item-actions {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
 }
 .ops-image-grid > img {
   width: 100%;

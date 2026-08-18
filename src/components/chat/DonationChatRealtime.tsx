@@ -4,6 +4,7 @@ import { MessageCircle, Search, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { donationChatService } from '@/services/donationChatService';
+import { notificationService } from '@/services/notificationService';
 import DonationChatDialog from './DonationChatDialog';
 import './DonationChatRealtime.css';
 
@@ -21,11 +22,12 @@ export default function DonationChatRealtime() {
   const { user } = useAuth(); const toast = useToast(); const toastRef = useRef(toast);
   const [listOpen, setListOpen] = useState(false); const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState(''); const [unread, setUnread] = useState(0);
+  const [chatNoticeIds, setChatNoticeIds] = useState<string[]>([]);
   const [items, setItems] = useState<ChatItem[]>([]); const [active, setActive] = useState<ChatItem | null>(null);
   toastRef.current = toast;
 
   useEffect(() => {
-    if (!listOpen || !user) return; setUnread(0); setLoading(true);
+    if (!listOpen || !user) return; setLoading(true);
     const direct = donationChatService.getDirectContacts().then((rows) => rows.map((x): ChatItem => ({
       id: `direct:${x.userId}`, type: 'direct', participantId: x.userId, participantLabel: x.fullName,
       role: x.role, avatarUrl: x.avatarUrl, lastMessage: x.lastMessage, lastMessageAt: x.lastMessageAt })));
@@ -38,6 +40,31 @@ export default function DonationChatRealtime() {
       (y.lastMessageAt || '').localeCompare(x.lastMessageAt || ''))))
       .catch(() => toastRef.current.error('Không thể tải danh sách trò chuyện.')).finally(() => setLoading(false));
   }, [listOpen, user?.userId, user?.role]);
+
+  useEffect(() => {
+    if (!user) return;
+    void notificationService.getMine().then((feed) => {
+      const pending = feed.items.filter((item) => !item.isRead &&
+        (item.type === 'DirectChatMessage' || item.type === 'DonationChatMessage'));
+      setChatNoticeIds(pending.map((item) => item.id));
+      setUnread(pending.length);
+    }).catch(() => undefined);
+  }, [user?.userId]);
+
+  const toggleList = async () => {
+    const opening = !listOpen;
+    setListOpen(opening);
+    if (!opening) return;
+    setUnread(0);
+    const feed = await notificationService.getMine().catch(() => null);
+    const ids = feed
+      ? feed.items.filter((item) => !item.isRead &&
+          (item.type === 'DirectChatMessage' || item.type === 'DonationChatMessage')).map((item) => item.id)
+      : chatNoticeIds;
+    setChatNoticeIds([]);
+    await Promise.all(ids.map((id) => notificationService.markRead(id).catch(() => undefined)));
+    window.dispatchEvent(new Event('notifications:refresh'));
+  };
 
   useEffect(() => {
     if (!user) return; let disposed = false;
@@ -67,7 +94,7 @@ export default function DonationChatRealtime() {
   const q = search.trim().toLocaleLowerCase('vi'); const filtered = items.filter((x) => !q ||
     x.participantLabel.toLocaleLowerCase('vi').includes(q) || (x.requestCode || '').toLowerCase().includes(q));
   return <>
-    {!active && <button className="chat-launcher" type="button" aria-label="Mở trò chuyện" onClick={() => setListOpen((v) => !v)}>
+    {!active && <button className="chat-launcher" type="button" aria-label="Mở trò chuyện" onClick={() => void toggleList()}>
       {listOpen ? <X size={25} /> : <MessageCircle size={26} />}{!listOpen && unread > 0 && <span>{unread > 9 ? '9+' : unread}</span>}
     </button>}
     {listOpen && !active && <aside className="chat-conversation-panel"><header><strong>Tin nhắn</strong><small>Danh bạ theo quyền và phạm vi làm việc</small></header>
