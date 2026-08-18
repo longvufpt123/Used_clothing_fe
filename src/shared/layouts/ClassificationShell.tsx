@@ -24,10 +24,11 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
         setCounts({
           pending: batches.filter(
             (b) =>
-              b.status === 'PendingConfirmation' ||
-              b.status === 'AwaitingClassificationCount' ||
-              b.status === 'ReadyForClassification' ||
-              b.status === 'Classifying',
+              (b.status === 'PendingConfirmation' ||
+                b.status === 'AwaitingClassificationCount' ||
+                b.status === 'ReadyForClassification' ||
+                b.status === 'Classifying') &&
+              !(b.countedItemCount != null && b.classifiedItems >= b.countedItemCount),
           ).length,
           classified: groupedBatches.filter(
             (batch) => batch.status === 'Open' && !batch.placedInClassificationAreaAt,

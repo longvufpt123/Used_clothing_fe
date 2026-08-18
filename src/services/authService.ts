@@ -65,3 +65,12 @@ export const resendVerificationApi = (userId: string): Promise<void> =>
 
 export const getCurrentUserProfileApi = (): Promise<CurrentUserProfile> =>
   apiClient.get<unknown, CurrentUserProfile>('/auth/me');
+
+export const forgotPasswordApi = (email: string): Promise<{ message: string }> =>
+  apiClient.post('/auth/forgot-password', { email });
+
+export const resetPasswordApi = (data: {
+  email: string;
+  code: string;
+  newPassword: string;
+}): Promise<{ message: string }> => apiClient.post('/auth/reset-password', data);

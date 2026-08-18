@@ -36,7 +36,11 @@ export default function NotificationBell() {
   useEffect(() => {
     load();
     const timer = window.setInterval(load, 30000);
-    return () => window.clearInterval(timer);
+    window.addEventListener('notifications:refresh', load);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('notifications:refresh', load);
+    };
   }, []);
   useEffect(() => {
     const close = (e: MouseEvent) => {

@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -25,12 +26,6 @@ import '@/styles/ops-shared.css';
 import './ReceivingOperations.css';
 import './ShiftDetail.css';
 import './ClassificationDispatch.css';
-
-const localDate = () => {
-  const value = new Date();
-  value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
-  return value.toISOString().slice(0, 10);
-};
 
 const shortTime = (value: string) => value.slice(0, 5);
 
@@ -89,7 +84,6 @@ export default function ClassificationDispatch() {
       }
       const result = await receivingService.getManagerShifts({
         warehouseId: selectedWarehouse,
-        fromDate: localDate(),
       });
       setShifts(result);
     } catch (error: any) {
@@ -670,7 +664,8 @@ export default function ClassificationDispatch() {
                       className={`${selected ? 'selected' : ''} ${occupied ? 'assigned' : ''}`}
                       onClick={() => setStaffIds((ids) => selected ? ids.filter((id) => id !== staff.id) : [...ids, staff.id])}
                     >
-                      <span><b>{staff.fullName}</b><small>@{staff.userName} · {staff.phoneNumber}</small>{occupied && <em className="manager-assigned-note">Đã thuộc team trong ca này</em>}</span><i className="manager-check" />
+                      <span><b>{staff.fullName}</b><small>@{staff.userName} · {staff.phoneNumber}</small>{occupied && <em className="manager-assigned-note">Đã thuộc team trong ca này</em>}</span>
+                      {selected ? <CheckCircle2 size={19} /> : <i className="manager-check" />}
                     </button>
                   );
                 })}

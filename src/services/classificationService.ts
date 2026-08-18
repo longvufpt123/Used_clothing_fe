@@ -233,11 +233,12 @@ export const classificationService = {
     apiClient.get<unknown, GroupedClassifiedBatchDetail>(
       `/classification-operations/grouped-batches/${id}`,
     ),
-  placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string) =>
+  placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string, actualWeightKg: number) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/place`, {
       areaId,
       groupId,
       storageLocationId,
+      actualWeightKg,
     }),
   sendGroupedBatchToWarehouse: (id: string) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/send-to-warehouse`),

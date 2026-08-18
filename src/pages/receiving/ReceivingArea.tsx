@@ -67,6 +67,7 @@ export const ReceivingArea: React.FC = () => {
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [sendingBatchId, setSendingBatchId] = useState<string | null>(null);
   const [stage, setStage] = useState<StageFilter>('waiting');
   const [shift, setShift] = useState<ShiftFilter>('all');
   const [search, setSearch] = useState('');
@@ -234,9 +235,16 @@ export const ReceivingArea: React.FC = () => {
   };
 
   const sendToClassification = async (batch: ReceivingBatch) => {
-    setBusy(true);
+    if (sendingBatchId) return;
+    setSendingBatchId(batch.id);
     try {
       await receivingService.sendToClassification(batch.id);
+      setBatches((current) => current.map((item) => item.id === batch.id
+        ? { ...item, status: 'AwaitingClassificationAssignment' }
+        : item));
+      setLocationBatches((current) => current.map((item) => item.id === batch.id
+        ? { ...item, status: 'AwaitingClassificationAssignment' }
+        : item));
       toast.success(`Đã gửi ${batch.code} sang điều phối phân loại.`);
       if (detailBatch?.id === batch.id) setDetailBatch(null);
       await load();
@@ -245,7 +253,7 @@ export const ReceivingArea: React.FC = () => {
         error?.response?.data?.message || 'Không thể gửi Intake Batch sang phân loại.',
       );
     } finally {
-      setBusy(false);
+      setSendingBatchId(null);
     }
   };
 
@@ -320,13 +328,13 @@ export const ReceivingArea: React.FC = () => {
       {batch.status === 'ReceivedAtWarehouse' && (
         <button
           className="receiving-area-primary"
-          disabled={busy}
+          disabled={sendingBatchId === batch.id}
           onClick={(event) => {
             event.stopPropagation();
             void sendToClassification(batch);
           }}
         >
-          <Send size={16} /> Gửi đi phân loại
+          <Send size={16} /> {sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
         </button>
       )}
     </article>
@@ -557,13 +565,13 @@ export const ReceivingArea: React.FC = () => {
                       {batch.canManage && batch.status === 'ReceivedAtWarehouse' && (
                         <button
                           className="send"
-                          disabled={busy}
+                          disabled={sendingBatchId === batch.id}
                           onClick={() => {
                             const myBatch = batches.find((item) => item.id === batch.id);
                             if (myBatch) void sendToClassification(myBatch);
                           }}
                         >
-                          <Send size={14} /> {busy ? 'Đang gửi...' : 'Gửi đi phân loại'}
+                          <Send size={14} /> {sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
                         </button>
                       )}
                     </div>
@@ -645,10 +653,10 @@ export const ReceivingArea: React.FC = () => {
               {detailBatch.status === 'ReceivedAtWarehouse' && (
                 <button
                   className="primary"
-                  disabled={busy}
+                  disabled={sendingBatchId === detailBatch.id}
                   onClick={() => void sendToClassification(detailBatch)}
                 >
-                  <Send size={16} /> {busy ? 'Đang gửi...' : 'Gửi đi phân loại'}
+                  <Send size={16} /> {sendingBatchId === detailBatch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
                 </button>
               )}
             </footer>

@@ -36,11 +36,6 @@ import '@/styles/ops-shared.css';
 import './ReceivingOperations.css';
 import './ShiftDetail.css';
 
-const today = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-};
 const shiftStatus: Record<string, string> = {
   Scheduled: 'Đã lên lịch',
   InProgress: 'Đang trong ca',
@@ -126,7 +121,6 @@ export default function DispatchOperations() {
             receivingService.getManagerReceivingStaff(selectedWarehouse),
             receivingService.getManagerShifts({
               warehouseId: selectedWarehouse,
-              fromDate: today(),
             }),
           ])
         : [[], []];
@@ -155,7 +149,6 @@ export default function DispatchOperations() {
   const shifts = useMemo(
     () =>
       setup.shifts
-        .filter((x) => x.shiftDate.slice(0, 10) >= today() || x.status === 'InProgress')
         .sort(
           (a, b) =>
             a.shiftDate.localeCompare(b.shiftDate) || a.startTime.localeCompare(b.startTime),

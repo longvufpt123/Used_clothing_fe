@@ -294,7 +294,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
           kind === 'approve',
           kind === 'reject' ? 'Không phù hợp nhu cầu hiện tại' : undefined,
         );
-      if (kind === 'issue') await distributionService.issue(id, 'Xuất theo yêu cầu tổ chức');
+      if (kind === 'issue') {
+        await distributionService.issue(id, 'Xuất theo yêu cầu tổ chức');
+        setDetailRequest(null);
+      }
       if (kind === 'refresh') await distributionService.refresh(id);
       toast.success('Đã cập nhật.');
       load();

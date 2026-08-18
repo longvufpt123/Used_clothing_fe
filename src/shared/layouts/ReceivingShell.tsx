@@ -46,13 +46,11 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ childr
       to: '/receiving/receiving-area',
       label: 'Khu nhận đồ',
       icon: Warehouse,
-      count: counts.staging,
     },
     {
       to: '/receiving?tab=transferring',
       label: 'Đang chuyển đi',
       icon: Layers,
-      count: counts.transferring,
     },
     {
       to: '/receiving/team',
