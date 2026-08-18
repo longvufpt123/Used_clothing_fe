@@ -88,12 +88,13 @@ export interface ClassifyItemPayload {
   answers: { questionId: string; answerId: string }[];
 }
 export interface AiClassificationSuggestion {
-  fabricTypeId: string;
-  garmentGroupId: string;
-  clothingTypeId: string;
-  genderId: string;
-  targetUserId: string;
-  sizeId: string;
+  isClothing: boolean;
+  fabricTypeId: string | null;
+  garmentGroupId: string | null;
+  clothingTypeId: string | null;
+  genderId: string | null;
+  targetUserId: string | null;
+  sizeId: string | null;
   answers: { questionId: string; answerId: string }[];
   confidence: number;
   summary: string;

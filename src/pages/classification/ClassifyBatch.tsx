@@ -117,14 +117,20 @@ export default function ClassifyBatch() {
       const result = await classificationService.analyzeImages(
         await Promise.all(images.map((image) => fileToDataUrl(image.file))),
       );
+      if (!result.isClothing) {
+        setForm((current) => ({ ...empty, notes: current.notes }));
+        setAiResult({ confidence: result.confidence, summary: result.summary });
+        toast.error(result.summary || 'AI nhận thấy ảnh không phải là quần áo. Không có lựa chọn nào được điền.');
+        return;
+      }
       setForm((current) => ({
         ...current,
-        fabricTypeId: result.fabricTypeId,
-        garmentGroupId: result.garmentGroupId,
-        clothingTypeId: result.clothingTypeId,
-        genderId: result.genderId,
-        targetUserId: result.targetUserId,
-        sizeId: result.sizeId,
+        fabricTypeId: result.fabricTypeId!,
+        garmentGroupId: result.garmentGroupId!,
+        clothingTypeId: result.clothingTypeId!,
+        genderId: result.genderId!,
+        targetUserId: result.targetUserId!,
+        sizeId: result.sizeId!,
         answers: Object.fromEntries(result.answers.map((answer) => [answer.questionId, answer.answerId])),
       }));
       setAiResult({ confidence: result.confidence, summary: result.summary });
