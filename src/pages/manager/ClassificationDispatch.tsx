@@ -412,7 +412,7 @@ export default function ClassificationDispatch() {
                               <strong>{shiftTeams.length} team</strong>
                               <small>{assigned} lô</small>
                             </span>
-                            {shift.status === 'Scheduled' && (
+                            {(shift.status === 'Scheduled' || shift.status === 'InProgress') && (
                               <div className="manager-shift-team-actions">
                                 <button
                                   onClick={(event) => {
@@ -560,7 +560,7 @@ export default function ClassificationDispatch() {
                   <span>Trạng thái ca</span>
                   <strong>{getStatusLabel(detailShift.status)}</strong>
                 </div>
-                {detailShift.status === 'Scheduled' && (
+                {(detailShift.status === 'Scheduled' || detailShift.status === 'InProgress') && (
                   <button
                     type="button"
                     className="ops-btn ops-btn-secondary"
