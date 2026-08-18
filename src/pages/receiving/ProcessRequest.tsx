@@ -72,7 +72,7 @@ export const ProcessRequest: React.FC = () => {
         toast.error('Đơn quyên góp không tồn tại.');
         navigate('/receiving');
       });
-  }, [id, navigate, toast]);
+  }, [id, navigate]);
 
   if (!request) return null;
 
