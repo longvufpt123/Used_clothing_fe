@@ -239,12 +239,42 @@ export const ReceivingArea: React.FC = () => {
     setSendingBatchId(batch.id);
     try {
       await receivingService.sendToClassification(batch.id);
-      setBatches((current) => current.map((item) => item.id === batch.id
-        ? { ...item, status: 'AwaitingClassificationAssignment' }
-        : item));
-      setLocationBatches((current) => current.map((item) => item.id === batch.id
-        ? { ...item, status: 'AwaitingClassificationAssignment' }
-        : item));
+      setBatches((current) => current.map((item) => ({
+        ...item,
+        ...(item.id === batch.id
+          ? {
+              status: 'AwaitingClassificationAssignment' as const,
+              currentAreaName: null,
+              currentGroupName: null,
+              currentLocationCode: null,
+            }
+          : {}),
+        receivingGroups: item.receivingGroups.map((group) => {
+          const containsLocation = group.locations.some(
+            (location) => location.locationCode === batch.currentLocationCode,
+          );
+          if (!containsLocation) return group;
+          return {
+            ...group,
+            currentKg: Math.max(0, group.currentKg - batch.totalWeight),
+            availableKg: Math.min(group.capacityKg, group.availableKg + batch.totalWeight),
+            locations: group.locations.map((location) =>
+              location.locationCode === batch.currentLocationCode
+                ? {
+                    ...location,
+                    currentKg: Math.max(0, location.currentKg - batch.totalWeight),
+                    availableKg: Math.min(
+                      location.capacityKg,
+                      location.availableKg + batch.totalWeight,
+                    ),
+                    batchCount: Math.max(0, location.batchCount - 1),
+                  }
+                : location,
+            ),
+          };
+        }),
+      })));
+      setLocationBatches((current) => current.filter((item) => item.id !== batch.id));
       toast.success(`Đã gửi ${batch.code} sang điều phối phân loại.`);
       if (detailBatch?.id === batch.id) setDetailBatch(null);
       await load();
