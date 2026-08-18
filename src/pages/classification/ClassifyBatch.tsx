@@ -84,13 +84,28 @@ export default function ClassifyBatch() {
       URL.revokeObjectURL(p[index].preview);
       return p.filter((_, i) => i !== index);
     });
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error('Không thể đọc hình ảnh.'));
-      reader.readAsDataURL(file);
-    });
+  const fileToDataUrl = async (file: File) => {
+    const maxDimension = 1600;
+    const image = await createImageBitmap(file);
+    try {
+      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Không thể xử lý hình ảnh.');
+
+      // JPEG does not support transparency, so use a neutral background for transparent images.
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+      return canvas.toDataURL('image/jpeg', 0.82);
+    } finally {
+      image.close();
+    }
+  };
   const analyzeWithAi = async () => {
     if (!images.length) {
       toast.error('Vui lòng chọn ít nhất một ảnh mới để AI phân tích.');

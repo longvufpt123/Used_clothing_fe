@@ -193,6 +193,7 @@ export const classificationService = {
     apiClient.post<unknown, AiClassificationSuggestion>(
       '/classification-operations/analyze-images',
       { imageDataUrls },
+      { timeout: 120000 },
     ),
   startBatch: (id: string) => apiClient.post(`/classification-operations/batches/${id}/start`),
   confirmReceipt: (id: string) =>
