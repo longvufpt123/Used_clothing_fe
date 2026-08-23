@@ -83,7 +83,7 @@ export const WarehouseTracking: React.FC = () => {
 
       <div className="ops-panel glass">
         <span className="ops-panel-label">Mã vận đơn</span>
-        <h2 style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.04em' }}>
+        <h2 style={{ letterSpacing: '0.04em' }}>
           {dist.trackingCode}
         </h2>
         <div className="ops-kv-grid">
