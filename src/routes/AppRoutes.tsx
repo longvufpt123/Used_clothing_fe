@@ -61,11 +61,17 @@ import DistributePrep from '@/pages/warehouse/DistributePrep';
 import WarehouseTracking from '@/pages/warehouse/Tracking';
 import DistributionPortal from '@/pages/distribution/DistributionPortal';
 import OrganizationShell from '@/shared/layouts/OrganizationShell';
+import Vouchers from '@/pages/Vouchers';
+import ManagerVouchers from '@/pages/manager/Vouchers';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Front-office pages wrapped in MainLayout */}
+      <Route
+        path="/vouchers"
+        element={<RoleRoute role="Donor"><MainLayout><Vouchers /></MainLayout></RoleRoute>}
+      />
       <Route
         path="/"
         element={
@@ -73,6 +79,10 @@ export const AppRoutes: React.FC = () => {
             <Home />
           </MainLayout>
         }
+      />
+      <Route
+        path="/manager/vouchers"
+        element={<RoleRoute role="Manager"><AdminLayout><ManagerVouchers /></AdminLayout></RoleRoute>}
       />
       <Route
         path="/products"
