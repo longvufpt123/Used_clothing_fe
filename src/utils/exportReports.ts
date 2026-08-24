@@ -35,9 +35,9 @@ export const exportToPDFPrint = (title: string, contentHtml: string) => {
         <title>${title}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap&subset=vietnamese" rel="stylesheet">
         <style>
-          body { font-family: 'Outfit', sans-serif; padding: 20px; color: #333; }
+          body { font-family: 'Be Vietnam Pro', Arial, sans-serif; padding: 20px; color: #333; }
           h1 { color: #16a34a; text-align: center; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }

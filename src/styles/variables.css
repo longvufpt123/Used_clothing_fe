@@ -1,7 +1,7 @@
 /* e:/WORK/Used_clothing_fe/src/styles/variables.css */
 :root {
   /* Typography */
-  --font-sans: 'Outfit', sans-serif;
+  --font-sans: 'Be Vietnam Pro', Arial, sans-serif;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -109,6 +109,8 @@
 
 html {
   font-family: var(--font-sans);
+  font-synthesis: none;
+  font-feature-settings: 'kern' 1, 'liga' 1;
   scroll-behavior: smooth;
 }
 
