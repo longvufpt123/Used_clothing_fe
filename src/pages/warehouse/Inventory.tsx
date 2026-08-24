@@ -22,7 +22,6 @@ export default function WarehouseInventoryPage() {
   const [mode, setMode] = useState<'issue' | 'move' | null>(null);
   const [locations, setLocations] = useState<StorageLocation[]>([]);
   const [form, setForm] = useState({
-    quantity: 1,
     weightKg: 1,
     reason: 'Phân phối từ thiện',
     notes: '',
@@ -39,7 +38,7 @@ export default function WarehouseInventoryPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const inStockItems = items.filter(
-      (item) => item.quantity > 0 || item.totalWeightKg > 0,
+      (item) => item.totalWeightKg > 0,
     );
     return !q
       ? inStockItems
@@ -76,7 +75,6 @@ export default function WarehouseInventoryPage() {
     setMode(next);
     setForm((f) => ({
       ...f,
-      quantity: Math.min(1, item.availableQuantity),
       weightKg: Math.min(1, item.availableWeightKg),
     }));
     if (next === 'move') {
@@ -93,7 +91,6 @@ export default function WarehouseInventoryPage() {
     try {
       if (mode === 'issue')
         await warehouseService.issue(selected.id, {
-          quantity: form.quantity,
           weightKg: form.weightKg,
           reason: form.reason,
           notes: form.notes,
@@ -151,7 +148,7 @@ export default function WarehouseInventoryPage() {
                 </div>
               </div>
               <span className={`ops-badge ${item.status === 'Available' ? 'done' : 'pending'}`}>
-                {item.reservedQuantity >= item.quantity && item.quantity > 0
+                {item.reservedWeightKg >= item.totalWeightKg && item.totalWeightKg > 0
                   ? 'Đã giữ chỗ'
                   : getStatusLabel(item.status)}
               </span>
@@ -161,24 +158,12 @@ export default function WarehouseInventoryPage() {
             </h3>
             <div className="ops-kv-grid">
               <div className="ops-kv">
-                <span>Tổng tồn</span>
-                <strong>{item.quantity} item</strong>
-              </div>
-              <div className="ops-kv">
                 <span>Tổng khối lượng</span>
                 <strong>{item.totalWeightKg} kg</strong>
               </div>
               <div className="ops-kv">
-                <span>Đã giữ chỗ</span>
-                <strong>{item.reservedQuantity} item</strong>
-              </div>
-              <div className="ops-kv">
                 <span>Khối lượng giữ chỗ</span>
                 <strong>{item.reservedWeightKg} kg</strong>
-              </div>
-              <div className="ops-kv">
-                <span>Khả dụng</span>
-                <strong>{item.availableQuantity} item</strong>
               </div>
               <div className="ops-kv">
                 <span>Khối lượng khả dụng</span>
@@ -204,7 +189,7 @@ export default function WarehouseInventoryPage() {
                 <ArrowRightLeft size={15} />
                 Điều chuyển
               </button>
-              {item.reservedQuantity > 0 && (
+              {item.reservedWeightKg > 0 && (
                 <button
                   className="ops-btn ops-btn-primary"
                   onClick={() => navigate('/warehouse/distributions')}
@@ -237,16 +222,6 @@ export default function WarehouseInventoryPage() {
             </p>
             {mode === 'issue' ? (
               <>
-                <div className="ops-field">
-                  <label>Số lượng xuất</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={selected.availableQuantity}
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-                  />
-                </div>
                 <div className="ops-field">
                   <label>Khối lượng xuất (kg)</label>
                   <input

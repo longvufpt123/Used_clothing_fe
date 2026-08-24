@@ -18,6 +18,7 @@ import {
   UserRound,
   ClipboardCheck,
   Gift,
+  Bot,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -68,6 +69,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           icon: <HandHeart size={18} />,
         },
         { label: 'Quản lý voucher', path: `${basePath}/vouchers`, icon: <Gift size={18} /> },
+        { label: 'Prompt phân loại AI', path: `${basePath}/ai-prompts`, icon: <Bot size={18} /> },
         { label: 'Danh mục phân loại', path: `${basePath}/categories`, icon: <Tags size={18} /> },
         {
           label: 'Tiêu chí đánh giá',

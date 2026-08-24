@@ -8,6 +8,7 @@ import {
   type GroupedClassifiedBatchDetail,
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
+import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 
 const directionLabel: Record<string, string> = {
   Charity: 'Từ thiện',
@@ -89,12 +90,8 @@ export default function GroupedBatchDetail() {
         <div className="ops-kv-grid">
           {[
             ['Ngày', new Date(group.classificationDate).toLocaleDateString('vi-VN')],
-            ['Loại', group.clothingType],
-            ['Nhóm', group.garmentGroup],
-            ['Vải', group.fabricType],
-            ['Giới tính', group.gender],
-            ['Đối tượng', group.targetUser],
-            ['Size', group.size],
+            ['Nhóm phân loại', getClassifiedBatchGroupLabel(group)],
+            ['Nhãn chất lượng', group.conditionGrade],
             ['Hướng xử lý', directionLabel[group.processingDirection] || group.processingDirection],
             ['Tổng item', String(group.totalItem)],
           ].map(([key, value]) => (

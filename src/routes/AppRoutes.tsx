@@ -63,6 +63,7 @@ import DistributionPortal from '@/pages/distribution/DistributionPortal';
 import OrganizationShell from '@/shared/layouts/OrganizationShell';
 import Vouchers from '@/pages/Vouchers';
 import ManagerVouchers from '@/pages/manager/Vouchers';
+import ManagerAiPromptManagement from '@/pages/manager/AiPromptManagement';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -83,6 +84,10 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/manager/vouchers"
         element={<RoleRoute role="Manager"><AdminLayout><ManagerVouchers /></AdminLayout></RoleRoute>}
+      />
+      <Route
+        path="/manager/ai-prompts"
+        element={<RoleRoute role="Manager"><AdminLayout><ManagerAiPromptManagement /></AdminLayout></RoleRoute>}
       />
       <Route
         path="/products"

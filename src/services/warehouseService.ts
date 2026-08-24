@@ -376,7 +376,6 @@ export const warehouseService = {
   issue: (
     id: string,
     data: {
-      quantity: number;
       weightKg: number;
       reason: string;
       referenceType?: string;

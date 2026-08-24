@@ -10,6 +10,7 @@ import {
 import Pagination from '@/components/common/Pagination';
 import '@/styles/ops-shared.css';
 import { getStatusLabel } from '@/utils/statusLabels';
+import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 
 type Tab = 'inbound' | 'putaway' | 'stored';
 const labels: Record<string, string> = {
@@ -194,13 +195,9 @@ export default function WarehouseDashboard() {
                   {labels[batch.status] || getStatusLabel(batch.status)}
                 </span>
               </div>
-              <h3>
-                {batch.clothingType} · {batch.fabricType}
-              </h3>
+              <h3>{getClassifiedBatchGroupLabel(batch)}</h3>
               <div className="ops-card-meta">
-                <span>{batch.gender}</span>
-                <span>{batch.targetUser}</span>
-                <span>Size {batch.size}</span>
+                <span>{batch.expectedItemCount} item</span>
               </div>
               <div className="ops-card-footer">
                 <span>

@@ -1,9 +1,7 @@
 /* e:/WORK/Used_clothing_fe/src/styles/variables.css */
 :root {
   /* Typography */
-  --font-sans:
-    'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
-    sans-serif;
+  --font-sans: 'Outfit', sans-serif;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -110,6 +108,7 @@
 }
 
 html {
+  font-family: var(--font-sans);
   scroll-behavior: smooth;
 }
 
@@ -144,6 +143,18 @@ body {
   transition:
     background-color var(--transition-normal),
     color var(--transition-normal);
+}
+
+button,
+input,
+select,
+textarea,
+option,
+code,
+pre,
+kbd,
+samp {
+  font-family: inherit;
 }
 
 a {

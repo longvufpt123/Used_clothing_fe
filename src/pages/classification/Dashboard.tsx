@@ -19,6 +19,7 @@ import {
 } from "@/services/classificationService";
 import "@/styles/ops-shared.css";
 import "@/pages/warehouse/WarehouseAreas.css";
+import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 import { getStatusLabel } from "@/utils/statusLabels";
 
 const PENDING_STATUSES = new Set([
@@ -296,13 +297,8 @@ export default function ClassificationDashboard() {
                     Nhãn {batch.conditionGrade}
                   </span>
                 </div>
-                <h3>
-                  {batch.clothingType} · {batch.fabricType}
-                </h3>
+                <h3>{getClassifiedBatchGroupLabel(batch)}</h3>
                 <div className="ops-card-meta">
-                  <span>{batch.gender}</span>
-                  <span>{batch.targetUser}</span>
-                  <span>Size {batch.size}</span>
                   <span>{batch.totalWeight.toFixed(2)} kg</span>
                 </div>
                 <div className="ops-card-footer classification-putaway-actions">
@@ -423,8 +419,7 @@ export default function ClassificationDashboard() {
             <div className="ops-modal-details">
               <div className="classification-placement-summary">
                 <div><span>Phân loại</span><strong>Nhãn {placing.conditionGrade} · {getStatusLabel(placing.status)}</strong></div>
-                <div><span>Mặt hàng</span><strong>{placing.clothingType} · {placing.fabricType}</strong></div>
-                <div><span>Đối tượng / kích cỡ</span><strong>{placing.gender} · {placing.targetUser} · Size {placing.size}</strong></div>
+                <div><span>Nhóm phân loại</span><strong>{getClassifiedBatchGroupLabel(placing)}</strong></div>
                 <div><span>Số lượng</span><strong>{placing.totalItem} item</strong></div>
               </div>
               <div className="ops-field">

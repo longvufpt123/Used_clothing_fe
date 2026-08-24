@@ -24,6 +24,7 @@ import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/common/Modal';
 import Pagination from '@/components/common/Pagination';
 import { getStatusLabel } from '@/utils/statusLabels';
+import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 import '@/styles/ops-shared.css';
 import '@/pages/distribution/ProductCatalogModal.css';
 import './WarehouseAreas.css';
@@ -482,11 +483,8 @@ export default function WarehouseAreas() {
                     </div>
                     <b>Nhãn {item.conditionGrade}</b>
                   </header>
-                  <h4>
-                    {item.clothingType} · {item.fabricType}
-                  </h4>
+                  <h4>{getClassifiedBatchGroupLabel(item)}</h4>
                   <p>
-                    {item.gender} · {item.targetUser} · Size {item.size} ·{' '}
                     {item.processingDirection}
                   </p>
                   <div className="warehouse-batch-compact-footer">
@@ -544,9 +542,7 @@ export default function WarehouseAreas() {
             <header>
               <div>
                 <span>DANH SÁCH SẢN PHẨM</span>
-                <h2>
-                  {activeBatch.clothingType} · {activeBatch.fabricType}
-                </h2>
+                <h2>{getClassifiedBatchGroupLabel(activeBatch)}</h2>
                 <p>
                   {activeBatch.batchCode} · Nhãn {activeBatch.conditionGrade}
                 </p>
@@ -560,9 +556,6 @@ export default function WarehouseAreas() {
                 <ShoppingBag />
                 {activeBatch.items.length} sản phẩm
               </span>
-              <span>{activeBatch.gender}</span>
-              <span>{activeBatch.targetUser}</span>
-              <span>Size {activeBatch.size}</span>
               <span>{activeBatch.processingDirection}</span>
             </div>
             <div className="product-grid">

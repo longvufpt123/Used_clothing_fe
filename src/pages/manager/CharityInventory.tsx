@@ -287,7 +287,6 @@ export default function ManagerWarehouseControl() {
         const item = detail.data as WarehouseInventory;
         if (action === 'issue')
           await warehouseService.issue(item.id, {
-            quantity: form.quantity,
             weightKg: form.weightKg,
             reason: form.reason,
             notes: form.notes,
@@ -658,9 +657,9 @@ export default function ManagerWarehouseControl() {
           </div>
           <div className="ops-stat-card">
             <span className="ops-stat-label">Tồn khả dụng</span>
-            <strong className="ops-stat-value">{stats?.availableQuantity || 0}</strong>
+            <strong className="ops-stat-value">{stats?.availableWeightKg || 0} kg</strong>
             <small>
-              {stats?.availableWeightKg || 0} kg · {stats?.inventorySkuCount || 0} SKU
+              {stats?.inventorySkuCount || 0} nhóm tồn kho
             </small>
           </div>
           <div className="ops-stat-card">
@@ -1814,13 +1813,13 @@ function InventoryCard({
       </p>
       <div className="warehouse-record-kpis">
         <span>
-          <b>{item.availableQuantity}</b> khả dụng
+          <b>{item.availableWeightKg}</b> kg khả dụng
         </span>
         <span>
-          <b>{item.availableWeightKg}</b> kg
+          <b>{item.reservedWeightKg}</b> kg giữ chỗ
         </span>
         <span>
-          <b>{item.reservedQuantity}</b> giữ chỗ
+          <b>{item.totalWeightKg}</b> kg tổng tồn
         </span>
       </div>
       <footer>
@@ -1833,7 +1832,7 @@ function InventoryCard({
             <ArrowRightLeft />
             Di chuyển
           </button>
-          <button onClick={onIssue} disabled={item.availableQuantity <= 0}>
+          <button onClick={onIssue} disabled={item.availableWeightKg <= 0}>
             <Send />
             Xuất kho
           </button>
@@ -1997,15 +1996,6 @@ function DetailModal({
           <div className="warehouse-action-form">
             <h3>Xác nhận nhận Classified Batch vào kho</h3>
             <div className="warehouse-form-row">
-              <label>
-                Số item thực nhận
-                <input
-                  type="number"
-                  min={1}
-                  value={form.actualItemCount}
-                  onChange={(e) => setForm({ ...form, actualItemCount: Number(e.target.value) })}
-                />
-              </label>
               <label>
                 Khối lượng thực nhận (kg)
                 <input
@@ -2171,11 +2161,8 @@ function DetailModal({
                   </span>
                   <span>
                     <b>
-                      {item.quantityBefore} → {item.quantityAfter} item
-                    </b>
-                    <small>
                       {item.weightBefore} → {item.weightAfter} kg
-                    </small>
+                    </b>
                   </span>
                 </div>
               ))}
@@ -2209,13 +2196,13 @@ function DetailModal({
               <span>
                 Tổng tồn
                 <b>
-                  {d.quantity} item · {d.totalWeightKg} kg
+                  {d.totalWeightKg} kg
                 </b>
               </span>
               <span>
                 Khả dụng
                 <b>
-                  {d.availableQuantity} item · {d.availableWeightKg} kg
+                  {d.availableWeightKg} kg
                 </b>
               </span>
             </div>
@@ -2242,16 +2229,6 @@ function DetailModal({
             <h3>{action === 'issue' ? 'Phiếu xuất kho' : 'Điều chuyển vị trí nội bộ'}</h3>
             {action === 'issue' ? (
               <div className="warehouse-form-row">
-                <label>
-                  Số lượng
-                  <input
-                    type="number"
-                    min={1}
-                    max={d.availableQuantity}
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-                  />
-                </label>
                 <label>
                   Khối lượng (kg)
                   <input

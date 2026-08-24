@@ -21,6 +21,7 @@ import {
   type GroupedClassifiedBatch,
 } from "@/services/classificationService";
 import { getProcessingDirectionLabel } from "@/utils/processingDirection";
+import { getClassifiedBatchGroupLabel } from "@/utils/classifiedBatch";
 import "@/styles/ops-shared.css";
 import "@/pages/warehouse/WarehouseAreas.css";
 
@@ -191,13 +192,8 @@ export default function GroupedBatches({
             )}
           </span>
         </div>
-        <h3>
-          {g.clothingType} · {g.fabricType}
-        </h3>
+        <h3>{getClassifiedBatchGroupLabel(g)}</h3>
         <div className="ops-card-meta">
-          <span>{g.gender}</span>
-          <span>{g.targetUser}</span>
-          <span>Size {g.size}</span>
           <span>{getProcessingDirectionLabel(g.processingDirection)}</span>
         </div>
         <div className="ops-card-footer">

@@ -41,7 +41,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   >([]);
   const [warehouseId, setWarehouseId] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
-  const [selectedItemCodes, setSelectedItemCodes] = useState<Record<string, string[]>>({});
   const [activeBatch, setActiveBatch] = useState<CatalogItem | null>(null);
   const [productPage, setProductPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -188,26 +187,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   useEffect(() => {
     if (catalogPage > catalogPageCount) setCatalogPage(catalogPageCount);
   }, [catalogPage, catalogPageCount]);
-  const setQuantity = (batch: CatalogItem, quantity: number) => {
-    const normalized = Math.min(batch.availableQuantity, Math.max(0, quantity));
+  const setWeight = (batch: CatalogItem, weightKg: number) => {
+    const normalized = Math.min(batch.availableWeight, Math.max(0, weightKg));
     setSelected((value) => ({ ...value, [batch.inventoryId]: normalized }));
-    setSelectedItemCodes((value) => ({
-      ...value,
-      [batch.inventoryId]: batch.items.slice(0, normalized).map((item) => item.itemCode),
-    }));
-  };
-  const toggleProduct = (batch: CatalogItem, itemCode: string) => {
-    setSelectedItemCodes((value) => {
-      const current = value[batch.inventoryId] || [];
-      const next = current.includes(itemCode)
-        ? current.filter((code) => code !== itemCode)
-        : [...current, itemCode];
-      setSelected((quantity) => ({
-        ...quantity,
-        [batch.inventoryId]: next.length,
-      }));
-      return { ...value, [batch.inventoryId]: next };
-    });
   };
   const create = async () => {
     if (
@@ -227,7 +209,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         ...form,
         items: Object.entries(selected)
           .filter(([, q]) => q > 0)
-          .map(([inventoryId, quantity]) => ({ inventoryId, quantity })),
+          .map(([inventoryId, weightKg]) => ({ inventoryId, weightKg })),
       };
       if (editingRequestId) await distributionService.update(editingRequestId, payload);
       else await distributionService.create(payload);
@@ -239,7 +221,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         notes: '',
       });
       setSelected({});
-      setSelectedItemCodes({});
       toast.success('Đã gửi yêu cầu đến Manager.');
       load();
     } catch (error: any) {
@@ -258,16 +239,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       notes: request.notes || '',
     });
     setSelected(
-      Object.fromEntries(request.items.map((item) => [item.inventoryId, item.requestedQuantity])),
+      Object.fromEntries(request.items.map((item) => [item.inventoryId, item.requestedWeight])),
     );
-    setSelectedItemCodes({});
     setSearchParams({ tab: 'catalog' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const cancelEdit = () => {
     setEditingRequestId(null);
     setSelected({});
-    setSelectedItemCodes({});
     setForm({
       recipientName: '',
       recipientPhone: '',
@@ -525,23 +504,24 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   {batch.gender} · {batch.targetUser} · Size {batch.size}
                 </p>
                 <strong>
-                  {batch.availableQuantity} item · {batch.availableWeight} kg khả dụng
+                  {batch.availableWeight} kg khả dụng
                 </strong>
                 <button className="product-preview" onClick={() => setActiveBatch(batch)}>
                   <Eye size={18} /> Xem {batch.items.length} sản phẩm
                 </button>
                 <div className="quantity-picker">
-                  <button onClick={() => setQuantity(batch, batch.availableQuantity)}>
+                  <button onClick={() => setWeight(batch, batch.availableWeight)}>
                     Chọn tất cả
                   </button>
                   <label>
-                    <span>Số lượng</span>
+                    <span>Khối lượng (kg)</span>
                     <input
                       type="number"
                       min="0"
-                      max={batch.availableQuantity}
+                      max={batch.availableWeight}
+                      step="0.1"
                       value={selected[batch.inventoryId] || 0}
-                      onChange={(e) => setQuantity(batch, Number(e.target.value))}
+                      onChange={(e) => setWeight(batch, Number(e.target.value))}
                     />
                   </label>
                 </div>
@@ -812,7 +792,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                     </small>
                   </span>
                   <strong>
-                    {item.issuedQuantity || item.approvedQuantity || item.requestedQuantity} item ·{' '}
                     {item.issuedWeight || item.requestedWeight} kg
                   </strong>
                 </div>
@@ -986,7 +965,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                     </small>
                   </span>
                   <strong>
-                    {item.issuedQuantity || item.approvedQuantity} item ·{' '}
                     {item.issuedWeight || item.requestedWeight} kg
                   </strong>
                 </div>
@@ -995,11 +973,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             <div className="issue-slip-total">
               <span>Tổng cộng</span>
               <strong>
-                {issueSlipRequest.items.reduce(
-                  (total, item) => total + (item.issuedQuantity || item.approvedQuantity),
-                  0,
-                )}{' '}
-                item ·{' '}
                 {issueSlipRequest.items
                   .reduce(
                     (total, item) => total + (item.issuedWeight || item.requestedWeight),
@@ -1372,24 +1345,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <span>Size {activeBatch.size}</span>
             </div>
             <div className="product-grid">
-              {pagedProducts.map((item) => {
-                const isSelected = (selectedItemCodes[activeBatch.inventoryId] || []).includes(
-                  item.itemCode,
-                );
-                return (
+              {pagedProducts.map((item) => (
                   <article
                     key={item.itemCode}
-                    className={`product-tile selectable${isSelected ? ' selected' : ''}`}
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    tabIndex={0}
-                    onClick={() => toggleProduct(activeBatch, item.itemCode)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        toggleProduct(activeBatch, item.itemCode);
-                      }
-                    }}
+                    className="product-tile"
                   >
                     <div className="product-image">
                       {item.imageUrls[0] ? (
@@ -1404,11 +1363,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                         </div>
                       )}
                       <span className="product-grade">Nhãn {activeBatch.grade}</span>
-                      {isSelected && (
-                        <span className="product-selected-mark">
-                          <Check /> Đã chọn
-                        </span>
-                      )}
                     </div>
                     <div className="product-info">
                       <small>{item.itemCode}</small>
@@ -1422,8 +1376,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                       {item.notes && <em>{item.notes}</em>}
                     </div>
                   </article>
-                );
-              })}
+              ))}
             </div>
             {activeBatch.items.length > productPageSize && (
               <nav
@@ -1465,9 +1418,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             <footer>
               <div>
                 <b>
-                  {selected[activeBatch.inventoryId] || 0}/{activeBatch.availableQuantity}
+                  {selected[activeBatch.inventoryId] || 0}/{activeBatch.availableWeight} kg
                 </b>
-                <span> sản phẩm đã chọn</span>
+                <span> đã chọn</span>
               </div>
               <div>
                 <button className="secondary" onClick={() => setActiveBatch(null)}>
@@ -1475,7 +1428,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 </button>
                 <button
                   onClick={() => {
-                    setQuantity(activeBatch, activeBatch.availableQuantity);
+                    setWeight(activeBatch, activeBatch.availableWeight);
                     setActiveBatch(null);
                   }}
                 >

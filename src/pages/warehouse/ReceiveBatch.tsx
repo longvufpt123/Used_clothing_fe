@@ -4,13 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { warehouseService, type WarehouseBatch } from '@/services/warehouseService';
 import '@/styles/ops-shared.css';
+import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 
 export default function ReceiveBatch() {
   const { batchId } = useParams();
   const nav = useNavigate();
   const toast = useToast();
   const [batch, setBatch] = useState<WarehouseBatch | null>(null);
-  const [quantity, setQuantity] = useState(0);
   const [weight, setWeight] = useState(0);
   const [seal, setSeal] = useState(true);
   const [notes, setNotes] = useState('');
@@ -21,7 +21,6 @@ export default function ReceiveBatch() {
       .getBatch(batchId)
       .then((data) => {
         setBatch(data);
-        setQuantity(data.expectedItemCount);
         setWeight(data.expectedWeightKg || data.expectedItemCount);
       })
       .catch(() => {
@@ -30,14 +29,14 @@ export default function ReceiveBatch() {
       });
   }, [batchId]);
   const confirm = async () => {
-    if (!batchId || quantity <= 0 || weight <= 0)
-      return toast.error('Nhập số lượng và khối lượng thực nhận.');
+    if (!batchId || weight <= 0)
+      return toast.error('Nhập khối lượng thực nhận.');
     if (!seal && !notes.trim())
       return toast.error('Cần ghi nhận sai lệch khi niêm phong không nguyên vẹn.');
     setSaving(true);
     try {
       await warehouseService.confirmReceipt(batchId, {
-        actualItemCount: quantity,
+        actualItemCount: batch?.expectedItemCount || 0,
         actualWeightKg: weight,
         sealIntact: seal,
         discrepancyNotes: notes,
@@ -65,9 +64,7 @@ export default function ReceiveBatch() {
       <div className="ops-form-grid two-col">
         <section className="ops-panel glass">
           <span className="ops-panel-label">{batch.batchCode}</span>
-          <h2>
-            {batch.clothingType} · Nhãn {batch.conditionGrade}
-          </h2>
+          <h2>{getClassifiedBatchGroupLabel(batch)} · Nhãn {batch.conditionGrade}</h2>
           <div className="ops-kv-grid">
             <div className="ops-kv">
               <span>Dự kiến</span>
@@ -79,16 +76,6 @@ export default function ReceiveBatch() {
             <div className="ops-kv">
               <span>Hướng xử lý</span>
               <strong>{batch.processingDirection}</strong>
-            </div>
-            <div className="ops-kv">
-              <span>Thuộc tính</span>
-              <strong>
-                {batch.gender} · {batch.targetUser} · {batch.size}
-              </strong>
-            </div>
-            <div className="ops-kv">
-              <span>Vải</span>
-              <strong>{batch.fabricType}</strong>
             </div>
           </div>
           <div className="ops-provenance">
@@ -116,15 +103,6 @@ export default function ReceiveBatch() {
         </section>
         <section className="ops-panel glass">
           <span className="ops-panel-label">Biên bản thực nhận</span>
-          <div className="ops-field">
-            <label>Số item thực nhận</label>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-            />
-          </div>
           <div className="ops-field">
             <label>Khối lượng thực nhận (kg)</label>
             <input
