@@ -5,13 +5,12 @@ import {
   Shield,
   CheckCircle2,
   ChevronRight,
-  Award,
   History,
   MapPin,
-  Compass,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { voucherService } from '@/services/voucherService';
 import './Profile.css';
 
 export const Profile: React.FC = () => {
@@ -19,6 +18,7 @@ export const Profile: React.FC = () => {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const [donationPoint, setDonationPoint] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -33,6 +33,11 @@ export const Profile: React.FC = () => {
         })
         .catch(() => {});
     });
+
+    voucherService
+      .pointSummary()
+      .then((summary) => setDonationPoint(summary.donationPoint))
+      .catch(() => setDonationPoint(0));
   }, []);
 
   // Temporarily disabled auth block for UI preview
@@ -91,10 +96,6 @@ export const Profile: React.FC = () => {
                     <CheckCircle2 size={12} className="text-primary" />
                     Đã xác minh
                   </span>
-                  <span className="badge-pill mini-badge">
-                    <Award size={12} />
-                    Hạng Bạc
-                  </span>
                 </div>
                 <button type="button" className="btn-logout-pill" onClick={handleLogout}>
                   <span className="btn-icon-circle">
@@ -118,29 +119,17 @@ export const Profile: React.FC = () => {
                 <Leaf size={40} className="leaf-icon" />
               </div>
               <div className="score-numbers">
-                <span className="score-count text-gradient">240</span>
+                <span className="score-count text-gradient">
+                  {donationPoint.toLocaleString('vi-VN')}
+                </span>
                 <span className="score-unit">Điểm xanh</span>
               </div>
             </div>
-
-            <div className="score-bar-container">
-              <div className="score-bar-header">
-                <span>Cấp độ tiếp theo (Vàng)</span>
-                <span>240/500</span>
-              </div>
-              <div className="score-progress-track">
-                <div className="score-progress-bar" style={{ width: '48%' }}></div>
-              </div>
-            </div>
-
-            <p className="score-tip">
-              Bạn đã giảm thiểu khoảng 36kg khí thải CO2 ra môi trường bằng việc quyên góp quần áo.
-            </p>
           </div>
         </div>
 
         {/* Card 3: Quick Navigation Islands */}
-        <div className="bento-card col-span-1 card-shell card-fade-up delay-3">
+        <div className="bento-card col-span-3 card-shell card-fade-up delay-3">
           <div className="card-core nav-islands-card">
             <span className="eyebrow-tag">Tiện ích nhanh</span>
             <h3>Lối tắt</h3>
@@ -188,45 +177,6 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Detailed Account Details & Achievements */}
-        <div className="bento-card col-span-2 card-shell card-fade-up delay-4">
-          <div className="card-core achievements-card">
-            <span className="eyebrow-tag">Hành trình xanh</span>
-            <h3>Thành tựu đạt được</h3>
-
-            <div className="achievements-grid">
-              <div className="achievement-item active">
-                <div className="achievement-badge-icon">
-                  <Compass size={24} />
-                </div>
-                <div className="achievement-details">
-                  <h4>Người tiên phong</h4>
-                  <p>Tham gia quyên góp lần đầu tiên tại hệ thống ReThreads.</p>
-                </div>
-              </div>
-
-              <div className="achievement-item active">
-                <div className="achievement-badge-icon">
-                  <Leaf size={24} />
-                </div>
-                <div className="achievement-details">
-                  <h4>Đại sứ xanh</h4>
-                  <p>Đạt mốc 100 điểm tích lũy bảo vệ môi trường xanh.</p>
-                </div>
-              </div>
-
-              <div className="achievement-item locked">
-                <div className="achievement-badge-icon">
-                  <Award size={24} />
-                </div>
-                <div className="achievement-details">
-                  <h4>Nhà phân loại thông thái</h4>
-                  <p>Phân loại đúng chất liệu cho 10 đơn quyên góp liên tục (Khóa).</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

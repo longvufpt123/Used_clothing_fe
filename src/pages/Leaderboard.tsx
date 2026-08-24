@@ -1,226 +1,120 @@
-import React, { useState } from 'react';
-import { Award, Sparkles, Leaf, Recycle, Gift } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Award, PackageCheck, Sparkles } from 'lucide-react';
 import Table from '@/components/common/Table';
-import Badge from '@/components/common/Badge';
+import { voucherService, type DonorLeaderboardEntry } from '@/services/voucherService';
 import './Leaderboard.css';
 
-interface DonorRank {
-  rank: number;
-  name: string;
-  type: 'individual' | 'corporate';
-  weight: number; // kg donated
-  impactSavedCo2: number; // kg CO2 saved
-  treesPlanted: number; // trees planted equivalent
-}
+const formatWeight = (weight: number) =>
+  weight.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 
-const DONOR_DATA: DonorRank[] = [
-  {
-    rank: 1,
-    name: 'Nguyễn Thị Minh Vy',
-    type: 'individual',
-    weight: 285,
-    impactSavedCo2: 427,
-    treesPlanted: 19,
-  },
-  {
-    rank: 2,
-    name: 'Công ty Cổ phần May Xanh',
-    type: 'corporate',
-    weight: 250,
-    impactSavedCo2: 375,
-    treesPlanted: 17,
-  },
-  {
-    rank: 3,
-    name: 'Trần Hoàng Long',
-    type: 'individual',
-    weight: 195,
-    impactSavedCo2: 292,
-    treesPlanted: 13,
-  },
-  {
-    rank: 4,
-    name: 'Đại học Quốc gia TP. HCM',
-    type: 'corporate',
-    weight: 160,
-    impactSavedCo2: 240,
-    treesPlanted: 10,
-  },
-  {
-    rank: 5,
-    name: 'Phạm Thành Nhân',
-    type: 'individual',
-    weight: 125,
-    impactSavedCo2: 187,
-    treesPlanted: 8,
-  },
-  {
-    rank: 6,
-    name: 'Lê Văn Khải',
-    type: 'individual',
-    weight: 110,
-    impactSavedCo2: 165,
-    treesPlanted: 7,
-  },
-  {
-    rank: 7,
-    name: 'Cộng đồng Yêu Sống Xanh',
-    type: 'corporate',
-    weight: 95,
-    impactSavedCo2: 142,
-    treesPlanted: 6,
-  },
-  {
-    rank: 8,
-    name: 'Nguyễn Bích Ngọc',
-    type: 'individual',
-    weight: 85,
-    impactSavedCo2: 127,
-    treesPlanted: 5,
-  },
-  {
-    rank: 9,
-    name: 'Vũ Minh Tuấn',
-    type: 'individual',
-    weight: 70,
-    impactSavedCo2: 105,
-    treesPlanted: 4,
-  },
-];
+const initialsOf = (name: string) =>
+  name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join('').toUpperCase();
 
 export const Leaderboard: React.FC = () => {
-  const [filterType, setFilterType] = useState<'all' | 'individual' | 'corporate'>('all');
+  const [donors, setDonors] = useState<DonorLeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filteredData = DONOR_DATA.filter((donor) => {
-    if (filterType === 'all') return true;
-    return donor.type === filterType;
-  });
+  useEffect(() => {
+    voucherService
+      .donorLeaderboard()
+      .then(setDonors)
+      .catch(() => setError('Không thể tải bảng xếp hạng. Vui lòng thử lại sau.'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Re-map ranks after filtering for visual purposes, but keep original rank numbers
-  const podiumData = filteredData.slice(0, 3);
-  const tableData = filteredData.slice(3);
+  const podiumData = donors.slice(0, 3);
+  const tableData = donors.slice(3);
+  const displayPodium = [podiumData[1], podiumData[0], podiumData[2]].filter(
+    (donor): donor is DonorLeaderboardEntry => Boolean(donor),
+  );
 
-  // Reordering podium for display structure: [2nd, 1st, 3rd]
-  const displayPodium = [];
-  if (podiumData[1]) displayPodium.push(podiumData[1]); // 2nd
-  if (podiumData[0]) displayPodium.push(podiumData[0]); // 1st
-  if (podiumData[2]) displayPodium.push(podiumData[2]); // 3rd
-
-  const columns = [
-    {
-      header: 'Hạng',
-      accessor: (row: DonorRank) => {
-        return <strong className="table-rank-num">#{row.rank}</strong>;
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Hạng',
+        accessor: (row: DonorLeaderboardEntry) => (
+          <strong className="table-rank-num">#{row.rank}</strong>
+        ),
       },
-    },
-    { header: 'Hội viên', accessor: 'name' as const },
-    {
-      header: 'Phân loại',
-      accessor: (row: DonorRank) => (
-        <Badge variant={row.type === 'corporate' ? 'info' : 'success'}>
-          {row.type === 'corporate' ? 'Tập thể / DN' : 'Cá nhân'}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Quần áo quyên góp',
-      accessor: (row: DonorRank) => <strong>{row.weight} kg</strong>,
-    },
-    {
-      header: 'Lượng CO2 cắt giảm',
-      accessor: (row: DonorRank) => (
-        <span className="co2-saving-text">-{row.impactSavedCo2} kg CO2</span>
-      ),
-    },
-    {
-      header: 'Quy đổi cây xanh',
-      accessor: (row: DonorRank) => (
-        <span className="tree-eq-text">
-          <Leaf size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-          {row.treesPlanted} cây
-        </span>
-      ),
-    },
-  ];
+      {
+        header: 'Cá nhân tiêu biểu',
+        accessor: (row: DonorLeaderboardEntry) => (
+          <div className="leaderboard-member-cell">
+            <span className="leaderboard-mini-avatar">{initialsOf(row.fullName)}</span>
+            <div><strong>{row.fullName}</strong><small>@{row.userName}</small></div>
+          </div>
+        ),
+      },
+      {
+        header: 'Khối lượng quyên góp',
+        accessor: (row: DonorLeaderboardEntry) => (
+          <strong>{formatWeight(row.totalWeightKg)} kg</strong>
+        ),
+      },
+      {
+        header: 'Số lần quyên góp',
+        accessor: (row: DonorLeaderboardEntry) => (
+          <span className="donation-count-cell">
+            <PackageCheck size={15} /> {row.donationCount} lần
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="leaderboard-page container">
-      {/* Header */}
       <div className="leaderboard-header text-center">
         <span className="section-subtitle">Tác động cộng đồng</span>
-        <h1 className="text-gradient">Bảng Vàng Vinh Danh</h1>
+        <h1 className="text-gradient">Bảng vàng đóng góp</h1>
         <p className="leaderboard-desc">
-          Tri ân những đóng góp to lớn của các cá nhân và tập thể đã chung tay quyên gửi áo ấm và
-          dệt sợi tái chế vải cũ bảo vệ hành tinh xanh.
+          Vinh danh những cá nhân có tổng khối lượng quần áo quyên góp đã được xác nhận cao nhất.
         </p>
       </div>
 
-      {/* Filter tabs */}
       <div className="leaderboard-filters flex-center">
-        <button
-          className={`filter-tab-btn glass ${filterType === 'all' ? 'active' : ''}`}
-          onClick={() => setFilterType('all')}
-        >
-          Tất cả đóng góp
-        </button>
-        <button
-          className={`filter-tab-btn glass ${filterType === 'individual' ? 'active' : ''}`}
-          onClick={() => setFilterType('individual')}
-        >
-          Cá nhân tiêu biểu
-        </button>
-        <button
-          className={`filter-tab-btn glass ${filterType === 'corporate' ? 'active' : ''}`}
-          onClick={() => setFilterType('corporate')}
-        >
-          Hội nhóm & Doanh nghiệp
-        </button>
+        <button type="button" className="filter-tab-btn glass active">Cá nhân tiêu biểu</button>
       </div>
 
-      {/* Podium Top 3 */}
-      {podiumData.length > 0 && (
+      {loading && <div className="leaderboard-state glass">Đang tải bảng xếp hạng...</div>}
+      {!loading && error && <div className="leaderboard-state error">{error}</div>}
+      {!loading && !error && donors.length === 0 && (
+        <div className="leaderboard-state glass">
+          Chưa có lượt quyên góp nào được xác nhận để xếp hạng.
+        </div>
+      )}
+
+      {!loading && !error && podiumData.length > 0 && (
         <div className="podium-section flex-center">
           <div className="podium-container">
             {displayPodium.map((donor) => {
-              // Determine visual spot: 1st, 2nd, or 3rd
-              let spotClass = 'first';
-              let awardColor = '#ffd700'; // Gold
-              if (donor.rank === 2) {
-                spotClass = 'second';
-                awardColor = '#c0c0c0'; // Silver
-              } else if (donor.rank === 3) {
-                spotClass = 'third';
-                awardColor = '#cd7f32'; // Bronze
-              }
-
+              const spotClass = donor.rank === 1 ? 'first' : donor.rank === 2 ? 'second' : 'third';
+              const awardColor = donor.rank === 1 ? '#ffd700' : donor.rank === 2 ? '#c0c0c0' : '#cd7f32';
               return (
-                <div key={donor.name} className={`podium-column ${spotClass}`}>
+                <div key={donor.userId} className={`podium-column ${spotClass}`}>
                   <div className="podium-avatar-wrapper">
                     <div className="podium-badge" style={{ backgroundColor: awardColor }}>
                       {donor.rank === 1 ? <Sparkles size={16} /> : <Award size={16} />}
                     </div>
                     <div className="podium-avatar flex-center">
-                      {donor.name.split(' ').pop()?.substring(0, 2).toUpperCase()}
+                      {donor.avatarUrl ? <img src={donor.avatarUrl} alt="" /> : initialsOf(donor.fullName)}
                     </div>
                   </div>
-
                   <div className="podium-card glass">
                     <span className="podium-rank">Hạng {donor.rank}</span>
-                    <h4 className="podium-donor-name">{donor.name}</h4>
-                    <span className="podium-weight text-gradient">{donor.weight} kg</span>
-
+                    <h4 className="podium-donor-name">{donor.fullName}</h4>
+                    <span className="podium-weight text-gradient">
+                      {formatWeight(donor.totalWeightKg)} kg
+                    </span>
                     <div className="podium-stats">
                       <div className="podium-stat-line">
-                        <Recycle size={12} />
-                        <span>-{donor.impactSavedCo2}kg CO2</span>
-                      </div>
-                      <div className="podium-stat-line">
-                        <Gift size={12} />
-                        <span>{donor.treesPlanted} cây xanh</span>
+                        <PackageCheck size={13} /><span>{donor.donationCount} lần quyên góp</span>
                       </div>
                     </div>
                   </div>
-                  <div className="podium-pedestal"></div>
+                  <div className="podium-pedestal" />
                 </div>
               );
             })}
@@ -228,10 +122,9 @@ export const Leaderboard: React.FC = () => {
         </div>
       )}
 
-      {/* Table for ranks 4+ */}
-      {tableData.length > 0 && (
+      {!loading && !error && tableData.length > 0 && (
         <div className="leaderboard-table-section glass">
-          <h3>Bảng xếp hạng đóng góp xanh</h3>
+          <h3>Bảng xếp hạng cá nhân tiêu biểu</h3>
           <Table columns={columns} data={tableData} />
         </div>
       )}
