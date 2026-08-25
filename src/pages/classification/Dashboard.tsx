@@ -45,6 +45,8 @@ export default function ClassificationDashboard() {
   const [areaLayout, setAreaLayout] = useState<ClassificationAreaLayout | null>(
     null,
   );
+  const [areaLoading, setAreaLoading] = useState(false);
+  const [areaLoadFailed, setAreaLoadFailed] = useState(false);
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
   const [placeAreaId, setPlaceAreaId] = useState("");
   const [placeGroupId, setPlaceGroupId] = useState("");
@@ -77,15 +79,31 @@ export default function ClassificationDashboard() {
     return () => window.removeEventListener("focus", refreshFromApi);
   }, []);
   useEffect(() => {
-    if (selectedTab !== "classified") return;
+    if (selectedTab !== "classified") {
+      setAreaLayout(null);
+      setAreaLoading(false);
+      setAreaLoadFailed(false);
+      return;
+    }
+    let active = true;
+    setAreaLayout(null);
+    setAreaLoading(true);
+    setAreaLoadFailed(false);
     classificationService
       .getClassifiedAreaLayout()
       .then((data) => {
-        setAreaLayout(data);
+        if (active) setAreaLayout(data);
       })
-      .catch(() =>
-        toast.error("Không tải được sơ đồ khu vực đồ đã phân loại."),
-      );
+      .catch(() => {
+        if (active) setAreaLoadFailed(true);
+        toast.error("Không tải được sơ đồ khu vực đồ đã phân loại.");
+      })
+      .finally(() => {
+        if (active) setAreaLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [selectedTab, toast]);
   const today = localDateValue();
   const todayBatches = batches.filter(
@@ -280,9 +298,18 @@ export default function ClassificationDashboard() {
                 ? "Danh sách lô hàng chờ phân loại"
                 : "Danh sách lô hàng"}
           </h2>
-          <span>{loading ? "Đang tải..." : "Chọn một lô để bắt đầu"}</span>
+          <span>{loading || areaLoading ? "Đang tải..." : "Chọn một lô để bắt đầu"}</span>
         </div>
-        {selectedTab === "classified" && areaLayout ? (
+        {selectedTab === "classified" && (areaLoading || !areaLayout) ? (
+          <div className="ops-empty">
+            <ClipboardList size={36} />
+            <h4>
+              {areaLoadFailed
+                ? "Không tải được danh sách batch đã phân loại"
+                : "Đang tải danh sách batch đã phân loại..."}
+            </h4>
+          </div>
+        ) : selectedTab === "classified" && areaLayout ? (
           <div className="ops-list classification-putaway-list">
             {areaLayout.unassignedBatches.map((batch) => (
               <article
