@@ -136,6 +136,7 @@ export default function GroupedBatches({
     }
   };
   const openPlacement = (batch: GroupedClassifiedBatch) => {
+    if (batch.status !== "Open") return;
     setPlacing(batch);
     setPlaceAreaId("");
     setPlaceGroupId("");
@@ -200,7 +201,7 @@ export default function GroupedBatches({
           <span className="classification-batch-measure">
             <strong>{g.totalItem}</strong> item · <strong>{g.totalWeight.toFixed(2)}</strong> kg
           </span>
-          {unassigned ? (
+          {!sent && unassigned ? (
             <button
               type="button"
               className="ops-btn ops-btn-primary"
