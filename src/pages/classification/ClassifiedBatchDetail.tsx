@@ -25,7 +25,7 @@ export default function ClassifiedBatchDetail() {
     classificationService
       .getBatch(batchId)
       .then((b) => {
-        if (b.status !== 'InClassifiedArea') toast.warning('Batch này chưa được đưa vào khu vực đồ đã phân loại.');
+        if (b.status !== 'InClassifiedArea') toast.warning('Batch này chưa hoàn tất phân loại.');
         setBatch(b);
       })
       .catch(() => {
@@ -52,7 +52,7 @@ export default function ClassifiedBatchDetail() {
         </button>
         <div className="ops-title-row">
           <h1>Chi tiết Classified Batch</h1>
-          <span className="ops-badge classified">Trong khu vực đồ đã phân loại</span>
+          <span className="ops-badge classified">Đã phân loại xong</span>
         </div>
       </div>
       <header className="ops-pagehead">

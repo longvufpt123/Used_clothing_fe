@@ -95,7 +95,7 @@ export default function ClassificationDashboard() {
     if (selectedTab === "classified")
       return CLASSIFIED_STATUSES.has(batch.status);
     if (selectedTab === "pending")
-      return PENDING_STATUSES.has(batch.status) && !isFullyClassified(batch);
+      return PENDING_STATUSES.has(batch.status);
     return true;
   });
   const displayedBatchCount = visibleBatches.length;
@@ -228,10 +228,12 @@ export default function ClassificationDashboard() {
                     </div>
                   </div>
                   <span
-                    className={`ops-badge ${isFullyClassified(b) ? "done" : b.status.toLowerCase()}`}
+                    className={`ops-badge ${CLASSIFIED_STATUSES.has(b.status) ? "done" : isFullyClassified(b) ? "pending" : b.status.toLowerCase()}`}
                   >
-                    {isFullyClassified(b)
+                    {CLASSIFIED_STATUSES.has(b.status)
                       ? "Đã phân loại xong"
+                      : isFullyClassified(b)
+                        ? "Chờ xác nhận hoàn tất"
                       : getStatusLabel(b.status)}
                   </span>
                 </div>

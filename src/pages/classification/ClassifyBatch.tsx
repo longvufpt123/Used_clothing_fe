@@ -258,7 +258,7 @@ export default function ClassifyBatch() {
         <div className="ops-title-row">
           <h1>{batch.batchCode}</h1>
           <span className={`ops-badge ${isClassificationComplete ? 'done' : 'pending'}`}>
-            {isClassificationComplete ? 'Đã phân loại xong' : getStatusLabel(batch.status)}
+            {isClassificationComplete ? 'Đã phân loại đủ' : getStatusLabel(batch.status)}
           </span>
         </div>
       </div>
@@ -429,7 +429,7 @@ export default function ClassifyBatch() {
           <CheckCircle size={38} />
           <div>
             <span className="ops-panel-label">Bước 2 đã hoàn tất</span>
-            <h2>Đã phân loại xong {countedItemCount}/{countedItemCount} món</h2>
+            <h2>Đã phân loại đủ {countedItemCount}/{countedItemCount} món</h2>
             <p>
               Không còn item nào cần phân loại. Hãy kiểm tra danh sách bên dưới và hoàn tất
               batch để đưa hàng vào khu vực đồ đã phân loại.
