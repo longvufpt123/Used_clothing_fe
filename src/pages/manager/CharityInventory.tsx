@@ -53,6 +53,7 @@ type LayoutEditor = {
   capacityKg: number;
   currentKg: number;
   allocatedKg: number;
+  areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
 };
 type LocationEditor = {
   id?: string;
@@ -318,6 +319,7 @@ export default function ManagerWarehouseControl() {
         const data = {
           warehouseId: layout.warehouseId,
           areaName: layoutEditor.name.trim(),
+          areaType: layoutEditor.areaType,
           description: layoutEditor.description,
           capacityKg: layoutEditor.capacityKg,
         };
@@ -1026,6 +1028,33 @@ export default function ManagerWarehouseControl() {
                     onChange={(e) => setLayoutEditor({ ...layoutEditor, name: e.target.value })}
                   />
                 </label>
+                {layoutEditor.kind === 'area' && (
+                  <label>
+                    Mục đích khu vực
+                    <select
+                      value={layoutEditor.areaType}
+                      disabled={Boolean(layoutEditor.id) && layoutEditor.currentKg > 0}
+                      onChange={(e) =>
+                        setLayoutEditor({
+                          ...layoutEditor,
+                          areaType: e.target.value as LayoutEditor['areaType'],
+                        })
+                      }
+                    >
+                      <option value="Receiving">Tiếp nhận hàng — Receiving Staff</option>
+                      <option value="Unclassified">Chờ phân loại — Classification Staff</option>
+                      <option value="Classified">Đã phân loại — Classification Staff</option>
+                      <option value="Storage">Lưu kho — Warehouse Staff</option>
+                    </select>
+                    <small>
+                      {layoutEditor.areaType === 'Receiving' && 'Dùng để nhận Intake Batch từ Receiving Staff.'}
+                      {layoutEditor.areaType === 'Unclassified' && 'Dùng cho các lô đang chờ Classification Staff xử lý.'}
+                      {layoutEditor.areaType === 'Classified' && 'Dùng để xếp các Classified Batch đã hoàn tất.'}
+                      {layoutEditor.areaType === 'Storage' && 'Dùng để lưu tồn kho từ thiện, tái chế hoặc tiêu hủy.'}
+                      {Boolean(layoutEditor.id) && layoutEditor.currentKg > 0 && ' Phải chuyển hết hàng ra ngoài trước khi đổi mục đích.'}
+                    </small>
+                  </label>
+                )}
                 <label>
                   Mô tả
                   <textarea
@@ -1393,6 +1422,7 @@ function LayoutView({
               kind: 'area',
               name: '',
               description: '',
+              areaType: 'Storage',
               capacityKg: 1000,
               currentKg: 0,
               allocatedKg: 0,
@@ -1474,6 +1504,7 @@ function LayoutView({
                       id: area.id,
                       name: area.areaName,
                       description: area.description || '',
+                      areaType: area.areaType as LayoutEditor['areaType'],
                       capacityKg: area.capacityKg,
                       currentKg: area.currentWeightKg,
                       allocatedKg: allocated,
@@ -1535,6 +1566,7 @@ function LayoutView({
                     capacityKg: Math.max(1, area.capacityKg - allocated),
                     currentKg: 0,
                     allocatedKg: allocated,
+                    areaType: area.areaType as LayoutEditor['areaType'],
                   })
                 }
                 disabled={allocated >= area.capacityKg}
@@ -1600,6 +1632,7 @@ function LayoutView({
                               capacityKg: group.capacityKg,
                               currentKg: group.currentWeightKg,
                               allocatedKg: allocated - group.capacityKg,
+                              areaType: area.areaType as LayoutEditor['areaType'],
                             })
                           }
                         >

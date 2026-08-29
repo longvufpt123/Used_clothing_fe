@@ -299,12 +299,19 @@ export const warehouseService = {
   createArea: (data: {
     warehouseId: string;
     areaName: string;
+    areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
     description?: string;
     capacityKg: number;
   }) => apiClient.post<unknown, { id: string }>('/warehouse-operations/areas', data),
   updateArea: (
     id: string,
-    data: { warehouseId: string; areaName: string; description?: string; capacityKg: number },
+    data: {
+      warehouseId: string;
+      areaName: string;
+      areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
+      description?: string;
+      capacityKg: number;
+    },
   ) => apiClient.put(`/warehouse-operations/areas/${id}`, data),
   deleteArea: (id: string) => apiClient.delete(`/warehouse-operations/areas/${id}`),
   createGroup: (data: {
