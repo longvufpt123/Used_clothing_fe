@@ -22,10 +22,10 @@ function MapClick({ onSelect }: { onSelect: (point: Selected) => void }) {
   return null;
 }
 
-export default function AddressSearchMap({ value, onChange, onLocationChange, location, label = 'Địa chỉ lấy hàng', required }: {
+export default function AddressSearchMap({ value, onChange, onLocationChange, location, label = 'Địa chỉ lấy hàng', mapTitle = 'Vị trí lấy hàng', required }: {
   value: string; onChange: (address: string) => void;
   onLocationChange?: (location: { lat: number; lon: number } | null) => void;
-  location?: { lat: number; lon: number } | null; label?: string; required?: boolean;
+  location?: { lat: number; lon: number } | null; label?: string; mapTitle?: string; required?: boolean;
 }) {
   const skip = useRef(false);
   const [results, setResults] = useState<Result[]>([]), [selected, setSelected] = useState<Selected | null>(() =>
@@ -56,7 +56,7 @@ export default function AddressSearchMap({ value, onChange, onLocationChange, lo
       {value && <button type="button" onClick={clear} aria-label="Xóa địa chỉ"><X size={17} /></button>}
     </div>
     {open && (results.length > 0 || message) && <div className="address-search-results">{results.map((result) => <button type="button" key={result.place_id} onClick={() => select({ address: result.formatted, lat: result.lat, lon: result.lon })}><MapPin size={17} /><span>{result.formatted}</span></button>)}{message && <p>{message}</p>}<small>Địa chỉ bởi Geoapify</small></div>}
-    <div className={`address-search-map${selected ? ' has-location' : ''}`}><div className="address-search-map-heading"><MapPin size={16} /><div><strong>{selected ? 'Vị trí lấy hàng đã chọn' : 'Chọn vị trí lấy hàng'}</strong><span>{selected?.address || 'Tìm địa chỉ hoặc bấm trực tiếp lên bản đồ để đặt điểm lấy hàng.'}</span></div></div>
+    <div className={`address-search-map${selected ? ' has-location' : ''}`}><div className="address-search-map-heading"><MapPin size={16} /><div><strong>{selected ? `${mapTitle} đã chọn` : `Chọn ${mapTitle.toLocaleLowerCase('vi-VN')}`}</strong><span>{selected?.address || `Tìm địa chỉ hoặc bấm trực tiếp lên bản đồ để đặt ${mapTitle.toLocaleLowerCase('vi-VN')}.`}</span></div></div>
       <MapContainer key={selected ? `${selected.lat}-${selected.lon}` : 'geoapify-map'} center={selected ? [selected.lat, selected.lon] : CENTER} zoom={selected ? 17 : 11} scrollWheelZoom={false} style={{ height: 240, width: '100%' }}><TileLayer attribution='&copy; OpenStreetMap contributors &copy; Geoapify' url={geoapifyTileUrl()} /><MapClick onSelect={select} />{selected && <Marker position={[selected.lat, selected.lon]} icon={pin} />}</MapContainer>
     </div>
   </div>;

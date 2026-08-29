@@ -9,16 +9,20 @@
 
 .classification-day-card {
   max-width: none;
-  height: fit-content;
-  align-self: start;
+  height: 100%;
+  align-self: stretch;
 }
 
 .classification-dispatch .manager-workday-list {
-  align-items: start;
+  align-items: stretch;
 }
 
 .classification-dispatch .manager-workday-shifts {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+}
+
+.classification-dispatch .manager-workday-footer {
+  margin-top: auto;
 }
 
 .classification-clickable-shift {

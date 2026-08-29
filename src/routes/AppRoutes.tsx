@@ -48,6 +48,7 @@ import ConfirmBatch from '@/pages/classification/ConfirmBatch';
 import ClassifiedBatchDetail from '@/pages/classification/ClassifiedBatchDetail';
 import GroupedBatches from '@/pages/classification/GroupedBatches';
 import GroupedBatchDetail from '@/pages/classification/GroupedBatchDetail';
+import ManualBatching from '@/pages/classification/ManualBatching';
 
 // Warehouse Staff pages
 import WarehouseShell from '@/shared/layouts/WarehouseShell';
@@ -64,6 +65,7 @@ import OrganizationShell from '@/shared/layouts/OrganizationShell';
 import Vouchers from '@/pages/Vouchers';
 import ManagerVouchers from '@/pages/manager/Vouchers';
 import ManagerAiPromptManagement from '@/pages/manager/AiPromptManagement';
+import ManagerDonationPointRules from '@/pages/manager/DonationPointRules';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -88,6 +90,10 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/manager/ai-prompts"
         element={<RoleRoute role="Manager"><AdminLayout><ManagerAiPromptManagement /></AdminLayout></RoleRoute>}
+      />
+      <Route
+        path="/manager/point-rules"
+        element={<RoleRoute role="Manager"><AdminLayout><ManagerDonationPointRules /></AdminLayout></RoleRoute>}
       />
       <Route
         path="/products"
@@ -462,11 +468,31 @@ export const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/classification/manual-batching"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <ManualBatching />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
         path="/classification/groups"
         element={
           <RoleRoute role="ClassificationStaff">
             <ClassificationShell>
               <GroupedBatches />
+            </ClassificationShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/classification/pending-warehouse"
+        element={
+          <RoleRoute role="ClassificationStaff">
+            <ClassificationShell>
+              <GroupedBatches view="pending" />
             </ClassificationShell>
           </RoleRoute>
         }

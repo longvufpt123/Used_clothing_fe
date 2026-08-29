@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Layers, CheckCircle, Boxes, Send } from 'lucide-react';
+import { LayoutDashboard, Layers, CheckCircle, Boxes, Send, PackagePlus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
 import { classificationService } from '@/services/classificationService';
@@ -11,6 +11,7 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
     pending: 0,
     classified: 0,
     grouped: 0,
+    pendingWarehouse: 0,
     sentToWarehouse: 0,
   });
 
@@ -31,12 +32,19 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
               !(b.countedItemCount != null && b.classifiedItems >= b.countedItemCount),
           ).length,
           classified: groupedBatches.filter(
-            (batch) => batch.status === 'Open' && !batch.placedInClassificationAreaAt,
+            (batch) => batch.status === 'Draft' || batch.status === 'ReadyForPlacement'
+              || (batch.status === 'Open' && !batch.placedInClassificationAreaAt),
           ).length,
           grouped: groupedBatches.filter(
-            (batch) => batch.status === 'Open' && batch.placedInClassificationAreaAt,
+            (batch) => batch.status === 'PlacedInClassifiedArea'
+              || (batch.status === 'Open' && !!batch.placedInClassificationAreaAt),
           ).length,
-          sentToWarehouse: groupedBatches.filter((batch) => batch.status !== 'Open').length,
+          pendingWarehouse: groupedBatches.filter(
+            (batch) => batch.status === 'PendingWarehouseReceipt',
+          ).length,
+          sentToWarehouse: groupedBatches.filter(
+            (batch) => batch.status === 'WarehouseReceived' || batch.status === 'Stored',
+          ).length,
         });
       } catch {
         /* Keep the last counts during a temporary API failure. */
@@ -74,11 +82,23 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
       matchPrefixes: ['/classification/batches', '/classification/classified-groups'],
     },
     {
+      to: '/classification/manual-batching',
+      label: 'Chờ gom nhóm',
+      icon: PackagePlus,
+      count: counts.classified,
+    },
+    {
       to: '/classification/groups',
       label: 'Khu vực đồ đã phân loại',
       icon: Boxes,
       count: counts.grouped,
       matchPrefixes: ['/classification/groups'],
+    },
+    {
+      to: '/classification/pending-warehouse',
+      label: 'Chờ kho tiếp nhận',
+      icon: Send,
+      count: counts.pendingWarehouse,
     },
     {
       to: '/classification/warehouse-handoffs',

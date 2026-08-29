@@ -122,6 +122,23 @@ export interface GroupedClassifiedBatch {
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
   items: ClassifiedItem[];
 }
+export interface UnassignedClassifiedItem {
+  id: string;
+  itemCode: string;
+  intakeBatchCode: string;
+  garmentGroup: string;
+  gender: string;
+  targetUser: string;
+  size: string;
+  conditionGrade: 'A' | 'B' | 'C';
+  processingDirection: string;
+  classifiedAt: string;
+  garmentGroupId?: string | null;
+  genderId?: string | null;
+  targetUserId?: string | null;
+  sizeId?: string | null;
+  conditionGradeId?: string | null;
+}
 export interface BulkWarehouseHandoffResult {
   sent: number;
   skipped: number;
@@ -167,6 +184,8 @@ export interface ClassificationManagementBoard {
     members: { id: string; fullName: string; phoneNumber: string }[];
     assignedBatches: number;
     completedBatches: number;
+    assignedWeightKg: number;
+    completedWeightKg: number;
   }[];
   batches: {
     id: string;
@@ -181,6 +200,14 @@ export interface ClassificationManagementBoard {
     currentAreaName?: string | null;
     sentAt?: string | null;
   }[];
+}
+
+export interface ClassificationAutoBalanceResult {
+  assigned: number;
+  skipped: number;
+  minimumTeamWeightKg: number;
+  maximumTeamWeightKg: number;
+  teams: { teamId: string; teamName: string; assignedBatches: number; assignedWeightKg: number }[];
 }
 
 export const classificationService = {
@@ -223,6 +250,10 @@ export const classificationService = {
     }),
   assignBatch: (batchId: string, teamId: string) =>
     apiClient.post(`/classification-management/batches/${batchId}/assign`, { teamId }),
+  autoBalanceBatches: (shiftId: string) =>
+    apiClient.post<unknown, ClassificationAutoBalanceResult>(
+      `/classification-management/shifts/${shiftId}/auto-balance`,
+    ),
   getGroupedBatches: (date?: string) =>
     apiClient.get<unknown, GroupedClassifiedBatch[]>('/classification-operations/grouped-batches', {
       params: { date },
@@ -235,6 +266,20 @@ export const classificationService = {
     apiClient.get<unknown, GroupedClassifiedBatchDetail>(
       `/classification-operations/grouped-batches/${id}`,
     ),
+  getUnassignedItems: () =>
+    apiClient.get<unknown, UnassignedClassifiedItem[]>('/classification-operations/unassigned-items'),
+  createManualBatch: (payload: {
+    garmentGroupId: string; genderId: string;
+    targetUserId: string; conditionGradeId: string;
+  }) => apiClient.post<unknown, GroupedClassifiedBatchDetail>(
+    '/classification-operations/grouped-batches/manual', payload,
+  ),
+  assignItemsToBatch: (id: string, itemIds: string[]) =>
+    apiClient.post(`/classification-operations/grouped-batches/${id}/items`, { itemIds }),
+  removeItemFromBatch: (id: string, itemId: string) =>
+    apiClient.delete(`/classification-operations/grouped-batches/${id}/items/${itemId}`),
+  finalizeManualBatch: (id: string) =>
+    apiClient.post(`/classification-operations/grouped-batches/${id}/finalize`),
   placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string, actualWeightKg: number) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/place`, {
       areaId,

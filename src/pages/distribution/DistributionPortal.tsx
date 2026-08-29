@@ -23,12 +23,64 @@ import {
   type DistributionRequest,
 } from '@/services/distributionService';
 import { useToast } from '@/context/ToastContext';
+import AddressSearchMap from '@/components/common/AddressSearchMap';
 import { getStatusLabel } from '@/utils/statusLabels';
 import ghnAdministrative from '@/ghnAdministrative.json';
 import './DistributionPortal.css';
 import './ProductCatalogModal.css';
 
 type Mode = 'organization' | 'manager' | 'warehouse';
+
+const normalizeAdministrativeName = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .toLowerCase()
+    .replace(/\b(?:thanh pho|tp|tinh|quan|huyen|thi xa|thi tran|phuong|xa)\b/g, ' ')
+    .replace(/\b\d{5,6}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const findAdministrativeMatch = <T extends { name: string }>(address: string, options: T[]) => {
+  const segments = address.split(',').map(normalizeAdministrativeName).filter(Boolean);
+  const best = options
+    .map((option) => {
+      const name = normalizeAdministrativeName(option.name);
+      const exact = segments.some((segment) => segment === name);
+      const contained = name.length >= 3 && segments.some((segment) => segment.includes(name));
+      return { option, score: exact ? 2000 + name.length : contained ? 1000 + name.length : 0 };
+    })
+    .sort((left, right) => right.score - left.score)[0];
+  return best?.score ? best.option : undefined;
+};
+
+const resolveGhnDestination = (address: string) => {
+  let province = findAdministrativeMatch(address, ghnAdministrative.provinces);
+  const directlyMatchedProvinceId = province?.id;
+  let district = province
+    ? findAdministrativeMatch(
+        address,
+        ghnAdministrative.districts.filter((item) => item.provinceId === directlyMatchedProvinceId),
+      )
+    : findAdministrativeMatch(address, ghnAdministrative.districts);
+
+  // Một số địa chỉ bản đồ chỉ trả về thành phố trực thuộc (ví dụ Thủ Đức)
+  // mà không kèm tên tỉnh/thành. Suy ngược tỉnh từ quận/huyện để vẫn tự điền GHN.
+  if (!province && district) {
+    province = ghnAdministrative.provinces.find((item) => item.id === district?.provinceId);
+  }
+  if (province && district && district.provinceId !== province.id) {
+    district = findAdministrativeMatch(
+      address,
+      ghnAdministrative.districts.filter((item) => item.provinceId === province?.id),
+    );
+  }
+  if (!province) return {};
+  if (!district) return { province };
+  const wards = ghnAdministrative.wards.filter((item) => item.districtId === district.id);
+  return { province, district, ward: findAdministrativeMatch(address, wards) };
+};
 
 export default function DistributionPortal({ mode }: { mode: Mode }) {
   const toast = useToast();
@@ -187,9 +239,13 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   useEffect(() => {
     if (catalogPage > catalogPageCount) setCatalogPage(catalogPageCount);
   }, [catalogPage, catalogPageCount]);
-  const setWeight = (batch: CatalogItem, weightKg: number) => {
-    const normalized = Math.min(batch.availableWeight, Math.max(0, weightKg));
-    setSelected((value) => ({ ...value, [batch.inventoryId]: normalized }));
+  const toggleBatch = (batch: CatalogItem) => {
+    setSelected((current) => {
+      const next = { ...current };
+      if (next[batch.inventoryId] > 0) delete next[batch.inventoryId];
+      else next[batch.inventoryId] = batch.availableWeight;
+      return next;
+    });
   };
   const create = async () => {
     if (
@@ -209,7 +265,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         ...form,
         items: Object.entries(selected)
           .filter(([, q]) => q > 0)
-          .map(([inventoryId, weightKg]) => ({ inventoryId, weightKg })),
+          .map(([inventoryId]) => ({ inventoryId })),
       };
       if (editingRequestId) await distributionService.update(editingRequestId, payload);
       else await distributionService.create(payload);
@@ -362,24 +418,26 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   };
 
   const openGhnForm = (request: DistributionRequest) => {
+    const destination = resolveGhnDestination(request.toAddress);
+    const pickup = resolveGhnDestination(request.warehouseAddress || '');
     setGhnTarget(request);
     setGhnErrors({});
     setGhnForm({
       fromName: request.warehouseName,
       fromPhone: request.warehousePhone || '',
       fromAddress: request.warehouseAddress || '',
-      fromProvinceId: '',
-      fromDistrictId: '',
-      fromWardCode: '',
-      provinceId: '',
-      provinceName: '',
+      fromProvinceId: pickup.province ? String(pickup.province.id) : '',
+      fromDistrictId: pickup.district ? String(pickup.district.id) : '',
+      fromWardCode: pickup.ward?.code || '',
+      provinceId: destination.province ? String(destination.province.id) : '',
+      provinceName: destination.province?.name || '',
       paymentTypeId: '1',
       serviceTypeId: '2',
       requiredNote: 'KHONGCHOXEMHANG',
-      toDistrictId: '',
-      districtName: '',
-      toWardCode: '',
-      wardName: '',
+      toDistrictId: destination.district ? String(destination.district.id) : '',
+      districtName: destination.district?.name || '',
+      toWardCode: destination.ward?.code || '',
+      wardName: destination.ward?.name || '',
     });
   };
 
@@ -510,20 +568,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   <Eye size={18} /> Xem {batch.items.length} sản phẩm
                 </button>
                 <div className="quantity-picker">
-                  <button onClick={() => setWeight(batch, batch.availableWeight)}>
-                    Chọn tất cả
+                  <button
+                    className={selected[batch.inventoryId] > 0 ? 'selected' : ''}
+                    onClick={() => toggleBatch(batch)}
+                  >
+                    {selected[batch.inventoryId] > 0
+                      ? `Đã chọn toàn bộ ${batch.availableWeight} kg`
+                      : `Chọn toàn bộ ${batch.availableWeight} kg`}
                   </button>
-                  <label>
-                    <span>Khối lượng (kg)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      max={batch.availableWeight}
-                      step="0.1"
-                      value={selected[batch.inventoryId] || 0}
-                      onChange={(e) => setWeight(batch, Number(e.target.value))}
-                    />
-                  </label>
                 </div>
               </article>
             ))}
@@ -591,17 +643,15 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 onChange={(e) => setForm({ ...form, recipientPhone: e.target.value })}
               />
             </label>
-            <label className="distribution-field">
-              <span>
-                Địa chỉ nhận hàng <b>*</b>
-              </span>
-              <input
-                placeholder="Nhập địa chỉ nhận hàng"
+            <div className="distribution-address-map">
+              <AddressSearchMap
+                label="Địa chỉ nhận hàng"
+                mapTitle="Vị trí nhận hàng"
                 value={form.toAddress}
                 required
-                onChange={(e) => setForm({ ...form, toAddress: e.target.value })}
+                onChange={(toAddress) => setForm((current) => ({ ...current, toAddress }))}
               />
-            </label>
+            </div>
             <label className="distribution-field full">
               <span>
                 Mục đích sử dụng / ghi chú <b>*</b>
@@ -1179,7 +1229,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               </label>
               <div className="ghn-form-section-title">
                 <b>Địa chỉ giao đến</b>
-                <span>Chọn mã hành chính tương ứng với địa chỉ người nhận phía trên.</span>
+                <span>Địa chỉ đầy đủ của Organization:</span>
+                <strong>{ghnTarget.toAddress}</strong>
+                <small>Hệ thống đã tự động đối chiếu tỉnh/thành, quận/huyện và phường/xã. Vui lòng kiểm tra lại trước khi tạo vận đơn.</small>
               </div>
               <label className={ghnErrors.provinceId ? 'invalid' : ''}>
                 <span>
@@ -1428,7 +1480,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 </button>
                 <button
                   onClick={() => {
-                    setWeight(activeBatch, activeBatch.availableWeight);
+                    setSelected((current) => ({
+                      ...current,
+                      [activeBatch.inventoryId]: activeBatch.availableWeight,
+                    }));
                     setActiveBatch(null);
                   }}
                 >

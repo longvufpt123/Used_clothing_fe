@@ -269,51 +269,61 @@
 
 /* Nested CTA - Logout Button in Button */
 .btn-logout-pill {
-  margin-top: 10px;
   position: relative;
-  display: flex;
+  display: inline-flex;
+  min-width: 156px;
+  min-height: 48px;
+  margin-top: 12px;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 10px;
   border-radius: 9999px;
-  padding: 10px 10px 10px 24px;
+  padding: 11px 22px;
   font-weight: 700;
   font-size: 0.9rem;
-  color: #fff;
-  background: rgba(234, 84, 85, 0.1);
-  border: 1px solid rgba(234, 84, 85, 0.2);
+  line-height: 1;
+  color: #ef5350;
+  background: rgba(239, 83, 80, 0.08);
+  border: 1px solid rgba(239, 83, 80, 0.28);
   cursor: pointer;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .btn-logout-pill:hover {
-  background: rgba(234, 84, 85, 0.18);
-  border-color: rgba(234, 84, 85, 0.35);
-  box-shadow: 0 10px 24px rgba(234, 84, 85, 0.15);
-  transform: scale(1.02);
+  background: rgba(239, 83, 80, 0.14);
+  border-color: rgba(239, 83, 80, 0.48);
+  box-shadow: 0 8px 20px rgba(239, 83, 80, 0.14);
+  transform: translateY(-1px);
 }
 
 .btn-logout-pill:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-logout-pill:focus-visible {
+  outline: 3px solid rgba(239, 83, 80, 0.18);
+  outline-offset: 3px;
 }
 
 .btn-icon-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
   align-items: center;
   justify-content: center;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  background: transparent;
+  transition: transform 0.2s ease;
 }
 
 .btn-logout-pill:hover .btn-icon-circle {
-  transform: rotate(-10deg) scale(1.05);
+  transform: translateX(2px);
 }
 
 [data-theme='light'] .btn-logout-pill {
-  color: #ea5455;
+  color: #ef5350;
 }
 
 /* CARD 2: Score card details */
@@ -616,8 +626,8 @@
   }
 
   .btn-logout-pill {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: center;
   }
 
   .achievements-grid {

@@ -33,7 +33,7 @@ const localDateValue = () => {
 export default function GroupedBatches({
   view = "open",
 }: {
-  view?: "open" | "sent";
+  view?: "open" | "pending" | "sent";
 }) {
   const [date, setDate] = useState(localDateValue);
   const [groups, setGroups] = useState<GroupedClassifiedBatch[]>([]);
@@ -46,6 +46,7 @@ export default function GroupedBatches({
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
   const [placeAreaId, setPlaceAreaId] = useState("");
   const [placeGroupId, setPlaceGroupId] = useState("");
+  const [actualWeightKg, setActualWeightKg] = useState("");
   const [savingPlace, setSavingPlace] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null,
@@ -83,19 +84,23 @@ export default function GroupedBatches({
   const openGroups = useMemo(
     () =>
       groups.filter(
-        (x) => x.status === "Open" && x.placedInClassificationAreaAt,
+        (x) => (x.status === "PlacedInClassifiedArea" || x.status === "Open") && x.placedInClassificationAreaAt,
       ),
     [groups],
   );
   const allOpenGroups = useMemo(
-    () => groups.filter((x) => x.status === "Open"),
+    () => groups.filter((x) => x.status === "ReadyForPlacement" || x.status === "PlacedInClassifiedArea" || x.status === "Open"),
     [groups],
   );
   const sentGroups = useMemo(
-    () => groups.filter((x) => x.status !== "Open"),
+    () => groups.filter((x) => x.status === "WarehouseReceived" || x.status === "Stored"),
     [groups],
   );
-  const visible = view === "open" ? allOpenGroups : sentGroups;
+  const pendingGroups = useMemo(
+    () => groups.filter((x) => x.status === "PendingWarehouseReceipt"),
+    [groups],
+  );
+  const visible = view === "open" ? allOpenGroups : view === "pending" ? pendingGroups : sentGroups;
   const selectedLocation = layout?.areas
     .flatMap((area) => area.groups.flatMap((group) => group.locations))
     .find((location) => location.id === selectedLocationId);
@@ -136,17 +141,19 @@ export default function GroupedBatches({
     }
   };
   const openPlacement = (batch: GroupedClassifiedBatch) => {
-    if (batch.status !== "Open") return;
+    if (batch.status !== "ReadyForPlacement" && batch.status !== "Open") return;
     setPlacing(batch);
     setPlaceAreaId("");
     setPlaceGroupId("");
+    setActualWeightKg("");
   };
   const savePlacement = async () => {
     const locationId = layout?.areas
       .flatMap((area) => area.groups)
       .find((group) => group.id === placeGroupId)
       ?.locations.find((location) => location.status !== "Full")?.id;
-    if (!placing || !placeAreaId || !placeGroupId || !locationId) return;
+    const weight = Number(actualWeightKg);
+    if (!placing || !placeAreaId || !placeGroupId || !locationId || !Number.isFinite(weight) || weight <= 0) return;
     setSavingPlace(true);
     try {
       await classificationService.placeGroupedBatch(
@@ -154,7 +161,7 @@ export default function GroupedBatches({
         placeAreaId,
         placeGroupId,
         locationId,
-        placing.totalWeight,
+        weight,
       );
       toast.success(`Đã xếp ${placing.batchCode} vào khu và dãy đã chọn.`);
       setPlacing(null);
@@ -166,7 +173,7 @@ export default function GroupedBatches({
     }
   };
   const card = (g: GroupedClassifiedBatch, showHandoff = false) => {
-    const sent = g.status !== "Open";
+    const sent = g.status === "PendingWarehouseReceipt" || g.status === "WarehouseReceived" || g.status === "Stored";
     const unassigned = !g.placedInClassificationAreaAt;
     return (
       <article
@@ -199,7 +206,7 @@ export default function GroupedBatches({
         </div>
         <div className="ops-card-footer">
           <span className="classification-batch-measure">
-            <strong>{g.totalItem}</strong> item · <strong>{g.totalWeight.toFixed(2)}</strong> kg
+            <strong>{g.totalWeight > 0 ? `${g.totalWeight.toFixed(2)} kg` : 'Chưa cân'}</strong>
           </span>
           {!sent && unassigned ? (
             <button
@@ -244,19 +251,17 @@ export default function GroupedBatches({
       <header className="ops-pagehead">
         <div className="ops-pagehead-main">
           <span className="ops-pagehead-kicker">
-            {view === "open"
-              ? "Bước 3 · Khu vực đồ đã phân loại"
-              : "Lịch sử bàn giao kho"}
+            {view === "open" ? "Bước 3 · Khu vực đồ đã phân loại"
+              : view === "pending" ? "Bước 4 · Chờ kho tiếp nhận" : "Lịch sử bàn giao kho"}
           </span>
           <h1>
-            {view === "open"
-              ? "Đồ đã phân loại chờ gửi kho"
-              : "Classified Batch đã gửi sang kho"}
+            {view === "open" ? "Đồ đã phân loại chờ gửi kho"
+              : view === "pending" ? "Classified Batch chờ kho tiếp nhận" : "Classified Batch đã gửi sang kho"}
           </h1>
           <p>
-            {view === "open"
-              ? "Theo dõi Classified Batch theo từng khu vực và dãy chứa trước khi bàn giao kho."
-              : "Theo dõi các batch đã bàn giao sang bộ phận kho."}
+            {view === "open" ? "Theo dõi Classified Batch theo từng khu vực và dãy chứa trước khi bàn giao kho."
+              : view === "pending" ? "Các batch đã bàn giao và đang chờ warehouse staff xác nhận."
+              : "Lịch sử các batch đã được kho xác nhận nhập."}
           </p>
         </div>
       </header>
@@ -280,10 +285,10 @@ export default function GroupedBatches({
           </div>
         </div>
         <div className="ops-stat-card">
-          <span className="ops-stat-label">Tổng item</span>
+          <span className="ops-stat-label">Tổng khối lượng</span>
           <div className="ops-stat-value">
             <Package size={18} />
-            {visible.reduce((n, x) => n + x.totalItem, 0)}
+            {visible.reduce((n, x) => n + x.totalWeight, 0).toFixed(2)} kg
           </div>
         </div>
         <div className="ops-stat-card">
@@ -318,6 +323,14 @@ export default function GroupedBatches({
         </div>
         {view === "open" && layout ? (
           <div className="warehouse-area-list classification-area-layout">
+            {!!layout.unassignedBatches.length && (
+              <section className="ops-panel glass">
+                <div className="ops-section-head">
+                  <div><h2>Batch chờ xếp khu</h2><span>{layout.unassignedBatches.length} batch đã chốt</span></div>
+                </div>
+                <div className="ops-list">{layout.unassignedBatches.map((batch) => card(batch))}</div>
+              </section>
+            )}
             {layout.areas.map((area) => {
               const open = expanded[area.id],
                 count = area.groups.reduce((n, g) => n + g.batches.length, 0);
@@ -444,11 +457,11 @@ export default function GroupedBatches({
           </div>
         ) : (
           <div className="ops-list">
-            {sentGroups.map((batch) => card(batch))}
-            {!loading && !sentGroups.length && (
+            {visible.map((batch) => card(batch))}
+            {!loading && !visible.length && (
               <div className="ops-empty">
                 <Boxes size={36} />
-                <h4>Chưa có batch nào đã gửi kho trong ngày này</h4>
+                <h4>{view === "pending" ? "Không có batch chờ kho tiếp nhận" : "Chưa có batch nào đã nhập kho trong ngày này"}</h4>
               </div>
             )}
           </div>
@@ -557,6 +570,17 @@ export default function GroupedBatches({
                     ))}
                 </select>
               </div>
+              <div className="ops-field">
+                <label>Khối lượng thực tế của batch (kg)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={actualWeightKg}
+                  onChange={(event) => setActualWeightKg(event.target.value)}
+                  placeholder="Nhập khối lượng sau khi cân"
+                />
+              </div>
               <div className="ops-actions">
                 <button
                   className="ops-btn ops-btn-secondary"
@@ -568,7 +592,7 @@ export default function GroupedBatches({
                 <button
                   className="ops-btn ops-btn-primary"
                   onClick={() => void savePlacement()}
-                  disabled={savingPlace || !placeAreaId || !placeGroupId}
+                  disabled={savingPlace || !placeAreaId || !placeGroupId || !(Number(actualWeightKg) > 0)}
                 >
                   <MapPin size={15} />
                   {savingPlace ? "Đang xếp..." : "Xác nhận vị trí"}

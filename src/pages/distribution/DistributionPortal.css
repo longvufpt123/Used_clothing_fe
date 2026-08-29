@@ -60,6 +60,18 @@
   border-radius: 16px;
   background: var(--color-bg-secondary);
 }
+.distribution-catalog > article {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+.distribution-catalog > article .product-preview {
+  margin-top: auto;
+}
+.distribution-catalog > article .quantity-picker {
+  flex: 0 0 auto;
+}
 .distribution-card-head,
 .request-title {
   display: flex;
@@ -82,7 +94,7 @@
 .quantity-picker button,
 .detail-toggle,
 .request-actions button,
-.distribution-form button {
+.distribution-form > button {
   border: 1px solid var(--color-primary);
   background: var(--color-primary);
   color: #fff;
@@ -93,6 +105,14 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
+}
+.quantity-picker button {
+  width: 100%;
+  justify-content: center;
+}
+.quantity-picker button.selected {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 .quantity-picker input {
   width: 80px;
@@ -132,6 +152,10 @@
 }
 .distribution-form h2 {
   width: 100%;
+}
+.distribution-address-map {
+  width: 100%;
+  flex: 0 0 100%;
 }
 .distribution-form textarea {
   width: 100%;
@@ -439,11 +463,11 @@
   color: #059669;
 }
 .distribution-requests > article > p {
-  display: -webkit-box;
+  display: block;
   min-height: 42px;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--color-text-secondary);
   font-size: 0.78rem;
 }
@@ -605,6 +629,16 @@
 .ghn-form-section-title span {
   color: var(--color-text-secondary);
   font-size: 0.78rem;
+}
+.ghn-form-section-title strong {
+  margin-top: 3px;
+  color: var(--color-text-primary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.ghn-form-section-title small {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
 }
 .ghn-create-modal form > label.wide {
   grid-column: 1 / -1;

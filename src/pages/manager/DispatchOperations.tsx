@@ -68,6 +68,10 @@ const isPickupTeam = (team: ManagerTeamOverview) =>
   team.teamType === 'Receiving' || team.teamType === 'ReceivingPickup';
 
 export default function DispatchOperations() {
+  const today = useMemo(
+    () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date()),
+    [],
+  );
   const toast = useToast();
   const [setup, setSetup] = useState<ManagerReceivingSetup>({
     warehouses: [],
@@ -76,8 +80,8 @@ export default function DispatchOperations() {
   });
   const [loading, setLoading] = useState(true);
   const [warehouseFilter, setWarehouseFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(today);
+  const [yearFilter, setYearFilter] = useState(today.slice(0, 4));
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
@@ -591,7 +595,7 @@ export default function DispatchOperations() {
                         disabled={!!balancingId}
                       >
                         <Truck size={15} />
-                        {balancingId ? 'Đang chia...' : 'Điều phối cả ngày'}
+                        {balancingId ? 'Đang chia...' : 'Điều phối'}
                       </button>
                     </div>
                   )}

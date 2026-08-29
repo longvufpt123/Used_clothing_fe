@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Check, ChevronLeft, ImageOff, Package, Scale } from 'lucide-react';
+import { AlertTriangle, Check, ChevronLeft, ImageOff, Scale } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { warehouseService, type WarehouseBatch } from '@/services/warehouseService';
@@ -29,8 +29,12 @@ export default function ReceiveBatch() {
       });
   }, [batchId]);
   const confirm = async () => {
-    if (!batchId || weight <= 0)
+    if (!batchId || !batch || weight <= 0)
       return toast.error('Nhập khối lượng thực nhận.');
+    const handedOffWeight = Number(batch.expectedWeightKg.toFixed(2));
+    const receivedWeight = Number(weight.toFixed(2));
+    if (receivedWeight !== handedOffWeight)
+      return toast.error(`Khối lượng thực nhận phải đúng bằng ${handedOffWeight} kg do Classification Staff bàn giao.`);
     if (!seal && !notes.trim())
       return toast.error('Cần ghi nhận sai lệch khi niêm phong không nguyên vẹn.');
     setSaving(true);
@@ -67,10 +71,10 @@ export default function ReceiveBatch() {
           <h2>{getClassifiedBatchGroupLabel(batch)} · Nhãn {batch.conditionGrade}</h2>
           <div className="ops-kv-grid">
             <div className="ops-kv">
-              <span>Dự kiến</span>
+              <span>Khối lượng bàn giao</span>
               <strong>
-                <Package size={14} />
-                {batch.expectedItemCount} item
+                <Scale size={14} />
+                {batch.expectedWeightKg} kg
               </strong>
             </div>
             <div className="ops-kv">
@@ -107,11 +111,17 @@ export default function ReceiveBatch() {
             <label>Khối lượng thực nhận (kg)</label>
             <input
               type="number"
-              min=".01"
+              min={batch.expectedWeightKg}
+              max={batch.expectedWeightKg}
               step=".01"
               value={weight}
               onChange={(e) => setWeight(Number(e.target.value))}
             />
+            {Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2)) && (
+              <small style={{ color: 'var(--color-danger)' }}>
+                Khối lượng phải đúng bằng {batch.expectedWeightKg} kg, không được lớn hơn hoặc nhỏ hơn.
+              </small>
+            )}
           </div>
           <button
             type="button"
@@ -134,7 +144,8 @@ export default function ReceiveBatch() {
           </div>
           <button
             className="ops-btn ops-btn-primary ops-btn-block"
-            disabled={saving}
+            disabled={saving
+              || Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2))}
             onClick={confirm}
           >
             <Scale size={16} />

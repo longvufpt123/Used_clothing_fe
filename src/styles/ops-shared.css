@@ -1002,6 +1002,7 @@
   width: 100%;
   font-family: inherit;
   color: inherit;
+  margin-top: 10px;
 }
 
 .ops-item-row:hover {

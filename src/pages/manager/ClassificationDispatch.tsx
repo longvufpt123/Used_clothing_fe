@@ -9,6 +9,7 @@ import {
   PackageCheck,
   RefreshCw,
   Search,
+  Truck,
   UserPlus,
   Users,
   Warehouse,
@@ -67,6 +68,7 @@ export default function ClassificationDispatch() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [assigningId, setAssigningId] = useState('');
+  const [balancingId, setBalancingId] = useState('');
   const [detailShiftId, setDetailShiftId] = useState<string | null>(null);
   const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
   const batchPageSize = 6;
@@ -245,6 +247,25 @@ export default function ClassificationDispatch() {
     }
   };
 
+  const autoBalance = async (shiftId: string) => {
+    setBalancingId(shiftId);
+    try {
+      const result = await classificationService.autoBalanceBatches(shiftId);
+      if (!result.assigned) {
+        toast.info('Không còn batch nào chờ phân công tại kho này.');
+      } else {
+        toast.success(
+          `Đã điều phối ${result.assigned} batch. Tải các team từ ${result.minimumTeamWeightKg.toFixed(2)} đến ${result.maximumTeamWeightKg.toFixed(2)} kg.`,
+        );
+      }
+      await load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể điều phối cân bằng các batch phân loại.');
+    } finally {
+      setBalancingId('');
+    }
+  };
+
   const unassignedCount =
     board?.batches.filter(
       (batch) =>
@@ -353,6 +374,10 @@ export default function ClassificationDispatch() {
               const dayTeams = allWarehouseTeams.filter(
                 (team) => team.shiftDate.slice(0, 10) === day,
               );
+              const dispatchableShift = dayShifts.find((shift) =>
+                (shift.status === 'Scheduled' || shift.status === 'InProgress')
+                  && allWarehouseTeams.some((team) => team.shiftId === shift.id),
+              );
               return (
                 <article className="manager-workday-card classification-day-card" key={day}>
                   <div className="manager-workday-head">
@@ -367,7 +392,7 @@ export default function ClassificationDispatch() {
                       {dayTeams.length} team · {dayTeams.reduce(
                         (sum, team) => sum + team.assignedBatches,
                         0,
-                      )} lô
+                      )} lô · {dayTeams.reduce((sum, team) => sum + team.assignedWeightKg, 0).toFixed(2)} kg
                     </b>
                   </div>
                   <div className="manager-workday-shifts">
@@ -377,6 +402,10 @@ export default function ClassificationDispatch() {
                       );
                       const assigned = shiftTeams.reduce(
                         (total, team) => total + team.assignedBatches,
+                        0,
+                      );
+                      const assignedWeight = shiftTeams.reduce(
+                        (total, team) => total + team.assignedWeightKg,
                         0,
                       );
                       return (
@@ -410,7 +439,7 @@ export default function ClassificationDispatch() {
                             <span>
                               <Users size={15} />
                               <strong>{shiftTeams.length} team</strong>
-                              <small>{assigned} lô</small>
+                              <small>{assigned} lô · {assignedWeight.toFixed(2)} kg</small>
                             </span>
                             {(shift.status === 'Scheduled' || shift.status === 'InProgress') && (
                               <div className="manager-shift-team-actions">
@@ -425,27 +454,22 @@ export default function ClassificationDispatch() {
                               </div>
                             )}
                           </div>
-                          <div className="classification-shift-team-names">
-                            {shiftTeams.map((team) => (
-                              <button
-                                type="button"
-                                key={team.id}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setDetailTeamId(team.id);
-                                }}
-                                aria-label={`Xem chi tiết ${team.teamName}`}
-                              >
-                                <span>{team.teamName}</span>
-                                <b>{team.assignedBatches} lô</b>
-                              </button>
-                            ))}
-                            {!shiftTeams.length && <small>Chưa có nhóm trong ca này.</small>}
-                          </div>
                         </section>
                       );
                     })}
                   </div>
+                  {dispatchableShift && (
+                    <div className="manager-workday-footer">
+                      <button
+                        className="ops-btn ops-btn-primary ops-btn-block"
+                        disabled={!!balancingId}
+                        onClick={() => void autoBalance(dispatchableShift.id)}
+                      >
+                        <Truck size={15} />
+                        {balancingId === dispatchableShift.id ? 'Đang chia...' : 'Điều phối'}
+                      </button>
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -616,8 +640,8 @@ export default function ClassificationDispatch() {
                         ))}
                       </div>
                       <div className="classification-shift-team-progress">
-                        <span>Tiến độ lô</span>
-                        <strong>{team.completedBatches}/{team.assignedBatches} lô</strong>
+                        <span>Khối lượng được giao</span>
+                        <strong>{team.assignedWeightKg.toFixed(2)} kg · {team.assignedBatches} lô</strong>
                       </div>
                       <small className="classification-shift-team-link">Xem chi tiết team →</small>
                     </button>
@@ -765,7 +789,7 @@ export default function ClassificationDispatch() {
                     <h3>Intake Batch được phân công</h3>
                   </div>
                   <b>
-                    {detailTeam.completedBatches}/{detailTeam.assignedBatches} lô hoàn thành
+                    {detailTeam.assignedWeightKg.toFixed(2)} kg · {detailTeam.completedBatches}/{detailTeam.assignedBatches} lô hoàn thành
                   </b>
                 </div>
                 <div className="classification-detail-batches">

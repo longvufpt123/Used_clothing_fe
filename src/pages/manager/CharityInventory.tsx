@@ -19,7 +19,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Send,
   Trash2,
   Warehouse,
   X,
@@ -241,26 +240,6 @@ export default function ManagerWarehouseControl() {
     if (page > pages) setPage(pages);
   }, [page, pages]);
 
-  const openAction = async (item: WarehouseInventory, mode: 'issue' | 'move') => {
-    setDetail({ kind: 'inventory', data: item });
-    setAction(mode);
-    setForm({
-      quantity: Math.min(1, item.availableQuantity),
-      weightKg: Math.min(1, item.availableWeightKg),
-      reason: mode === 'issue' ? 'Xuất kho theo điều phối của Manager' : 'Tối ưu vị trí lưu trữ',
-      notes: '',
-      destinationLocationId: '',
-      actualItemCount: 1,
-      actualWeightKg: 1,
-      sealIntact: true,
-    });
-    if (mode === 'move') {
-      const list = await warehouseService.locations(item.classifiedBatchId);
-      const available = list.filter((x) => x.locationCode !== item.locationCode);
-      setLocations(available);
-      setForm((current) => ({ ...current, destinationLocationId: available[0]?.id || '' }));
-    }
-  };
   const openBatchAction = async (item: WarehouseBatch, mode: 'receipt' | 'putaway') => {
     setDetail({ kind: 'batch', data: item });
     setAction(mode);
@@ -787,8 +766,6 @@ export default function ManagerWarehouseControl() {
                   <InventoryCard
                     item={item}
                     onOpen={() => setDetail({ kind: 'inventory', data: item })}
-                    onIssue={() => openAction(item, 'issue')}
-                    onMove={() => openAction(item, 'move')}
                   />
                 ))}
               {tab === 'transactions' &&
@@ -1009,7 +986,6 @@ export default function ManagerWarehouseControl() {
             form={form}
             setForm={setForm}
             onAction={setAction}
-            onInventoryAction={(item, mode) => void openAction(item, mode)}
             onSubmit={submitAction}
             onClose={() => {
               setDetail(null);
@@ -1788,13 +1764,9 @@ function BatchCard({
 function InventoryCard({
   item,
   onOpen,
-  onIssue,
-  onMove,
 }: {
   item: WarehouseInventory;
   onOpen: () => void;
-  onIssue: () => void;
-  onMove: () => void;
 }) {
   return (
     <article className="warehouse-record-card">
@@ -1827,16 +1799,6 @@ function InventoryCard({
           <Eye />
           Chi tiết
         </button>
-        <div>
-          <button onClick={onMove} disabled={item.status !== 'Available'}>
-            <ArrowRightLeft />
-            Di chuyển
-          </button>
-          <button onClick={onIssue} disabled={item.availableWeightKg <= 0}>
-            <Send />
-            Xuất kho
-          </button>
-        </div>
       </footer>
     </article>
   );
@@ -1873,7 +1835,7 @@ function TransactionCard({ item, onOpen }: { item: WarehouseTransaction; onOpen:
         <small>{item.notes || 'Không có ghi chú'}</small>
         <button onClick={onOpen}>
           <Eye />
-          Xem chứng từ
+          Chi tiết
         </button>
       </footer>
     </article>
@@ -1887,7 +1849,6 @@ function DetailModal({
   form,
   setForm,
   onAction,
-  onInventoryAction,
   onSubmit,
   onClose,
 }: {
@@ -1897,7 +1858,6 @@ function DetailModal({
   form: any;
   setForm: (x: any) => void;
   onAction: (x: 'issue' | 'move' | 'receipt' | 'putaway' | null) => void;
-  onInventoryAction: (item: WarehouseInventory, mode: 'issue' | 'move') => void;
   onSubmit: () => void;
   onClose: () => void;
 }) {
@@ -2205,22 +2165,6 @@ function DetailModal({
                   {d.availableWeightKg} kg
                 </b>
               </span>
-            </div>
-            <div className="warehouse-modal-actions">
-              <button
-                className="ops-btn ops-btn-secondary"
-                onClick={() => onInventoryAction(d, 'move')}
-              >
-                <ArrowRightLeft />
-                Điều chuyển
-              </button>
-              <button
-                className="ops-btn ops-btn-primary"
-                onClick={() => onInventoryAction(d, 'issue')}
-              >
-                <Send />
-                Lập phiếu xuất
-              </button>
             </div>
           </>
         )}

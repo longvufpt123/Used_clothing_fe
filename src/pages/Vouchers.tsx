@@ -43,7 +43,7 @@ export default function Vouchers() {
     </nav>
     {tab==='catalog' && <div className="voucher-grid">{vouchers.map(v => <article className="voucher-card" key={v.id}>
       <div className="voucher-image">{v.imageUrl?<img src={v.imageUrl} alt={v.name}/>:<Gift/>}</div>
-      <div><small>{v.partnerName}</small><h3>{v.name}</h3><p>{v.description || 'Ưu đãi dành cho cộng đồng ReThreads.'}</p>
+      <div className="voucher-content"><small>{v.partnerName}</small><h3>{v.name}</h3><p>{v.description || 'Ưu đãi dành cho cộng đồng ReThreads.'}</p>
         <div className="voucher-meta"><b>{v.requiredPoints} điểm</b><span>Còn {v.availableQuantity} mã</span></div>
         <button disabled={loadingId===v.id || summary.donationPoint<v.requiredPoints} onClick={()=>void redeem(v)}>
           {loadingId===v.id?'Đang đổi...':summary.donationPoint<v.requiredPoints?'Chưa đủ điểm':'Đổi voucher'}</button></div>

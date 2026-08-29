@@ -50,7 +50,9 @@ export default function GroupedBatchDetail() {
 
   if (!group) return <div className="ops-page">Đang tải...</div>;
   const isPlaced = Boolean(group.placedInClassificationAreaAt);
-  const backPath = isPlaced ? '/classification/groups' : '/classification?tab=classified';
+  const backPath = isPlaced ? '/classification/groups'
+    : group?.status === 'Draft' || group?.status === 'ReadyForPlacement'
+      ? '/classification/manual-batching' : '/classification/warehouse-handoffs';
 
   const sendToWarehouse = async () => {
     setSending(true);
@@ -93,7 +95,6 @@ export default function GroupedBatchDetail() {
             ['Nhóm phân loại', getClassifiedBatchGroupLabel(group)],
             ['Nhãn chất lượng', group.conditionGrade],
             ['Hướng xử lý', directionLabel[group.processingDirection] || group.processingDirection],
-            ['Tổng item', String(group.totalItem)],
           ].map(([key, value]) => (
             <div className="ops-kv" key={key}>
               <span>{key}</span>
@@ -130,7 +131,6 @@ export default function GroupedBatchDetail() {
       <section style={{ marginTop: 20 }}>
         <div className="ops-section-head">
           <h2>Item trong batch</h2>
-          <span>{group.items.length} item</span>
         </div>
         <div className="ops-list">
           {group.items.map((item) => (

@@ -278,12 +278,23 @@ export const ProcessRequest: React.FC = () => {
             <div className="ops-form-grid">
               <Input
                 label="Cân nặng thực tế (kg)"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 required
                 placeholder="Nhập số cân nặng thực đo được..."
                 value={actualWeight}
-                onChange={(e) => setActualWeight(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(',', '.');
+                  if (!/^\d*(?:\.\d{0,2})?$/.test(value)) return;
+                  if (value !== '' && value !== '0.' && Number(value) <= 0) {
+                    setActualWeight('');
+                    return;
+                  }
+                  setActualWeight(value);
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                }}
                 icon={<Scale size={16} />}
               />
 

@@ -101,11 +101,17 @@ export const ConfirmBatch: React.FC = () => {
   };
 
   const handleCountAndContinue = async () => {
-    if (!batchId || submitting) return;
+    if (!batchId || !batch || submitting) return;
     const quantity = Number(itemCount);
     const weight = Number(countedWeight);
     if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isFinite(weight) || weight <= 0) {
       toast.error('Số lượng phải là số nguyên dương và tổng kg phải lớn hơn 0.');
+      return;
+    }
+    const handedOffWeight = Number(batch.totalWeight.toFixed(2));
+    const actualWeight = Number(weight.toFixed(2));
+    if (actualWeight !== handedOffWeight) {
+      toast.error(`Tổng khối lượng thực tế phải đúng bằng ${handedOffWeight} kg do Receiving Staff bàn giao.`);
       return;
     }
     setSubmitting(true);
@@ -285,15 +291,21 @@ export const ConfirmBatch: React.FC = () => {
                 </div>
                 <div className="ops-field">
                   <label htmlFor="countedWeight">Tổng khối lượng thực tế (kg) *</label>
-                  <input id="countedWeight" type="number" min="0.01" step="0.01"
+                  <input id="countedWeight" type="number" step="0.01"
+                    min={batch.totalWeight} max={batch.totalWeight}
                     value={countedWeight} onChange={(event) => setCountedWeight(event.target.value)}
-                    placeholder="Ví dụ: 18.5 kg" />
+                    placeholder={`Nhập đúng ${batch.totalWeight} kg`} />
+                  {countedWeight && Number(Number(countedWeight).toFixed(2)) !== Number(batch.totalWeight.toFixed(2)) && (
+                    <small style={{ color: 'var(--color-danger)' }}>
+                      Khối lượng phải đúng bằng {batch.totalWeight} kg, không được lớn hơn hoặc nhỏ hơn.
+                    </small>
+                  )}
                 </div>
                 <div className="ops-field">
                   <label htmlFor="countingNotes">Ghi chú chênh lệch / tình trạng lô</label>
                   <textarea id="countingNotes" value={countingNotes}
                     onChange={(event) => setCountingNotes(event.target.value)}
-                    placeholder="Ghi rõ nếu số kg thực tế khác biên bản bàn giao..." />
+                    placeholder="Ghi rõ tình trạng bàn giao..." />
                 </div>
                 <div className="classification-count-comparison">
                   <span>Khối lượng Receiving bàn giao</span>
@@ -330,7 +342,9 @@ export const ConfirmBatch: React.FC = () => {
                   <button
                     type="button"
                     className="premium-btn-island"
-                    disabled={submitting}
+                    disabled={submitting
+                      || !countedWeight
+                      || Number(Number(countedWeight).toFixed(2)) !== Number(batch.totalWeight.toFixed(2))}
                     onClick={handleCountAndContinue}
                     style={{
                       background: 'var(--color-text-primary)',
