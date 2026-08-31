@@ -12,6 +12,8 @@ export interface CatalogItem {
   grade: string;
   availableQuantity: number;
   availableWeight: number;
+  isLocked: boolean;
+  lockReason?: string;
   items: {
     itemCode: string;
     clothingType: string;

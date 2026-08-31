@@ -240,6 +240,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     if (catalogPage > catalogPageCount) setCatalogPage(catalogPageCount);
   }, [catalogPage, catalogPageCount]);
   const toggleBatch = (batch: CatalogItem) => {
+    if (batch.isLocked) return;
     setSelected((current) => {
       const next = { ...current };
       if (next[batch.inventoryId] > 0) delete next[batch.inventoryId];
@@ -548,7 +549,13 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
           </section>
           <div className="distribution-catalog">
             {pagedCatalog.map((batch) => (
-              <article key={batch.inventoryId}>
+              <article
+                key={batch.inventoryId}
+                className={batch.isLocked ? 'catalog-batch-locked' : undefined}
+                data-tooltip={batch.isLocked ? batch.lockReason : undefined}
+                tabIndex={batch.isLocked ? 0 : undefined}
+                aria-disabled={batch.isLocked || undefined}
+              >
                 <div className="distribution-card-head">
                   <div>
                     <b>{batch.batchCode}</b>
@@ -564,15 +571,19 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <strong>
                   {batch.availableWeight} kg khả dụng
                 </strong>
+                {batch.isLocked && <span className="batch-lock-label">Đang được giữ chỗ</span>}
                 <button className="product-preview" onClick={() => setActiveBatch(batch)}>
                   <Eye size={18} /> Xem {batch.items.length} sản phẩm
                 </button>
                 <div className="quantity-picker">
                   <button
                     className={selected[batch.inventoryId] > 0 ? 'selected' : ''}
+                    disabled={batch.isLocked}
                     onClick={() => toggleBatch(batch)}
                   >
-                    {selected[batch.inventoryId] > 0
+                    {batch.isLocked
+                      ? 'Batch tạm thời không khả dụng'
+                      : selected[batch.inventoryId] > 0
                       ? `Đã chọn toàn bộ ${batch.availableWeight} kg`
                       : `Chọn toàn bộ ${batch.availableWeight} kg`}
                   </button>
@@ -669,7 +680,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               </button>
             )}
             <button onClick={create}>
-              <Send /> Gửi yêu cầu ({Object.values(selected).reduce((a, b) => a + b, 0)} item)
+              <Send /> Gửi yêu cầu ({Object.values(selected).reduce((a, b) => a + b, 0)} kg)
             </button>
           </section>
         </>
@@ -1479,6 +1490,8 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   Đóng
                 </button>
                 <button
+                  disabled={activeBatch.isLocked}
+                  title={activeBatch.isLocked ? activeBatch.lockReason : undefined}
                   onClick={() => {
                     setSelected((current) => ({
                       ...current,
