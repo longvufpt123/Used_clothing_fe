@@ -6,11 +6,13 @@ import { useToast } from '@/context/ToastContext';
 import '@/styles/ops-shared.css';
 import './Categories.css';
 import './CategoriesStatus.css';
+import ScoringRulesEditor from './ScoringRulesEditor';
 
 interface ConditionQuestionConfig {
   id: string;
   questionText: string;
   displayOrder: number;
+  weight: number;
   answers: { id: string; text: string; grade: 'A' | 'B' | 'C' }[];
 }
 
@@ -18,6 +20,7 @@ const blankQuestion = {
   id: '',
   questionText: '',
   displayOrder: 1,
+  weight: 1,
   answerA: '',
   answerB: '',
   answerC: '',
@@ -49,6 +52,7 @@ export default function ConditionCriteria() {
       id: question.id,
       questionText: question.questionText,
       displayOrder: question.displayOrder,
+      weight: question.weight,
       answerA: answer('A'),
       answerB: answer('B'),
       answerC: answer('C'),
@@ -64,6 +68,7 @@ export default function ConditionCriteria() {
     )
       return toast.error('Câu hỏi và cả ba lựa chọn A/B/C đều bắt buộc.');
     if (form.displayOrder < 1) return toast.error('Thứ tự phải từ 1 trở lên.');
+    if (!Number.isFinite(form.weight) || form.weight <= 0 || form.weight > 10000) return toast.error('Trọng số phải lớn hơn 0 và không quá 10000.');
     const maximumOrder = form.id ? questions.length : questions.length + 1;
     if (form.displayOrder > maximumOrder)
       return toast.error(`Thứ tự không được vượt quá ${maximumOrder}.`);
@@ -112,6 +117,7 @@ export default function ConditionCriteria() {
           </button>
         </header>
 
+        <ScoringRulesEditor />
         <section className="ops-panel condition-question-config">
           <div className="ops-section-head">
             <div>
@@ -127,6 +133,7 @@ export default function ConditionCriteria() {
                   <div>
                     <span>Tiêu chí {question.displayOrder}</span>
                     <h3>{question.questionText}</h3>
+                    <small>Trọng số {question.weight} · {(100 * question.weight / questions.reduce((sum, q) => sum + q.weight, 0)).toFixed(2)}% điểm tổng</small>
                   </div>
                 </header>
                 <div className="condition-answer-grid">
@@ -180,6 +187,10 @@ export default function ConditionCriteria() {
                 />
               </div>
               <div className="condition-question-meta">
+                <div className="ops-field"><label>Trọng số *</label>
+                  <input type="number" min="0.01" max="10000" step="0.01" value={form.weight} onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })} />
+                  <small>Hệ thống tự chuẩn hóa trọng số; không bắt buộc tổng bằng 100.</small>
+                </div>
                 <div className="ops-field">
                   <label>Thứ tự *</label>
                   <input

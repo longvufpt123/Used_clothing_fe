@@ -23,6 +23,8 @@ export interface ClassificationBatchSummary {
   teamShiftEndTime?: string | null;
 }
 export interface ClassifiedItem {
+  weightedScore?: number | null;
+  scoringSnapshot?: string | null;
   id: string;
   itemCode: string;
   fabricType: string;
@@ -54,6 +56,7 @@ export interface ConditionOption {
   grade: 'A' | 'B' | 'C';
 }
 export interface ConditionQuestion {
+  weight: number;
   id: string;
   text: string;
   displayOrder: number;
@@ -67,6 +70,7 @@ export interface CategoryOption {
   sortOrder: number;
 }
 export interface ClassificationCatalog {
+  scoringRules: { gradeAMinimum: number; gradeBMinimum: number };
   fabricTypes: CategoryOption[];
   garmentGroups: CategoryOption[];
   clothingTypes: CategoryOption[];

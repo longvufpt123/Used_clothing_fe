@@ -388,10 +388,20 @@ export default function ClassifyBatch() {
         <section className="ops-panel glass">
           <span className="ops-panel-label">Đánh giá tình trạng A / B / C</span>
           <h2>Ma trận chất lượng</h2>
+          <p>A = 100 · B = 50 · C = 0. Điểm tổng là trung bình có trọng số; A từ {catalog.scoringRules?.gradeAMinimum ?? 85}, B từ {catalog.scoringRules?.gradeBMinimum ?? 50}.</p>
+          {catalog.conditionQuestions.length > 0 && catalog.conditionQuestions.every((q) => form.answers[q.id]) && (() => {
+            const total = catalog.conditionQuestions.reduce((sum, q) => sum + (q.weight ?? 1), 0);
+            const score = Math.round((catalog.conditionQuestions.reduce((sum, q) => {
+              const grade = q.options.find((option) => option.id === form.answers[q.id])?.grade;
+              return sum + (q.weight ?? 1) * (grade === 'A' ? 100 : grade === 'B' ? 50 : 0);
+            }, 0) / total + Number.EPSILON) * 100) / 100;
+            return <p><strong>Điểm dự kiến: {score.toFixed(2)} / 100 · Nhãn {score >= (catalog.scoringRules?.gradeAMinimum ?? 85) ? 'A' : score >= (catalog.scoringRules?.gradeBMinimum ?? 50) ? 'B' : 'C'}</strong></p>;
+          })()}
           {catalog.conditionQuestions.map((q) => (
             <div className="ops-field" key={q.id}>
               <label>
                 {q.displayOrder}. {q.text}
+                {' '}· Trọng số {q.weight ?? 1}
               </label>
               <div className="ops-item-list">
                 {q.options.map((o) => (
@@ -453,6 +463,7 @@ export default function ClassifyBatch() {
               <div className="ops-item-main">
                 <strong>
                   {i.itemCode} · Loại {i.conditionGrade}
+                  {i.weightedScore != null && ` · ${i.weightedScore.toFixed(2)}/100 điểm`}
                 </strong>
                 <span>
                   {i.fabricType} · {i.clothingType} · {i.gender} · {i.targetUser} · {i.size}

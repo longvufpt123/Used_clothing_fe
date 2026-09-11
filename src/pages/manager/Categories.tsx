@@ -1,3 +1,4 @@
+import ScoringRulesEditor from './ScoringRulesEditor';
 import { useEffect, useMemo, useState } from 'react';
 import { Edit3, Plus, Power, Save, Tags, X } from 'lucide-react';
 import AdminLayout from '@/shared/layouts/AdminLayout';
@@ -45,12 +46,6 @@ export default function Categories() {
   const [form, setForm] = useState({ ...blank });
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [savingRules, setSavingRules] = useState(false);
-  const [conditionQuestionCount, setConditionQuestionCount] = useState(0);
-  const [gradeThresholds, setGradeThresholds] = useState<Record<string, number>>({
-    GRADE_B: 2,
-    GRADE_C: 1,
-  });
   const load = () =>
     apiClient
       .get<unknown, Category[]>('/categories')
@@ -58,10 +53,6 @@ export default function Categories() {
       .catch(() => toast.error('Không thể tải danh mục phân loại.'));
   useEffect(() => {
     load();
-    apiClient
-      .get<unknown, { id: string }[]>('/condition-question-configurations')
-      .then((data) => setConditionQuestionCount(data.length))
-      .catch(() => setConditionQuestionCount(0));
   }, []);
   const visible = useMemo(
     () => items.filter((x) => x.type === filter).sort((a, b) => a.sortOrder - b.sortOrder),
@@ -72,16 +63,6 @@ export default function Categories() {
   const categoryTypeCount = items.filter((x) => x.type === form.type).length;
   const maximumCategoryOrder =
     form.id && originalCategory?.type === form.type ? categoryTypeCount : categoryTypeCount + 1;
-  const savedGradeThresholds = useMemo(() => {
-    const grades = items.filter((x) => x.type === 'ConditionGrade');
-    return {
-      GRADE_B: grades.find((x) => x.code === 'GRADE_B')?.minimumMatchCount ?? 2,
-      GRADE_C: grades.find((x) => x.code === 'GRADE_C')?.minimumMatchCount ?? 1,
-    };
-  }, [items]);
-  const gradeRulesChanged =
-    gradeThresholds.GRADE_B !== savedGradeThresholds.GRADE_B ||
-    gradeThresholds.GRADE_C !== savedGradeThresholds.GRADE_C;
   const edit = (item: Category) => {
     setForm({ ...blank, ...item, parentId: item.parentId || '' });
     setOpen(true);
@@ -141,48 +122,6 @@ export default function Categories() {
       toast.error('Không thể ngừng sử dụng danh mục.');
     }
   };
-  useEffect(() => {
-    const next = { ...gradeThresholds };
-    items
-      .filter((x) => x.type === 'ConditionGrade')
-      .forEach((item) => {
-        if (item.code === 'GRADE_B' || item.code === 'GRADE_C')
-          next[item.code] = item.minimumMatchCount ?? (item.code === 'GRADE_B' ? 2 : 1);
-      });
-    setGradeThresholds(next);
-  }, [items]);
-  const saveGradeRules = async () => {
-    const gradeItems = items.filter(
-      (x) => x.type === 'ConditionGrade' && (x.code === 'GRADE_B' || x.code === 'GRADE_C'),
-    );
-    if (gradeItems.length !== 2) return toast.error('Cần cấu hình đầy đủ Nhãn B và Nhãn C.');
-    if (gradeItems.some((item) => (gradeThresholds[item.code] || 0) < 1))
-      return toast.error('Ngưỡng phải từ 1 trở lên.');
-    if (
-      conditionQuestionCount > 0 &&
-      gradeItems.some((item) => gradeThresholds[item.code] > conditionQuestionCount)
-    )
-      return toast.error(
-        `Ngưỡng không được vượt quá ${conditionQuestionCount} tiêu chí đang hoạt động.`,
-      );
-    setSavingRules(true);
-    try {
-      await Promise.all(
-        gradeItems.map((item) =>
-          apiClient.put(`/categories/${item.id}`, {
-            ...item,
-            minimumMatchCount: gradeThresholds[item.code],
-          }),
-        ),
-      );
-      toast.success('Đã lưu quy tắc tổng hợp nhãn.');
-      await load();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Không thể lưu quy tắc tổng hợp nhãn.');
-    } finally {
-      setSavingRules(false);
-    }
-  };
   return (
     <AdminLayout>
       <div className="ops-page">
@@ -215,58 +154,7 @@ export default function Categories() {
             <h2>{types.find((x) => x[0] === filter)?.[1]}</h2>
             <span>{visible.length} giá trị đang sử dụng</span>
           </div>
-          {filter === 'ConditionGrade' && (
-            <div className="grade-rule-config">
-              <div className="grade-rule-intro">
-                <strong>Quy tắc tổng hợp kết quả</strong>
-                <span>Hệ thống xét C trước, sau đó B; nếu không đạt ngưỡng thì kết quả là A.</span>
-                <span>Đang có {conditionQuestionCount} tiêu chí đánh giá hoạt động.</span>
-                {gradeRulesChanged && <em>Đang có thay đổi chưa lưu</em>}
-              </div>
-              <div className="grade-rule-fields">
-                <label>
-                  <span>Nhãn C</span>
-                  <small>Số câu trả lời C tối thiểu</small>
-                  <input
-                    type="number"
-                    min="1"
-                    max={conditionQuestionCount || undefined}
-                    value={gradeThresholds.GRADE_C}
-                    onChange={(e) =>
-                      setGradeThresholds({ ...gradeThresholds, GRADE_C: Number(e.target.value) })
-                    }
-                  />
-                </label>
-                <label>
-                  <span>Nhãn B</span>
-                  <small>Số câu trả lời B tối thiểu</small>
-                  <input
-                    type="number"
-                    min="1"
-                    max={conditionQuestionCount || undefined}
-                    value={gradeThresholds.GRADE_B}
-                    onChange={(e) =>
-                      setGradeThresholds({ ...gradeThresholds, GRADE_B: Number(e.target.value) })
-                    }
-                  />
-                </label>
-                <div className="grade-rule-example">
-                  <b>Quy tắc hiện tại</b>
-                  <span>Chỉ cần {savedGradeThresholds.GRADE_C} câu C → Nhãn C</span>
-                  <span>Không đạt C nhưng có {savedGradeThresholds.GRADE_B} câu B → Nhãn B</span>
-                  <span>Còn lại → Nhãn A</span>
-                </div>
-              </div>
-              <button
-                className="ops-btn ops-btn-primary"
-                disabled={savingRules || !gradeRulesChanged}
-                onClick={saveGradeRules}
-              >
-                <Save size={16} />
-                {savingRules ? 'Đang lưu...' : gradeRulesChanged ? 'Lưu quy tắc' : 'Đã cập nhật'}
-              </button>
-            </div>
-          )}
+          {filter === 'ConditionGrade' && <ScoringRulesEditor />}
           <div className="ops-item-list">
             {visible.map((item) => (
               <div
