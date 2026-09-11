@@ -1,6 +1,19 @@
 import apiClient from './api';
 import type { ClassifiedItem } from './classificationService';
 
+// Share only in-flight requests; never cache stock across mutations or accounts.
+const dashboardRequests = new Map<string, Promise<WarehouseDashboard>>();
+function loadDashboard(warehouseId?: string) {
+  const key = `${localStorage.getItem('accessToken') || ''}:${warehouseId || ''}`;
+  const pending = dashboardRequests.get(key);
+  if (pending) return pending;
+  const request = apiClient.get<unknown, WarehouseDashboard>('/warehouse-operations/dashboard', {
+    params: { warehouseId },
+  }).finally(() => dashboardRequests.delete(key));
+  dashboardRequests.set(key, request);
+  return request;
+}
+
 export interface WarehouseDashboard {
   pendingReceipt: number;
   awaitingPutaway: number;
@@ -281,17 +294,14 @@ export const warehouseService = {
     },
   ) => apiClient.put(`/warehouse-operations/warehouses/${id}`, data),
   deleteWarehouse: (id: string) => apiClient.delete(`/warehouse-operations/warehouses/${id}`),
-  dashboard: (warehouseId?: string) =>
-    apiClient.get<unknown, WarehouseDashboard>('/warehouse-operations/dashboard', {
-      params: { warehouseId },
-    }),
+  dashboard: loadDashboard,
   layout: (warehouseId?: string) =>
     apiClient.get<unknown, WarehouseLayout>('/warehouse-operations/layout', {
       params: { warehouseId },
     }),
-  inboundBatches: (warehouseId?: string) =>
+  inboundBatches: (warehouseId?: string, includeItems = true) =>
     apiClient.get<unknown, WarehouseBatch[]>('/warehouse-operations/inbound-batches', {
-      params: { warehouseId },
+      params: { warehouseId, includeItems },
     }),
   intakeTraces: (warehouseId?: string) =>
     apiClient.get<unknown, WarehouseIntakeTrace[]>('/warehouse-operations/intake-traces', {

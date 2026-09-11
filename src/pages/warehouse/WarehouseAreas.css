@@ -59,6 +59,43 @@
 .warehouse-area-body {
   padding: 16px;
 }
+.warehouse-row {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.warehouse-row + .warehouse-row {
+  margin-top: 16px;
+}
+.warehouse-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.warehouse-row-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.warehouse-row-head p,
+.warehouse-row-head > span,
+.warehouse-row-empty {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+.warehouse-row-head p {
+  margin: 4px 0 0;
+}
+.warehouse-row-empty {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin: 0;
+}
 .warehouse-groups {
   display: flex;
   gap: 8px;
@@ -76,7 +113,7 @@
 }
 .warehouse-location-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(255px, 100%), 1fr));
   gap: 12px;
 }
 .warehouse-location {
@@ -112,8 +149,14 @@
 .warehouse-location > div:first-child {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+}
+.warehouse-location > div:first-child b {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .warehouse-location > div:first-child span {
+  flex-shrink: 0;
   font-size: 0.7rem;
   color: var(--color-primary);
 }

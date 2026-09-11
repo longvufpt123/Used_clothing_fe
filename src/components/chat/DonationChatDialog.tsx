@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
-import { HttpTransportType, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { donationChatService } from '@/services/donationChatService';
 import type { DonationChatMessage } from '@/services/donationChatService';
 import { useToast } from '@/context/ToastContext';
@@ -43,8 +43,8 @@ export default function DonationChatDialog({ requestId, requestCode, directUserI
     const connection = new HubConnectionBuilder()
       .withUrl(`${hubBase}/hubs/donation-chat`, {
         accessTokenFactory: () => localStorage.getItem('accessToken') || '',
-        transport: HttpTransportType.WebSockets,
-        skipNegotiation: true,
+        // Keep transport fallback and App Service session-affinity cookies enabled.
+        withCredentials: true,
       })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)

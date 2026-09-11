@@ -16,20 +16,27 @@ export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const location = useLocation();
   const [counts, setCounts] = useState({ inbound: 0, putaway: 0, inventory: 0 });
   useEffect(() => {
-    const refresh = () =>
-      warehouseService
+    let disposed = false;
+    let busy = false;
+    const refresh = () => {
+      if (busy || document.hidden) return;
+      busy = true;
+      void warehouseService
         .dashboard()
-        .then((x) =>
-          setCounts({
+        .then((x) => {
+          if (!disposed) setCounts({
             inbound: x.pendingReceipt,
             putaway: x.awaitingPutaway,
             inventory: x.inventorySkuCount,
-          }),
-        )
-        .catch(() => {});
+          });
+        })
+        .catch(() => {})
+        .finally(() => { busy = false; });
+    };
     refresh();
     const id = window.setInterval(refresh, 10000);
-    return () => window.clearInterval(id);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { disposed = true; window.clearInterval(id); document.removeEventListener('visibilitychange', refresh); };
   }, [location.pathname]);
   const nav: OpsNavItem[] = [
     { to: '/warehouse', label: 'Tổng quan', icon: LayoutDashboard },

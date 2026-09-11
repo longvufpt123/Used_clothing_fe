@@ -84,8 +84,9 @@ export default function WarehouseAreas() {
       .flatMap((area) => area.locations.map((location) => ({ area, location })))
       .filter(({ area, location }) => {
         if (!q) return true;
-        const locationMatches = [
+          const locationMatches = [
             area.areaName,
+            area.groups.find((group) => group.id === location.areaGroupId)?.groupName,
             location.locationCode,
             location.aisleCode,
             location.rackCode,
@@ -289,7 +290,22 @@ export default function WarehouseAreas() {
             const visibleLocations = area.locations.filter((location) =>
               filteredLocationIds.has(location.id),
             );
-            if (!visibleLocations.length) return null;
+            const query = search.trim().toLowerCase();
+            const rows = area.groups.map((group) => ({
+              ...group,
+              locations: visibleLocations.filter((location) => location.areaGroupId === group.id),
+            }));
+            const unassigned = visibleLocations.filter((location) =>
+              !area.groups.some((group) => group.id === location.areaGroupId));
+            if (unassigned.length) rows.push({
+              id: `${area.id}-unassigned`, groupName: 'Vị trí chưa gán dãy', description: undefined,
+              capacityKg: unassigned.reduce((sum, location) => sum + location.capacityKg, 0),
+              currentWeightKg: unassigned.reduce((sum, location) => sum + location.currentWeightKg, 0),
+              locations: unassigned,
+            });
+            const visibleRows = rows.filter((row) => !query || row.locations.length > 0
+              || row.groupName.toLowerCase().includes(query) || area.areaName.toLowerCase().includes(query));
+            if (query && !visibleRows.length && !area.areaName.toLowerCase().includes(query)) return null;
             return (
               <article className="warehouse-area" key={area.id}>
                 <button
@@ -316,20 +332,13 @@ export default function WarehouseAreas() {
                 </div>
                 {open && (
                   <div className="warehouse-area-body">
-                    {area.groups.length > 0 && (
-                      <div className="warehouse-groups">
-                        {area.groups.map((group) => (
-                          <span key={group.id}>
-                            {group.groupName}
-                            <small>
-                              {group.currentWeightKg.toFixed(1)}/{group.capacityKg.toFixed(1)} kg
-                            </small>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {visibleRows.map((row) => <section className="warehouse-row" key={row.id}>
+                      <header className="warehouse-row-head">
+                        <div><h3>{row.groupName}</h3>{row.description && <p>{row.description}</p>}</div>
+                        <span>{row.currentWeightKg.toFixed(1)} / {row.capacityKg.toFixed(1)} kg · {row.locations.length} vị trí</span>
+                      </header>
                     <div className="warehouse-location-grid">
-                      {visibleLocations.map((location) => {
+                      {row.locations.map((location) => {
                         const load = percent(location.currentWeightKg, location.capacityKg);
                         return (
                           <button
@@ -365,12 +374,17 @@ export default function WarehouseAreas() {
                         );
                       })}
                     </div>
+                      {!row.locations.length && <p className="warehouse-row-empty">Dãy chưa có vị trí.</p>}
+                    </section>)}
+                    {!visibleRows.length && <p className="warehouse-row-empty">Khu vực chưa có dãy.</p>}
                   </div>
                 )}
               </article>
             );
           })}
-          {!filteredLocations.length && (
+          {!filteredLocations.length && !!search.trim() && !layout.areas.some((area) =>
+            area.areaName.toLowerCase().includes(search.trim().toLowerCase())
+            || area.groups.some((group) => group.groupName.toLowerCase().includes(search.trim().toLowerCase()))) && (
             <div className="ops-empty">
               <MapPin size={34} />
               <h4>Không có vị trí phù hợp</h4>

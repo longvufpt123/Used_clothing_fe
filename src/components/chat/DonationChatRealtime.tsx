@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { HttpTransportType, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { MessageCircle, Search, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -72,8 +72,8 @@ export default function DonationChatRealtime() {
     const connection = new HubConnectionBuilder().withUrl(`${api.replace(/\/api\/?$/, '')}/hubs/donation-chat`,
       {
         accessTokenFactory: () => localStorage.getItem('accessToken') || '',
-        transport: HttpTransportType.WebSockets,
-        skipNegotiation: true,
+        // Negotiate transport so chat can fall back when the host blocks WebSockets.
+        withCredentials: true,
       })
       .withAutomaticReconnect().configureLogging(LogLevel.Warning).build();
     connection.on('ChatNotification', (n: ChatNotice) => {
