@@ -1,107 +1,98 @@
-import { useEffect, useState } from "react";
-import {
-  ArrowRight,
-  ClipboardList,
-  Package,
-  Play,
-  Scale,
-  Square,
-} from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useToast } from "@/context/ToastContext";
+import { useEffect, useState } from 'react';
+import { ArrowRight, ClipboardList, Package, Play, Scale, Square } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/context/ToastContext';
 import {
   classificationService,
   type ClassificationBatchSummary,
-} from "@/services/classificationService";
-import "@/styles/ops-shared.css";
-import { getStatusLabel } from "@/utils/statusLabels";
+  type CurrentClassificationTeam,
+} from '@/services/classificationService';
+import '@/styles/ops-shared.css';
+import './Dashboard.css';
+import ResumeBatchDialog from './ResumeBatchDialog';
+import { getStatusLabel } from '@/utils/statusLabels';
 
-const PENDING_STATUSES = new Set([
-  "PendingConfirmation",
-  "AssignedToClassification",
-  "AwaitingClassificationCount",
-  "ReadyForClassification",
-  "Classifying",
-]);
-const CLASSIFIED_STATUSES = new Set(["Classified", "InClassifiedArea"]);
+import {
+  PENDING_CLASSIFICATION_STATUSES as PENDING_STATUSES,
+  CLASSIFIED_INTAKE_STATUSES as CLASSIFIED_STATUSES,
+} from '@/utils/classificationQueues';
 const isFullyClassified = (batch: ClassificationBatchSummary) =>
-  batch.countedItemCount != null &&
-  batch.classifiedItems >= batch.countedItemCount;
-const localDateValue = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  batch.countedItemCount != null && batch.classifiedItems >= batch.countedItemCount;
+const hasEndedShift = (batch: ClassificationBatchSummary) => {
+  if (!batch.teamShiftDate || !batch.teamShiftEndTime) return batch.teamStatus === 'Completed';
+  return (
+    Date.now() >=
+    new Date(`${batch.teamShiftDate.slice(0, 10)}T${batch.teamShiftEndTime}+07:00`).getTime()
+  );
 };
 
 export default function ClassificationDashboard() {
   const [batches, setBatches] = useState<ClassificationBatchSummary[]>([]);
+  const [teams, setTeams] = useState<CurrentClassificationTeam[]>([]);
+  const [resuming, setResuming] = useState<ClassificationBatchSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamBusy, setTeamBusy] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const selectedTab = searchParams.get("tab");
+  const selectedTab = searchParams.get('tab');
   const toast = useToast();
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    classificationService
-      .getBatches()
-      .then(setBatches)
-      .catch(() => toast.error("Không tải được danh sách lô hàng."))
-      .finally(() => setLoading(false));
+    try {
+      const [data, currentTeams] = await Promise.all([
+        classificationService.getBatches(),
+        classificationService.getCurrentTeams(),
+      ]);
+      setBatches(data);
+      setTeams(currentTeams);
+      window.dispatchEvent(new Event('classification-data-changed'));
+    } catch {
+      toast.error('Không tải được danh sách lô và ca phân loại.');
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     load();
   }, [toast]);
   useEffect(() => {
     const refreshFromApi = () => {
-      classificationService
-        .getBatches()
-        .then(setBatches)
+      Promise.all([classificationService.getBatches(), classificationService.getCurrentTeams()])
+        .then(([data, currentTeams]) => {
+          setBatches(data);
+          setTeams(currentTeams);
+          window.dispatchEvent(new Event('classification-data-changed'));
+        })
         .catch(() => undefined);
     };
-    window.addEventListener("focus", refreshFromApi);
-    return () => window.removeEventListener("focus", refreshFromApi);
+    window.addEventListener('focus', refreshFromApi);
+    return () => window.removeEventListener('focus', refreshFromApi);
   }, []);
-  const today = localDateValue();
-  const todayBatches = batches.filter(
-    (batch) => batch.teamShiftDate?.slice(0, 10) === today,
-  );
-  const currentTeam =
-    todayBatches.find((batch) => batch.teamStatus === "InProgress") ??
-    todayBatches.find((batch) => batch.teamStatus === "Scheduled") ??
-    todayBatches[0];
-  const changeTeamStatus = async (complete = false) => {
-    if (!currentTeam?.classificationTeamId) return;
+  const changeTeamStatus = async (teamId: string, complete = false) => {
     setTeamBusy(true);
     try {
-      if (complete)
-        await classificationService.completeTeam(
-          currentTeam.classificationTeamId,
-        );
-      else
-        await classificationService.startTeam(currentTeam.classificationTeamId);
-      toast.success(
-        complete ? "Đã kết thúc ca phân loại." : "Đã bắt đầu ca phân loại.",
-      );
+      if (complete) await classificationService.completeTeam(teamId);
+      else await classificationService.startTeam(teamId);
+      toast.success(complete ? 'Đã kết thúc ca phân loại.' : 'Đã bắt đầu ca phân loại.');
       load();
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Không thể cập nhật ca phân loại.",
-      );
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật ca phân loại.');
     } finally {
       setTeamBusy(false);
     }
   };
   const visibleBatches = batches.filter((batch) => {
-    if (selectedTab === "classified")
-      return CLASSIFIED_STATUSES.has(batch.status);
-    if (selectedTab === "pending")
-      return PENDING_STATUSES.has(batch.status);
+    if (selectedTab === 'classified') return CLASSIFIED_STATUSES.has(batch.status);
+    if (selectedTab === 'pending') return PENDING_STATUSES.has(batch.status);
     return true;
   });
   const displayedBatchCount = visibleBatches.length;
-  const displayedInProgressCount = selectedTab === "classified"
-    ? visibleBatches.length
-    : visibleBatches.filter((batch) => batch.status === "Classifying" && !isFullyClassified(batch)).length;
+  const displayedInProgressCount =
+    selectedTab === 'classified'
+      ? visibleBatches.length
+      : visibleBatches.filter(
+          (batch) => batch.status === 'Classifying' && !isFullyClassified(batch),
+        ).length;
   const displayedTotalWeight = visibleBatches.reduce((sum, batch) => sum + batch.totalWeight, 0);
   const open = async (b: ClassificationBatchSummary) => {
     try {
@@ -109,25 +100,26 @@ export default function ClassificationDashboard() {
         navigate(`/classification/batches/${b.id}`);
         return;
       }
-      if (b.teamStatus !== "InProgress") {
-        toast.warning(
-          "Vui lòng bắt đầu đúng ca phân loại của lô hàng này trước khi xử lý.",
-        );
+      if (hasEndedShift(b)) {
+        setResuming(b);
+        return;
+      }
+      if (b.teamStatus !== 'InProgress') {
+        toast.warning('Vui lòng bắt đầu đúng ca phân loại của lô hàng này trước khi xử lý.');
         return;
       }
       if (
-        b.status === "AssignedToClassification" ||
-        b.status === "PendingConfirmation" ||
-        b.status === "AwaitingClassificationCount"
+        b.status === 'AssignedToClassification' ||
+        b.status === 'PendingConfirmation' ||
+        b.status === 'AwaitingClassificationCount'
       ) {
         navigate(`/classification/confirm/${b.id}`);
         return;
       }
-      if (b.status === "ReadyForClassification")
-        await classificationService.startBatch(b.id);
+      if (b.status === 'ReadyForClassification') await classificationService.startBatch(b.id);
       navigate(`/classification/classify/${b.id}`);
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Không thể bắt đầu phân loại.");
+      toast.error(e?.response?.data?.message || 'Không thể bắt đầu phân loại.');
     }
   };
   return (
@@ -137,41 +129,46 @@ export default function ClassificationDashboard() {
           <span className="ops-pagehead-kicker">Bộ phận Phân loại</span>
           <h1>Phân loại từng vật phẩm</h1>
           <p>
-            Chọn lô hàng được chuyển từ bộ phận tiếp nhận và đánh giá từng món
-            theo tiêu chí A, B, C.
+            Chọn lô hàng được chuyển từ bộ phận tiếp nhận và đánh giá từng món theo tiêu chí A, B,
+            C.
           </p>
         </div>
       </header>
-      {currentTeam && (
-        <section className="ops-panel glass" style={{ marginBottom: 20 }}>
+      {resuming && (
+        <ResumeBatchDialog
+          batch={resuming}
+          teams={teams}
+          onClose={() => setResuming(null)}
+          onSaved={load}
+        />
+      )}
+      {teams.map((currentTeam) => (
+        <section key={currentTeam.id} className="ops-panel glass" style={{ marginBottom: 20 }}>
           <div className="ops-section-head">
             <div>
-              <h2>{currentTeam.classificationTeamName || "Team phân loại"}</h2>
-              <span>
-                Trạng thái ca:{" "}
-                {getStatusLabel(currentTeam.teamStatus || "Scheduled")}
-              </span>
+              <h2>{currentTeam.teamName || 'Team phân loại'}</h2>
+              <span>Trạng thái ca: {getStatusLabel(currentTeam.status || 'Scheduled')}</span>
             </div>
-            {currentTeam.teamStatus === "Scheduled" ? (
+            {currentTeam.status === 'Scheduled' ? (
               <button
                 className="btn btn-primary"
                 disabled={teamBusy}
-                onClick={() => changeTeamStatus()}
+                onClick={() => changeTeamStatus(currentTeam.id)}
               >
                 <Play size={16} /> Bắt đầu ca phân loại
               </button>
-            ) : currentTeam.teamStatus === "InProgress" ? (
+            ) : currentTeam.status === 'InProgress' ? (
               <button
                 className="btn btn-danger"
                 disabled={teamBusy}
-                onClick={() => changeTeamStatus(true)}
+                onClick={() => changeTeamStatus(currentTeam.id, true)}
               >
                 <Square size={16} /> Kết thúc ca
               </button>
             ) : null}
           </div>
         </section>
-      )}
+      ))}
       <div className="ops-stats">
         <div className="ops-stat-card">
           <span className="ops-stat-label">Lô hàng</span>
@@ -182,7 +179,7 @@ export default function ClassificationDashboard() {
         </div>
         <div className="ops-stat-card">
           <span className="ops-stat-label">
-            {selectedTab === "classified" ? "Đã hoàn thành" : "Đang phân loại"}
+            {selectedTab === 'classified' ? 'Đã hoàn thành' : 'Đang phân loại'}
           </span>
           <div className="ops-stat-value">
             <ClipboardList size={18} />
@@ -200,73 +197,66 @@ export default function ClassificationDashboard() {
       <section>
         <div className="ops-section-head">
           <h2>
-            {selectedTab === "classified"
-              ? "Danh sách lô hàng đã phân loại"
-              : selectedTab === "pending"
-                ? "Danh sách lô hàng chờ phân loại"
-                : "Danh sách lô hàng"}
+            {selectedTab === 'classified'
+              ? 'Danh sách lô hàng đã phân loại'
+              : selectedTab === 'pending'
+                ? 'Danh sách lô hàng chờ phân loại'
+                : 'Danh sách lô hàng'}
           </h2>
-          <span>{loading ? "Đang tải..." : "Chọn một lô để xem chi tiết"}</span>
+          <span>{loading ? 'Đang tải...' : 'Chọn một lô để xem chi tiết'}</span>
         </div>
-        <div className="ops-list">
-            {visibleBatches.map((b) => (
-              <article
-                key={b.id}
-                className="ops-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => open(b)}
-              >
-                <div className="ops-card-top">
-                  <div>
-                    <div className="ops-card-code">{b.batchCode}</div>
-                    <div className="ops-card-meta">
-                      <span>
-                        {new Date(b.intakeDate).toLocaleDateString("vi-VN")}
-                      </span>
-                      <span>{b.totalWeight} kg</span>
-                    </div>
+        <div className="ops-list classification-batch-list">
+          {visibleBatches.map((b) => (
+            <article
+              key={b.id}
+              className="ops-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => open(b)}
+            >
+              <div className="ops-card-top">
+                <div>
+                  <div className="ops-card-code">{b.batchCode}</div>
+                  <div className="ops-card-meta">
+                    <span>{new Date(b.intakeDate).toLocaleDateString('vi-VN')}</span>
+                    <span>{b.totalWeight} kg</span>
                   </div>
-                  <span
-                    className={`ops-badge ${CLASSIFIED_STATUSES.has(b.status) ? "done" : isFullyClassified(b) ? "pending" : b.status.toLowerCase()}`}
-                  >
-                    {CLASSIFIED_STATUSES.has(b.status)
-                      ? "Đã phân loại xong"
-                      : isFullyClassified(b)
-                        ? "Chờ xác nhận hoàn tất"
+                </div>
+                <span
+                  className={`ops-badge ${CLASSIFIED_STATUSES.has(b.status) ? 'done' : isFullyClassified(b) ? 'pending' : b.status.toLowerCase()}`}
+                >
+                  {CLASSIFIED_STATUSES.has(b.status)
+                    ? 'Đã phân loại xong'
+                    : isFullyClassified(b)
+                      ? 'Chờ xác nhận hoàn tất'
                       : getStatusLabel(b.status)}
-                  </span>
-                </div>
-                <h3>{b.routeName || "Tuyến tiếp nhận"}</h3>
-                <div className="ops-card-footer">
-                  <span>
-                    Đã phân loại: <strong>{b.classifiedItems}</strong> món ·{" "}
-                    {b.donationRequests} đơn
-                  </span>
-                  <span className="ops-card-action">
-                    {CLASSIFIED_STATUSES.has(b.status)
-                      ? "Xem chi tiết"
-                      : "Mở lô"}{" "}
-                    <ArrowRight size={14} />
-                  </span>
-                </div>
-              </article>
-            ))}
-            {!loading && visibleBatches.length === 0 && (
-              <div className="ops-empty">
-                <ClipboardList size={36} />
-                <h4>
-                  {selectedTab === "classified"
-                    ? "Chưa có lô hàng đã phân loại"
-                    : "Chưa có lô hàng"}
-                </h4>
-                <p>
-                  {selectedTab === "classified"
-                    ? "Các lô hoàn tất phân loại sẽ xuất hiện tại đây."
-                    : "Batch được gửi sang phân loại sẽ xuất hiện tại đây."}
-                </p>
+                </span>
               </div>
-            )}
+              <h3>{b.routeName || 'Tuyến tiếp nhận'}</h3>
+              <div className="ops-card-footer">
+                <span>
+                  Đã phân loại: <strong>{b.classifiedItems}</strong> món · {b.donationRequests} đơn
+                </span>
+                <span className="ops-card-action">
+                  {CLASSIFIED_STATUSES.has(b.status) ? 'Xem chi tiết' : 'Mở lô'}{' '}
+                  <ArrowRight size={14} />
+                </span>
+              </div>
+            </article>
+          ))}
+          {!loading && visibleBatches.length === 0 && (
+            <div className="ops-empty">
+              <ClipboardList size={36} />
+              <h4>
+                {selectedTab === 'classified' ? 'Chưa có lô hàng đã phân loại' : 'Chưa có lô hàng'}
+              </h4>
+              <p>
+                {selectedTab === 'classified'
+                  ? 'Các lô hoàn tất phân loại sẽ xuất hiện tại đây.'
+                  : 'Batch được gửi sang phân loại sẽ xuất hiện tại đây.'}
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -73,6 +73,7 @@ export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({ childr
       icon: HandHeart,
       matchPrefixes: ['/warehouse/distributions', '/warehouse/tracking'],
     },
+    { to: '/warehouse/processing-operations', label: 'Xuất tái chế / tiêu hủy', icon: Archive, matchPrefixes: ['/warehouse/processing-operations'] },
   ];
   return (
     <OpsLayout homePath="/warehouse" roleLabel="Bộ phận Kho" nav={nav}>

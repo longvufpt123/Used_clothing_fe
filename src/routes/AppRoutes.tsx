@@ -66,10 +66,18 @@ import Vouchers from '@/pages/Vouchers';
 import ManagerVouchers from '@/pages/manager/Vouchers';
 import ManagerAiPromptManagement from '@/pages/manager/AiPromptManagement';
 import ManagerDonationPointRules from '@/pages/manager/DonationPointRules';
+import ProcessingPortal from '@/pages/processing/ProcessingPortal';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {['/manager/processing-operations', '/manager/processing-operations/:operationId'].map(path =>
+        <Route key={path} path={path} element={<RoleRoute role="Manager"><AdminLayout><ProcessingPortal mode="manager" /></AdminLayout></RoleRoute>} />)}
+      {['/warehouse/processing-operations', '/warehouse/processing-operations/:operationId'].map(path =>
+        <Route key={path} path={path} element={<RoleRoute role="WarehouseStaff"><WarehouseShell><ProcessingPortal mode="warehouse" /></WarehouseShell></RoleRoute>} />)}
+      {['/organization/processing-operations', '/organization/processing-operations/:operationId'].map(path =>
+        <Route key={path} path={path} element={<RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}><OrganizationShell><ProcessingPortal mode="organization" /></OrganizationShell></RoleRoute>} />)}
+      <Route path="/organization/processing-operations/profile" element={<RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}><OrganizationShell><StaffProfile /></OrganizationShell></RoleRoute>} />
       {/* Front-office pages wrapped in MainLayout */}
       <Route
         path="/vouchers"

@@ -12,7 +12,7 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/context/ToastContext";
 import {
@@ -25,17 +25,20 @@ import { getClassifiedBatchGroupLabel } from "@/utils/classifiedBatch";
 import "@/styles/ops-shared.css";
 import "@/pages/warehouse/WarehouseAreas.css";
 
-const localDateValue = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+import { classificationDate, isOpenClassifiedGroup, isPendingWarehouseGroup, isSentWarehouseGroup } from '@/utils/classificationQueues';
 
 export default function GroupedBatches({
   view = "open",
 }: {
   view?: "open" | "pending" | "sent";
 }) {
-  const [date, setDate] = useState(localDateValue);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const date = searchParams.get('date') ?? classificationDate();
+  const setDate = (value: string) => setSearchParams(current => {
+    const next = new URLSearchParams(current);
+    next.set('date', value);
+    return next;
+  }, { replace: true });
   const [groups, setGroups] = useState<GroupedClassifiedBatch[]>([]);
   const [layout, setLayout] = useState<ClassificationAreaLayout | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -57,12 +60,13 @@ export default function GroupedBatches({
     setLoading(true);
     try {
       const [batchData, layoutData] = await Promise.all([
-        classificationService.getGroupedBatches(date),
+        classificationService.getGroupedBatches(view === "open" ? undefined : date),
         view === "open"
-          ? classificationService.getClassifiedAreaLayout(date)
+          ? classificationService.getClassifiedAreaLayout()
           : Promise.resolve(null),
       ]);
       setGroups(batchData);
+      window.dispatchEvent(new Event('classification-data-changed'));
       setLayout(layoutData);
       if (layoutData)
         setExpanded((x) =>
@@ -89,15 +93,15 @@ export default function GroupedBatches({
     [groups],
   );
   const allOpenGroups = useMemo(
-    () => groups.filter((x) => x.status === "ReadyForPlacement" || x.status === "PlacedInClassifiedArea" || x.status === "Open"),
+    () => groups.filter(isOpenClassifiedGroup),
     [groups],
   );
   const sentGroups = useMemo(
-    () => groups.filter((x) => x.status === "WarehouseReceived" || x.status === "Stored"),
+    () => groups.filter(isSentWarehouseGroup),
     [groups],
   );
   const pendingGroups = useMemo(
-    () => groups.filter((x) => x.status === "PendingWarehouseReceipt"),
+    () => groups.filter(isPendingWarehouseGroup),
     [groups],
   );
   const visible = view === "open" ? allOpenGroups : view === "pending" ? pendingGroups : sentGroups;
@@ -259,13 +263,13 @@ export default function GroupedBatches({
               : view === "pending" ? "Classified Batch chờ kho tiếp nhận" : "Classified Batch đã gửi sang kho"}
           </h1>
           <p>
-            {view === "open" ? "Theo dõi Classified Batch theo từng khu vực và dãy chứa trước khi bàn giao kho."
+            {view === "open" ? "Hiển thị tất cả batch đang chờ xếp khu hoặc đang nằm trong khu, bao gồm các ngày trước."
               : view === "pending" ? "Các batch đã bàn giao và đang chờ warehouse staff xác nhận."
               : "Lịch sử các batch đã được kho xác nhận nhập."}
           </p>
         </div>
       </header>
-      <section className="ops-panel glass">
+      {view !== "open" && <section className="ops-panel glass">
         <div className="ops-field">
           <label htmlFor="groupDate">Ngày phân loại</label>
           <input
@@ -275,7 +279,7 @@ export default function GroupedBatches({
             onChange={(e) => setDate(e.target.value)}
           />
         </div>
-      </section>
+      </section>}
       <div className="ops-stats">
         <div className="ops-stat-card">
           <span className="ops-stat-label">Số batch nhóm</span>
@@ -292,10 +296,10 @@ export default function GroupedBatches({
           </div>
         </div>
         <div className="ops-stat-card">
-          <span className="ops-stat-label">Ngày</span>
+          <span className="ops-stat-label">{view === "open" ? "Phạm vi" : "Ngày"}</span>
           <div className="ops-stat-value">
             <CalendarDays size={18} />
-            {new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN")}
+            {view === "open" ? "Tất cả ngày" : new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN")}
           </div>
         </div>
       </div>

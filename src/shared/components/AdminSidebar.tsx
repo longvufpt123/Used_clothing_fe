@@ -69,6 +69,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           path: `${basePath}/distributions`,
           icon: <HandHeart size={18} />,
         },
+        { label: 'Tái chế & tiêu hủy', path: `${basePath}/processing-operations`, icon: <Archive size={18} /> },
         { label: 'Quản lý voucher', path: `${basePath}/vouchers`, icon: <Gift size={18} /> },
         { label: 'Quy tắc điểm donor', path: `${basePath}/point-rules`, icon: <Coins size={18} /> },
         { label: 'Prompt phân loại AI', path: `${basePath}/ai-prompts`, icon: <Bot size={18} /> },

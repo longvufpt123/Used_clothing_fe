@@ -29,6 +29,7 @@ export interface WarehouseLocationLayout {
   itemQuantity: number;
 }
 export interface WarehouseAreaLayout {
+  processingDirection?: string | null;
   id: string;
   areaName: string;
   description?: string;
@@ -299,7 +300,8 @@ export const warehouseService = {
   createArea: (data: {
     warehouseId: string;
     areaName: string;
-    areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
+    areaType: 'Receiving' | 'Recycled' | 'Unclassified' | 'Classified' | 'Storage';
+    processingDirection?: string | null;
     description?: string;
     capacityKg: number;
   }) => apiClient.post<unknown, { id: string }>('/warehouse-operations/areas', data),
@@ -308,7 +310,8 @@ export const warehouseService = {
     data: {
       warehouseId: string;
       areaName: string;
-      areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
+      areaType: 'Receiving' | 'Recycled' | 'Unclassified' | 'Classified' | 'Storage';
+      processingDirection?: string | null;
       description?: string;
       capacityKg: number;
     },

@@ -120,6 +120,10 @@ export interface GroupedClassifiedBatch {
   donationRequestCodes: string[];
 }
 export interface GroupedClassifiedBatchDetail extends GroupedClassifiedBatch {
+  garmentGroupId?: string;
+  genderId?: string;
+  targetUserId?: string;
+  conditionGradeId?: string;
   items: ClassifiedItem[];
 }
 export interface UnassignedClassifiedItem {
@@ -211,6 +215,10 @@ export interface ClassificationAutoBalanceResult {
 }
 
 export const classificationService = {
+  getCurrentTeams: () => apiClient.get<unknown, CurrentClassificationTeam[]>('/classification-operations/my-current-teams'),
+  resumeBatch: (id: string, teamId: string) => apiClient.post(`/classification-operations/batches/${id}/resume`, { teamId }),
+  updateManualBatch: (id: string, payload: { garmentGroupId: string; genderId: string; targetUserId: string; conditionGradeId: string }) => apiClient.put(`/classification-operations/grouped-batches/${id}`, payload),
+  deleteManualBatch: (id: string) => apiClient.delete(`/classification-operations/grouped-batches/${id}`),
   getBatches: () =>
     apiClient.get<unknown, ClassificationBatchSummary[]>('/classification-operations/batches'),
   getBatch: (id: string) =>
@@ -295,3 +303,5 @@ export const classificationService = {
       { groupedBatchIds: ids },
     ),
 };
+
+export interface CurrentClassificationTeam { id: string; teamName: string; status: string; shiftDate: string; startTime: string; endTime: string; }

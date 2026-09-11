@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Boxes, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { Boxes, CheckCircle2, Plus, Trash2, Pencil } from 'lucide-react';
+import ManualBatchDialog from './ManualBatchDialog';
+import BatchPlacementDialog from './BatchPlacementDialog';
 import { useToast } from '@/context/ToastContext';
 import {
   classificationService,
@@ -26,6 +28,8 @@ export default function ManualBatching() {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
+  const [batchAction, setBatchAction] = useState<{ batch: GroupedClassifiedBatch; mode: 'edit' | 'delete' } | null>(null);
 
   const load = async (keepBatchId?: string) => {
     setLoading(true);
@@ -39,6 +43,7 @@ export default function ManualBatching() {
       setItems(itemData);
       const manual = batchData.filter((batch) => batch.status === 'Draft' || batch.status === 'ReadyForPlacement');
       setBatches(manual);
+      window.dispatchEvent(new Event('classification-data-changed'));
       const id = keepBatchId || selectedBatch?.id;
       if (id && manual.some((batch) => batch.id === id)) {
         setSelectedBatch(await classificationService.getGroupedBatch(id));
@@ -132,6 +137,7 @@ export default function ManualBatching() {
           <span className="ops-pagehead-kicker">BƯỚC 2 · GOM CLASSIFIED BATCH</span>
           <h1>Gom item vào Classified Batch</h1>
           <p>Tạo batch rỗng theo thuộc tính, sau đó chọn các item tương ứng để đưa vào batch.</p>
+          {!loading && <p><strong>{items.length}</strong> món đã phân loại đang chờ gom nhóm.</p>}
         </div>
       </header>
 
@@ -151,16 +157,35 @@ export default function ManualBatching() {
       </section>
 
       <div className="classification-manual-grid">
+        {placing && <BatchPlacementDialog batch={placing} onClose={() => setPlacing(null)} onSaved={async () => {
+          setSelectedItems([]);
+          await load();
+          toast.success('Đã xếp batch vào khu đồ đã phân loại.');
+        }} />}
+        {batchAction && <ManualBatchDialog batch={batchAction.batch} mode={batchAction.mode} catalog={catalog} onClose={() => setBatchAction(null)} onSaved={async () => {
+          setSelectedItems([]);
+          await load();
+          toast.success(batchAction.mode === 'edit' ? 'Đã cập nhật batch.' : 'Đã xóa batch, các món đã trở về danh sách chờ gom nhóm.');
+        }} />}
         <section className="ops-panel glass">
           <div className="ops-section-head"><div><h2>Classified Batch</h2><span>{batches.length} batch đang xử lý</span></div></div>
           <div className="ops-list">
             {batches.map((batch) => (
-              <button key={batch.id} type="button" className={`ops-card classification-manual-batch ${selectedBatch?.id === batch.id ? 'selected' : ''}`}
-                onClick={async () => { setSelectedItems([]); setSelectedBatch(await classificationService.getGroupedBatch(batch.id)); }}>
+              <article key={batch.id} className={`ops-card classification-manual-batch ${selectedBatch?.id === batch.id ? 'selected' : ''}`}>
+                <button type="button" className="classification-manual-summary" disabled={saving} onClick={async () => {
+                  try { setSelectedItems([]); setSelectedBatch(await classificationService.getGroupedBatch(batch.id)); }
+                  catch { toast.error('Không tải được chi tiết batch.'); }
+                }}>
                 <div className="ops-card-top"><strong>{batch.batchCode}</strong><span className="ops-badge pending">{batch.status === 'Draft' ? 'Đang tạo' : 'Chờ xếp khu'}</span></div>
                 <h3>{batch.garmentGroup} · {batch.targetUser} · {batch.gender}</h3>
                 <p>Nhãn {batch.conditionGrade}</p>
-              </button>
+                </button>
+                <div className="ops-actions">
+                  {batch.status === 'ReadyForPlacement' && <button type="button" className="ops-btn ops-btn-primary" disabled={saving} onClick={() => setPlacing(batch)}><Boxes size={15} /> Xếp vào khu đồ đã phân loại</button>}
+                  <button type="button" className="ops-btn ops-btn-secondary" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'edit' })}><Pencil size={15} /> Sửa</button>
+                  <button type="button" className="ops-btn ops-btn-danger" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'delete' })}><Trash2 size={15} /> Xóa</button>
+                </div>
+              </article>
             ))}
             {!loading && !batches.length && <div className="ops-empty"><Boxes size={32} /><p>Chưa có Classified Batch thủ công.</p></div>}
           </div>

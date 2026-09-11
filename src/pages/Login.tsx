@@ -175,6 +175,8 @@ export const Login: React.FC = () => {
         navigate('/manager', { replace: true });
       } else if (role === 'CharityOrganization') {
         navigate('/organization/distributions', { replace: true });
+      } else if (role === 'RecyclingOrganization' || role === 'DisposalOrganization') {
+        navigate('/organization/processing-operations', { replace: true });
       } else {
         navigate('/', { replace: true });
       }

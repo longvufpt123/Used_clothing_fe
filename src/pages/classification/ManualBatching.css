@@ -1,5 +1,7 @@
 .classification-manual-grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(420px, 1.2fr); gap: 20px; }
 .classification-manual-batch { width: 100%; text-align: left; cursor: pointer; }
+.classification-manual-summary { display: block; width: 100%; border: 0; padding: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.manual-batch-dialog-form { display: grid; gap: 18px; }
 .classification-manual-batch.selected { border-color: #00a878; box-shadow: 0 0 0 2px rgba(0,168,120,.12); }
 .classification-manual-item { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #dbe4ee; border-radius: 12px; margin-bottom: 10px; background: rgba(255,255,255,.78); }
 .classification-manual-item input { width: 18px; height: 18px; accent-color: #009c72; }

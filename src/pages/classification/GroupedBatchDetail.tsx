@@ -9,6 +9,7 @@ import {
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
 import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
+import { isPendingWarehouseGroup, isSentWarehouseGroup } from '@/utils/classificationQueues';
 
 const directionLabel: Record<string, string> = {
   Charity: 'Từ thiện',
@@ -50,17 +51,31 @@ export default function GroupedBatchDetail() {
 
   if (!group) return <div className="ops-page">Đang tải...</div>;
   const isPlaced = Boolean(group.placedInClassificationAreaAt);
-  const backPath = isPlaced ? '/classification/groups'
+  const isHandedOff = isPendingWarehouseGroup(group) || isSentWarehouseGroup(group);
+  const canSend = isPlaced && ['Open', 'PlacedInClassifiedArea'].includes(group.status);
+  const statusLabel = ({
+    Draft: 'Đang tạo',
+    ReadyForPlacement: 'Chờ xếp khu',
+    PlacedInClassifiedArea: 'Đã xếp khu',
+    Open: isPlaced ? 'Đã xếp khu' : 'Chờ xếp khu',
+    PendingWarehouseReceipt: 'Chờ kho tiếp nhận',
+    WarehouseReceived: 'Kho đã tiếp nhận',
+    Stored: 'Đã nhập kho',
+  } as Record<string, string>)[group.status] || group.status;
+  const backPath = isHandedOff ? '/classification/warehouse-handoffs'
+    : isPlaced ? '/classification/groups'
     : group?.status === 'Draft' || group?.status === 'ReadyForPlacement'
       ? '/classification/manual-batching' : '/classification/warehouse-handoffs';
 
   const sendToWarehouse = async () => {
+    if (!canSend || sending) return;
     setSending(true);
     try {
       await classificationService.sendGroupedBatchToWarehouse(group.id);
       setGroup((current) =>
         current ? { ...current, status: 'PendingWarehouseReceipt' } : current,
       );
+      window.dispatchEvent(new Event('classification-data-changed'));
       toast.success(`Đã bàn giao ${group.batchCode} sang bộ phận Kho.`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể bàn giao batch sang kho.');
@@ -78,17 +93,13 @@ export default function GroupedBatchDetail() {
         <div className="ops-title-row">
           <h1>{group.batchCode}</h1>
           <span className="ops-badge classified">
-            {group.status !== 'Open'
-              ? 'Đã gửi kho'
-              : isPlaced
-                ? `Nhãn ${group.conditionGrade}`
-                : 'Chờ nhập kho đồ đã phân loại'}
+            {statusLabel}
           </span>
         </div>
       </div>
 
       <section className="ops-panel glass">
-        <span className="ops-panel-label">Khóa phân nhóm</span>
+        <span className="ops-panel-label">Nhóm</span>
         <div className="ops-kv-grid">
           {[
             ['Ngày', new Date(group.classificationDate).toLocaleDateString('vi-VN')],
@@ -112,17 +123,17 @@ export default function GroupedBatchDetail() {
         </div>
       </section>
 
-      {isPlaced && <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>
+      {(canSend || isHandedOff) && <div className="ops-actions" style={{ justifyContent: 'flex-end' }}>
         <button
           className="ops-btn ops-btn-primary"
           type="button"
-          disabled={group.status !== 'Open' || sending}
+          disabled={!canSend || sending}
           onClick={sendToWarehouse}
         >
           <Send size={16} />{' '}
           {sending
             ? 'Đang bàn giao...'
-            : group.status === 'Open'
+            : canSend
               ? 'Bàn giao sang Kho'
               : 'Đã bàn giao sang Kho'}
         </button>

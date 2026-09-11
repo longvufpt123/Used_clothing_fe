@@ -1,0 +1,44 @@
+.classification-batch-list {
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  align-items: stretch;
+}
+.classification-resume-form { display: grid; gap: 16px; }
+
+.classification-batch-list .ops-card {
+  min-width: 0;
+}
+
+.classification-batch-list .ops-card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.classification-batch-list .ops-card-code {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.classification-batch-list .ops-badge {
+  justify-self: start;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.classification-batch-list .ops-card h3 {
+  overflow-wrap: anywhere;
+  margin-bottom: 14px;
+}
+
+.classification-batch-list .ops-card-footer {
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.classification-batch-list .ops-card-action {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

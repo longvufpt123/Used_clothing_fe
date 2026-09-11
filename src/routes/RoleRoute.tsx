@@ -10,11 +10,12 @@ const homeByRole: Record<string, string> = {
   Manager: '/manager',
   Donor: '/',
   CharityOrganization: '/organization/distributions',
-  RecyclingOrganization: '/login',
+  RecyclingOrganization: '/organization/processing-operations',
+  DisposalOrganization: '/organization/processing-operations',
 };
 
 interface RoleRouteProps {
-  role: string;
+  role: string | string[];
   children: ReactNode;
 }
 
@@ -27,7 +28,7 @@ export default function RoleRoute({ role, children }: RoleRouteProps) {
   }
 
   const currentRole = user.role.trim();
-  if (currentRole !== role) {
+  if (!(Array.isArray(role) ? role.includes(currentRole) : currentRole === role)) {
     return <Navigate to={homeByRole[currentRole] ?? '/'} replace />;
   }
 

@@ -1,8 +1,11 @@
 import type React from 'react';
 import { ClipboardList, HeartHandshake, ShoppingBag } from 'lucide-react';
 import OpsLayout, { type OpsNavItem } from '@/shared/layouts/OpsLayout';
+import { useAuth } from '@/context/AuthContext';
 
 export default function OrganizationShell({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const processing = ['RecyclingOrganization', 'DisposalOrganization'].includes(user?.role.trim() || '');
   const nav: OpsNavItem[] = [
     {
       to: '/organization/distributions',
@@ -22,7 +25,9 @@ export default function OrganizationShell({ children }: { children: React.ReactN
     },
   ];
   return (
-    <OpsLayout homePath="/organization/distributions" roleLabel="Tổ chức từ thiện" nav={nav}>
+    <OpsLayout homePath={processing ? '/organization/processing-operations' : '/organization/distributions'}
+      roleLabel={processing ? user?.role.trim() === 'RecyclingOrganization' ? 'Tổ chức tái chế' : 'Tổ chức tiêu hủy' : 'Tổ chức từ thiện'}
+      nav={processing ? [{ to: '/organization/processing-operations', label: 'Yêu cầu xử lý', icon: ClipboardList, matchPrefixes: ['/organization/processing-operations'] }] : nav}>
       {children}
     </OpsLayout>
   );

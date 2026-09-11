@@ -53,7 +53,8 @@ type LayoutEditor = {
   capacityKg: number;
   currentKg: number;
   allocatedKg: number;
-  areaType: 'Receiving' | 'Unclassified' | 'Classified' | 'Storage';
+  areaType: 'Receiving' | 'Recycled' | 'Unclassified' | 'Classified' | 'Storage';
+  processingDirection?: string | null;
 };
 type LocationEditor = {
   id?: string;
@@ -320,6 +321,7 @@ export default function ManagerWarehouseControl() {
           warehouseId: layout.warehouseId,
           areaName: layoutEditor.name.trim(),
           areaType: layoutEditor.areaType,
+          processingDirection: layoutEditor.processingDirection || null,
           description: layoutEditor.description,
           capacityKg: layoutEditor.capacityKg,
         };
@@ -1032,25 +1034,34 @@ export default function ManagerWarehouseControl() {
                   <label>
                     Mục đích khu vực
                     <select
-                      value={layoutEditor.areaType}
+                      value={layoutEditor.areaType === 'Storage' && layoutEditor.processingDirection
+                        ? `Storage:${layoutEditor.processingDirection}` : layoutEditor.areaType}
                       disabled={Boolean(layoutEditor.id) && layoutEditor.currentKg > 0}
                       onChange={(e) =>
                         setLayoutEditor({
                           ...layoutEditor,
-                          areaType: e.target.value as LayoutEditor['areaType'],
+                          areaType: e.target.value.split(':')[0] as LayoutEditor['areaType'],
+                          processingDirection: e.target.value.split(':')[1] || null,
                         })
                       }
                     >
                       <option value="Receiving">Tiếp nhận hàng — Receiving Staff</option>
+                      <option value="Recycled">Đồ đã tái chế — Chờ phân loại lại</option>
                       <option value="Unclassified">Chờ phân loại — Classification Staff</option>
                       <option value="Classified">Đã phân loại — Classification Staff</option>
-                      <option value="Storage">Lưu kho — Warehouse Staff</option>
+                      <option value="Storage:Charity">Hàng từ thiện — Nhãn A</option>
+                      <option value="Storage:Recycling">Hàng chờ tái chế — Nhãn B</option>
+                      <option value="Storage:Disposal">Cách ly / tiêu hủy — Nhãn C</option>
+                      <option value="Storage">Lưu kho đa mục đích — Warehouse Staff</option>
                     </select>
                     <small>
                       {layoutEditor.areaType === 'Receiving' && 'Dùng để nhận Intake Batch từ Receiving Staff.'}
+                      {layoutEditor.areaType === 'Recycled' && 'Nhận đồ tổ chức tái chế gửi về, chờ manager phân công phân loại lại.'}
                       {layoutEditor.areaType === 'Unclassified' && 'Dùng cho các lô đang chờ Classification Staff xử lý.'}
                       {layoutEditor.areaType === 'Classified' && 'Dùng để xếp các Classified Batch đã hoàn tất.'}
-                      {layoutEditor.areaType === 'Storage' && 'Dùng để lưu tồn kho từ thiện, tái chế hoặc tiêu hủy.'}
+                      {layoutEditor.areaType === 'Storage' && (layoutEditor.processingDirection
+                        ? 'Các vị trí trong khu sẽ dùng cùng hướng xử lý đã chọn.'
+                        : 'Chọn hướng xử lý riêng khi cấu hình từng vị trí lưu kho.')}
                       {Boolean(layoutEditor.id) && layoutEditor.currentKg > 0 && ' Phải chuyển hết hàng ra ngoài trước khi đổi mục đích.'}
                     </small>
                   </label>
@@ -1228,6 +1239,7 @@ export default function ManagerWarehouseControl() {
                     Hướng xử lý ưu tiên
                     <select
                       value={locationEditor.preferredProcessingDirection}
+                      disabled={Boolean(layout?.areas.find((area) => area.groups.some((group) => group.id === locationEditor.areaGroupId))?.processingDirection)}
                       onChange={(e) =>
                         setLocationEditor({
                           ...locationEditor,
@@ -1505,6 +1517,7 @@ function LayoutView({
                       name: area.areaName,
                       description: area.description || '',
                       areaType: area.areaType as LayoutEditor['areaType'],
+                      processingDirection: area.processingDirection,
                       capacityKg: area.capacityKg,
                       currentKg: area.currentWeightKg,
                       allocatedKg: allocated,
@@ -1608,7 +1621,7 @@ function LayoutView({
                               shelfCode: 'S01',
                               binCode: 'B01',
                               preferredGarmentGroup: '',
-                              preferredProcessingDirection: '',
+                              preferredProcessingDirection: area.processingDirection || '',
                               capacityKg: Math.max(1, group.capacityKg - locationCapacity),
                               currentWeightKg: 0,
                               allocatedKg: locationCapacity,

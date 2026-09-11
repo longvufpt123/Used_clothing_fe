@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRightLeft, Boxes, Search, Send } from 'lucide-react';
+import { ArrowRightLeft, Boxes, Search, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -181,21 +181,23 @@ export default function WarehouseInventoryPage() {
               </div>
             </div>
             <div className="ops-actions">
-              <button
-                className="ops-btn ops-btn-secondary"
-                disabled={item.status !== 'Available'}
-                onClick={() => open(item, 'move')}
-              >
-                <ArrowRightLeft size={15} />
-                Điều chuyển
-              </button>
-              {item.reservedWeightKg > 0 && (
+              {item.reservedWeightKg > 0 ? (
                 <button
                   className="ops-btn ops-btn-primary"
-                  onClick={() => navigate('/warehouse/distributions')}
+                  onClick={() => navigate(['Recycling', 'Disposal'].includes(item.processingDirection)
+                    ? '/warehouse/processing-operations' : '/warehouse/distributions')}
                 >
-                  <Send size={15} />
-                  Xuất kho
+                  <FileText size={15} />
+                  Xem yêu cầu
+                </button>
+              ) : (
+                <button
+                  className="ops-btn ops-btn-secondary"
+                  disabled={item.status !== 'Available'}
+                  onClick={() => open(item, 'move')}
+                >
+                  <ArrowRightLeft size={15} />
+                  Điều chuyển
                 </button>
               )}
             </div>
