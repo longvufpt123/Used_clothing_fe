@@ -30,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   ApprovedAwaitingWarehouse: 'Đã duyệt, chờ kho xử lý', ReadyForGhn: 'Sẵn sàng tạo vận đơn GHN',
   GhnBooked: 'Đã tạo vận đơn GHN', Shipping: 'Đang giao hàng', InTransit: 'Đang vận chuyển',
   Delivered: 'Đã giao hàng', DeliveryFailed: 'Giao hàng thất bại',
+  OrganizationReceived: 'Đã nhận được hàng',
   ready_to_pick: 'Chờ GHN lấy hàng', picking: 'GHN đang lấy hàng',
   money_collect_picking: 'Đang thu tiền khi lấy hàng', picked: 'GHN đã lấy hàng',
   storing: 'Đang lưu tại kho GHN', transporting: 'Đang vận chuyển',

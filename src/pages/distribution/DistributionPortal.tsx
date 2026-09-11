@@ -55,6 +55,25 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DistributionRequest | null>(null);
   const [detailRequest, setDetailRequest] = useState<DistributionRequest | null>(null);
+  const [receiptTarget, setReceiptTarget] = useState<DistributionRequest | null>(null);
+  const [receiptSubmitting, setReceiptSubmitting] = useState(false);
+  const receiptBusy = useRef(false);
+  const confirmReceipt = async () => {
+    if (!receiptTarget || receiptBusy.current) return;
+    receiptBusy.current = true;
+    setReceiptSubmitting(true);
+    try {
+      await distributionService.confirmReceipt(receiptTarget.id);
+      const receivedId = receiptTarget.id;
+      setRequests((current) => current.map((request) => request.id === receivedId
+        ? { ...request, status: 'OrganizationReceived' } : request));
+      setDetailRequest(null);
+      setReceiptTarget(null);
+      toast.success('Đã xác nhận nhận được hàng.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể xác nhận nhận hàng.');
+    } finally { receiptBusy.current = false; setReceiptSubmitting(false); }
+  };
   const [issueSlipRequest, setIssueSlipRequest] = useState<DistributionRequest | null>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
   const issueSlipRef = useRef<HTMLElement | null>(null);
@@ -768,6 +787,24 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
           )}
         </section>
       )}
+      {receiptTarget && (
+        <div className="product-modal-backdrop" onMouseDown={() => { if (!receiptBusy.current) setReceiptTarget(null); }}>
+          <section className="distribution-detail-modal" role="dialog" aria-modal="true"
+            aria-labelledby="charity-receipt-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header><h2 id="charity-receipt-title">Xác nhận đã nhận hàng</h2>
+              <button type="button" aria-label="Đóng" disabled={receiptSubmitting} onClick={() => setReceiptTarget(null)}><X /></button>
+            </header>
+            <p>Bạn xác nhận tổ chức đã thực nhận hàng của yêu cầu <strong>{receiptTarget.code}</strong>?</p>
+            <p>Kiểm tra hàng thực tế trước khi xác nhận. Trạng thái GHN có thể chưa cập nhật.</p>
+            <div className="request-actions">
+              <button type="button" disabled={receiptSubmitting} onClick={() => setReceiptTarget(null)}>Hủy</button>
+              <button type="button" disabled={receiptSubmitting} onClick={() => void confirmReceipt()}>
+                {receiptSubmitting ? 'Đang xác nhận...' : 'Xác nhận đã nhận hàng'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {detailRequest && (
         <div className="product-modal-backdrop" onMouseDown={() => setDetailRequest(null)}>
           <section
@@ -846,6 +883,12 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               </div>
             )}
             <div className="request-actions">
+              {mode === 'organization' && detailRequest.warehouseIssuedAt
+                && ['ReadyForGhn', 'GhnBooked', 'InTransit', 'Delivered', 'DeliveryFailed'].includes(detailRequest.status) && (
+                <button type="button" onClick={() => { setReceiptTarget(detailRequest); setDetailRequest(null); }}>
+                  <PackageCheck /> Đã nhận được hàng
+                </button>
+              )}
               {mode === 'organization' && detailRequest.status === 'PendingManagerApproval' && (
                 <>
                   <button
