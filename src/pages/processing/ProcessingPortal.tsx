@@ -47,7 +47,7 @@ const labels: Record<string, string> = {
   ReturnScheduled: 'Đã hẹn ngày trả',
   ReturnInTransit: 'Đang gửi đồ tái chế về',
   ReturnReceived: 'Đã nhận về · phân loại lại',
-  Completed: 'Hoàn tất',
+  Completed: 'Đã hoàn thành',
   RejectedByOrganization: 'Tổ chức từ chối',
   RejectedByManager: 'Quản lý từ chối',
   Rejected: 'Đã từ chối',

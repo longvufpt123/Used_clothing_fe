@@ -194,7 +194,8 @@ export default function RecyclingReturnPanel({
               Nhận đồ tái chế về kho
             </button>
           )}
-          {mode === 'manager' && detail.status === 'ReturnReceived' && (
+          {mode === 'manager' && detail.status === 'ReturnReceived'
+            && data?.batches.some((batch) => batch.status === 'AwaitingClassificationAssignment') && (
             <Link className="processing-button primary" to="/manager/classification-dispatch">
               Phân công phân loại lại
             </Link>
