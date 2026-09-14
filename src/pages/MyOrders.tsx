@@ -38,6 +38,8 @@ interface DonorRequestSearchApiResponse {
   description?: string;
   imageUrls?: string[];
   estimateWeight: number;
+  estimatedItemCount?: number;
+  estimatedVolumeLiters?: number;
   actualWeight?: number | null;
   pickupAddress: string;
   pickupDate?: string | null;
@@ -76,6 +78,8 @@ interface UpdateDonationPayload {
   description: string;
   imageUrls: string[];
   estimateWeight: number;
+  estimatedItemCount: number;
+  estimatedVolumeLiters: number;
   pickupAddress: string;
   warehouseId: string;
 }
@@ -467,6 +471,8 @@ export const MyOrders: React.FC = () => {
         .join('\n'),
       imageUrls: editForm.imageUrls,
       estimateWeight: estimateWeightByOption[editForm.weight] ?? order.estimateWeight,
+      estimatedItemCount: order.estimatedItemCount ?? 10,
+      estimatedVolumeLiters: order.estimatedVolumeLiters ?? 30,
       pickupAddress: editForm.pickupAddress,
       warehouseId: editForm.warehouseId,
     };

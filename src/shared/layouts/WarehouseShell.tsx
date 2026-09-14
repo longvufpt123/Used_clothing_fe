@@ -64,7 +64,7 @@ export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({ childr
     },
     {
       to: '/warehouse/areas',
-      label: 'Khu vực kho',
+      label: 'Khu vực lưu trữ',
       icon: Building2,
       matchPrefixes: ['/warehouse/areas'],
     },

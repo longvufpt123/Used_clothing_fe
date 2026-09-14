@@ -548,3 +548,83 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Organization registration modal (feedback 11/09) */
+.org-register-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.org-register-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: min(640px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 24px;
+}
+.org-register-modal header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.org-register-modal header h3 {
+  margin: 0;
+  flex: 1;
+}
+.org-register-modal header p {
+  flex-basis: 100%;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0;
+}
+.org-register-modal header button {
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.org-register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.org-register-grid label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.org-register-grid label.full {
+  grid-column: 1 / -1;
+}
+.org-register-grid input,
+.org-register-grid select {
+  padding: 9px 12px;
+  border: 1px solid #d8dee6;
+  border-radius: 9px;
+  font: inherit;
+}
+.org-register-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+.org-register-actions > button[type='button'] {
+  border: 1px solid #d8dee6;
+  background: transparent;
+  border-radius: 9px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+.auth-tabs .org-register-tab {
+  color: var(--color-primary, #059669);
+}

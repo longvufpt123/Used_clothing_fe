@@ -23,7 +23,7 @@ const roleLabels: Record<string, string> = {
   Manager: 'Điều phối viên',
   ReceivingStaff: 'Nhân viên tiếp nhận',
   ClassificationStaff: 'Nhân viên phân loại',
-  WarehouseStaff: 'Nhân viên kho',
+  WarehouseStaff: 'Chuyên viên xuất nhập kho',
 };
 
 export const StaffProfile: React.FC = () => {

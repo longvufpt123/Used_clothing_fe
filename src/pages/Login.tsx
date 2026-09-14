@@ -24,6 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   loginApi,
   registerApi,
+  registerOrganizationApi,
   resendVerificationApi,
   verifyRegistrationApi,
 } from '@/services/authService';
@@ -249,6 +250,86 @@ export const Login: React.FC = () => {
     setFocusedField(null);
   };
 
+  // Organization registration (feedback 11/09): separate flow with certificate upload,
+  // reviewed by a Manager before the account can log in.
+  const [showOrgRegister, setShowOrgRegister] = useState(false);
+  const [orgSubmitting, setOrgSubmitting] = useState(false);
+  const [orgForm, setOrgForm] = useState({
+    organizationType: 'CharityOrganization',
+    organizationName: '',
+    taxCode: '',
+    address: '',
+    userName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const resetOrgForm = () => {
+    setOrgForm({
+      organizationType: 'CharityOrganization',
+      organizationName: '',
+      taxCode: '',
+      address: '',
+      userName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    });
+    setCertificateFile(null);
+  };
+  const handleOrgRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !orgForm.organizationName.trim() ||
+      !orgForm.taxCode.trim() ||
+      !orgForm.address.trim() ||
+      !orgForm.userName.trim() ||
+      !orgForm.email.trim() ||
+      !orgForm.phoneNumber.trim() ||
+      !orgForm.password
+    )
+      return toast.error('Vui lòng nhập đầy đủ thông tin tổ chức.');
+    if (orgForm.password !== orgForm.confirmPassword)
+      return toast.error('Mật khẩu xác nhận không trùng khớp.');
+    if (orgForm.password.length < 8 || !/[A-Z]/.test(orgForm.password)
+      || !/\d/.test(orgForm.password) || /^[A-Za-z0-9]+$/.test(orgForm.password))
+      return toast.error('Mật khẩu cần ít nhất 8 ký tự, chữ hoa, chữ số và ký tự đặc biệt.');
+    if (!certificateFile) return toast.error('Vui lòng đính kèm giấy chứng nhận (pdf/jpg/png, tối đa 5MB).');
+    if (certificateFile.size > 5_000_000)
+      return toast.error('Giấy chứng nhận không được vượt quá 5MB.');
+    const extension = certificateFile.name.split('.').pop()?.toLowerCase() || '';
+    if (!['pdf', 'jpg', 'jpeg', 'png'].includes(extension))
+      return toast.error('Giấy chứng nhận chỉ chấp nhận file pdf, jpg, jpeg hoặc png.');
+    setOrgSubmitting(true);
+    try {
+      await registerOrganizationApi({
+        organizationType: orgForm.organizationType as
+          | 'CharityOrganization'
+          | 'RecyclingOrganization'
+          | 'DisposalOrganization',
+        organizationName: orgForm.organizationName.trim(),
+        taxCode: orgForm.taxCode.trim(),
+        address: orgForm.address.trim(),
+        userName: orgForm.userName.trim(),
+        email: orgForm.email.trim(),
+        phoneNumber: orgForm.phoneNumber.trim(),
+        password: orgForm.password,
+        certificateFile,
+      });
+      toast.success('Đã gửi đăng ký. Tài khoản hoạt động sau khi Manager phê duyệt.');
+      setShowOrgRegister(false);
+      resetOrgForm();
+      handleTabChange(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || 'Đăng ký tổ chức thất bại.');
+    } finally {
+      setOrgSubmitting(false);
+    }
+  };
+
   const getMascotClass = () => {
     if (focusedField === 'password') return 'cover-eyes';
     if (focusedField === 'email' || focusedField === 'name') return 'look-down';
@@ -417,6 +498,13 @@ export const Login: React.FC = () => {
               onClick={() => handleTabChange(true)}
             >
               Đăng ký
+            </button>
+            <button
+              type="button"
+              className="auth-tab org-register-tab"
+              onClick={() => setShowOrgRegister(true)}
+            >
+              Đăng ký tổ chức
             </button>
           </div>
 
@@ -627,6 +715,115 @@ export const Login: React.FC = () => {
           )}
         </div>
       </div>
+
+      {showOrgRegister && (
+        <div className="org-register-backdrop" onMouseDown={(e) => {
+          if (e.target === e.currentTarget && !orgSubmitting) setShowOrgRegister(false);
+        }}>
+          <form className="org-register-modal" onSubmit={handleOrgRegister}>
+            <header>
+              <h3>Đăng ký tài khoản tổ chức</h3>
+              <p>
+                Tổ chức từ thiện / tái chế / xử lý gửi giấy chứng nhận — Manager phê duyệt trước khi
+                tài khoản hoạt động.
+              </p>
+              <button type="button" aria-label="Đóng" onClick={() => setShowOrgRegister(false)}>
+                ×
+              </button>
+            </header>
+            <div className="org-register-grid">
+              <label>
+                Loại tổ chức <b>*</b>
+                <select
+                  value={orgForm.organizationType}
+                  onChange={(e) => setOrgForm({ ...orgForm, organizationType: e.target.value })}
+                >
+                  <option value="CharityOrganization">Tổ chức từ thiện</option>
+                  <option value="RecyclingOrganization">Tổ chức tái chế</option>
+                  <option value="DisposalOrganization">Tổ chức xử lý / tiêu hủy</option>
+                </select>
+              </label>
+              <label>
+                Tên tổ chức <b>*</b>
+                <input
+                  value={orgForm.organizationName}
+                  onChange={(e) => setOrgForm({ ...orgForm, organizationName: e.target.value })}
+                />
+              </label>
+              <label>
+                Mã số thuế <b>*</b>
+                <input
+                  value={orgForm.taxCode}
+                  onChange={(e) => setOrgForm({ ...orgForm, taxCode: e.target.value })}
+                />
+              </label>
+              <label className="full">
+                Địa chỉ vật lý <b>*</b>
+                <input
+                  placeholder="Địa chỉ trụ sở tổ chức"
+                  value={orgForm.address}
+                  onChange={(e) => setOrgForm({ ...orgForm, address: e.target.value })}
+                />
+              </label>
+              <label>
+                Tên đăng nhập <b>*</b>
+                <input
+                  value={orgForm.userName}
+                  onChange={(e) => setOrgForm({ ...orgForm, userName: e.target.value })}
+                />
+              </label>
+              <label>
+                Email <b>*</b>
+                <input
+                  type="email"
+                  value={orgForm.email}
+                  onChange={(e) => setOrgForm({ ...orgForm, email: e.target.value })}
+                />
+              </label>
+              <label>
+                Số điện thoại <b>*</b>
+                <input
+                  value={orgForm.phoneNumber}
+                  onChange={(e) => setOrgForm({ ...orgForm, phoneNumber: e.target.value })}
+                />
+              </label>
+              <label>
+                Mật khẩu <b>*</b>
+                <input
+                  type="password"
+                  value={orgForm.password}
+                  onChange={(e) => setOrgForm({ ...orgForm, password: e.target.value })}
+                />
+              </label>
+              <label>
+                Xác nhận mật khẩu <b>*</b>
+                <input
+                  type="password"
+                  value={orgForm.confirmPassword}
+                  onChange={(e) => setOrgForm({ ...orgForm, confirmPassword: e.target.value })}
+                />
+              </label>
+              <label className="full">
+                Giấy chứng nhận (pdf/jpg/png, ≤5MB) <b>*</b>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setCertificateFile(e.target.files?.[0] || null)}
+                />
+                {certificateFile && <small>Đã chọn: {certificateFile.name}</small>}
+              </label>
+            </div>
+            <div className="org-register-actions">
+              <button type="button" disabled={orgSubmitting} onClick={() => setShowOrgRegister(false)}>
+                Đóng
+              </button>
+              <Button type="submit" isLoading={orgSubmitting} className="login-submit">
+                Gửi đăng ký <ArrowRight size={16} style={{ marginLeft: 8 }} />
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

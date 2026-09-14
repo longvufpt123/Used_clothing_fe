@@ -3,15 +3,12 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Eye,
   Download,
-  ImageOff,
   PackageCheck,
   Pencil,
   RefreshCw,
   Search,
   Send,
-  ShoppingBag,
   Trash2,
   Truck,
   X,
@@ -19,8 +16,8 @@ import {
 import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   distributionService,
-  type CatalogItem,
   type DistributionRequest,
+  type RequestCriteria,
 } from '@/services/distributionService';
 import { useToast } from '@/context/ToastContext';
 import AddressSearchMap from '@/components/common/AddressSearchMap';
@@ -37,16 +34,11 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [requests, setRequests] = useState<DistributionRequest[]>([]);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [criteria, setCriteria] = useState<RequestCriteria | null>(null);
   const [warehouses, setWarehouses] = useState<
     { id: string; warehouseName: string; address: string }[]
   >([]);
   const [warehouseId, setWarehouseId] = useState('');
-  const [selected, setSelected] = useState<Record<string, number>>({});
-  const [activeBatch, setActiveBatch] = useState<CatalogItem | null>(null);
-  const [productPage, setProductPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [catalogPage, setCatalogPage] = useState(1);
   const [requestPage, setRequestPage] = useState(1);
   const [requestSearch, setRequestSearch] = useState('');
   const [requestStatus, setRequestStatus] = useState('');
@@ -99,22 +91,30 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     toWardCode: '',
     wardName: '',
   });
-  const [form, setForm] = useState({
+  const emptyCriteriaForm = {
     recipientName: '',
     recipientPhone: '',
     toAddress: '',
     notes: '',
-  });
+    requestedClothingTypeId: '',
+    requestedGenderId: '',
+    requestedSizeId: '',
+    requestedTargetUserId: '',
+    requestedWeightKg: '',
+    requestedQuantity: '',
+  };
+  const [form, setForm] = useState(emptyCriteriaForm);
 
   const load = async () => {
     try {
       if (mode === 'organization') {
-        const [cat, mine] = await Promise.all([
-          distributionService.catalog(warehouseId || undefined),
+        const [criteria, warehouses, mine] = await Promise.all([
+          distributionService.criteria(),
+          distributionService.warehouses(),
           distributionService.mine(),
         ]);
-        setCatalog(cat.items);
-        setWarehouses(cat.warehouses);
+        setCriteria(criteria);
+        setWarehouses(warehouses);
         setRequests(mine);
       } else
         setRequests(
@@ -128,45 +128,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   };
   useEffect(() => {
     load();
-  }, [mode, warehouseId]);
-  useEffect(() => {
-    if (!activeBatch) return;
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && setActiveBatch(null);
-    document.addEventListener('keydown', close);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', close);
-      document.body.style.overflow = '';
-    };
-  }, [activeBatch]);
-  useEffect(() => {
-    setProductPage(1);
-  }, [activeBatch?.inventoryId]);
-
-  const shown = useMemo(
-    () =>
-      catalog.filter((x) =>
-        `${x.batchCode} ${x.clothingType} ${x.fabricType} ${x.gender} ${x.size}`
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
-    [catalog, search],
-  );
-  const catalogPageSize = 6;
-  const catalogPageCount = Math.max(1, Math.ceil(shown.length / catalogPageSize));
-  const pagedCatalog = shown.slice(
-    (catalogPage - 1) * catalogPageSize,
-    catalogPage * catalogPageSize,
-  );
-  const productPageSize = 6;
-  const productPageCount = activeBatch
-    ? Math.max(1, Math.ceil(activeBatch.items.length / productPageSize))
-    : 1;
-  const pagedProducts =
-    activeBatch?.items.slice((productPage - 1) * productPageSize, productPage * productPageSize) ||
-    [];
+  }, [mode]);
   const organizationView =
-    location.pathname.split('/').length > 3 ? 'requests' : searchParams.get('tab') || 'catalog';
+    location.pathname.split('/').length > 3 ? 'requests' : searchParams.get('tab') || 'request';
   const requestPageSize = 5;
   const requestWarehouses = useMemo(
     () => Array.from(new Set(requests.map((request) => request.warehouseName))).sort(),
@@ -195,9 +159,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     (requestPage - 1) * requestPageSize,
     requestPage * requestPageSize,
   );
-  useEffect(() => {
-    setCatalogPage(1);
-  }, [warehouseId, search]);
   useEffect(
     () => setRequestPage(1),
     [requestSearch, requestStatus, requestWarehouse, requestDate, organizationView],
@@ -205,18 +166,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   useEffect(() => {
     if (requestPage > requestPageCount) setRequestPage(requestPageCount);
   }, [requestPage, requestPageCount]);
-  useEffect(() => {
-    if (catalogPage > catalogPageCount) setCatalogPage(catalogPageCount);
-  }, [catalogPage, catalogPageCount]);
-  const toggleBatch = (batch: CatalogItem) => {
-    if (batch.isLocked) return;
-    setSelected((current) => {
-      const next = { ...current };
-      if (next[batch.inventoryId] > 0) delete next[batch.inventoryId];
-      else next[batch.inventoryId] = batch.availableWeight;
-      return next;
-    });
-  };
   const create = async () => {
     if (
       !form.recipientName.trim() ||
@@ -227,26 +176,31 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       return toast.warning('Vui lòng nhập đầy đủ tất cả thông tin bắt buộc.');
     if (!/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/.test(form.recipientPhone.replace(/[\s.\-()]/g, '')))
       return toast.warning('Số điện thoại nhận hàng không hợp lệ.');
-    if (!warehouseId || !Object.values(selected).some((x) => x > 0))
-      return toast.warning('Chọn kho và ít nhất một batch.');
+    if (!warehouseId) return toast.warning('Chọn kho nhận yêu cầu.');
+    if (!form.requestedClothingTypeId) return toast.warning('Chọn loại quần áo mong muốn nhận.');
+    const requestedWeightKg = Number(form.requestedWeightKg);
+    if (!Number.isFinite(requestedWeightKg) || requestedWeightKg <= 0)
+      return toast.warning('Nhập khối lượng mong muốn (kg) lớn hơn 0.');
+    if (form.requestedQuantity && Number(form.requestedQuantity) <= 0)
+      return toast.warning('Số lượng món mong muốn phải lớn hơn 0 nếu nhập.');
     try {
       const payload = {
         warehouseId,
-        ...form,
-        items: Object.entries(selected)
-          .filter(([, q]) => q > 0)
-          .map(([inventoryId]) => ({ inventoryId })),
+        recipientName: form.recipientName.trim(),
+        recipientPhone: form.recipientPhone.trim(),
+        toAddress: form.toAddress.trim(),
+        notes: form.notes.trim(),
+        requestedClothingTypeId: form.requestedClothingTypeId || null,
+        requestedGenderId: form.requestedGenderId || null,
+        requestedSizeId: form.requestedSizeId || null,
+        requestedTargetUserId: form.requestedTargetUserId || null,
+        requestedWeightKg,
+        requestedQuantity: form.requestedQuantity ? Number(form.requestedQuantity) : null,
       };
       if (editingRequestId) await distributionService.update(editingRequestId, payload);
       else await distributionService.create(payload);
       setEditingRequestId(null);
-      setForm({
-        recipientName: '',
-        recipientPhone: '',
-        toAddress: '',
-        notes: '',
-      });
-      setSelected({});
+      setForm(emptyCriteriaForm);
       toast.success('Đã gửi yêu cầu đến Manager.');
       load();
     } catch (error: any) {
@@ -255,30 +209,25 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   };
   const startEdit = (request: DistributionRequest) => {
     setEditingRequestId(request.id);
-    setWarehouseId(
-      warehouses.find((warehouse) => warehouse.warehouseName === request.warehouseName)?.id || '',
-    );
+    setWarehouseId(request.warehouseId);
     setForm({
       recipientName: request.recipientName,
       recipientPhone: request.recipientPhone,
       toAddress: request.toAddress,
       notes: request.notes || '',
+      requestedClothingTypeId: request.requestedClothingTypeId || '',
+      requestedGenderId: request.requestedGenderId || '',
+      requestedSizeId: request.requestedSizeId || '',
+      requestedTargetUserId: request.requestedTargetUserId || '',
+      requestedWeightKg: request.requestedWeightKg ? String(request.requestedWeightKg) : '',
+      requestedQuantity: request.requestedQuantity ? String(request.requestedQuantity) : '',
     });
-    setSelected(
-      Object.fromEntries(request.items.map((item) => [item.inventoryId, item.requestedWeight])),
-    );
-    setSearchParams({ tab: 'catalog' });
+    setSearchParams({ tab: 'request' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const cancelEdit = () => {
     setEditingRequestId(null);
-    setSelected({});
-    setForm({
-      recipientName: '',
-      recipientPhone: '',
-      toAddress: '',
-      notes: '',
-    });
+    setForm(emptyCriteriaForm);
   };
   const deleteRequest = async () => {
     if (!deleteTarget) return;
@@ -496,163 +445,165 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         </h1>
         <p>Theo dõi minh bạch các đơn đã phân loại đến tổ chức tiếp nhận.</p>
       </header>
-      {mode === 'organization' && organizationView === 'catalog' && (
-        <>
-          <section className="distribution-toolbar">
+      {mode === 'organization' && organizationView === 'request' && (
+        <section className={`distribution-form${editingRequestId ? ' editing' : ''}`}>
+          {editingRequestId && (
+            <div className="edit-banner">
+              <Pencil /> Đang chỉnh sửa yêu cầu chờ Manager duyệt
+            </div>
+          )}
+          <h2>{editingRequestId ? 'Chỉnh sửa yêu cầu nhận đồ' : 'Tạo yêu cầu nhận đồ từ thiện'}</h2>
+          <p className="distribution-form-hint">
+            Chọn loại quần áo và khối lượng mong muốn — Manager duyệt và kho tự động chọn lô hàng phù hợp.
+          </p>
+          <label className="distribution-field">
+            <span>
+              Kho nhận yêu cầu <b>*</b>
+            </span>
             <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-              <option value="">Chọn kho để xem tồn khả dụng</option>
+              <option value="">Chọn kho</option>
               {warehouses.map((x) => (
                 <option value={x.id} key={x.id}>
                   {x.warehouseName}
                 </option>
               ))}
             </select>
-            <label>
-              <Search size={16} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm batch, loại đồ, size..."
-              />
-            </label>
-          </section>
-          <div className="distribution-catalog">
-            {pagedCatalog.map((batch) => (
-              <article
-                key={batch.inventoryId}
-                className={batch.isLocked ? 'catalog-batch-locked' : undefined}
-                data-tooltip={batch.isLocked ? batch.lockReason : undefined}
-                tabIndex={batch.isLocked ? 0 : undefined}
-                aria-disabled={batch.isLocked || undefined}
-              >
-                <div className="distribution-card-head">
-                  <div>
-                    <b>{batch.batchCode}</b>
-                    <h3>
-                      {batch.clothingType} · {batch.fabricType}
-                    </h3>
-                  </div>
-                  <span>Nhãn {batch.grade}</span>
-                </div>
-                <p>
-                  {batch.gender} · {batch.targetUser} · Size {batch.size}
-                </p>
-                <strong>
-                  {batch.availableWeight} kg khả dụng
-                </strong>
-                {batch.isLocked && <span className="batch-lock-label">Đang được giữ chỗ</span>}
-                <button className="product-preview" onClick={() => setActiveBatch(batch)}>
-                  <Eye size={18} /> Xem {batch.items.length} sản phẩm
-                </button>
-                <div className="quantity-picker">
-                  <button
-                    className={selected[batch.inventoryId] > 0 ? 'selected' : ''}
-                    disabled={batch.isLocked}
-                    onClick={() => toggleBatch(batch)}
-                  >
-                    {batch.isLocked
-                      ? 'Batch tạm thời không khả dụng'
-                      : selected[batch.inventoryId] > 0
-                      ? `Đã chọn toàn bộ ${batch.availableWeight} kg`
-                      : `Chọn toàn bộ ${batch.availableWeight} kg`}
-                  </button>
-                </div>
-              </article>
-            ))}
+          </label>
+          <label className="distribution-field">
+            <span>
+              Loại quần áo mong muốn <b>*</b>
+            </span>
+            <select
+              value={form.requestedClothingTypeId}
+              onChange={(e) => setForm({ ...form, requestedClothingTypeId: e.target.value })}
+            >
+              <option value="">Chọn loại quần áo</option>
+              {(criteria?.clothingTypes || []).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="distribution-field">
+            <span>Giới tính</span>
+            <select
+              value={form.requestedGenderId}
+              onChange={(e) => setForm({ ...form, requestedGenderId: e.target.value })}
+            >
+              <option value="">Không yêu cầu</option>
+              {(criteria?.genders || []).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="distribution-field">
+            <span>Kích cỡ</span>
+            <select
+              value={form.requestedSizeId}
+              onChange={(e) => setForm({ ...form, requestedSizeId: e.target.value })}
+            >
+              <option value="">Không yêu cầu</option>
+              {(criteria?.sizes || []).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="distribution-field">
+            <span>Đối tượng sử dụng</span>
+            <select
+              value={form.requestedTargetUserId}
+              onChange={(e) => setForm({ ...form, requestedTargetUserId: e.target.value })}
+            >
+              <option value="">Không yêu cầu</option>
+              {(criteria?.targetUsers || []).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="distribution-field">
+            <span>
+              Khối lượng mong muốn (kg) <b>*</b>
+            </span>
+            <input
+              type="number"
+              min={0.1}
+              step={0.1}
+              inputMode="decimal"
+              placeholder="VD: 20"
+              value={form.requestedWeightKg}
+              onChange={(e) => setForm({ ...form, requestedWeightKg: e.target.value })}
+            />
+          </label>
+          <label className="distribution-field">
+            <span>Số lượng món (không bắt buộc)</span>
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              placeholder="VD: 50"
+              value={form.requestedQuantity}
+              onChange={(e) => setForm({ ...form, requestedQuantity: e.target.value })}
+            />
+          </label>
+          <label className="distribution-field">
+            <span>
+              Tên người/tổ chức nhận <b>*</b>
+            </span>
+            <input
+              placeholder="Nhập tên người hoặc tổ chức nhận"
+              value={form.recipientName}
+              required
+              onChange={(e) => setForm({ ...form, recipientName: e.target.value })}
+            />
+          </label>
+          <label className="distribution-field">
+            <span>
+              Số điện thoại <b>*</b>
+            </span>
+            <input
+              placeholder="Nhập số điện thoại"
+              value={form.recipientPhone}
+              required
+              inputMode="tel"
+              onChange={(e) => setForm({ ...form, recipientPhone: e.target.value })}
+            />
+          </label>
+          <div className="distribution-address-map">
+            <AddressSearchMap
+              label="Địa chỉ nhận hàng"
+              mapTitle="Vị trí nhận hàng"
+              value={form.toAddress}
+              required
+              onChange={(toAddress) => setForm((current) => ({ ...current, toAddress }))}
+            />
           </div>
-          {shown.length > catalogPageSize && (
-            <nav className="catalog-pagination" aria-label="Phân trang danh sách batch">
-              <span>
-                Hiển thị {(catalogPage - 1) * catalogPageSize + 1}–
-                {Math.min(catalogPage * catalogPageSize, shown.length)} trong {shown.length} batch
-              </span>
-              <div>
-                <button
-                  disabled={catalogPage === 1}
-                  onClick={() => setCatalogPage((page) => page - 1)}
-                  aria-label="Trang trước"
-                >
-                  <ChevronLeft />
-                </button>
-                {Array.from({ length: catalogPageCount }, (_, index) => index + 1).map((page) => (
-                  <button
-                    key={page}
-                    className={page === catalogPage ? 'active' : ''}
-                    onClick={() => setCatalogPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  disabled={catalogPage === catalogPageCount}
-                  onClick={() => setCatalogPage((page) => page + 1)}
-                  aria-label="Trang sau"
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-            </nav>
-          )}
-          <section className={`distribution-form${editingRequestId ? ' editing' : ''}`}>
-            {editingRequestId && (
-              <div className="edit-banner">
-                <Pencil /> Đang chỉnh sửa yêu cầu chờ Manager duyệt
-              </div>
-            )}
-            <h2>Tạo Distribution Request</h2>
-            <label className="distribution-field">
-              <span>
-                Tên người/tổ chức nhận <b>*</b>
-              </span>
-              <input
-                placeholder="Nhập tên người hoặc tổ chức nhận"
-                value={form.recipientName}
-                required
-                onChange={(e) => setForm({ ...form, recipientName: e.target.value })}
-              />
-            </label>
-            <label className="distribution-field">
-              <span>
-                Số điện thoại <b>*</b>
-              </span>
-              <input
-                placeholder="Nhập số điện thoại"
-                value={form.recipientPhone}
-                required
-                inputMode="tel"
-                onChange={(e) => setForm({ ...form, recipientPhone: e.target.value })}
-              />
-            </label>
-            <div className="distribution-address-map">
-              <AddressSearchMap
-                label="Địa chỉ nhận hàng"
-                mapTitle="Vị trí nhận hàng"
-                value={form.toAddress}
-                required
-                onChange={(toAddress) => setForm((current) => ({ ...current, toAddress }))}
-              />
-            </div>
-            <label className="distribution-field full">
-              <span>
-                Mục đích sử dụng / ghi chú <b>*</b>
-              </span>
-              <textarea
-                placeholder="Mô tả mục đích sử dụng"
-                value={form.notes}
-                required
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </label>
-            {editingRequestId && (
-              <button className="cancel-edit" onClick={cancelEdit}>
-                <X /> Hủy chỉnh sửa
-              </button>
-            )}
-            <button onClick={create}>
-              <Send /> Gửi yêu cầu ({Object.values(selected).reduce((a, b) => a + b, 0)} kg)
+          <label className="distribution-field full">
+            <span>
+              Mục đích sử dụng / ghi chú <b>*</b>
+            </span>
+            <textarea
+              placeholder="Mô tả mục đích sử dụng"
+              value={form.notes}
+              required
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </label>
+          {editingRequestId && (
+            <button className="cancel-edit" onClick={cancelEdit}>
+              <X /> Hủy chỉnh sửa
             </button>
-          </section>
-        </>
+          )}
+          <button onClick={create}>
+            <Send /> Gửi yêu cầu
+          </button>
+        </section>
       )}
       {(mode !== 'organization' || organizationView !== 'catalog') && (
         <section className="distribution-requests">
@@ -1367,136 +1318,6 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 </button>
               </div>
             </form>
-          </section>
-        </div>
-      )}
-      {activeBatch && (
-        <div className="product-modal-backdrop" onMouseDown={() => setActiveBatch(null)}>
-          <section
-            className="product-modal"
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <header>
-              <div>
-                <span>DANH SÁCH SẢN PHẨM</span>
-                <h2>
-                  {activeBatch.clothingType} · {activeBatch.fabricType}
-                </h2>
-                <p>
-                  {activeBatch.batchCode} · Nhãn {activeBatch.grade}
-                </p>
-              </div>
-              <button aria-label="Đóng" onClick={() => setActiveBatch(null)}>
-                <X />
-              </button>
-            </header>
-            <div className="product-modal-summary">
-              <span>
-                <ShoppingBag /> {activeBatch.items.length} sản phẩm
-              </span>
-              <span>{activeBatch.gender}</span>
-              <span>{activeBatch.targetUser}</span>
-              <span>Size {activeBatch.size}</span>
-            </div>
-            <div className="product-grid">
-              {pagedProducts.map((item) => (
-                  <article
-                    key={item.itemCode}
-                    className="product-tile"
-                  >
-                    <div className="product-image">
-                      {item.imageUrls[0] ? (
-                        <img
-                          src={item.imageUrls[0]}
-                          alt={`${item.clothingType} ${item.itemCode}`}
-                        />
-                      ) : (
-                        <div>
-                          <ImageOff />
-                          <span>Chưa có ảnh</span>
-                        </div>
-                      )}
-                      <span className="product-grade">Nhãn {activeBatch.grade}</span>
-                    </div>
-                    <div className="product-info">
-                      <small>{item.itemCode}</small>
-                      <h3>{item.clothingType}</h3>
-                      <p>{item.fabricType}</p>
-                      <div>
-                        <span>{item.gender}</span>
-                        <span>{item.targetUser}</span>
-                        <span>Size {item.size}</span>
-                      </div>
-                      {item.notes && <em>{item.notes}</em>}
-                    </div>
-                  </article>
-              ))}
-            </div>
-            {activeBatch.items.length > productPageSize && (
-              <nav
-                className="catalog-pagination product-pagination"
-                aria-label="Phân trang sản phẩm"
-              >
-                <span>
-                  Hiển thị {(productPage - 1) * productPageSize + 1}–
-                  {Math.min(productPage * productPageSize, activeBatch.items.length)} trong{' '}
-                  {activeBatch.items.length} sản phẩm
-                </span>
-                <div>
-                  <button
-                    disabled={productPage === 1}
-                    onClick={() => setProductPage((page) => page - 1)}
-                    aria-label="Trang sản phẩm trước"
-                  >
-                    <ChevronLeft />
-                  </button>
-                  {Array.from({ length: productPageCount }, (_, index) => index + 1).map((page) => (
-                    <button
-                      key={page}
-                      className={page === productPage ? 'active' : ''}
-                      onClick={() => setProductPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    disabled={productPage === productPageCount}
-                    onClick={() => setProductPage((page) => page + 1)}
-                    aria-label="Trang sản phẩm sau"
-                  >
-                    <ChevronRight />
-                  </button>
-                </div>
-              </nav>
-            )}
-            <footer>
-              <div>
-                <b>
-                  {selected[activeBatch.inventoryId] || 0}/{activeBatch.availableWeight} kg
-                </b>
-                <span> đã chọn</span>
-              </div>
-              <div>
-                <button className="secondary" onClick={() => setActiveBatch(null)}>
-                  Đóng
-                </button>
-                <button
-                  disabled={activeBatch.isLocked}
-                  title={activeBatch.isLocked ? activeBatch.lockReason : undefined}
-                  onClick={() => {
-                    setSelected((current) => ({
-                      ...current,
-                      [activeBatch.inventoryId]: activeBatch.availableWeight,
-                    }));
-                    setActiveBatch(null);
-                  }}
-                >
-                  <ShoppingBag /> Chọn toàn bộ batch
-                </button>
-              </div>
-            </footer>
           </section>
         </div>
       )}

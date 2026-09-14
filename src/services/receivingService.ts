@@ -13,6 +13,9 @@ export interface ReceivingRequest {
   donorName: string;
   phoneNumber: string;
   pickupAddress: string;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  routeOrder?: number | null;
   deliveryMethod: string;
   category: string;
   weight: string;
@@ -44,6 +47,11 @@ export interface ReceivingBatch {
   warehouseAddress: string;
   teamMembers: TeamMember[];
   totalWeight: number;
+  vehicleType?: string | null;
+  maxOrdersPerShift?: number | null;
+  usedOrders?: number | null;
+  maxKgPerShift?: number | null;
+  usedKg?: number | null;
   warehouseReceivedAt?: string | null;
   warehouseReceivedBy?: string | null;
   currentAreaName?: string | null;
@@ -109,6 +117,9 @@ interface ApiRequest {
   donorName: string;
   phoneNumber: string;
   pickupAddress: string;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  routeOrder?: number | null;
   deliveryMethod: string;
   description: string;
   estimateWeight: number;
@@ -134,6 +145,11 @@ interface ApiBatch {
   warehouseAddress: string;
   teamMembers: TeamMember[];
   totalWeight: number;
+  vehicleType?: string | null;
+  maxOrdersPerShift?: number | null;
+  usedOrders?: number | null;
+  maxKgPerShift?: number | null;
+  usedKg?: number | null;
   warehouseReceivedAt?: string | null;
   warehouseReceivedBy?: string | null;
   currentAreaName?: string | null;
@@ -360,7 +376,7 @@ export const receivingService = {
   confirmPickup: (
     batchId: string,
     requestId: string,
-    data: { actualWeight: number; notes?: string; imageUrls?: string[] },
+    data: { actualWeight?: number | null; notes?: string; imageUrls?: string[] },
   ) =>
     apiClient.post(
       `/receiving-operations/my-batches/${batchId}/requests/${requestId}/confirm`,
@@ -467,7 +483,17 @@ export const receivingService = {
     teamName: string,
     staffIds: string[],
     teamType = 'ReceivingPickup',
-  ) => apiClient.post('/receiving-operations/teams', { shiftId, teamName, staffIds, teamType }),
+    options?: { vehicleType?: 'Motorbike' | 'Car'; maxOrdersPerShift?: number; maxKgPerShift?: number },
+  ) =>
+    apiClient.post('/receiving-operations/teams', {
+      shiftId,
+      teamName,
+      staffIds,
+      teamType,
+      vehicleType: options?.vehicleType,
+      maxOrdersPerShift: options?.maxOrdersPerShift,
+      maxKgPerShift: options?.maxKgPerShift,
+    }),
   updateTeam: (teamId: string, teamName: string, staffIds: string[]) =>
     apiClient.put(`/receiving-operations/teams/${teamId}`, { teamName, staffIds }),
   deleteTeam: (teamId: string) => apiClient.delete(`/receiving-operations/teams/${teamId}`),

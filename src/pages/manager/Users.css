@@ -415,3 +415,33 @@
     grid-column: auto;
   }
 }
+.manager-account-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.manager-account-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--color-border, #d8dee6);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: inherit;
+}
+.manager-account-tabs button.active {
+  background: var(--color-primary, #059669);
+  border-color: var(--color-primary, #059669);
+  color: #fff;
+}
+.pending-organizations .pending-certificate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary, #059669);
+  font-weight: 600;
+  text-decoration: none;
+}

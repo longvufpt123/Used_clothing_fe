@@ -46,6 +46,8 @@ interface CreateDonationPayload {
   description: string;
   imageUrls: string[];
   estimateWeight: number;
+  estimatedItemCount: number;
+  estimatedVolumeLiters: number;
   pickupAddress: string;
   pickupLatitude: number;
   pickupLongitude: number;
@@ -239,6 +241,8 @@ export const Products: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('outerwear');
   const [weight, setWeight] = useState('5-10');
+  const [itemCount, setItemCount] = useState('10');
+  const [volumeLiters, setVolumeLiters] = useState('30');
   const [condition, setCondition] = useState('good');
   const [address, setAddress] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'StaffPickup' | 'DonorDropOff'>(
@@ -486,6 +490,16 @@ export const Products: React.FC = () => {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
       return;
     }
+    const parsedItemCount = Number(itemCount);
+    const parsedVolume = Number(volumeLiters);
+    if (!Number.isFinite(parsedItemCount) || parsedItemCount < 1 || parsedItemCount > 2000) {
+      toast.error('Số lượng món ước tính phải từ 1 đến 2000.');
+      return;
+    }
+    if (!Number.isFinite(parsedVolume) || parsedVolume < 0.1 || parsedVolume > 10000) {
+      toast.error('Thể tích ước tính phải từ 0.1 đến 10000 lít.');
+      return;
+    }
 
     setLoading(true);
 
@@ -518,6 +532,8 @@ export const Products: React.FC = () => {
           .join('\n'),
         imageUrls,
         estimateWeight: estimateWeightByOption[weight] ?? 0,
+        estimatedItemCount: Number(itemCount) || 0,
+        estimatedVolumeLiters: Number(volumeLiters) || 0,
         pickupAddress:
           deliveryMethod === 'DonorDropOff'
             ? warehouses.find((warehouse) => warehouse.id === warehouseId)?.address || ''
@@ -703,6 +719,28 @@ export const Products: React.FC = () => {
                   options={weightOptions}
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <Input
+                  label="Số lượng món ước tính *"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  value={itemCount}
+                  onChange={(e) => setItemCount(e.target.value)}
+                  placeholder="VD: 10"
+                />
+                <Input
+                  label="Thể tích ước tính (lít) *"
+                  type="number"
+                  min={0.1}
+                  max={10000}
+                  step={0.1}
+                  value={volumeLiters}
+                  onChange={(e) => setVolumeLiters(e.target.value)}
+                  placeholder="VD: 30"
                 />
               </div>
 

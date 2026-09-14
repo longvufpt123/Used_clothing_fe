@@ -21,6 +21,10 @@ export interface ClassificationBatchSummary {
   teamShiftDate?: string | null;
   teamShiftStartTime?: string | null;
   teamShiftEndTime?: string | null;
+  isRecycledReturn?: boolean;
+  sourceOperationCode?: string | null;
+  sourceOrganizationName?: string | null;
+  imageUrls?: string[];
 }
 export interface ClassifiedItem {
   weightedScore?: number | null;
@@ -48,6 +52,7 @@ export interface ClassifiedItem {
 }
 export interface ClassificationBatchDetail extends ClassificationBatchSummary {
   countingNotes?: string | null;
+  batchImages?: string[];
   items: ClassifiedItem[];
 }
 export interface ConditionOption {
