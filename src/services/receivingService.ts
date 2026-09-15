@@ -329,10 +329,41 @@ const mapBatch = (b: ApiBatch): ReceivingBatch => ({
   })),
 });
 
+// Share concurrent reads (page, sidebar, StrictMode), without caching settled data.
+// Include the session token so a different signed-in user never shares a response.
+const pendingReads = new Map<string, Promise<unknown>>();
+function shareReceivingRead<T>(path: string, read: () => Promise<T>, fresh = false): Promise<T> {
+  const key = `${localStorage.getItem('accessToken') || ''}:${path}`;
+  const pending = pendingReads.get(key);
+  if (!fresh && pending) return pending as Promise<T>;
+  const request = read().finally(() => {
+    if (pendingReads.get(key) === request) pendingReads.delete(key);
+  });
+  pendingReads.set(key, request);
+  return request;
+}
+
+export type ReceivingStage = 'receiving' | 'completed' | 'transferring';
+export interface ReceivingOverview {
+  batches: ReceivingBatch[];
+  totalWeight: number;
+  processedCount: number;
+  totalCount: number;
+}
+
 export const receivingService = {
-  async getMyBatches() {
-    const data = await apiClient.get<unknown, ApiBatch[]>('/receiving-operations/my-batches');
-    return data.map(mapBatch);
+  getMyOverview(fresh = false): Promise<ReceivingOverview> {
+    return shareReceivingRead('my-overview', async () => {
+      const data = await apiClient.get<unknown, Omit<ReceivingOverview, 'batches'> & { batches: ApiBatch[] }>('/receiving-operations/my-overview');
+      return { ...data, batches: data.batches.map(mapBatch) };
+    }, fresh);
+  },
+  getMyBatches(fresh = false, stage?: ReceivingStage) {
+    const path = `/receiving-operations/my-batches${stage ? `?stage=${stage}` : ''}`;
+    return shareReceivingRead(path, async () => {
+      const data = await apiClient.get<unknown, ApiBatch[]>(path);
+      return data.map(mapBatch);
+    }, fresh);
   },
   getLocationBatches: (locationId: string) =>
     apiClient.get<unknown, ReceivingLocationBatch[]>(
@@ -366,8 +397,9 @@ export const receivingService = {
       `/receiving-operations/my-batches/${batchId}/requests/${requestId}/confirm`,
       data,
     ),
-  getMyWarehouseDropOffs: () =>
-    apiClient.get<unknown, WarehouseDropOffBoard>('/receiving-operations/my-warehouse-dropoffs'),
+  getMyWarehouseDropOffs: (fresh = false) =>
+    shareReceivingRead('my-warehouse-dropoffs', () =>
+      apiClient.get<unknown, WarehouseDropOffBoard>('/receiving-operations/my-warehouse-dropoffs'), fresh),
   confirmWarehouseDropOff: (
     requestId: string,
     data: { actualWeight: number; notes?: string; imageUrls?: string[] },

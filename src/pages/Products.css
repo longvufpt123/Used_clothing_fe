@@ -518,3 +518,34 @@
     grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   }
 }
+.nearest-warehouse-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-primary, #059669);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary, #059669) 8%, transparent);
+  color: var(--color-text-primary);
+}
+.nearest-warehouse-info > svg { flex-shrink: 0; color: var(--color-primary, #059669); }
+.nearest-warehouse-info strong { display: block; margin-top: 4px; }
+.nearest-warehouse-info p { margin: 6px 0; overflow-wrap: anywhere; }
+.nearest-warehouse-info span,
+.nearest-warehouse-info small { color: var(--color-text-secondary); font-size: 0.85rem; }
+.donation-confirmation-modal { max-width: 640px; }
+.modal-overlay:has(.donation-confirmation-modal) { z-index: 1700; }
+.donation-confirmation-modal .modal-header,
+.donation-confirmation-modal .modal-footer { flex-shrink: 0; }
+.donation-confirmation-modal .modal-body { min-height: 0; }
+.donation-confirmation-intro { margin: 0 0 16px; }
+.donation-confirmation-details { margin: 0; }
+.donation-confirmation-details > div { display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+.donation-confirmation-details dt { color: var(--color-text-secondary); }
+.donation-confirmation-details dd { margin: 0; color: var(--color-text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.donation-confirmation-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.donation-confirmation-images img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; }
+.donation-confirmation-error { color: var(--color-danger, #dc2626); }
+@media (max-width: 480px) {
+  .donation-confirmation-details > div { grid-template-columns: 1fr; gap: 4px; }
+}

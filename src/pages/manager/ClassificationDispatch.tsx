@@ -51,11 +51,15 @@ const formatDate = (value: string) =>
   });
 
 export default function ClassificationDispatch() {
+  const today = useMemo(
+    () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date()),
+    [],
+  );
   const toast = useToast();
   const [board, setBoard] = useState<ClassificationManagementBoard | null>(null);
   const [warehouseId, setWarehouseId] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(today);
+  const [yearFilter, setYearFilter] = useState(today.slice(0, 4));
   const [shifts, setShifts] = useState<ManagerShiftOverview[]>([]);
   const [createShift, setCreateShift] = useState<ManagerShiftOverview | null>(null);
   const [teamName, setTeamName] = useState('Team phân loại');

@@ -17,6 +17,9 @@ export interface ManagerAccount {
   userStatus: string;
   avatarUrl: string | null;
   createdAt: string;
+  representativeName: string | null;
+  taxCode: string | null;
+  certificateImageUrl: string | null;
 }
 export interface ManagerAccountPage {
   items: ManagerAccount[];

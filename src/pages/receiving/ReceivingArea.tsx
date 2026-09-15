@@ -85,10 +85,10 @@ export const ReceivingArea: React.FC = () => {
   const pageSize = 6;
   const requestPageSize = 3;
 
-  const load = async () => {
+  const load = async (fresh = false) => {
     setLoading(true);
     try {
-      const data = await receivingService.getMyBatches();
+      const data = await receivingService.getMyBatches(fresh);
       setBatches(data);
       const requestedId = searchParams.get('batchId');
       const requested = data.find(
@@ -224,7 +224,7 @@ export const ReceivingArea: React.FC = () => {
       setPlacementBatch(null);
       setSearchParams({}, { replace: true });
       setStage('stored');
-      await load();
+      await load(true);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || 'Không thể xếp Intake Batch vào vị trí đã chọn.',
@@ -277,7 +277,7 @@ export const ReceivingArea: React.FC = () => {
       setLocationBatches((current) => current.filter((item) => item.id !== batch.id));
       toast.success(`Đã gửi ${batch.code} sang điều phối phân loại.`);
       if (detailBatch?.id === batch.id) setDetailBatch(null);
-      await load();
+      await load(true);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || 'Không thể gửi Intake Batch sang phân loại.',

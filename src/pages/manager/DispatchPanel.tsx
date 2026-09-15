@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   CalendarDays,
@@ -53,6 +53,7 @@ type DispatchPanelProps = {
   hideWarehouseFilter?: boolean;
   onWarehouseChange?: (warehouseId: string) => void;
   onAssigned?: () => void | Promise<void>;
+  refreshVersion?: number;
 };
 
 export default function DispatchPanel({
@@ -60,6 +61,7 @@ export default function DispatchPanel({
   hideWarehouseFilter = false,
   onWarehouseChange,
   onAssigned,
+  refreshVersion = 0,
 }: DispatchPanelProps = {}) {
   const toast = useToast();
   const [searchParams] = useSearchParams();
@@ -74,14 +76,26 @@ export default function DispatchPanel({
   const [focusedRequestId, setFocusedRequestId] = useState<string>();
   const pageSize = 8;
   const activeWarehouseFilter = sharedWarehouseId ?? warehouseFilter;
-  const load = () =>
-    receivingService
-      .getDispatchBoard()
-      .then(setBoard)
-      .catch(() => toast.error('Không thể tải dữ liệu điều phối.'));
+  const latestLoad = useRef(0);
+  const showLoadError = toast.error;
+  const load = useCallback(async () => {
+    const request = ++latestLoad.current;
+    try {
+      const nextBoard = await receivingService.getDispatchBoard();
+      if (request !== latestLoad.current) return;
+      setBoard(nextBoard);
+      setSelectedTeams((current) => Object.fromEntries(Object.entries(current).filter(
+        ([requestId, teamId]) => nextBoard.requests.some((item) => item.id === requestId)
+          && nextBoard.teams.some((team) => team.id === teamId),
+      )));
+    } catch {
+      if (request === latestLoad.current) showLoadError('Không thể tải dữ liệu điều phối.');
+    }
+  }, [showLoadError]);
   useEffect(() => {
     void load();
-  }, []);
+    return () => { latestLoad.current++; };
+  }, [load, refreshVersion]);
 
   useEffect(() => {
     const requestId = searchParams.get('requestId');

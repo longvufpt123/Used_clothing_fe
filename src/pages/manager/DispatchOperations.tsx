@@ -79,6 +79,7 @@ export default function DispatchOperations() {
     shifts: [],
   });
   const [loading, setLoading] = useState(true);
+  const [dispatchRefreshVersion, setDispatchRefreshVersion] = useState(0);
   const [warehouseFilter, setWarehouseFilter] = useState('');
   const [dateFilter, setDateFilter] = useState(today);
   const [yearFilter, setYearFilter] = useState(today.slice(0, 4));
@@ -137,6 +138,7 @@ export default function DispatchOperations() {
         })),
       };
       setSetup(data);
+      setDispatchRefreshVersion((version) => version + 1);
       setWarehouseFilter((current) => current || selectedWarehouse);
       if (detailId) setDetailShift(data.shifts.find((x) => x.id === detailId) || null);
       return data;
@@ -636,6 +638,7 @@ export default function DispatchOperations() {
         </section>
 
         <DispatchPanel
+          refreshVersion={dispatchRefreshVersion}
           warehouseId={warehouseFilter}
           hideWarehouseFilter
           onWarehouseChange={setWarehouseFilter}
@@ -1119,7 +1122,9 @@ export default function DispatchOperations() {
                         .sort((a, b) => a.routeOrder - b.routeOrder)
                         .map((request) => ({
                           id: request.id,
+                          code: request.code,
                           donorName: request.contactName,
+                          phoneNumber: request.phoneNumber,
                           pickupAddress: request.address,
                           deliveryMethod: 'StaffPickup',
                         })),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Play,
@@ -9,7 +9,6 @@ import {
   Scale,
   ArrowRight,
   Calendar,
-  Layers,
   Users,
   Clock3,
   MapPin,
@@ -27,6 +26,7 @@ import { getReceivingBatchPresentation } from '@/services/receivingService';
 import type {
   ReceivingBatch,
   ReceivingRequest,
+  ReceivingOverview,
   WarehouseDropOffBoard,
   WarehouseDropOffItem,
 } from '@/services/receivingService';
@@ -59,10 +59,14 @@ const getLocalDateValue = () => {
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
+  const [overview, setOverview] = useState<ReceivingOverview>({ batches: [], totalWeight: 0, processedCount: 0, totalCount: 0 });
+  const [batchesLoading, setBatchesLoading] = useState(true);
+  const [batchesError, setBatchesError] = useState(false);
+  const batchLoadVersion = useRef(0);
   const [teamDate, setTeamDate] = useState(getLocalDateValue);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [batchShiftFilter, setBatchShiftFilter] = useState<'all' | 'morning' | 'afternoon'>('all');
@@ -81,8 +85,6 @@ export const Dashboard: React.FC = () => {
 
   const tabParam = searchParams.get('tab');
   const activeTab: TabKey = isTab(tabParam) ? tabParam : 'receiving';
-  const setActiveTab = (t: TabKey) =>
-    setSearchParams(t === 'receiving' ? {} : { tab: t }, { replace: true });
 
   useEffect(() => {
     if (!isTab(tabParam)) return;
@@ -94,48 +96,60 @@ export const Dashboard: React.FC = () => {
     return () => window.cancelAnimationFrame(frame);
   }, [tabParam]);
 
+  const loadBatches = useCallback(async (fresh = false) => {
+    const version = ++batchLoadVersion.current;
+    setBatchesLoading(true);
+    setBatchesError(false);
+    try {
+      const data = await receivingService.getMyBatches(fresh, activeTab);
+      if (version !== batchLoadVersion.current) return;
+      setBatches(data);
+      setRequests(data.flatMap((batch) => batch.requests));
+    } catch {
+      if (version === batchLoadVersion.current) setBatchesError(true);
+    } finally {
+      if (version === batchLoadVersion.current) setBatchesLoading(false);
+    }
+  }, [activeTab]);
+
   useEffect(() => {
-    Promise.all([receivingService.getMyBatches(), receivingService.getMyWarehouseDropOffs()])
-      .then(([data, dropOffData]) => {
-        setBatches(data);
-        setDropOffBoard(dropOffData);
-        setRequests(data.flatMap((batch) => batch.requests));
-        const today = getLocalDateValue();
-        const active = data.some((batch) =>
-          batch.shiftStatus === 'InProgress' && batch.teamStatus === 'InProgress'
-            && batch.date.slice(0, 10) === today)
-          || dropOffData.dutyContexts.some((context) =>
-            context.shiftStatus === 'InProgress' && context.teamStatus === 'InProgress'
-              && context.shiftDate.slice(0, 10) === today);
-        setIsShiftActive(active);
-      })
-      .catch(() => toast.error('Không thể tải tuyến thu gom được phân công.'));
-  }, []);
+    setBatches([]);
+    setRequests([]);
+    void loadBatches();
+    return () => { batchLoadVersion.current++; };
+  }, [loadBatches]);
 
-  const reloadDropOffs = async () =>
-    setDropOffBoard(await receivingService.getMyWarehouseDropOffs());
-
-  const reloadShiftState = async () => {
+  const loadOverview = useCallback(async (fresh = false) => {
     const [data, dropOffData] = await Promise.all([
-      receivingService.getMyBatches(), receivingService.getMyWarehouseDropOffs(),
+      receivingService.getMyOverview(fresh), receivingService.getMyWarehouseDropOffs(fresh),
     ]);
-    setBatches(data);
+    setOverview(data);
     setDropOffBoard(dropOffData);
-    setRequests(data.flatMap((batch) => batch.requests));
     const today = getLocalDateValue();
-    setIsShiftActive(data.some((batch) =>
+    setIsShiftActive(data.batches.some((batch) =>
       batch.shiftStatus === 'InProgress' && batch.teamStatus === 'InProgress'
         && batch.date.slice(0, 10) === today)
       || dropOffData.dutyContexts.some((context) =>
         context.shiftStatus === 'InProgress' && context.teamStatus === 'InProgress'
           && context.shiftDate.slice(0, 10) === today));
-  };
+  }, []);
+
+  const showLoadError = toast.error;
+  useEffect(() => {
+    void loadOverview().catch(() => showLoadError('Không thể tải thông tin ca tiếp nhận.'));
+  }, [loadOverview, showLoadError]);
+
+  const reloadShiftState = useCallback(async (fresh = false) => {
+    await Promise.all([loadOverview(fresh), loadBatches(fresh)]);
+  }, [loadOverview, loadBatches]);
 
   useEffect(() => {
-    const refreshFromApi = () => { void reloadShiftState(); };
+    const refreshFromApi = () => {
+      void reloadShiftState().catch(() => showLoadError('Không thể cập nhật dữ liệu tiếp nhận.'));
+    };
     window.addEventListener('focus', refreshFromApi);
     return () => window.removeEventListener('focus', refreshFromApi);
-  }, []);
+  }, [reloadShiftState, showLoadError]);
 
   const handleToggleShift = async () => {
     const nextState = !isShiftActive;
@@ -146,7 +160,7 @@ export const Dashboard: React.FC = () => {
         .toISOString()
         .slice(0, 10);
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const scheduledToday = batches.filter(
+      const scheduledToday = overview.batches.filter(
         (batch) =>
           batch.teamStatus === 'Scheduled' &&
           batch.date.slice(0, 10) === localDate &&
@@ -180,13 +194,13 @@ export const Dashboard: React.FC = () => {
         await receivingService.startTeam(targetWarehouseTeam!.teamId);
       }
       toast.success('Bắt đầu ca làm việc thành công! Trạng thái đơn đã sẵn sàng.');
-      await reloadShiftState();
+      await reloadShiftState(true);
       // Update UI to reload indicators
     } else {
       const shiftIds = [
         ...new Set(
           [
-            ...batches
+            ...overview.batches
             .filter((batch) => batch.teamStatus === 'InProgress'
                 && batch.date.slice(0, 10) === getLocalDateValue())
               .map((batch) => batch.shiftId),
@@ -199,20 +213,15 @@ export const Dashboard: React.FC = () => {
       ];
       await Promise.all(shiftIds.map((shiftId) => receivingService.completeShift(shiftId)));
       toast.info('Đã kết thúc ca làm việc.');
-      await reloadShiftState();
+      await reloadShiftState(true);
     }
   };
 
-  const totalWeight = requests
-    .filter((r) => r.status === 'Received' && r.actualWeight)
-    .reduce((sum, r) => sum + (r.actualWeight || 0), 0);
-
-  const processedCount = requests.filter((r) => r.status !== 'Pending').length;
-  const totalCount = requests.length;
+  const { totalWeight, processedCount, totalCount } = overview;
   const completionPct = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
   const assignedTeamEntries: Array<[string, AssignedTeamView]> = [
-    ...batches.map((batch) => [
+    ...overview.batches.map((batch) => [
       `${batch.shiftId}-${batch.teamName}`,
       {
         teamName: batch.teamName,
@@ -293,10 +302,7 @@ export const Dashboard: React.FC = () => {
       await receivingService.confirmWarehouseDropOff(receivingDropOff.id, dropOffForm);
       toast.success('Đã tiếp nhận đơn tại kho và thêm vào Intake Batch của ca hiện tại.');
       setReceivingDropOff(null);
-      await reloadDropOffs();
-      const data = await receivingService.getMyBatches();
-      setBatches(data);
-      setRequests(data.flatMap((batch) => batch.requests));
+      await reloadShiftState(true);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể xác nhận nhận hàng tại kho.');
     } finally {
@@ -652,51 +658,10 @@ export const Dashboard: React.FC = () => {
 
       <section id="receiving-batch-list" className="rcv-batch-list-section">
         <div className="ops-section-head">
-          <h2>Các lô hàng tiếp nhận</h2>
+          <h2>{activeTab === 'receiving' ? 'Các lô hàng đang thu nhận' : activeTab === 'completed' ? 'Các lô hàng đã gom xong' : 'Các lô hàng đang chuyển đi'}</h2>
         </div>
 
         <div className="rcv-batch-filter-row">
-        <div className="ops-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'receiving'}
-            className={`ops-tab ${activeTab === 'receiving' ? 'active' : ''}`}
-            onClick={() => setActiveTab('receiving')}
-          >
-            <Truck size={15} strokeWidth={2} />
-            Đang thu nhận
-            <span className="ops-tab-count">
-              {batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned').length}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'completed'}
-            className={`ops-tab ${activeTab === 'completed' ? 'active' : ''}`}
-            onClick={() => setActiveTab('completed')}
-          >
-            <CheckCircle size={15} strokeWidth={2} />
-            Đã gom xong
-            <span className="ops-tab-count">
-              {batches.filter((b) => b.status === 'Completed').length}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'transferring'}
-            className={`ops-tab ${activeTab === 'transferring' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transferring')}
-          >
-            <Layers size={15} strokeWidth={2} />
-            Đang chuyển đi
-            <span className="ops-tab-count">
-              {batches.filter((b) => ['AwaitingClassificationAssignment', 'AssignedToClassification', 'SentToClassification'].includes(b.status)).length}
-            </span>
-          </button>
-        </div>
           <label className="rcv-shift-filter">
             <Clock3 size={15} />
             <span>Ca làm</span>
@@ -709,7 +674,14 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="ops-list">
-          {filteredBatches.length === 0 ? (
+          {batchesLoading ? (
+            <div className="ops-empty" role="status">Đang tải lô hàng...</div>
+          ) : batchesError ? (
+            <div className="ops-empty" role="alert">
+              <p>Không thể tải danh sách lô hàng.</p>
+              <button className="ops-btn ops-btn-secondary" onClick={() => void loadBatches(true)}>Thử lại</button>
+            </div>
+          ) : filteredBatches.length === 0 ? (
             <div className="ops-empty">
               <ClipboardList size={36} strokeWidth={1.5} />
               <h4>Không có lô tiếp nhận nào</h4>

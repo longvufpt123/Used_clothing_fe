@@ -12,7 +12,7 @@ export const ReceivingShell: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const refresh = async () => {
       try {
-        const batches = await receivingService.getMyBatches();
+        const { batches } = await receivingService.getMyOverview();
         setCounts({
           receiving: batches.filter((b) => b.status === 'Receiving' || b.status === 'Planned')
             .length,

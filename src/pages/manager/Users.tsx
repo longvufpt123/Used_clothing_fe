@@ -24,6 +24,7 @@ import '@/shared/pages/Users.css';
 import './Users.css';
 
 const roleLabels: Record<string, string> = {
+  DisposalOrganization: 'Tổ chức tiêu hủy',
   Donor: 'Donor',
   CharityOrganization: 'Tổ chức từ thiện',
   RecyclingOrganization: 'Tổ chức tái chế',
@@ -264,7 +265,7 @@ export default function ManagerUsers() {
 
         <section className="manager-account-table">
           <div className="account-table-head">
-            <span>Nhân viên</span>
+            <span>Tài khoản</span>
             <span>Liên hệ</span>
             <span>Vai trò / Kho</span>
             <span>Trạng thái</span>
@@ -288,6 +289,9 @@ export default function ManagerUsers() {
                   <div>
                     <strong>{user.fullName}</strong>
                     <span>@{user.userName}</span>
+                    {user.representativeName && <span>Đại diện: {user.representativeName}</span>}
+                    {user.taxCode && <span>Mã số: {user.taxCode}</span>}
+                    {user.certificateImageUrl && <a href={user.certificateImageUrl} target="_blank" rel="noopener noreferrer">Xem giấy chứng nhận</a>}
                   </div>
                 </div>
                 <div className="account-contact">

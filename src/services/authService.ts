@@ -34,6 +34,9 @@ export interface CurrentUserProfile {
   warehouseAddress: string | null;
   emailConfirmed: boolean;
   createAt: string | null;
+  representativeName: string | null;
+  taxCode: string | null;
+  certificateImageUrl: string | null;
 }
 
 export const loginApi = async (data: {
@@ -43,6 +46,8 @@ export const loginApi = async (data: {
   return apiClient.post<any, AuthResponse>('/auth/login', data);
 };
 
+export type RegistrationAccountType = 'Donor' | 'CharityOrganization' | 'RecyclingOrganization' | 'DisposalOrganization';
+
 export const registerApi = async (data: {
   fullName: string;
   userName: string;
@@ -50,6 +55,10 @@ export const registerApi = async (data: {
   password: string;
   address: string;
   phoneNumber: string;
+  accountType?: RegistrationAccountType;
+  representativeName?: string;
+  taxCode?: string;
+  certificateImageUrl?: string;
 }): Promise<RegisterResponse> => {
   return apiClient.post<any, RegisterResponse>('/auth/register', data);
 };

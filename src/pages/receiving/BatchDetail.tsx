@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -23,7 +23,8 @@ import { getReceivingBatchPresentation } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
-import RouteMap from './RouteMap';
+import './BatchDetail.css';
+import RouteMap, { StopDetails, type RouteStopPoint } from './RouteMap';
 
 type StatusFilter = 'all' | 'pending' | 'received' | 'rescheduled' | 'canceled';
 
@@ -33,6 +34,24 @@ export const BatchDetail: React.FC = () => {
   const toast = useToast();
 
   const [batch, setBatch] = useState<ReceivingBatch | null>(null);
+  const [routeStops, setRouteStops] = useState<RouteStopPoint[]>([]);
+  const [selectedStop, setSelectedStop] = useState<number | null>(null);
+  const routeSidebarRef = useRef<HTMLElement>(null);
+  useEffect(() => { setRouteStops([]); setSelectedStop(null); }, [id]);
+  const selectRouteStop = (index: number) => {
+    setSelectedStop(index);
+    // Wait for the selected card's layout before measuring its scroll position.
+    window.requestAnimationFrame(() => {
+    const sidebar = routeSidebarRef.current;
+    const stop = sidebar?.querySelector<HTMLElement>(`[data-route-stop="${index}"]`);
+    if (!sidebar || !stop) return;
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+    sidebar.scrollTo({ top: sidebar.scrollTop + stop.getBoundingClientRect().top - sidebar.getBoundingClientRect().top - 12, behavior });
+    if (window.matchMedia('(max-width: 1200px)').matches) {
+      sidebar.scrollIntoView({ behavior, block: 'nearest' });
+    }
+    });
+  };
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -132,7 +151,7 @@ export const BatchDetail: React.FC = () => {
   ];
 
   return (
-    <div className="ops-page">
+    <div className={requiresPickupRoute ? 'rcv-batch-layout' : 'ops-page'}>
       <div className="ops-nav">
         <button type="button" className="ops-back" onClick={() => navigate('/receiving')}>
           <ChevronLeft size={16} strokeWidth={1.75} /> Quay lại
@@ -143,6 +162,7 @@ export const BatchDetail: React.FC = () => {
         </div>
       </div>
 
+    <div className="ops-page">
       <div className="ops-panel glass">
         <span className="ops-panel-label">Tuyến đường thu nhận</span>
         <h2>{batch.route}</h2>
@@ -210,10 +230,10 @@ export const BatchDetail: React.FC = () => {
               .join(' · ')}
           </span>
         </div>
-        <RouteMap batch={batch} />
+        <RouteMap key={batch.id} batch={batch} onStopsChange={setRouteStops} onStopSelect={selectRouteStop} />
       </section>}
 
-      <section>
+      <section className="rcv-batch-requests">
         <div className="ops-section-head">
           <h2>Đơn quyên góp trong lô</h2>
           <span>Tìm kiếm và lọc theo trạng thái xử lý</span>
@@ -393,6 +413,23 @@ export const BatchDetail: React.FC = () => {
           </nav>
         )}
       </section>
+    </div>
+    {requiresPickupRoute && <aside ref={routeSidebarRef} className="rcv-route-sidebar" aria-label="Thứ tự lấy hàng và chi tiết đơn">
+      <div className="rcv-route-sidebar-head">
+        <h2>Thứ tự lấy hàng</h2>
+        <p>Theo tuyến gợi ý trên bản đồ · {requests.filter(request => request.deliveryMethod === 'StaffPickup').length} đơn</p>
+      </div>
+      {routeStops.length === 0 ? <p className="rcv-route-placeholder">Mở bản đồ để xem thứ tự lấy hàng và chi tiết từng đơn.</p> : <ol className="rcv-route-stop-list">
+        {routeStops.map((point, index) => <li key={`${point.lat}-${point.lon}`} data-route-stop={index} className={selectedStop === index ? 'is-selected' : undefined} aria-current={selectedStop === index ? 'step' : undefined}>
+          <span className={`rcv-route-stop-number ${index === 0 ? 'warehouse' : ''}`}>{index}</span>
+          <StopDetails point={{ ...point, requests: point.requests?.map(item => requests.find(request => request.id === item.id) || item) }} index={index} />
+        </li>)}
+      </ol>}
+      {routeStops.length > 0 && requests.filter(request => request.deliveryMethod === 'StaffPickup' && !routeStops.some(point => point.requests?.some(item => item.id === request.id))).length > 0 && <div className="rcv-route-unmapped">
+        <h3>Chưa xác định được vị trí</h3>
+        {requests.filter(request => request.deliveryMethod === 'StaffPickup' && !routeStops.some(point => point.requests?.some(item => item.id === request.id))).map(request => <StopDetails key={request.id} point={{ lat: 0, lon: 0, address: request.pickupAddress, label: '', requests: [request] }} index={-1} />)}
+      </div>}
+    </aside>}
     </div>
   );
 };

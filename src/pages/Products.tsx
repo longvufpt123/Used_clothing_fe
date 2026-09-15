@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   PlusCircle,
@@ -15,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import AddressSearchMap from '@/components/common/AddressSearchMap';
 import WorkdayDatePicker from '@/components/common/WorkdayDatePicker';
 import { useToast } from '@/context/ToastContext';
@@ -64,6 +66,15 @@ interface WarehouseOption {
   address: string;
 }
 
+interface DonationConfirmation {
+  payload: CreateDonationPayload;
+  categoryLabel: string;
+  conditionLabel: string;
+  warehouse: WarehouseOption;
+  notes: string;
+  images: UploadedImage[];
+}
+
 interface PickupWindow {
   shiftId: string;
   shiftName: string;
@@ -103,6 +114,7 @@ interface CreateDonationResponse {
 }
 
 const MAX_DONATION_IMAGES = 5;
+const MAX_DONATION_WEIGHT_KG = 50;
 
 const toLocalDateInputValue = (date: Date) => {
   const year = date.getFullYear();
@@ -134,13 +146,6 @@ const getAvailablePickupTimes = (pickupDate: string, windows: PickupWindow[]) =>
     }
   });
   return [...values].sort().map((value) => ({ value, label: value }));
-};
-
-const estimateWeightByOption: Record<string, number> = {
-  'under-5': 3,
-  '5-10': 7.5,
-  '10-20': 15,
-  'over-20': 25,
 };
 
 const getDescriptionValue = (description: string | undefined, label: string) => {
@@ -237,8 +242,8 @@ export const Products: React.FC = () => {
   // Form states
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [category, setCategory] = useState('outerwear');
-  const [weight, setWeight] = useState('5-10');
+  const [category, setCategory] = useState('mixed');
+  const [weight, setWeight] = useState('');
   const [condition, setCondition] = useState('good');
   const [address, setAddress] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'StaffPickup' | 'DonorDropOff'>(
@@ -255,11 +260,16 @@ export const Products: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmation, setConfirmation] = useState<DonationConfirmation | null>(null);
+  const [submissionError, setSubmissionError] = useState('');
+  const submittingDonation = useRef(false);
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
   const [loadingPickupWindows, setLoadingPickupWindows] = useState(false);
   const [availablePickupDates, setAvailablePickupDates] = useState<string[] | undefined>();
   const [loadingPickupDates, setLoadingPickupDates] = useState(false);
   const [warehouseAvailabilityError, setWarehouseAvailabilityError] = useState('');
+  const [nearestWarehouse, setNearestWarehouse] = useState<WarehouseOption | null>(null);
+  const [loadingNearestWarehouse, setLoadingNearestWarehouse] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => `${getDefaultPickupDate().slice(0, 7)}-01`);
   const availablePickupTimes = useMemo(
     () => getAvailablePickupTimes(pickupDate, pickupWindows),
@@ -278,9 +288,29 @@ export const Products: React.FC = () => {
   }, [toast]);
 
   useEffect(() => {
+    let cancelled = false;
+    setNearestWarehouse(null);
+    setWarehouseAvailabilityError('');
+    if (deliveryMethod !== 'StaffPickup' || !pickupLocation) {
+      setLoadingNearestWarehouse(false);
+      return;
+    }
+    setLoadingNearestWarehouse(true);
+    const params = new URLSearchParams({ latitude: String(pickupLocation.lat), longitude: String(pickupLocation.lon) });
+    apiClient.get<unknown, WarehouseOption>(`/donor-requests/nearest-warehouse?${params}`)
+      .then((warehouse) => { if (!cancelled) setNearestWarehouse(warehouse); })
+      .catch((error: any) => {
+        if (!cancelled) setWarehouseAvailabilityError(error?.response?.data?.message || 'Chưa thể xác định kho tiếp nhận. Vui lòng chọn lại địa chỉ.');
+      })
+      .finally(() => { if (!cancelled) setLoadingNearestWarehouse(false); });
+    return () => { cancelled = true; };
+  }, [deliveryMethod, pickupLocation]);
+
+  useEffect(() => {
     const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
     if (!pickupDate || !hasTarget) {
       setPickupWindows([]);
+      setLoadingPickupWindows(false);
       return;
     }
     const params = new URLSearchParams({ date: pickupDate });
@@ -308,12 +338,13 @@ export const Products: React.FC = () => {
   useEffect(() => {
     if (dropOffMethod === 'ThirdPartyDelivery') {
       setAvailablePickupDates(undefined);
+      setLoadingPickupDates(false);
       return;
     }
     const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
     if (!hasTarget) {
       setAvailablePickupDates(undefined);
-      setWarehouseAvailabilityError('');
+      setLoadingPickupDates(false);
       return;
     }
     const params = new URLSearchParams({ month: calendarMonth });
@@ -328,22 +359,15 @@ export const Products: React.FC = () => {
     apiClient.get<unknown, string[]>(`/donor-requests/pickup-dates?${params}`)
       .then((dates) => {
         if (cancelled) return;
-        setWarehouseAvailabilityError('');
         const normalizedDates = (dates || []).map((date) => date.slice(0, 10));
         setAvailablePickupDates(normalizedDates);
         if (pickupDate.startsWith(calendarMonth.slice(0, 7)) && !normalizedDates.includes(pickupDate)) {
           setPickupDate(normalizedDates[0] || '');
         }
       })
-      .catch((error: any) => {
+      .catch(() => {
         if (!cancelled) {
           setAvailablePickupDates([]);
-          if (deliveryMethod === 'StaffPickup') {
-            setWarehouseAvailabilityError(
-              error?.response?.data?.message ||
-              'Không tìm thấy kho có thể phục vụ địa chỉ lấy hàng này.',
-            );
-          }
         }
       })
       .finally(() => {
@@ -363,18 +387,11 @@ export const Products: React.FC = () => {
   const [searchResults, setSearchResults] = useState<DonationRequest[] | null>(null);
 
   const categoryOptions = [
+    { value: 'mixed', label: 'Hỗn hợp / Khác' },
     { value: 'outerwear', label: 'Áo khoác / Đồ ấm mùa đông' },
     { value: 'shirts', label: 'Áo thun / Áo sơ mi dệt kim' },
     { value: 'pants', label: 'Quần denim / Quần dài / kaki' },
     { value: 'kids', label: 'Quần áo trẻ em' },
-    { value: 'mixed', label: 'Hỗn hợp / Khác' },
-  ];
-
-  const weightOptions = [
-    { value: 'under-5', label: 'Dưới 5 kg (Túi nhỏ)' },
-    { value: '5-10', label: 'Từ 5 - 10 kg (Thùng giấy vừa)' },
-    { value: '10-20', label: 'Từ 10 - 20 kg (Bao tải lớn)' },
-    { value: 'over-20', label: 'Trên 20 kg (Nhiều bao tải)' },
   ];
 
   const conditionOptions = [
@@ -430,8 +447,8 @@ export const Products: React.FC = () => {
     });
   };
 
-  const uploadDonationImages = async (): Promise<string[]> => {
-    if (images.length === 0) {
+  const uploadDonationImages = async (selectedImages: UploadedImage[]): Promise<string[]> => {
+    if (selectedImages.length === 0) {
       return [];
     }
 
@@ -446,7 +463,7 @@ export const Products: React.FC = () => {
     }
 
     const uploadedUrls = await Promise.all(
-      images.map(async ({ file }) => {
+      selectedImages.map(async ({ file }) => {
         const extension = file.name.split('.').pop() || 'jpg';
         const filePath = `donations/${Date.now()}-${crypto.randomUUID()}.${extension}`;
         const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`;
@@ -476,6 +493,15 @@ export const Products: React.FC = () => {
   // Handle donation registration submit
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    const estimatedWeight = Number(weight);
+    if (estimatedWeight > MAX_DONATION_WEIGHT_KG) {
+      toast.error('Mỗi đơn quyên góp nhận tối đa 50 kg. Vui lòng điều chỉnh khối lượng.');
+      return;
+    }
+    if (!Number.isFinite(estimatedWeight) || estimatedWeight <= 0 || !/^\d+(?:\.\d{1,2})?$/.test(weight)) {
+      toast.error('Nhập khối lượng lớn hơn 0 kg, tối đa 2 chữ số thập phân.');
+      return;
+    }
     if (
       !name ||
       !phone ||
@@ -487,15 +513,15 @@ export const Products: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const imageUrls = await uploadDonationImages();
-      const code = `RT-2026-${Math.floor(100 + Math.random() * 900)}`;
+    const targetWarehouse = deliveryMethod === 'StaffPickup'
+      ? nearestWarehouse : warehouses.find((warehouse) => warehouse.id === warehouseId);
+    if (!targetWarehouse || (deliveryMethod === 'StaffPickup' && loadingNearestWarehouse)) {
+      toast.error('Vui lòng chờ xác định kho tiếp nhận hoặc chọn lại địa chỉ.');
+      return;
+    }
       const selectedCategoryLabel =
         categoryOptions.find((o) => o.value === category)?.label || 'Hỗn hợp';
-      const selectedWeightLabel =
-        weightOptions.find((o) => o.value === weight)?.label || 'Dưới 5 kg';
+      const selectedWeightLabel = `${estimatedWeight} kg`;
       const selectedConditionLabel =
         conditionOptions.find((o) => o.value === condition)?.label || 'Còn tốt';
 
@@ -516,8 +542,8 @@ export const Products: React.FC = () => {
         ]
           .filter(Boolean)
           .join('\n'),
-        imageUrls,
-        estimateWeight: estimateWeightByOption[weight] ?? 0,
+        imageUrls: [],
+        estimateWeight: estimatedWeight,
         pickupAddress:
           deliveryMethod === 'DonorDropOff'
             ? warehouses.find((warehouse) => warehouse.id === warehouseId)?.address || ''
@@ -533,35 +559,51 @@ export const Products: React.FC = () => {
         trackingCode: dropOffMethod === 'ThirdPartyDelivery' ? trackingCode.trim() : undefined,
       };
 
+      setSubmissionError('');
+      setConfirmation({ payload, categoryLabel: selectedCategoryLabel, conditionLabel: selectedConditionLabel,
+        warehouse: { ...targetWarehouse }, notes: notes.trim(), images: [...images] });
+  };
+
+  const submitConfirmedDonation = async () => {
+    if (!confirmation || submittingDonation.current) return;
+    submittingDonation.current = true;
+    setLoading(true);
+    setSubmissionError('');
+    try {
+      const { payload, categoryLabel, conditionLabel } = confirmation;
+      const imageUrls = await uploadDonationImages(confirmation.images);
+      const code = `RT-2026-${Math.floor(100 + Math.random() * 900)}`;
       const response = await apiClient.post<unknown, CreateDonationResponse>(
         '/donor-requests',
-        payload,
+        { ...payload, imageUrls },
       );
 
       const newRequest: DonationRequest = {
         code,
-        name,
-        phone,
-        category: selectedCategoryLabel,
-        weight: selectedWeightLabel,
-        condition: selectedConditionLabel,
+        name: payload.contactName,
+        phone: payload.contactPhoneNumber,
+        category: categoryLabel,
+        weight: `${payload.estimateWeight} kg`,
+        condition: conditionLabel,
         address: payload.pickupAddress,
         imageUrls,
         status: 'pending',
         statusText:
-          deliveryMethod === 'StaffPickup'
+          payload.deliveryMethod === 'StaffPickup'
             ? 'Chờ điều phối viên liên hệ thu gom'
-            : dropOffMethod === 'ThirdPartyDelivery'
+            : payload.dropOffMethod === 'ThirdPartyDelivery'
               ? 'Chờ đơn vị vận chuyển giao hàng đến kho'
               : 'Chờ người quyên góp mang hàng đến kho',
         date: new Date().toISOString().split('T')[0],
       };
 
       setDonations((prev) => [newRequest, ...prev]);
-      setLoading(false);
+      setConfirmation(null);
       // Reset form
       setName('');
       setPhone('');
+      setCategory('mixed');
+      setWeight('');
       setAddress('');
       setPickupLocation(null);
       setSelectedPickupTime('');
@@ -582,8 +624,12 @@ export const Products: React.FC = () => {
       );
       const createdRequestId = response.requestId || response.RequestId;
       navigate(createdRequestId ? `/my-orders?created=${createdRequestId}` : '/my-orders');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Dang ky quyen gop that bai.');
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Không thể gửi đơn quyên góp. Vui lòng thử lại.';
+      setSubmissionError(message);
+      toast.error(message);
+    } finally {
+      submittingDonation.current = false;
       setLoading(false);
     }
   };
@@ -635,13 +681,39 @@ export const Products: React.FC = () => {
 
   return (
     <div className="donation-portal-page container">
+      {confirmation && createPortal(
+        <Modal isOpen title="Xác nhận thông tin quyên góp" className="donation-confirmation-modal"
+          onClose={() => { if (!submittingDonation.current) setConfirmation(null); }}
+          footer={<>
+            <Button type="button" variant="outline" autoFocus disabled={loading} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</Button>
+            <Button type="button" isLoading={loading} onClick={() => void submitConfirmedDonation()}>Xác nhận và gửi đơn</Button>
+          </>}>
+          <p className="donation-confirmation-intro">Vui lòng kiểm tra lại thông tin trước khi gửi yêu cầu quyên góp.</p>
+          <dl className="donation-confirmation-details">
+            <div><dt>Người quyên góp</dt><dd>{confirmation.payload.contactName}</dd></div>
+            <div><dt>Số điện thoại</dt><dd>{confirmation.payload.contactPhoneNumber}</dd></div>
+            <div><dt>Loại quần áo</dt><dd>{confirmation.categoryLabel}</dd></div>
+            <div><dt>Khối lượng ước tính</dt><dd>{confirmation.payload.estimateWeight} kg</dd></div>
+            <div><dt>Tình trạng</dt><dd>{confirmation.conditionLabel}</dd></div>
+            <div><dt>Phương thức giao</dt><dd>{confirmation.payload.deliveryMethod === 'StaffPickup' ? 'Nhân viên đến lấy tại địa chỉ của tôi' : confirmation.payload.dropOffMethod === 'SelfDelivery' ? 'Tự mang đến kho' : 'Gửi qua dịch vụ vận chuyển khác'}</dd></div>
+            {confirmation.payload.deliveryMethod === 'StaffPickup' && <div><dt>Địa chỉ lấy hàng</dt><dd>{confirmation.payload.pickupAddress}</dd></div>}
+            <div><dt>Kho tiếp nhận</dt><dd><strong>{confirmation.warehouse.warehouseName}</strong><br />{confirmation.warehouse.address}</dd></div>
+            <div><dt>{confirmation.payload.deliveryMethod === 'StaffPickup' ? 'Ngày, giờ lấy hàng' : 'Ngày, giờ giao đến kho'}</dt><dd>{confirmation.payload.pickupDate
+              ? `${confirmation.payload.pickupDate.slice(0, 10).split('-').reverse().join('/')} · ${confirmation.payload.pickupDate.slice(11, 16)}`
+              : 'Cập nhật sau khi đặt dịch vụ vận chuyển'}</dd></div>
+            {confirmation.notes && <div><dt>Ghi chú</dt><dd>{confirmation.notes}</dd></div>}
+          </dl>
+          {confirmation.images.length > 0 && <div className="donation-confirmation-images" aria-label="Ảnh quần áo">
+            {confirmation.images.map((image, index) => <img key={image.previewUrl} src={image.previewUrl} alt={`Ảnh quần áo ${index + 1}`} />)}
+          </div>}
+          {submissionError && <p className="donation-confirmation-error" role="alert">{submissionError}</p>}
+        </Modal>, document.body)}
       {/* Title Header */}
       <div className="portal-header text-center">
         <span className="section-subtitle">Vì một tương lai xanh</span>
         <h1 className="text-gradient">Cổng Tiếp Nhận Quyên Góp</h1>
         <p className="portal-desc">
-          Gửi gắm những bộ quần áo không còn sử dụng để trao đi yêu thương hoặc tái chế thành sợi
-          sinh học dệt may thân thiện với môi trường.
+          Gửi gắm những bộ quần áo không còn sử dụng để trao đi yêu thương hoặc tái chế để thân thiện với môi trường.
         </p>
       </div>
 
@@ -698,11 +770,30 @@ export const Products: React.FC = () => {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 />
-                <Select
-                  label="Ước lượng khối lượng"
-                  options={weightOptions}
+                <Input
+                  label="Ước lượng khối lượng (kg) *"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ví dụ: 7.5"
+                  pattern="[0-9]+([.][0-9]{1,2})?"
+                  helperText="Tối đa 50 kg mỗi đơn, có thể nhập số lẻ."
+                  error={weight !== '' && !/^\d+(?:\.\d{1,2})?$/.test(weight)
+                    ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.'
+                    : weight !== '' && Number(weight) <= 0
+                    ? 'Khối lượng phải lớn hơn 0 kg.'
+                    : Number(weight) > MAX_DONATION_WEIGHT_KG
+                      ? 'Mỗi đơn quyên góp nhận tối đa 50 kg.'
+                      : undefined}
+                  required
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value.replace(/,/g, '.');
+                    if (/^\d*(?:\.\d{0,2})?$/.test(next)) {
+                      setWeight(next);
+                    } else {
+                      e.currentTarget.value = weight;
+                    }
+                  }}
                 />
               </div>
 
@@ -743,7 +834,7 @@ export const Products: React.FC = () => {
                 <div className="warehouse-availability-warning" role="alert">
                   <XCircle size={19} />
                   <div>
-                    <strong>Không có kho khả dụng</strong>
+                    <strong>Chưa xác định được kho tiếp nhận</strong>
                     <span>{warehouseAvailabilityError}</span>
                     <button type="button" onClick={() => {
                       setDeliveryMethod('DonorDropOff');
@@ -758,6 +849,7 @@ export const Products: React.FC = () => {
               )}
 
               {deliveryMethod === 'StaffPickup' ? (
+                <>
                 <AddressSearchMap
                   value={address}
                   onChange={setAddress}
@@ -767,6 +859,19 @@ export const Products: React.FC = () => {
                   }}
                   required
                 />
+                {pickupLocation && (loadingNearestWarehouse || nearestWarehouse) && (
+                  <div className="nearest-warehouse-info" role="status" aria-live="polite">
+                    {loadingNearestWarehouse ? <span>Đang tìm kho gần nhất...</span> : nearestWarehouse && <>
+                      <MapPin size={20} aria-hidden="true" />
+                      <div>
+                        <span>Kho tiếp nhận gần nhất</span>
+                        <strong>{nearestWarehouse.warehouseName}</strong>
+                        <p>{nearestWarehouse.address}</p>
+                      </div>
+                    </>}
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="input-wrapper">
                   <label className="input-label" htmlFor="dropoff-warehouse">

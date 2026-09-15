@@ -28,6 +28,7 @@ import {
   verifyRegistrationApi,
 } from '@/services/authService';
 import './Login.css';
+import { uploadOrganizationCertificate, validateOrganizationCertificate } from '@/utils/organizationCertificate';
 
 // Login validation schema
 const loginSchema = z.object({
@@ -40,7 +41,10 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 // Register validation schema
 const registerSchema = z
   .object({
-    fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
+    accountType: z.enum(['Donor', 'CharityOrganization', 'RecyclingOrganization', 'DisposalOrganization']),
+    representativeName: z.string().trim().max(100, 'Tên người đại diện tối đa 100 ký tự'),
+    taxCode: z.string().trim().max(50, 'Mã số tối đa 50 ký tự'),
+    fullName: z.string().trim().min(2, 'Tên phải có ít nhất 2 ký tự').max(100, 'Tên tối đa 100 ký tự'),
     userName: z
       .string()
       .regex(/^[A-Za-z0-9._]{3,30}$/, 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm hoặc gạch dưới'),
@@ -48,7 +52,7 @@ const registerSchema = z
     phoneNumber: z
       .string()
       .regex(/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/, 'Số điện thoại Việt Nam không hợp lệ'),
-    address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
+    address: z.string().trim().min(5, 'Địa chỉ phải có ít nhất 5 ký tự').max(500, 'Địa chỉ tối đa 500 ký tự'),
     password: z
       .string()
       .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
@@ -63,6 +67,12 @@ const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu xác nhận không trùng khớp',
     path: ['confirmPassword'],
+  })
+  .superRefine((data, ctx) => {
+    if (data.accountType !== 'Donor') {
+      if (data.representativeName.length < 2) ctx.addIssue({ code: 'custom', path: ['representativeName'], message: 'Nhập tên người đại diện (ít nhất 2 ký tự)' });
+      if (!data.taxCode) ctx.addIssue({ code: 'custom', path: ['taxCode'], message: 'Nhập mã số thuế hoặc số đăng ký tổ chức' });
+    }
   });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -72,6 +82,17 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [verification, setVerification] = useState<{ userId: string } | null>(null);
   const [emailCode, setEmailCode] = useState('');
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [certificatePreview, setCertificatePreview] = useState('');
+  const [certificateError, setCertificateError] = useState('');
+  const uploadedCertificate = useRef<{ file: File; url: string } | null>(null);
+  const certificateSelection = useRef(0);
+  useEffect(() => {
+    if (!certificateFile) { setCertificatePreview(''); return; }
+    const url = URL.createObjectURL(certificateFile);
+    setCertificatePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [certificateFile]);
   const [focusedField, setFocusedField] = useState<'email' | 'password' | 'name' | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -136,9 +157,13 @@ export const Login: React.FC = () => {
     formState: { errors: registerErrors },
     reset: resetRegisterForm,
     watch: watchSignUp,
+    setValue: setRegisterValue,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      accountType: 'Donor',
+      representativeName: '',
+      taxCode: '',
       fullName: '',
       userName: '',
       email: '',
@@ -149,6 +174,21 @@ export const Login: React.FC = () => {
       agreeTerms: false,
     },
   });
+
+  const isOrganization = watchSignUp('accountType') !== 'Donor';
+  const chooseCertificate = async (file?: File) => {
+    const selection = ++certificateSelection.current;
+    setCertificateFile(null);
+    setCertificateError('');
+    uploadedCertificate.current = null;
+    if (!file) return;
+    try {
+      await validateOrganizationCertificate(file);
+      if (selection === certificateSelection.current) setCertificateFile(file);
+    } catch (error) {
+      if (selection === certificateSelection.current) setCertificateError(error instanceof Error ? error.message : 'Ảnh không hợp lệ.');
+    }
+  };
 
   const onLoginSubmit = async (data: LoginFormValues) => {
     setLoading(true);
@@ -193,8 +233,19 @@ export const Login: React.FC = () => {
   };
 
   const onRegisterSubmit = async (data: RegisterFormValues) => {
+    if (data.accountType !== 'Donor' && !certificateFile) {
+      setCertificateError('Vui lòng chọn ảnh chứng nhận của tổ chức.');
+      return;
+    }
     setLoading(true);
     try {
+      let certificateImageUrl: string | undefined;
+      if (data.accountType !== 'Donor' && certificateFile) {
+        if (uploadedCertificate.current?.file !== certificateFile) {
+          uploadedCertificate.current = { file: certificateFile, url: await uploadOrganizationCertificate(certificateFile) };
+        }
+        certificateImageUrl = uploadedCertificate.current.url;
+      }
       const result = await registerApi({
         fullName: data.fullName,
         userName: data.userName,
@@ -202,6 +253,8 @@ export const Login: React.FC = () => {
         phoneNumber: data.phoneNumber,
         address: data.address,
         password: data.password,
+        accountType: data.accountType,
+        ...(data.accountType !== 'Donor' ? { representativeName: data.representativeName, taxCode: data.taxCode, certificateImageUrl } : {}),
       });
       setVerification({ userId: result.userId });
       toast.success('Đã gửi mã xác nhận qua email.');
@@ -223,6 +276,9 @@ export const Login: React.FC = () => {
       toast.success(result.message);
       if (result.accountActivated) {
         resetRegisterForm();
+        setCertificateFile(null);
+        uploadedCertificate.current = null;
+        setEmailCode('');
         setVerification(null);
         setIsRegister(false);
         toast.success('Tài khoản đã kích hoạt. Bạn có thể đăng nhập.');
@@ -259,7 +315,7 @@ export const Login: React.FC = () => {
   const registerPasswordVal = watchSignUp('password') || '';
 
   const criteria = {
-    length: registerPasswordVal.length >= 6,
+    length: registerPasswordVal.length >= 8,
     uppercase: /[A-Z]/.test(registerPasswordVal),
     number: /[0-9]/.test(registerPasswordVal),
     special: /[^A-Za-z0-9]/.test(registerPasswordVal),
@@ -495,15 +551,33 @@ export const Login: React.FC = () => {
           ) : (
             /* REGISTER FORM */
             <div className="auth-form-wrapper fade-in">
-              <h3 className="login-title text-gradient">Tạo Tài Khoản Thành Viên</h3>
+              <h3 className="login-title text-gradient">{isOrganization ? 'Đăng Ký Tổ Chức' : 'Tạo Tài Khoản Thành Viên'}</h3>
               <p className="login-subtitle">
                 Tham gia mạng lưới quyên góp và bảo vệ môi trường cùng ReThreads
               </p>
 
               <form onSubmit={handleSubmitSignUp(onRegisterSubmit)} className="login-form">
+                <fieldset className="registration-account-type" disabled={loading}>
+                  <legend>Đăng ký với tư cách</legend>
+                  <div className="registration-type-options">
+                    <button type="button" aria-pressed={!isOrganization} className={!isOrganization ? 'selected' : ''} onClick={() => { setRegisterValue('accountType', 'Donor'); setRegisterValue('representativeName', ''); setRegisterValue('taxCode', ''); setCertificateError(''); }}>Cá nhân</button>
+                    <button type="button" aria-pressed={isOrganization} className={isOrganization ? 'selected' : ''} onClick={() => { if (!isOrganization) setRegisterValue('accountType', 'CharityOrganization'); }}>Tổ chức</button>
+                  </div>
+                </fieldset>
+                {isOrganization && (
+                  <div className="organization-registration-fields">
+                    <label htmlFor="organization-type">Loại tổ chức</label>
+                    <select id="organization-type" disabled={loading} {...registerSignUp('accountType')}>
+                      <option value="CharityOrganization">Tổ chức từ thiện</option>
+                      <option value="RecyclingOrganization">Tổ chức tái chế</option>
+                      <option value="DisposalOrganization">Tổ chức tiêu hủy</option>
+                    </select>
+                    <p>Xác thực email để kích hoạt tài khoản và truy cập nghiệp vụ dành cho tổ chức.</p>
+                  </div>
+                )}
                 <Input
-                  label="Họ và tên"
-                  placeholder="Nguyễn Văn A"
+                  label={isOrganization ? 'Tên tổ chức' : 'Họ và tên'}
+                  placeholder={isOrganization ? 'Tên đầy đủ của tổ chức' : 'Nguyễn Văn A'}
                   error={registerErrors.fullName?.message}
                   icon={<User size={18} />}
                   {...registerSignUp('fullName', {
@@ -511,6 +585,19 @@ export const Login: React.FC = () => {
                   })}
                   onFocus={() => setFocusedField('name')}
                 />
+
+                {isOrganization && <>
+                  <Input label="Người đại diện" placeholder="Họ và tên người đại diện" error={registerErrors.representativeName?.message} {...registerSignUp('representativeName')} />
+                  <Input label="Mã số thuế / Số đăng ký tổ chức" placeholder="Nhập mã số trên giấy chứng nhận" error={registerErrors.taxCode?.message} {...registerSignUp('taxCode')} />
+                  <div className="organization-certificate">
+                    <label htmlFor="organization-certificate">Ảnh giấy chứng nhận</label>
+                    <input id="organization-certificate" type="file" accept="image/jpeg,image/png,image/webp" disabled={loading} aria-describedby="certificate-help certificate-error" aria-invalid={!!certificateError} onChange={(event) => void chooseCertificate(event.target.files?.[0])} />
+                    <small id="certificate-help">Giấy đăng ký hoặc chứng nhận hoạt động. JPG, PNG, WebP; tối đa 5 MB.</small>
+                    {certificatePreview && <img src={certificatePreview} alt="Ảnh chứng nhận đã chọn" />}
+                    {certificateFile && <button type="button" className="auth-tab" disabled={loading} onClick={() => { void chooseCertificate(); const input = document.getElementById('organization-certificate') as HTMLInputElement | null; if (input) input.value = ''; }}>Xóa ảnh</button>}
+                    <span id="certificate-error" role={certificateError ? 'alert' : undefined}>{certificateError}</span>
+                  </div>
+                </>}
 
                 <Input
                   label="Tên đăng nhập"
@@ -583,7 +670,7 @@ export const Login: React.FC = () => {
                     <ul className="strength-criteria">
                       <li className={criteria.length ? 'met' : ''}>
                         {criteria.length ? <Check size={13} /> : <Circle size={13} />}
-                        <span>Tối thiểu 6 ký tự</span>
+                        <span>Tối thiểu 8 ký tự</span>
                       </li>
                       <li className={criteria.uppercase ? 'met' : ''}>
                         {criteria.uppercase ? <Check size={13} /> : <Circle size={13} />}
