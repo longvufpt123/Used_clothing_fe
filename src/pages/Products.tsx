@@ -66,6 +66,15 @@ interface WarehouseOption {
   address: string;
 }
 
+// Feedback 11/09: warehouses that can serve the entered pickup address.
+interface EligibleWarehouse {
+  id: string;
+  name: string;
+  address: string;
+  distanceKm: number;
+  availableCapacityKg: number;
+}
+
 interface PickupWindow {
   shiftId: string;
   shiftName: string;
@@ -264,6 +273,8 @@ export const Products: React.FC = () => {
   const [availablePickupDates, setAvailablePickupDates] = useState<string[] | undefined>();
   const [loadingPickupDates, setLoadingPickupDates] = useState(false);
   const [warehouseAvailabilityError, setWarehouseAvailabilityError] = useState('');
+  const [eligibleWarehouses, setEligibleWarehouses] = useState<EligibleWarehouse[]>([]);
+  const [loadingEligible, setLoadingEligible] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => `${getDefaultPickupDate().slice(0, 7)}-01`);
   const availablePickupTimes = useMemo(
     () => getAvailablePickupTimes(pickupDate, pickupWindows),
@@ -355,6 +366,33 @@ export const Products: React.FC = () => {
       });
     return () => { cancelled = true; };
   }, [calendarMonth, deliveryMethod, dropOffMethod, pickupLocation, warehouseId]);
+
+  // Feedback 11/09: show which warehouses can accept the request once the donor
+  // has entered a pickup address, date and estimated weight.
+  useEffect(() => {
+    if (deliveryMethod !== 'StaffPickup' || !pickupLocation || !pickupDate) {
+      setEligibleWarehouses([]);
+      return;
+    }
+    const estimateWeight = estimateWeightByOption[weight] ?? 0;
+    if (estimateWeight <= 0) {
+      setEligibleWarehouses([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingEligible(true);
+    const params = new URLSearchParams({
+      latitude: String(pickupLocation.lat),
+      longitude: String(pickupLocation.lon),
+      pickupDate: `${pickupDate}T00:00:00`,
+      estimateWeight: String(estimateWeight),
+    });
+    apiClient.get<unknown, EligibleWarehouse[]>(`/donor-requests/eligible-warehouses?${params}`)
+      .then((data) => { if (!cancelled) setEligibleWarehouses(data || []); })
+      .catch(() => { if (!cancelled) setEligibleWarehouses([]); })
+      .finally(() => { if (!cancelled) setLoadingEligible(false); });
+    return () => { cancelled = true; };
+  }, [deliveryMethod, pickupLocation, pickupDate, weight]);
 
   useEffect(() => {
     if (!availablePickupTimes.some((option) => option.value === selectedPickupTime)) {
@@ -796,6 +834,7 @@ export const Products: React.FC = () => {
               )}
 
               {deliveryMethod === 'StaffPickup' ? (
+                <>
                 <AddressSearchMap
                   value={address}
                   onChange={setAddress}
@@ -805,6 +844,36 @@ export const Products: React.FC = () => {
                   }}
                   required
                 />
+                {deliveryMethod === 'StaffPickup' && pickupLocation && pickupDate && (
+                  <div className="eligible-warehouses" aria-live="polite">
+                    <strong>
+                      <ShieldCheck size={16} /> Các kho có thể tiếp nhận đơn của bạn
+                    </strong>
+                    {loadingEligible && <span>Đang kiểm tra kho phù hợp...</span>}
+                    {!loadingEligible && eligibleWarehouses.length === 0 && (
+                      <span className="eligible-empty">
+                        Chưa có kho nào phù hợp với địa chỉ, ngày lấy và khối lượng đã chọn.
+                      </span>
+                    )}
+                    {!loadingEligible && eligibleWarehouses.length > 0 && (
+                      <ul>
+                        {eligibleWarehouses.map((warehouse) => (
+                          <li key={warehouse.id}>
+                            <div>
+                              <b>{warehouse.name}</b>
+                              <small>{warehouse.address}</small>
+                            </div>
+                            <span>
+                              {warehouse.distanceKm.toFixed(1)} km · còn nhận{' '}
+                              {warehouse.availableCapacityKg.toFixed(0)} kg
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="input-wrapper">
                   <label className="input-label" htmlFor="dropoff-warehouse">
