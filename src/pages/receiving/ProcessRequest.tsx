@@ -127,11 +127,8 @@ export const ProcessRequest: React.FC = () => {
   // 1. Success Collection Submission
   const handleConfirmReceived = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Actual weight is optional (feedback 11/09): leaving it empty uses the donor's
-    // estimated weight instead of forcing staff to weigh at pickup.
-    const parsedWeight = actualWeight ? parseFloat(actualWeight) : null;
-    if (parsedWeight !== null && (!Number.isFinite(parsedWeight) || parsedWeight <= 0)) {
-      toast.error('Cân nặng thực tế phải lớn hơn 0, hoặc để trống để dùng khối lượng ước tính.');
+    if (!actualWeight || parseFloat(actualWeight) <= 0) {
+      toast.error('Vui lòng nhập cân nặng thực tế hợp lệ (lớn hơn 0).');
       return;
     }
     setIsSubmitting(true);
@@ -144,7 +141,7 @@ export const ProcessRequest: React.FC = () => {
         : request.imageUrls;
 
       await receivingService.confirmPickup(request.batchId, request.id, {
-        actualWeight: parsedWeight,
+        actualWeight: parseFloat(actualWeight),
         notes: `[${actualCategory} - ${actualCondition}] ${actualNotes}`,
         imageUrls,
       });
@@ -280,10 +277,11 @@ export const ProcessRequest: React.FC = () => {
 
             <div className="ops-form-grid">
               <Input
-                label="Cân nặng thực tế (kg) — để trống để dùng khối lượng ước tính"
+                label="Cân nặng thực tế (kg)"
                 type="text"
                 inputMode="decimal"
-                placeholder="Không cân lại thì bỏ trống..."
+                required
+                placeholder="Nhập số cân nặng thực đo được..."
                 value={actualWeight}
                 onChange={(e) => {
                   const value = e.target.value.replace(',', '.');
@@ -435,7 +433,7 @@ export const ProcessRequest: React.FC = () => {
               <>
                 <div className="ops-kv">
                   <span>Cân nặng thực tế</span>
-                  <strong>{actualWeight ? `${actualWeight} kg` : 'Dùng khối lượng ước tính'}</strong>
+                  <strong>{actualWeight} kg</strong>
                 </div>
                 <div className="ops-kv">
                   <span>Chất liệu chính</span>

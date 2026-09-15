@@ -15,7 +15,7 @@ interface ChatNotice { conversationType?: 'direct' | 'request'; participantId?: 
   requestCode?: string; participantLabel?: string; senderId: string; senderName: string; message: string; sentAt: string; }
 
 const roleLabels: Record<string, string> = { Manager: 'Quản lý', ReceivingStaff: 'Tiếp nhận',
-  ClassificationStaff: 'Phân loại', WarehouseStaff: 'Chuyên viên xuất nhập kho', Donor: 'Người quyên góp',
+  ClassificationStaff: 'Phân loại', WarehouseStaff: 'Nhân viên kho', Donor: 'Người quyên góp',
   CharityOrganization: 'Tổ chức từ thiện', RecyclingOrganization: 'Tổ chức tái chế' };
 
 export default function DonationChatRealtime() {

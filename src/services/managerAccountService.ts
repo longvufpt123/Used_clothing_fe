@@ -37,25 +37,7 @@ export interface SaveManagerAccount {
   userStatus: string;
   newPassword?: string;
 }
-export interface PendingOrganization {
-  id: string;
-  organizationName: string;
-  userName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-  taxCode?: string | null;
-  certificateImageUrl?: string | null;
-  address: string;
-  createdAt: string;
-}
 export const managerAccountService = {
-  pendingOrganizations: () =>
-    apiClient.get<unknown, PendingOrganization[]>('/manager-accounts/pending-organizations'),
-  approveOrganization: (id: string) =>
-    apiClient.post(`/manager-accounts/${id}/approve`),
-  rejectOrganization: (id: string, reason: string) =>
-    apiClient.post(`/manager-accounts/${id}/reject`, { reason }),
   search: (filter: {
     warehouseId: string;
     role: string;

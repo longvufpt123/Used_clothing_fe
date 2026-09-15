@@ -43,11 +43,6 @@ type AssignedTeamView = {
   endTime: string;
   warehouseAddress: string;
   members: ReceivingBatch['teamMembers'];
-  vehicleType?: string | null;
-  maxOrdersPerShift?: number | null;
-  usedOrders?: number | null;
-  maxKgPerShift?: number | null;
-  usedKg?: number | null;
 };
 
 const isTab = (v: string | null): v is TabKey =>
@@ -228,11 +223,6 @@ export const Dashboard: React.FC = () => {
         endTime: batch.endTime,
         warehouseAddress: batch.warehouseAddress,
         members: batch.teamMembers,
-        vehicleType: batch.vehicleType,
-        maxOrdersPerShift: batch.maxOrdersPerShift,
-        usedOrders: batch.usedOrders,
-        maxKgPerShift: batch.maxKgPerShift,
-        usedKg: batch.usedKg,
       },
     ] as [string, AssignedTeamView]),
     ...dropOffBoard.dutyContexts.map((context) => [
@@ -488,20 +478,6 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="rcv-team-members">
-                  {(team.teamType === 'ReceivingPickup' || team.vehicleType) && (team.maxOrdersPerShift != null || team.maxKgPerShift != null) && (
-                    <div className="rcv-team-quota">
-                      <Truck size={15} />
-                      <span>
-                        Xe {team.vehicleType === 'Car' ? 'ô tô' : 'máy'}
-                        {team.maxOrdersPerShift != null &&
-                          team.usedOrders != null &&
-                          ` · ${team.usedOrders}/${team.maxOrdersPerShift} đơn đã nhận`}
-                        {team.maxKgPerShift != null &&
-                          team.usedKg != null &&
-                          ` · ${Math.round(team.usedKg * 10) / 10}/${team.maxKgPerShift} kg`}
-                      </span>
-                    </div>
-                  )}
                   {team.members.map((member, index) => (
                     <div className="rcv-team-member" key={member.id}>
                       <span className="rcv-member-avatar">

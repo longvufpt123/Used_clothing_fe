@@ -1064,16 +1064,3 @@
 .rcv-shift-filter { display: flex; min-height: 42px; align-items: center; gap: 8px; padding: 5px 8px 5px 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg-secondary); color: var(--color-text-secondary); font-size: .75rem; font-weight: 750; white-space: nowrap; }
 .rcv-shift-filter select { min-width: 120px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 7px; outline: none; background: var(--color-bg-primary); color: var(--color-text-primary); }
 @media (max-width: 760px) { .rcv-batch-filter-row { align-items: stretch; flex-direction: column; } .rcv-shift-filter { width: fit-content; } }
-
-/* Vehicle quota line on team card (feedback 11/09) */
-.rcv-team-quota {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px dashed var(--color-border, #cbd5e1);
-  border-radius: 9px;
-  color: var(--color-text-secondary, #64748b);
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-}

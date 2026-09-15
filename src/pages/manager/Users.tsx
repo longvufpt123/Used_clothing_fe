@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  CheckCircle2,
   Edit3,
-  FileText,
   Lock,
   Mail,
   Phone,
@@ -12,7 +10,6 @@ import {
   UserPlus,
   UsersRound,
   Warehouse,
-  XCircle,
 } from 'lucide-react';
 import AdminLayout from '@/shared/layouts/AdminLayout';
 import { useToast } from '@/context/ToastContext';
@@ -21,7 +18,6 @@ import {
   managerAccountService,
   type ManagerAccount,
   type ManagerRoleOption,
-  type PendingOrganization,
   type SaveManagerAccount,
 } from '@/services/managerAccountService';
 import '@/shared/pages/Users.css';
@@ -33,7 +29,7 @@ const roleLabels: Record<string, string> = {
   RecyclingOrganization: 'Tổ chức tái chế',
   ReceivingStaff: 'Nhân viên tiếp nhận',
   ClassificationStaff: 'Nhân viên phân loại',
-  WarehouseStaff: 'Chuyên viên xuất nhập kho',
+  WarehouseStaff: 'Nhân viên kho',
 };
 const warehouseRoles = ['ReceivingStaff', 'ClassificationStaff', 'WarehouseStaff'];
 const emptyForm: SaveManagerAccount = {
@@ -52,12 +48,6 @@ const emptyForm: SaveManagerAccount = {
 export default function ManagerUsers() {
   const toast = useToast();
   const [users, setUsers] = useState<ManagerAccount[]>([]);
-  const [view, setView] = useState<'accounts' | 'pending'>('accounts');
-  const [pending, setPending] = useState<PendingOrganization[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(false);
-  const [rejectOrg, setRejectOrg] = useState<PendingOrganization | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const [orgBusy, setOrgBusy] = useState(false);
   const [roles, setRoles] = useState<ManagerRoleOption[]>([]);
   const [warehouses, setWarehouses] = useState<ManagerWarehouseOption[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
@@ -110,41 +100,6 @@ export default function ManagerUsers() {
       .then(setWarehouses)
       .catch(() => setWarehouses([]));
   }, []);
-
-  const loadPending = async () => {
-    setPendingLoading(true);
-    try {
-      setPending(await managerAccountService.pendingOrganizations());
-    } catch {
-      toast.error('Không thể tải danh sách tổ chức chờ duyệt.');
-    } finally {
-      setPendingLoading(false);
-    }
-  };
-  useEffect(() => {
-    if (view === 'pending') void loadPending();
-  }, [view]);
-  const decideOrg = async (org: PendingOrganization, approve: boolean) => {
-    if (orgBusy) return;
-    if (approve) {
-      if (!window.confirm(`Duyệt tài khoản tổ chức "${org.organizationName}"?`)) return;
-    } else {
-      if (!rejectReason.trim()) return toast.warning('Nhập lý do từ chối.');
-    }
-    setOrgBusy(true);
-    try {
-      if (approve) await managerAccountService.approveOrganization(org.id);
-      else await managerAccountService.rejectOrganization(org.id, rejectReason.trim());
-      toast.success(approve ? 'Đã duyệt tài khoản tổ chức.' : 'Đã từ chối đăng ký.');
-      setRejectOrg(null);
-      setRejectReason('');
-      await loadPending();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Thao tác thất bại.');
-    } finally {
-      setOrgBusy(false);
-    }
-  };
 
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const selectedRole = roles.find((x) => x.id === form.roleId)?.name ?? '';
@@ -262,104 +217,6 @@ export default function ManagerUsers() {
           </button>
         </header>
 
-        <div className="manager-account-tabs" role="tablist">
-          <button
-            role="tab"
-            aria-selected={view === 'accounts'}
-            className={view === 'accounts' ? 'active' : ''}
-            onClick={() => setView('accounts')}
-          >
-            <UsersRound size={15} /> Tài khoản bộ phận
-          </button>
-          <button
-            role="tab"
-            aria-selected={view === 'pending'}
-            className={view === 'pending' ? 'active' : ''}
-            onClick={() => setView('pending')}
-          >
-            <FileText size={15} /> Tổ chức chờ duyệt {pending.length > 0 && `(${pending.length})`}
-          </button>
-        </div>
-
-        {view === 'pending' ? (
-          <section className="manager-account-table pending-organizations">
-            <div className="account-table-head">
-              <span>Tổ chức</span>
-              <span>Liên hệ</span>
-              <span>Giấy chứng nhận</span>
-              <span>Thao tác</span>
-            </div>
-            {pendingLoading ? (
-              <div className="account-empty">Đang tải dữ liệu...</div>
-            ) : pending.length === 0 ? (
-              <div className="account-empty">
-                <FileText size={36} />
-                <strong>Không có tổ chức chờ duyệt</strong>
-                <span>Các đăng ký tổ chức mới sẽ xuất hiện ở đây.</span>
-              </div>
-            ) : (
-              pending.map((org) => (
-                <div className="account-table-row" key={org.id}>
-                  <div className="account-person">
-                    <div className="account-avatar">{org.organizationName.charAt(0)}</div>
-                    <div>
-                      <strong>{org.organizationName}</strong>
-                      <small>
-                        {roleLabels[org.role] ?? org.role} · Mã số thuế {org.taxCode || '—'}
-                      </small>
-                      <small>{org.address}</small>
-                    </div>
-                  </div>
-                  <div className="account-contact">
-                    <span>
-                      <Mail size={14} /> {org.email}
-                    </span>
-                    <span>
-                      <Phone size={14} /> {org.phoneNumber}
-                    </span>
-                    <span>@{org.userName}</span>
-                  </div>
-                  <div>
-                    {org.certificateImageUrl ? (
-                      <a
-                        className="pending-certificate-link"
-                        href={org.certificateImageUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FileText size={15} /> Xem giấy chứng nhận
-                      </a>
-                    ) : (
-                      <small>Chưa có</small>
-                    )}
-                  </div>
-                  <div className="account-actions">
-                    <button
-                      type="button"
-                      className="approve"
-                      disabled={orgBusy}
-                      onClick={() => decideOrg(org, true)}
-                    >
-                      <CheckCircle2 size={15} /> Duyệt
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      disabled={orgBusy}
-                      onClick={() => {
-                        setRejectOrg(org);
-                        setRejectReason('');
-                      }}
-                    >
-                      <XCircle size={15} /> Từ chối
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </section>
-        ) : (
-          <>
         <section className="manager-account-filters">
           <div className="account-search">
             <Search size={17} />
@@ -515,41 +372,6 @@ export default function ManagerUsers() {
             </button>
           </div>
         </footer>
-          </>
-        )}
-
-        {rejectOrg && (
-          <div className="manager-account-modal">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                decideOrg(rejectOrg, false);
-              }}
-            >
-              <h2>Từ chối đăng ký tổ chức</h2>
-              <p>
-                <strong>{rejectOrg.organizationName}</strong> sẽ nhận thông báo kèm lý do từ chối.
-              </p>
-              <label>
-                Lý do từ chối <b>*</b>
-                <textarea
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="VD: Giấy chứng nhận không hợp lệ..."
-                />
-              </label>
-              <div className="manager-account-modal-actions">
-                <button type="button" disabled={orgBusy} onClick={() => setRejectOrg(null)}>
-                  Quay lại
-                </button>
-                <button type="submit" className="danger" disabled={orgBusy}>
-                  <XCircle size={15} /> {orgBusy ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {editing && (
           <div className="manager-account-modal">

@@ -1,35 +1,34 @@
 import apiClient from './api';
-export interface CategoryOption {
-  id: string;
-  code: string;
-  name: string;
-  parentId?: string | null;
-  sortOrder: number;
-}
-export interface RequestCriteria {
-  clothingTypes: CategoryOption[];
-  genders: CategoryOption[];
-  sizes: CategoryOption[];
-  targetUsers: CategoryOption[];
-}
-export interface CreateCharityRequestPayload {
-  warehouseId: string;
-  recipientName: string;
-  recipientPhone: string;
-  toAddress: string;
-  notes?: string;
-  requestedClothingTypeId?: string | null;
-  requestedGenderId?: string | null;
-  requestedSizeId?: string | null;
-  requestedTargetUserId?: string | null;
-  requestedWeightKg: number;
-  requestedQuantity?: number | null;
+export interface CatalogItem {
+  inventoryId: string;
+  classifiedBatchId: string;
+  batchCode: string;
+  sku: string;
+  clothingType: string;
+  fabricType: string;
+  gender: string;
+  targetUser: string;
+  size: string;
+  grade: string;
+  availableQuantity: number;
+  availableWeight: number;
+  isLocked: boolean;
+  lockReason?: string;
+  items: {
+    itemCode: string;
+    clothingType: string;
+    fabricType: string;
+    gender: string;
+    targetUser: string;
+    size: string;
+    imageUrls: string[];
+    notes?: string;
+  }[];
 }
 export interface DistributionRequest {
   id: string;
   code: string;
   organizationName: string;
-  warehouseId: string;
   warehouseName: string;
   warehouseAddress: string;
   warehousePhone?: string;
@@ -62,23 +61,18 @@ export interface DistributionRequest {
     requestedWeight: number;
     issuedWeight: number;
   }[];
-  requestedClothingTypeId?: string | null;
-  requestedGenderId?: string | null;
-  requestedSizeId?: string | null;
-  requestedTargetUserId?: string | null;
-  requestedWeightKg?: number | null;
-  requestedQuantity?: number | null;
   shipmentHistory: { status: string; description?: string; source: string; occurredAt: string }[];
 }
 export const distributionService = {
   confirmReceipt: (id: string) => apiClient.post(`/distribution-operations/${id}/organization/receive`),
-  criteria: () => apiClient.get<unknown, RequestCriteria>('/distribution-operations/request-criteria'),
-  warehouses: () =>
-    apiClient.get<unknown, { id: string; warehouseName: string; address: string }[]>('/warehouses'),
-  create: (body: CreateCharityRequestPayload) => apiClient.post('/distribution-operations', body),
+  catalog: (warehouseId?: string) =>
+    apiClient.get<
+      unknown,
+      { warehouses: { id: string; warehouseName: string; address: string }[]; items: CatalogItem[] }
+    >(`/distribution-operations/catalog${warehouseId ? `?warehouseId=${warehouseId}` : ''}`),
+  create: (body: unknown) => apiClient.post('/distribution-operations', body),
   mine: () => apiClient.get<unknown, DistributionRequest[]>('/distribution-operations/mine'),
-  update: (id: string, body: CreateCharityRequestPayload) =>
-    apiClient.put(`/distribution-operations/${id}`, body),
+  update: (id: string, body: unknown) => apiClient.put(`/distribution-operations/${id}`, body),
   remove: (id: string) => apiClient.delete(`/distribution-operations/${id}`),
   manager: () => apiClient.get<unknown, DistributionRequest[]>('/distribution-operations/manager'),
   approve: (id: string, approved: boolean, notes?: string) =>

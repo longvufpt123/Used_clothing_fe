@@ -91,9 +91,6 @@ export default function DispatchOperations() {
   const [teamType, setTeamType] = useState<'ReceivingPickup' | 'ReceivingWarehouse'>(
     'ReceivingPickup',
   );
-  const [vehicleType, setVehicleType] = useState<'Motorbike' | 'Car'>('Motorbike');
-  const [maxOrders, setMaxOrders] = useState('');
-  const [maxKg, setMaxKg] = useState('');
   const [staffIds, setStaffIds] = useState<string[]>([]);
   const [savingTeam, setSavingTeam] = useState(false);
   const [editingTeamId, setEditingTeamId] = useState<string>();
@@ -265,22 +262,9 @@ export default function DispatchOperations() {
   };
   const createTeam = async () => {
     if (!teamShift || staffIds.length < 1 || staffIds.length > 2) return toast.warning('Chọn từ 1 đến 2 Receiving Staff.');
-    // Pickup teams must declare their vehicle and per-shift quota (feedback 11/09).
-    const parsedOrders = maxOrders ? Number(maxOrders) : null;
-    const parsedKg = maxKg ? Number(maxKg) : null;
-    if (teamType === 'ReceivingPickup') {
-      if (parsedOrders !== null && (parsedOrders < 1 || parsedOrders > 200))
-        return toast.warning('Giới hạn đơn mỗi ca phải từ 1 đến 200.');
-      if (parsedKg !== null && (parsedKg < 1 || parsedKg > 5000))
-        return toast.warning('Giới hạn kg mỗi ca phải từ 1 đến 5000.');
-    }
     setSavingTeam(true);
     try {
-      await receivingService.createTeam(teamShift.id, teamName.trim(), staffIds, teamType, {
-        vehicleType: teamType === 'ReceivingPickup' ? vehicleType : undefined,
-        maxOrdersPerShift: teamType === 'ReceivingPickup' ? (parsedOrders ?? undefined) : undefined,
-        maxKgPerShift: teamType === 'ReceivingPickup' ? (parsedKg ?? undefined) : undefined,
-      });
+      await receivingService.createTeam(teamShift.id, teamName.trim(), staffIds, teamType);
       toast.success(
         teamType === 'ReceivingWarehouse' ? 'Đã tạo team trực kho.' : 'Đã thêm pickup team vào ca.',
       );
@@ -1186,42 +1170,6 @@ export default function DispatchOperations() {
                 <label>Tên team</label>
                 <input value={teamName} onChange={(e) => setTeamName(e.target.value)} />
               </div>
-              {teamType === 'ReceivingPickup' && (
-                <div className="manager-vehicle-fields">
-                  <div className="ops-field">
-                    <label>Loại phương tiện *</label>
-                    <select
-                      value={vehicleType}
-                      onChange={(e) => setVehicleType(e.target.value as 'Motorbike' | 'Car')}
-                    >
-                      <option value="Motorbike">Xe máy</option>
-                      <option value="Car">Ô tô / Xe tải nhỏ</option>
-                    </select>
-                  </div>
-                  <div className="ops-field">
-                    <label>Giới hạn đơn mỗi ca</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={200}
-                      placeholder="VD: 10"
-                      value={maxOrders}
-                      onChange={(e) => setMaxOrders(e.target.value)}
-                    />
-                  </div>
-                  <div className="ops-field">
-                    <label>Giới hạn kg mỗi ca</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={5000}
-                      placeholder="VD: 50"
-                      value={maxKg}
-                      onChange={(e) => setMaxKg(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
               <div className="manager-staff-search">
                 <Search size={16} />
                 <input

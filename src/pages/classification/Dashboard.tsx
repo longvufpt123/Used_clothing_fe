@@ -18,62 +18,6 @@ import {
 } from '@/utils/classificationQueues';
 const isFullyClassified = (batch: ClassificationBatchSummary) =>
   batch.countedItemCount != null && batch.classifiedItems >= batch.countedItemCount;
-
-const CLASSIFIED_INTAKE = CLASSIFIED_STATUSES;
-
-function BatchCard({
-  batch,
-  onOpen,
-}: {
-  batch: ClassificationBatchSummary;
-  onOpen: (batch: ClassificationBatchSummary) => void;
-}) {
-  return (
-    <article className="ops-card" role="button" tabIndex={0} onClick={() => onOpen(batch)}>
-      {batch.imageUrls && batch.imageUrls.length > 0 && (
-        <div className="batch-card-thumb">
-          <img src={batch.imageUrls[0]} alt={batch.batchCode} />
-          {batch.imageUrls.length > 1 && <span>+{batch.imageUrls.length - 1}</span>}
-        </div>
-      )}
-      <div className="ops-card-top">
-        <div>
-          <div className="ops-card-code">{batch.batchCode}</div>
-          <div className="ops-card-meta">
-            <span>{new Date(batch.intakeDate).toLocaleDateString('vi-VN')}</span>
-            <span>{batch.totalWeight} kg</span>
-          </div>
-        </div>
-        <span
-          className={`ops-badge ${CLASSIFIED_INTAKE.has(batch.status) ? 'done' : isFullyClassified(batch) ? 'pending' : batch.status.toLowerCase()}`}
-        >
-          {CLASSIFIED_INTAKE.has(batch.status)
-            ? 'Đã phân loại xong'
-            : isFullyClassified(batch)
-              ? 'Chờ xác nhận hoàn tất'
-              : getStatusLabel(batch.status)}
-        </span>
-      </div>
-      <h3>{batch.routeName || 'Tuyến tiếp nhận'}</h3>
-      {batch.isRecycledReturn && (
-        <div className="ops-card-meta recycled-return-meta">
-          <span className="ops-badge pending">Tái chế về</span>
-          {batch.sourceOperationCode && <span>Mã vận hành: {batch.sourceOperationCode}</span>}
-          {batch.sourceOrganizationName && <span>Từ: {batch.sourceOrganizationName}</span>}
-        </div>
-      )}
-      <div className="ops-card-footer">
-        <span>
-          Đã phân loại: <strong>{batch.classifiedItems}</strong> món · {batch.donationRequests} đơn
-        </span>
-        <span className="ops-card-action">
-          {CLASSIFIED_INTAKE.has(batch.status) ? 'Xem chi tiết' : 'Mở lô'}{' '}
-          <ArrowRight size={14} />
-        </span>
-      </div>
-    </article>
-  );
-}
 const hasEndedShift = (batch: ClassificationBatchSummary) => {
   if (!batch.teamShiftDate || !batch.teamShiftEndTime) return batch.teamStatus === 'Completed';
   return (
@@ -142,9 +86,6 @@ export default function ClassificationDashboard() {
     if (selectedTab === 'pending') return PENDING_STATUSES.has(batch.status);
     return true;
   });
-  // Recycled-return batches (RC-) are displayed in a separate section (feedback 11/09).
-  const recycledBatches = visibleBatches.filter((batch) => batch.isRecycledReturn);
-  const normalBatches = visibleBatches.filter((batch) => !batch.isRecycledReturn);
   const displayedBatchCount = visibleBatches.length;
   const displayedInProgressCount =
     selectedTab === 'classified'
@@ -253,19 +194,6 @@ export default function ClassificationDashboard() {
           </div>
         </div>
       </div>
-      {recycledBatches.length > 0 && (
-        <section className="recycled-return-section">
-          <div className="ops-section-head">
-            <h2>Đồ tái chế về</h2>
-            <span>Lô hàng trả về từ tổ chức tái chế</span>
-          </div>
-          <div className="ops-list classification-batch-list">
-            {recycledBatches.map((b) => (
-              <BatchCard key={b.id} batch={b} onOpen={open} />
-            ))}
-          </div>
-        </section>
-      )}
       <section>
         <div className="ops-section-head">
           <h2>
@@ -278,8 +206,43 @@ export default function ClassificationDashboard() {
           <span>{loading ? 'Đang tải...' : 'Chọn một lô để xem chi tiết'}</span>
         </div>
         <div className="ops-list classification-batch-list">
-          {normalBatches.map((b) => (
-            <BatchCard key={b.id} batch={b} onOpen={open} />
+          {visibleBatches.map((b) => (
+            <article
+              key={b.id}
+              className="ops-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => open(b)}
+            >
+              <div className="ops-card-top">
+                <div>
+                  <div className="ops-card-code">{b.batchCode}</div>
+                  <div className="ops-card-meta">
+                    <span>{new Date(b.intakeDate).toLocaleDateString('vi-VN')}</span>
+                    <span>{b.totalWeight} kg</span>
+                  </div>
+                </div>
+                <span
+                  className={`ops-badge ${CLASSIFIED_STATUSES.has(b.status) ? 'done' : isFullyClassified(b) ? 'pending' : b.status.toLowerCase()}`}
+                >
+                  {CLASSIFIED_STATUSES.has(b.status)
+                    ? 'Đã phân loại xong'
+                    : isFullyClassified(b)
+                      ? 'Chờ xác nhận hoàn tất'
+                      : getStatusLabel(b.status)}
+                </span>
+              </div>
+              <h3>{b.routeName || 'Tuyến tiếp nhận'}</h3>
+              <div className="ops-card-footer">
+                <span>
+                  Đã phân loại: <strong>{b.classifiedItems}</strong> món · {b.donationRequests} đơn
+                </span>
+                <span className="ops-card-action">
+                  {CLASSIFIED_STATUSES.has(b.status) ? 'Xem chi tiết' : 'Mở lô'}{' '}
+                  <ArrowRight size={14} />
+                </span>
+              </div>
+            </article>
           ))}
           {!loading && visibleBatches.length === 0 && (
             <div className="ops-empty">
