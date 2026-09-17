@@ -134,9 +134,21 @@
 .account-person > div:last-child,
 .account-contact,
 .account-role {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 4px;
 }
+.manager-accounts-page .account-person > div:last-child > * {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.manager-accounts-page .account-table-row > div { min-width: 0; }
+.manager-accounts-page .account-contact span { white-space: normal; overflow-wrap: anywhere; }
+.manager-accounts-page .account-contact svg { flex-shrink: 0; }
+.manager-accounts-page .account-status.pending { color: #b45309; background: #fef3c7; }
+.manager-accounts-page .account-actions button.approve { display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 10px; gap: 5px; white-space: nowrap; color: var(--color-primary); }
 .account-person span,
 .account-contact span,
 .account-role span {

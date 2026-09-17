@@ -81,6 +81,7 @@ export const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verification, setVerification] = useState<{ userId: string } | null>(null);
+  const [approvalNotice, setApprovalNotice] = useState('');
   const [emailCode, setEmailCode] = useState('');
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificatePreview, setCertificatePreview] = useState('');
@@ -274,14 +275,14 @@ export const Login: React.FC = () => {
     try {
       const result = await verifyRegistrationApi(verification.userId, emailCode);
       toast.success(result.message);
-      if (result.accountActivated) {
+      if (result.emailConfirmed) {
+        setApprovalNotice(result.accountActivated ? '' : result.message);
         resetRegisterForm();
         setCertificateFile(null);
         uploadedCertificate.current = null;
         setEmailCode('');
         setVerification(null);
         setIsRegister(false);
-        toast.success('Tài khoản đã kích hoạt. Bạn có thể đăng nhập.');
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Mã xác nhận không hợp lệ.');
@@ -476,6 +477,7 @@ export const Login: React.FC = () => {
             </button>
           </div>
 
+          {approvalNotice && <div className="organization-approval-notice" role="status">{approvalNotice}</div>}
           {verification ? (
             <div className="auth-form-wrapper fade-in">
               <h3 className="login-title text-gradient">Xác nhận tài khoản</h3>

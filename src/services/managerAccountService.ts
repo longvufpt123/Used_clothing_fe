@@ -62,4 +62,5 @@ export const managerAccountService = {
   setLocked: (id: string, locked: boolean) =>
     apiClient.patch(`/manager-accounts/${id}/lock`, { locked }),
   remove: (id: string) => apiClient.delete(`/manager-accounts/${id}`),
+  approve: (id: string) => apiClient.post(`/manager-accounts/${id}/approve`),
 };

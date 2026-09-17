@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Edit3,
+  Check,
   Lock,
   Mail,
   Phone,
@@ -63,6 +64,25 @@ export default function ManagerUsers() {
   const [form, setForm] = useState<SaveManagerAccount>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ManagerAccount | null>(null);
+  const [approving, setApproving] = useState<ManagerAccount | null>(null);
+  const [approvalBusy, setApprovalBusy] = useState(false);
+  const approvalLock = useRef(false);
+  const approve = async () => {
+    if (!approving || approvalLock.current) return;
+    approvalLock.current = true;
+    setApprovalBusy(true);
+    try {
+      await managerAccountService.approve(approving.id);
+      toast.success('Đã duyệt tài khoản và gửi email thông báo cho tổ chức.');
+      setApproving(null);
+      await load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message ?? 'Không thể duyệt tài khoản. Vui lòng thử lại.');
+    } finally {
+      approvalLock.current = false;
+      setApprovalBusy(false);
+    }
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -310,12 +330,15 @@ export default function ManagerUsers() {
                 </div>
                 <div>
                   <span
-                    className={`account-status ${user.userStatus === 'Active' ? 'active' : 'inactive'}`}
+                    className={`account-status ${user.userStatus === 'PendingApproval' ? 'pending' : user.userStatus === 'Active' ? 'active' : 'inactive'}`}
                   >
-                    {user.userStatus === 'Active' ? 'Đang hoạt động' : 'Tạm ngưng'}
+                    {user.userStatus === 'PendingApproval' ? 'Chờ phê duyệt' : user.userStatus === 'Active' ? 'Đang hoạt động' : 'Tạm ngưng'}
                   </span>
                 </div>
                 <div className="account-actions">
+                  {user.userStatus === 'PendingApproval' ? (
+                    <button type="button" className="approve" onClick={() => setApproving(user)} title="Duyệt tài khoản" aria-label={`Duyệt tài khoản ${user.fullName}`}><Check size={16} /> Duyệt</button>
+                  ) : <>
                   <button type="button" onClick={() => openEdit(user)} title="Chỉnh sửa">
                     <Edit3 size={16} />
                   </button>
@@ -327,6 +350,7 @@ export default function ManagerUsers() {
                   >
                     {user.userStatus === 'Active' ? <Lock size={16} /> : <Unlock size={16} />}
                   </button>
+                  </>}
                   <button
                     type="button"
                     className="delete"
@@ -536,6 +560,18 @@ export default function ManagerUsers() {
           </div>
         )}
 
+        {approving && (
+          <div className="manager-account-modal compact">
+            <div className="delete-account-dialog" role="dialog" aria-modal="true" aria-labelledby="approve-account-title">
+              <h2 id="approve-account-title">Duyệt tài khoản tổ chức?</h2>
+              <p><strong>{approving.fullName}</strong> sẽ được phép đăng nhập. Email thông báo phê duyệt sẽ được gửi tới <strong>{approving.email}</strong>.</p>
+              <footer>
+                <button disabled={approvalBusy} onClick={() => setApproving(null)}>Hủy</button>
+                <button disabled={approvalBusy} onClick={() => void approve()}>{approvalBusy ? 'Đang duyệt và gửi email...' : 'Xác nhận duyệt'}</button>
+              </footer>
+            </div>
+          </div>
+        )}
         {deleting && (
           <div className="manager-account-modal compact">
             <div className="delete-account-dialog">
