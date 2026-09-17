@@ -104,6 +104,10 @@ export interface AiClassificationSuggestion {
   summary: string;
 }
 export interface GroupedClassifiedBatch {
+  garmentGroupId?: string | null;
+  genderId?: string | null;
+  targetUserId?: string | null;
+  conditionGradeId?: string | null;
   id: string;
   batchCode: string;
   classificationDate: string;

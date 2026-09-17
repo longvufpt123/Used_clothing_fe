@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Boxes, CheckCircle2, Plus, Trash2, Pencil } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Boxes, CheckCircle2, Plus, Trash2, Pencil, Lightbulb } from 'lucide-react';
 import ManualBatchDialog from './ManualBatchDialog';
 import BatchPlacementDialog from './BatchPlacementDialog';
 import { useToast } from '@/context/ToastContext';
@@ -16,6 +16,10 @@ import './ManualBatching.css';
 const emptyForm = {
   garmentGroupId: '', genderId: '', targetUserId: '', conditionGradeId: '',
 };
+const attributeKeys = Object.keys(emptyForm) as (keyof typeof emptyForm)[];
+const matchesAttributes = (left: Partial<Record<keyof typeof emptyForm, string | null>>,
+  right: Partial<Record<keyof typeof emptyForm, string | null>>) =>
+  attributeKeys.every((key) => !!left[key] && left[key] === right[key]);
 
 export default function ManualBatching() {
   const toast = useToast();
@@ -28,11 +32,18 @@ export default function ManualBatching() {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false);
+  const [selectingSuggestion, setSelectingSuggestion] = useState(false);
+  const createLock = useRef(false);
+  const formSection = useRef<HTMLElement>(null);
+  const itemsSection = useRef<HTMLElement>(null);
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
   const [batchAction, setBatchAction] = useState<{ batch: GroupedClassifiedBatch; mode: 'edit' | 'delete' } | null>(null);
 
   const load = async (keepBatchId?: string) => {
     setLoading(true);
+    setLoadError(false);
     try {
       const [catalogData, itemData, batchData] = await Promise.all([
         classificationService.getCatalog(),
@@ -51,6 +62,7 @@ export default function ManualBatching() {
         setSelectedBatch(null);
       }
     } catch (error: any) {
+      setLoadError(true);
       toast.error(error?.response?.data?.message || 'Không tải được dữ liệu gom Classified Batch.');
     } finally {
       setLoading(false);
@@ -61,27 +73,69 @@ export default function ManualBatching() {
 
   const compatibleItems = useMemo(() => {
     if (!selectedBatch || selectedBatch.status !== 'Draft') return [];
-    return items.filter((item) =>
-      item.garmentGroup === selectedBatch.garmentGroup
-      && item.gender === selectedBatch.gender
-      && item.targetUser === selectedBatch.targetUser
-      && item.conditionGrade === selectedBatch.conditionGrade);
+    return items.filter((item) => matchesAttributes(item, selectedBatch));
   }, [items, selectedBatch]);
 
+  const suggestions = useMemo(() => {
+    if (!catalog) return [];
+    const groups = new Map<string, { key: string; attributes: typeof emptyForm; label: string; gender: string;
+      target: string; grade: string; count: number; draft?: GroupedClassifiedBatch }>();
+    for (const item of items) {
+      const group = catalog.garmentGroups.find((option) => option.id === item.garmentGroupId);
+      const gender = catalog.genders.find((option) => option.id === item.genderId);
+      const target = catalog.targetUsers.find((option) => option.id === item.targetUserId);
+      const grade = catalog.conditionGrades.find((option) => option.id === item.conditionGradeId);
+      if (!group || !gender || !target || !grade) continue;
+      const attributes = { garmentGroupId: group.id, genderId: gender.id, targetUserId: target.id, conditionGradeId: grade.id };
+      const key = JSON.stringify(attributeKeys.map((field) => attributes[field]));
+      const existing = groups.get(key);
+      if (existing) { existing.count++; continue; }
+      groups.set(key, { key, attributes, label: group.name, gender: gender.name, target: target.name,
+        grade: item.conditionGrade, count: 1,
+        draft: batches.find((batch) => batch.status === 'Draft' && matchesAttributes(batch, attributes)) });
+    }
+    return [...groups.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'vi') || a.key.localeCompare(b.key));
+  }, [items, batches, catalog]);
+
+  const useSuggestion = async (suggestion: typeof suggestions[number]) => {
+    if (suggestion.draft) {
+      setSelectingSuggestion(true);
+      try {
+        const detail = await classificationService.getGroupedBatch(suggestion.draft.id);
+        if (detail.status !== 'Draft') {
+          toast.info('Batch này đã thay đổi trạng thái. Đang cập nhật lại gợi ý.');
+          await load();
+          return;
+        }
+        setSelectedItems([]);
+        setSelectedBatch(detail);
+        itemsSection.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      } catch { toast.error('Không tải được batch phù hợp. Vui lòng thử lại.'); }
+      finally { setSelectingSuggestion(false); }
+    } else {
+      setForm(suggestion.attributes);
+      formSection.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      formSection.current?.querySelector('select')?.focus({ preventScroll: true });
+    }
+  };
+
   const createBatch = async () => {
+    if (createLock.current) return;
     if (Object.values(form).some((value) => !value)) {
       toast.error('Vui lòng chọn đầy đủ thuộc tính của Classified Batch.');
       return;
     }
+    createLock.current = true;
     setCreating(true);
     try {
       const created = await classificationService.createManualBatch(form);
+      setSelectedItems([]);
       setForm(emptyForm);
       toast.success(`Đã tạo batch rỗng ${created.batchCode}.`);
       await load(created.id);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể tạo Classified Batch.');
-    } finally { setCreating(false); }
+    } finally { createLock.current = false; setCreating(false); }
   };
 
   const assignItems = async () => {
@@ -141,7 +195,30 @@ export default function ManualBatching() {
         </div>
       </header>
 
-      <section className="ops-panel glass">
+      <section className="ops-panel glass batch-suggestions">
+        <div className="ops-section-head">
+          <div><h2><Lightbulb size={20} aria-hidden="true" /> Gợi ý batch từ item hiện có</h2>
+            <span>Cùng loại, giới tính, đối tượng và nhãn A/B/C · Chỉ item chưa gom trong kho của bạn</span></div>
+          <button type="button" className="ops-btn ops-btn-secondary" disabled={loading || creating || saving || selectingSuggestion} onClick={() => void load()}>Làm mới</button>
+        </div>
+        {loading ? <p role="status">Đang cập nhật gợi ý...</p> : loadError ? <p role="alert">Không tải được gợi ý. Vui lòng bấm Làm mới để thử lại.</p> : <>
+          {suggestions.length > 0 ? <div className="batch-suggestions-grid">
+            {(showAllSuggestions ? suggestions : suggestions.slice(0, 6)).map((suggestion) => <article className="batch-suggestion-card" key={suggestion.key}>
+              <div className="ops-card-top"><h3>{suggestion.label}</h3><span className="ops-badge done">{suggestion.count} item</span></div>
+              <p>{suggestion.gender} · {suggestion.target}</p>
+              <strong>Nhãn {suggestion.grade} · {suggestion.grade === 'A' ? 'Từ thiện' : suggestion.grade === 'B' ? 'Tái chế' : 'Tiêu hủy'}</strong>
+              <small>{suggestion.draft ? `Batch nháp phù hợp: ${suggestion.draft.batchCode}` : 'Điền sẵn thuộc tính để tạo batch, sau đó chọn item cần thêm.'}</small>
+              <button type="button" className="ops-btn ops-btn-secondary" disabled={creating || saving || selectingSuggestion} onClick={() => void useSuggestion(suggestion)}>
+                {suggestion.draft ? 'Chọn batch phù hợp' : 'Dùng gợi ý'}
+              </button>
+            </article>)}
+          </div> : <p>Chưa có nhóm item đủ thuộc tính để gợi ý tạo batch.</p>}
+          {items.length > suggestions.reduce((sum, group) => sum + group.count, 0) && <p className="batch-suggestions-note">Một số item cần cập nhật thuộc tính phân loại trước khi có thể gợi ý gom nhóm.</p>}
+          {suggestions.length > 6 && <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setShowAllSuggestions((value) => !value)}>{showAllSuggestions ? 'Thu gọn' : `Xem tất cả ${suggestions.length} gợi ý`}</button>}
+        </>}
+      </section>
+
+      <section className="ops-panel glass" ref={formSection}>
         <div className="ops-section-head"><div><h2>Tạo Classified Batch rỗng</h2><span>Kho được xác định tự động theo tài khoản staff</span></div></div>
         <div className="ops-form-grid">
           {field('Loại', 'garmentGroupId', catalog?.garmentGroups || [])}
@@ -150,7 +227,7 @@ export default function ManualBatching() {
           {field('Hướng xử lý A/B/C', 'conditionGradeId', catalog?.conditionGrades || [])}
         </div>
         <div className="ops-actions">
-          <button className="ops-btn ops-btn-primary" disabled={creating} onClick={() => void createBatch()}>
+          <button className="ops-btn ops-btn-primary" disabled={creating || loading || loadError || saving || selectingSuggestion} onClick={() => void createBatch()}>
             <Plus size={16} /> {creating ? 'Đang tạo...' : 'Tạo lô hàng phân loại'}
           </button>
         </div>
@@ -191,7 +268,7 @@ export default function ManualBatching() {
           </div>
         </section>
 
-        <section className="ops-panel glass">
+        <section className="ops-panel glass" ref={itemsSection}>
           <div className="ops-section-head"><div><h2>Item phù hợp</h2><span>{compatibleItems.length} item có thể thêm</span></div></div>
           {!selectedBatch ? <div className="ops-empty"><p>Chọn hoặc tạo một Classified Batch để bắt đầu.</p></div> : (
             <>

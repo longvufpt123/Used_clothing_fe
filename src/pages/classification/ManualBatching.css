@@ -9,3 +9,11 @@
 .classification-manual-item small { color: #667085; }
 .classification-manual-item.assigned { border-left: 3px solid #00a878; margin-top: 15px; }
 @media (max-width: 900px) { .classification-manual-grid { grid-template-columns: 1fr; } }
+.batch-suggestions { border-top: 3px solid var(--color-primary); }
+.batch-suggestions h2 { display: flex; align-items: center; gap: 8px; }
+.batch-suggestions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.batch-suggestion-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-primary-light); }
+.batch-suggestion-card h3, .batch-suggestion-card p { margin: 0; }
+.batch-suggestion-card small, .batch-suggestions-note { color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.batch-suggestion-card > button { margin-top: auto; align-self: flex-start; }
+.batch-suggestions > button { margin-top: 16px; }
