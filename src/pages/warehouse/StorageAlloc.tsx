@@ -171,7 +171,7 @@ export default function StorageAlloc() {
           </div>
         )}
       </section>
-      <section className="ops-panel glass" style={{ marginTop: 20 }}>
+      <section className="ops-panel glass" style={{ marginTop: 20, display: 'grid', gap: 18 }}>
         <div className="ops-field">
           <label>Ghi chú xếp kho</label>
           <textarea

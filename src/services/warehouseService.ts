@@ -42,6 +42,7 @@ export interface WarehouseLocationLayout {
   itemQuantity: number;
 }
 export interface WarehouseAreaLayout {
+  classifiedBatches?: WarehouseClassifiedPlacement[];
   processingDirection?: string | null;
   id: string;
   areaName: string;
@@ -80,6 +81,19 @@ export interface WarehouseLayout {
   capacityKg: number;
   currentWeightKg: number;
   areas: WarehouseAreaLayout[];
+}
+export interface WarehouseClassifiedPlacement {
+  id: string;
+  batchCode: string;
+  status: string;
+  storageLocationId: string;
+  garmentGroup: string;
+  gender: string;
+  targetUser: string;
+  conditionGrade: string;
+  processingDirection: string;
+  totalItem: number;
+  totalWeight: number;
 }
 export interface WarehouseDetails {
   id: string;

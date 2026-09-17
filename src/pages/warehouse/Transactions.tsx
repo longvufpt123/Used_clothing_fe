@@ -32,6 +32,10 @@ const PAGE_SIZE = 6;
 
 const transactionLabel = (type: string) => transactionLabels[type.toUpperCase()] || type;
 
+// Receipt audit messages stay in the database but are not user-facing notes.
+const visibleNote = (note?: string | null) =>
+  /^\s*Seal (?:intact|discrepancy);\s*item variance:\s*[+-]?\d+\./i.test(note || '') ? '' : note ?? '';
+
 export default function WarehouseTransactions() {
   const [type, setType] = useState('');
   const [list, setList] = useState<WarehouseTransaction[]>([]);
@@ -40,7 +44,11 @@ export default function WarehouseTransactions() {
   const [selected, setSelected] = useState<WarehouseTransaction | null>(null);
 
   useEffect(() => {
-    warehouseService.transactions(type || undefined).then(setList);
+    warehouseService.transactions(type || undefined).then((transactions) => setList(transactions.map((tx) => ({
+      ...tx,
+      notes: visibleNote(tx.notes),
+      items: tx.items.map((item) => ({ ...item, notes: visibleNote(item.notes) })),
+    }))));
   }, [type]);
 
   useEffect(() => setPage(1), [type, search]);

@@ -16,6 +16,8 @@ import {
 import { warehouseService } from '@/services/warehouseService';
 import type {
   WarehouseBatch,
+  WarehouseAreaLayout,
+  WarehouseClassifiedPlacement,
   WarehouseInventory,
   WarehouseLayout,
   WarehouseLocationLayout,
@@ -24,10 +26,13 @@ import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/common/Modal';
 import Pagination from '@/components/common/Pagination';
 import { getStatusLabel } from '@/utils/statusLabels';
+import { getProcessingDirectionLabel } from '@/utils/processingDirection';
 import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 import '@/styles/ops-shared.css';
 import '@/pages/distribution/ProductCatalogModal.css';
 import './WarehouseAreas.css';
+
+type LocationBatch = WarehouseAreaLayout['intakeBatches'][number] & { classified?: WarehouseClassifiedPlacement };
 
 const percent = (current: number, capacity: number) =>
   capacity > 0 ? Math.min(100, Math.round((current / capacity) * 100)) : 0;
@@ -107,7 +112,10 @@ export default function WarehouseAreas() {
               String(value || '').toLowerCase().includes(q),
             ),
         );
-        return locationMatches || batchMatches;
+        const classifiedMatches = (area.classifiedBatches ?? []).some((batch) =>
+          batch.storageLocationId === location.id && [batch.batchCode, batch.garmentGroup, batch.gender, batch.targetUser]
+            .some((value) => value.toLowerCase().includes(search.trim().toLowerCase())));
+        return locationMatches || batchMatches || classifiedMatches;
       });
   }, [layout, search]);
   const filteredLocationIds = new Set(filteredLocations.map((x) => x.location.id));
@@ -151,7 +159,13 @@ export default function WarehouseAreas() {
 
     const locationId = normalizeLocationKey(selectedLocation.id);
     const locationCode = normalizeLocationKey(selectedLocation.locationCode);
-    const batches = layout.areas.flatMap((area) => area.intakeBatches ?? []);
+    const batches = layout.areas.flatMap<LocationBatch>((area) => [
+      ...(area.intakeBatches ?? []),
+      ...(area.classifiedBatches ?? []).map((batch) => ({
+        id: batch.id, batchCode: batch.batchCode, status: batch.status, totalWeight: batch.totalWeight,
+        storageLocationId: batch.storageLocationId, intakeDate: '', donationRequests: 0, classified: batch,
+      })),
+    ]);
 
     return batches.filter((batch, index) => {
       const batchLocationId = normalizeLocationKey(
@@ -177,6 +191,9 @@ export default function WarehouseAreas() {
         batch.teamName,
         batch.groupName,
         batch.warehouseReceivedBy,
+        batch.classified?.garmentGroup,
+        batch.classified?.gender,
+        batch.classified?.targetUser,
       ].some((value) => String(value || '').toLowerCase().includes(q));
     });
   }, [modalSearch, selectedLocationBatches]);
@@ -368,7 +385,7 @@ export default function WarehouseAreas() {
                               {location.currentWeightKg.toFixed(1)}/{location.capacityKg.toFixed(1)}{' '}
                               kg · {area.areaType === 'Storage'
                                 ? `${location.inventoryCount} SKU · ${location.itemQuantity} item`
-                                : `${location.inventoryCount} Intake Batch`}
+                                : `${location.inventoryCount} batch`}
                             </small>
                           </button>
                         );
@@ -410,14 +427,14 @@ export default function WarehouseAreas() {
               {selectedArea?.areaType === 'Storage' ? (
                 <><b>{selectedLocation.itemQuantity} item</b> · {selectedLocation.inventoryCount} SKU</>
               ) : (
-                <b>{selectedLocationBatches.length} Intake Batch</b>
+                <b>{selectedLocationBatches.length} batch</b>
               )}
             </span>
           </div>
         )}
         {!loadingInventory && (selectedArea?.areaType === 'Storage'
           ? locationInventory.length > 0
-          : filteredStagingBatches.length > 0) && (
+          : selectedLocationBatches.length > 0) && (
           <div className="ops-list-toolbar">
             <label className="ops-list-search">
               <Search size={16} />
@@ -426,7 +443,7 @@ export default function WarehouseAreas() {
                 onChange={(e) => setModalSearch(e.target.value)}
                 placeholder={selectedArea?.areaType === 'Storage'
                   ? 'Tìm batch, SKU, loại đồ...'
-                  : 'Tìm mã Intake Batch, trạng thái, team...'}
+                  : 'Tìm mã batch, trạng thái, loại đồ...'}
               />
             </label>
             <span className="ops-list-result">
@@ -449,14 +466,18 @@ export default function WarehouseAreas() {
                   <article key={batch.id} className="warehouse-staging-batch">
                     <header>
                       <div>
-                        <span>INTAKE BATCH</span>
+                        <span>{batch.classified ? 'CLASSIFIED BATCH' : 'INTAKE BATCH'}</span>
                         <strong>{batch.batchCode}</strong>
                       </div>
                       <b>{getStatusLabel(batch.status)}</b>
                     </header>
+                    {batch.classified && <>
+                      <h4>{getClassifiedBatchGroupLabel(batch.classified)} · Nhãn {batch.classified.conditionGrade}</h4>
+                      <p>{getProcessingDirectionLabel(batch.classified.processingDirection)}</p>
+                    </>}
                     <div className="warehouse-staging-metrics">
                       <span><Scale size={15} /> {batch.totalWeight.toFixed(1)} kg</span>
-                      <span><Package size={15} /> {batch.donationRequests} đơn quyên góp</span>
+                      <span><Package size={15} /> {batch.classified ? `${batch.classified.totalItem} item` : `${batch.donationRequests} đơn quyên góp`}</span>
                     </div>
                     <dl>
                       {batch.teamName && <><dt>Team phụ trách</dt><dd>{batch.teamName}</dd></>}
@@ -482,7 +503,7 @@ export default function WarehouseAreas() {
             <div className="ops-empty">
               <Boxes size={34} />
               <h4>Vị trí đang trống</h4>
-              <p>Chưa có Intake Batch nào được xếp vào vị trí này.</p>
+              <p>Chưa có batch nào được xếp vào vị trí này.</p>
             </div>
           )
         ) : filteredModalInventory.length ? (
