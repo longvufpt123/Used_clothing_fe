@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Modal } from '@/components/common/Modal';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -30,6 +32,20 @@ export const ConfirmBatch: React.FC = () => {
   const [itemCount, setItemCount] = useState('');
   const [countedWeight, setCountedWeight] = useState('');
   const [countingNotes, setCountingNotes] = useState('');
+  const [countTouched, setCountTouched] = useState(false);
+  const [weightTouched, setWeightTouched] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ itemCount: number; totalWeightKg: number; notes?: string } | null>(null);
+  const [saveError, setSaveError] = useState('');
+  const saving = useRef(false);
+  const countSaved = useRef(false);
+  const quantityError = !itemCount ? 'Vui lòng nhập số lượng quần áo thực tế.'
+    : !/^\d+$/.test(itemCount) || Number(itemCount) <= 0 || Number(itemCount) > 2147483647
+      ? 'Số lượng phải là số nguyên dương, tối đa 2.147.483.647 món.' : '';
+  const weightError = !countedWeight ? 'Vui lòng nhập tổng khối lượng thực tế.'
+    : !/^\d+(?:\.\d{1,2})?$/.test(countedWeight) || Number(countedWeight) <= 0
+      ? 'Khối lượng phải lớn hơn 0 kg và có tối đa 2 chữ số thập phân.'
+      : batch && Number(countedWeight) !== Number(batch.totalWeight.toFixed(2))
+        ? `Khối lượng phải đúng bằng ${batch.totalWeight} kg do Receiving bàn giao.` : '';
   const [checks, setChecks] = useState({ seals: false, weight: false, items: false });
 
   useEffect(() => {
@@ -100,33 +116,36 @@ export const ConfirmBatch: React.FC = () => {
     }
   };
 
-  const handleCountAndContinue = async () => {
+  const handleCountAndContinue = () => {
+    setCountTouched(true);
+    setWeightTouched(true);
+    if (!batch || submitting || quantityError || weightError) return;
+    countSaved.current = false;
+    setSaveError('');
+    setConfirmation({ itemCount: Number(itemCount), totalWeightKg: Number(countedWeight), notes: countingNotes.trim() || undefined });
+  };
+
+  const submitCount = async () => {
+    if (!confirmation || saving.current) return;
     if (!batchId || !batch || submitting) return;
-    const quantity = Number(itemCount);
-    const weight = Number(countedWeight);
-    if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isFinite(weight) || weight <= 0) {
-      toast.error('Số lượng phải là số nguyên dương và tổng kg phải lớn hơn 0.');
-      return;
-    }
-    const handedOffWeight = Number(batch.totalWeight.toFixed(2));
-    const actualWeight = Number(weight.toFixed(2));
-    if (actualWeight !== handedOffWeight) {
-      toast.error(`Tổng khối lượng thực tế phải đúng bằng ${handedOffWeight} kg do Receiving Staff bàn giao.`);
-      return;
-    }
+    saving.current = true;
+    setSaveError('');
     setSubmitting(true);
     try {
-      await classificationService.countBatch(batchId, {
-        itemCount: quantity,
-        totalWeightKg: weight,
-        notes: countingNotes.trim() || undefined,
-      });
+      if (!countSaved.current) {
+        await classificationService.countBatch(batchId, confirmation);
+        countSaved.current = true;
+      }
       await classificationService.startBatch(batchId);
-      toast.success(`Đã ghi nhận ${quantity} món, tổng ${weight} kg.`);
+      toast.success(`Đã ghi nhận ${confirmation.itemCount} món, tổng ${confirmation.totalWeightKg} kg.`);
+      setConfirmation(null);
       navigate(`/classification/classify/${batchId}`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể lưu biên bản kiểm đếm.');
+      setSaveError(error?.response?.data?.message || (countSaved.current
+        ? 'Đã lưu kiểm đếm nhưng chưa bắt đầu phân loại. Vui lòng thử lại.'
+        : 'Không thể lưu biên bản kiểm đếm. Vui lòng thử lại.'));
     } finally {
+      saving.current = false;
       setSubmitting(false);
     }
   };
@@ -286,20 +305,27 @@ export const ConfirmBatch: React.FC = () => {
               <div className="classification-count-form">
                 <div className="ops-field">
                   <label htmlFor="countedItems">Số lượng quần áo thực tế *</label>
-                  <input id="countedItems" type="number" min="1" step="1" value={itemCount}
-                    onChange={(event) => setItemCount(event.target.value)} placeholder="Ví dụ: 42 món" />
+                  <input id="countedItems" type="text" inputMode="numeric" value={itemCount}
+                    aria-invalid={countTouched && !!quantityError} aria-describedby="countedItemsError"
+                    onBlur={() => setCountTouched(true)}
+                    onChange={(event) => {
+                      if (/^\d*$/.test(event.target.value)) { setItemCount(event.target.value); setCountTouched(true); }
+                      else event.currentTarget.value = itemCount;
+                    }} placeholder="Ví dụ: 42 món" />
+                  {countTouched && quantityError && <small id="countedItemsError" className="count-field-error" role="alert">{quantityError}</small>}
                 </div>
                 <div className="ops-field">
                   <label htmlFor="countedWeight">Tổng khối lượng thực tế (kg) *</label>
-                  <input id="countedWeight" type="number" step="0.01"
-                    min={batch.totalWeight} max={batch.totalWeight}
-                    value={countedWeight} onChange={(event) => setCountedWeight(event.target.value)}
+                  <input id="countedWeight" type="text" inputMode="decimal"
+                    aria-invalid={weightTouched && !!weightError} aria-describedby="countedWeightError"
+                    onBlur={() => setWeightTouched(true)}
+                    value={countedWeight} onChange={(event) => {
+                      const value = event.target.value.replace(',', '.');
+                      if (/^\d*(?:\.\d{0,2})?$/.test(value)) { setCountedWeight(value); setWeightTouched(true); }
+                      else event.currentTarget.value = countedWeight;
+                    }}
                     placeholder={`Nhập đúng ${batch.totalWeight} kg`} />
-                  {countedWeight && Number(Number(countedWeight).toFixed(2)) !== Number(batch.totalWeight.toFixed(2)) && (
-                    <small style={{ color: 'var(--color-danger)' }}>
-                      Khối lượng phải đúng bằng {batch.totalWeight} kg, không được lớn hơn hoặc nhỏ hơn.
-                    </small>
-                  )}
+                  {weightTouched && weightError && <small id="countedWeightError" className="count-field-error" role="alert">{weightError}</small>}
                 </div>
                 <div className="ops-field">
                   <label htmlFor="countingNotes">Ghi chú chênh lệch / tình trạng lô</label>
@@ -342,9 +368,7 @@ export const ConfirmBatch: React.FC = () => {
                   <button
                     type="button"
                     className="premium-btn-island"
-                    disabled={submitting
-                      || !countedWeight
-                      || Number(Number(countedWeight).toFixed(2)) !== Number(batch.totalWeight.toFixed(2))}
+                    disabled={submitting}
                     onClick={handleCountAndContinue}
                     style={{
                       background: 'var(--color-text-primary)',
@@ -370,6 +394,24 @@ export const ConfirmBatch: React.FC = () => {
           </div>
         </div>
       </div>
+      {confirmation && createPortal(<Modal isOpen title="Xác nhận thông tin kiểm đếm"
+        className="count-confirmation-modal" onClose={() => { if (!saving.current) setConfirmation(null); }}
+        footer={<>
+          <button type="button" className="ops-back" disabled={submitting} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</button>
+          <button type="button" className="premium-btn-island" autoFocus disabled={submitting} onClick={submitCount}>
+            {submitting ? 'Đang lưu...' : 'Xác nhận & bắt đầu phân loại'}
+          </button>
+        </>}>
+        <p>Vui lòng kiểm tra thông tin trước khi lưu biên bản và bắt đầu phân loại.</p>
+        <dl>
+          <div><dt>Mã lô</dt><dd>{batch.batchCode}</dd></div>
+          <div><dt>Số lượng quần áo thực tế</dt><dd>{confirmation.itemCount} món</dd></div>
+          <div><dt>Tổng khối lượng thực tế</dt><dd>{confirmation.totalWeightKg} kg</dd></div>
+          <div><dt>Khối lượng Receiving bàn giao</dt><dd>{batch.totalWeight} kg</dd></div>
+          <div><dt>Ghi chú</dt><dd>{confirmation.notes || 'Không có'}</dd></div>
+        </dl>
+        {saveError && <p className="count-field-error" role="alert">{saveError}</p>}
+      </Modal>, document.body)}
     </div>
   );
 };
