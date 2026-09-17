@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Boxes, CheckCircle2, Plus, Trash2, Pencil, Lightbulb } from 'lucide-react';
+import { Boxes, CheckCircle2, Plus, Trash2, Pencil, Lightbulb, ImageOff } from 'lucide-react';
 import ManualBatchDialog from './ManualBatchDialog';
 import BatchPlacementDialog from './BatchPlacementDialog';
 import { useToast } from '@/context/ToastContext';
@@ -16,6 +16,18 @@ import './ManualBatching.css';
 const emptyForm = {
   garmentGroupId: '', genderId: '', targetUserId: '', conditionGradeId: '',
 };
+
+function ItemThumbnail({ src, label }: { src?: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  return <div className="classification-manual-thumbnail">
+    {src && !failed
+      ? <img src={src} alt={label} loading="lazy" decoding="async" onError={() => setFailed(true)} />
+      : <div role="img" aria-label={src ? 'Không tải được hình ảnh' : 'Chưa có hình ảnh'}
+          title={src ? 'Không tải được hình ảnh' : 'Chưa có hình ảnh'}>
+          <ImageOff size={24} aria-hidden="true" />
+        </div>}
+  </div>;
+}
 const attributeKeys = Object.keys(emptyForm) as (keyof typeof emptyForm)[];
 const matchesAttributes = (left: Partial<Record<keyof typeof emptyForm, string | null>>,
   right: Partial<Record<keyof typeof emptyForm, string | null>>) =>
@@ -284,7 +296,13 @@ export default function ManualBatching() {
                 {selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-primary" disabled={saving || !selectedBatch.items.length} onClick={() => void finalize()}><CheckCircle2 size={15} /> Hoàn tất gom nhóm</button>}
               </div>
               <div className="ops-list">
-                {selectedBatch.items.map((item) => <div key={item.id} className="classification-manual-item assigned"><span><strong>{item.itemCode}</strong><small>{item.garmentGroup} · {item.targetUser} · {item.gender} · {item.size}</small></span>{selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-danger" disabled={saving} onClick={() => void removeItem(item.id)}><Trash2 size={14} /></button>}</div>)}
+                {selectedBatch.items.map((item) => <div key={item.id} className="classification-manual-item assigned">
+                  <ItemThumbnail key={item.imageUrls?.[0] || 'no-image'} src={item.imageUrls?.[0]}
+                    label={`${item.clothingType || item.garmentGroup} · ${item.itemCode}`} />
+                  <span><strong>{item.itemCode}</strong><small>{item.garmentGroup} · {item.targetUser} · {item.gender} · {item.size}</small></span>
+                  {selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-danger" disabled={saving}
+                    aria-label={`Bỏ item ${item.itemCode} khỏi batch`} onClick={() => void removeItem(item.id)}><Trash2 size={14} /></button>}
+                </div>)}
               </div>
             </>
           )}

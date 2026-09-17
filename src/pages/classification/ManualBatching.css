@@ -17,3 +17,9 @@
 .batch-suggestion-card small, .batch-suggestions-note { color: var(--color-text-secondary); overflow-wrap: anywhere; }
 .batch-suggestion-card > button { margin-top: auto; align-self: flex-start; }
 .batch-suggestions > button { margin-top: 16px; }
+.classification-manual-thumbnail { flex: 0 0 72px; width: 72px; height: 80px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-secondary); }
+.classification-manual-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.classification-manual-thumbnail > div { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-text-secondary); }
+.classification-manual-item.assigned > span { overflow-wrap: anywhere; }
+.classification-manual-item.assigned > button { flex-shrink: 0; }
+@media (max-width: 480px) { .classification-manual-thumbnail { flex-basis: 56px; width: 56px; height: 64px; } }
