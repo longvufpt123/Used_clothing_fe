@@ -239,7 +239,7 @@ export default function ProcessingGhnPanel({
         </>
       ) : (
         <p className="processing-note">
-          Kho đã lập phiếu xuất. Nhân viên kho tạo vận đơn để GHN đến lấy và giao hàng tới tổ chức.
+          Kho đã lập phiếu xuất. Chuyên viên xuất nhập kho tạo vận đơn để GHN đến lấy và giao hàng tới tổ chức.
         </p>
       )}
       {open && canBook && (

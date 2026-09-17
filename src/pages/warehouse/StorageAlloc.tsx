@@ -89,7 +89,7 @@ export default function StorageAlloc() {
           <h1>
             {batch.clothingType} · Nhãn {batch.conditionGrade}
           </h1>
-          <p>Warehouse Staff vẫn là người xác nhận vị trí lưu kho.</p>
+          <p>Chuyên viên xuất nhập kho vẫn là người xác nhận vị trí lưu kho.</p>
         </div>
       </header>
       <div className="ops-stats">

@@ -60,7 +60,7 @@ export const HandoffBatch: React.FC = () => {
         return;
       }
       setDone(true);
-      toast.success(`Đã bàn giao ${batch.code} vào kho. Trạng thái: Đang chuyển đến kho.`);
+      toast.success(`Đã bàn giao ${batch.code} vào khu vực lưu trữ. Trạng thái: Đang chuyển đến khu vực lưu trữ.`);
     }, 900);
   };
 
@@ -71,7 +71,7 @@ export const HandoffBatch: React.FC = () => {
           <ChevronLeft size={16} strokeWidth={1.75} /> Quay lại
         </button>
         <div className="ops-title-row">
-          <h1>Bàn giao vào kho</h1>
+          <h1>Bàn giao vào khu vực lưu trữ</h1>
           <span className={`ops-badge ${done ? 'stored' : 'classified'}`}>
             {done ? 'Đã bàn giao' : 'Chờ xác nhận'}
           </span>
@@ -83,7 +83,7 @@ export const HandoffBatch: React.FC = () => {
           <CheckCircle size={22} strokeWidth={1.75} />
           <div>
             <strong>Bàn giao thành công</strong>
-            <p>Lô {batch.code} đang được chuyển đến kho. Kho sẽ thấy lô ở tab Chờ nhập kho.</p>
+            <p>Lô {batch.code} đang được chuyển đến khu vực lưu trữ. Khu vực lưu trữ sẽ thấy lô ở tab Chờ tiếp nhận.</p>
           </div>
         </div>
       )}
@@ -149,7 +149,7 @@ export const HandoffBatch: React.FC = () => {
               'Mọi kiện trong lô đã có kết quả phân loại',
               'Nhãn từ thiện / tái chế đã dán đủ',
               'Khối lượng cân lại khớp biên bản',
-              'Xe / pallet sẵn sàng chuyển kho',
+              'Xe / pallet sẵn sàng chuyển khu vực lưu trữ',
             ].map((line) => (
               <li key={line} className="ops-checklist-item">
                 <CheckCircle
@@ -177,7 +177,7 @@ export const HandoffBatch: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Truck size={16} strokeWidth={1.75} /> Xác nhận bàn giao vào kho
+                    <Truck size={16} strokeWidth={1.75} /> Xác nhận bàn giao vào khu vực lưu trữ
                   </>
                 )}
               </button>

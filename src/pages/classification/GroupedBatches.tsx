@@ -120,12 +120,12 @@ export default function GroupedBatches({
       const r = await classificationService.sendGroupedBatchesToWarehouse(
         openGroups.map((x) => x.id),
       );
-      toast.success(`Đã gửi ${r.sent} Classified Batch sang kho.`);
+      toast.success(`Đã gửi ${r.sent} Classified Batch sang khu vực lưu trữ.`);
       setConfirming(false);
       await loadGroups();
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.message || "Không thể gửi batch sang kho.",
+        e?.response?.data?.message || "Không thể gửi batch sang khu vực lưu trữ.",
       );
     } finally {
       setSending(false);
@@ -135,11 +135,11 @@ export default function GroupedBatches({
     setSendingBatchId(batch.id);
     try {
       await classificationService.sendGroupedBatchToWarehouse(batch.id);
-      toast.success(`Đã bàn giao ${batch.batchCode} sang kho.`);
+      toast.success(`Đã bàn giao ${batch.batchCode} sang khu vực lưu trữ.`);
       await loadGroups();
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.message || "Không thể bàn giao batch sang kho.",
+        e?.response?.data?.message || "Không thể bàn giao batch sang khu vực lưu trữ.",
       );
     } finally {
       setSendingBatchId(null);
@@ -205,7 +205,7 @@ export default function GroupedBatches({
           >
             {sent ? (
               <>
-                <CheckCircle2 size={13} /> Đã gửi kho
+                <CheckCircle2 size={13} /> Đã gửi khu vực lưu trữ
               </>
             ) : (
               `Nhãn ${g.conditionGrade}`
@@ -246,7 +246,7 @@ export default function GroupedBatches({
                 }}
               >
                 <Send size={14} />{" "}
-                {sendingBatchId === g.id ? "Đang gửi..." : "Bàn giao sang kho"}
+                {sendingBatchId === g.id ? "Đang gửi..." : "Bàn giao sang khu vực lưu trữ"}
               </button>
             </div>
           ) : (
@@ -264,16 +264,16 @@ export default function GroupedBatches({
         <div className="ops-pagehead-main">
           <span className="ops-pagehead-kicker">
             {view === "open" ? "Bước 3 · Khu vực đồ đã phân loại"
-              : view === "pending" ? "Bước 4 · Chờ kho tiếp nhận" : "Lịch sử bàn giao kho"}
+              : view === "pending" ? "Bước 4 · Chờ tiếp nhận lưu trữ" : "Lịch sử bàn giao khu vực lưu trữ"}
           </span>
           <h1>
-            {view === "open" ? "Đồ đã phân loại chờ gửi kho"
-              : view === "pending" ? "Classified Batch chờ kho tiếp nhận" : "Classified Batch đã gửi sang kho"}
+            {view === "open" ? "Đồ đã phân loại chờ gửi khu vực lưu trữ"
+              : view === "pending" ? "Classified Batch chờ tiếp nhận lưu trữ" : "Classified Batch đã gửi sang khu vực lưu trữ"}
           </h1>
           <p>
             {view === "open" ? "Hiển thị tất cả batch đang chờ xếp khu hoặc đang nằm trong khu, bao gồm các ngày trước."
-              : view === "pending" ? "Các batch đã bàn giao và đang chờ warehouse staff xác nhận."
-              : "Lịch sử các batch đã được kho xác nhận nhập."}
+              : view === "pending" ? "Các batch đã bàn giao và đang chờ chuyên viên xuất nhập kho xác nhận."
+              : "Lịch sử các batch đã được khu vực lưu trữ xác nhận nhập."}
           </p>
         </div>
       </header>
@@ -317,7 +317,7 @@ export default function GroupedBatches({
             <h2>
               {view === "open"
                 ? `Sơ đồ khu vực · ${layout?.warehouseName || ""}`
-                : "Danh sách đã gửi kho"}
+                : "Danh sách đã gửi khu vực lưu trữ"}
             </h2>
             <span>{loading ? "Đang tải..." : `${visible.length} batch`}</span>
           </div>
@@ -329,7 +329,7 @@ export default function GroupedBatches({
               onClick={() => setConfirming(true)}
             >
               <Send size={16} />
-              Gửi tất cả sang kho ({openGroups.length})
+              Gửi tất cả sang khu vực lưu trữ ({openGroups.length})
             </button>
           )}
         </div>
@@ -473,7 +473,7 @@ export default function GroupedBatches({
             {!loading && !visible.length && (
               <div className="ops-empty">
                 <Boxes size={36} />
-                <h4>{view === "pending" ? "Không có batch chờ kho tiếp nhận" : "Chưa có batch nào đã nhập kho trong ngày này"}</h4>
+                <h4>{view === "pending" ? "Không có batch chờ khu vực lưu trữ tiếp nhận" : "Chưa có batch nào đã nhập khu vực lưu trữ trong ngày này"}</h4>
               </div>
             )}
           </div>
@@ -630,8 +630,8 @@ export default function GroupedBatches({
       )}
       <ConfirmDialog
         isOpen={confirming}
-        title="Gửi tất cả Classified Batch sang kho?"
-        message={`Hệ thống sẽ gửi ${openGroups.length} batch sang bộ phận kho.`}
+        title="Gửi tất cả Classified Batch sang khu vực lưu trữ?"
+        message={`Hệ thống sẽ gửi ${openGroups.length} batch sang khu vực lưu trữ.`}
         confirmText={`Gửi ${openGroups.length} batch`}
         cancelText="Hủy"
         tone="info"

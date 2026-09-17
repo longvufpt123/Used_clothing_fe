@@ -31,7 +31,7 @@ const roleLabels: Record<string, string> = {
   RecyclingOrganization: 'Tổ chức tái chế',
   ReceivingStaff: 'Nhân viên tiếp nhận',
   ClassificationStaff: 'Nhân viên phân loại',
-  WarehouseStaff: 'Nhân viên kho',
+  WarehouseStaff: 'Chuyên viên xuất nhập kho',
 };
 const warehouseRoles = ['ReceivingStaff', 'ClassificationStaff', 'WarehouseStaff'];
 const emptyForm: SaveManagerAccount = {

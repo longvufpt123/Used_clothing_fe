@@ -101,7 +101,7 @@ export const ClassificationShell: React.FC<{ children: React.ReactNode }> = ({ c
     },
     {
       to: `/classification/warehouse-handoffs${groupQuery}`,
-      label: 'Đã gửi sang kho',
+      label: 'Đã gửi sang khu vực lưu trữ',
       icon: Send,
       count: counts.sentToWarehouse,
     },

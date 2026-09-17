@@ -1052,7 +1052,7 @@ export default function ManagerWarehouseControl() {
                       <option value="Storage:Charity">Hàng từ thiện — Nhãn A</option>
                       <option value="Storage:Recycling">Hàng chờ tái chế — Nhãn B</option>
                       <option value="Storage:Disposal">Cách ly / tiêu hủy — Nhãn C</option>
-                      <option value="Storage">Lưu kho đa mục đích — Warehouse Staff</option>
+                      <option value="Storage">Khu vực lưu trữ đa mục đích — Chuyên viên xuất nhập kho</option>
                     </select>
                     <small>
                       {layoutEditor.areaType === 'Receiving' && 'Dùng để nhận Intake Batch từ Receiving Staff.'}
