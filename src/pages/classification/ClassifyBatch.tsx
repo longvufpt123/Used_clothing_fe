@@ -39,8 +39,10 @@ export default function ClassifyBatch() {
   const [analyzing, setAnalyzing] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiResult, setAiResult] = useState<{ confidence: number; summary: string } | null>(null);
+  const [isNonClothing, setIsNonClothing] = useState(false);
   const analysisVersion = useRef(0);
   const invalidateAnalysis = () => {
+    setIsNonClothing(false);
     analysisVersion.current += 1;
     setAnalyzing(false);
     setAiResult(null);
@@ -137,6 +139,7 @@ export default function ClassifyBatch() {
       if (version !== analysisVersion.current) return;
       const result = await classificationService.analyzeImages(dataUrls);
       if (version !== analysisVersion.current) return;
+      setIsNonClothing(!result.isClothing);
       if (!result.isClothing) {
         setForm((current) => ({ ...empty, notes: current.notes }));
         setAiResult({ confidence: result.confidence, summary: result.summary });
@@ -168,6 +171,7 @@ export default function ClassifyBatch() {
     }
   };
   const save = async () => {
+    if (isNonClothing) return;
     if (
       !batchId ||
       !catalog ||
@@ -465,7 +469,7 @@ export default function ClassifyBatch() {
               </div>
             </div>
           ))}
-          <div className="ops-actions">
+          {!isNonClothing && <div className="ops-actions">
             <button
               className="ops-btn ops-btn-primary ops-btn-block"
               disabled={saving}
@@ -474,7 +478,7 @@ export default function ClassifyBatch() {
               <Save size={16} />{' '}
               {saving ? 'Đang lưu...' : editingItemId ? 'Lưu thay đổi' : 'Lưu item và phân loại tự động'}
             </button>
-          </div>
+          </div>}
         </section>
       </div>
       ) : (
