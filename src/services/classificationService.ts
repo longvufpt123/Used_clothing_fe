@@ -294,8 +294,8 @@ export const classificationService = {
     apiClient.post(`/classification-operations/grouped-batches/${id}/items`, { itemIds }),
   removeItemFromBatch: (id: string, itemId: string) =>
     apiClient.delete(`/classification-operations/grouped-batches/${id}/items/${itemId}`),
-  finalizeManualBatch: (id: string) =>
-    apiClient.post(`/classification-operations/grouped-batches/${id}/finalize`),
+  finalizeManualBatch: (id: string, actualWeightKg: number) =>
+    apiClient.post(`/classification-operations/grouped-batches/${id}/finalize`, { actualWeightKg }),
   placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string, actualWeightKg: number) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/place`, {
       areaId,

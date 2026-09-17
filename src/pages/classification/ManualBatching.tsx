@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Boxes, CheckCircle2, Plus, Trash2, Pencil, Lightbulb, ImageOff } from 'lucide-react';
 import ManualBatchDialog from './ManualBatchDialog';
 import BatchPlacementDialog from './BatchPlacementDialog';
+import FinalizeBatchDialog from './FinalizeBatchDialog';
 import { useToast } from '@/context/ToastContext';
 import {
   classificationService,
@@ -51,6 +52,7 @@ export default function ManualBatching() {
   const formSection = useRef<HTMLElement>(null);
   const itemsSection = useRef<HTMLElement>(null);
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
+  const [finalizing, setFinalizing] = useState<GroupedClassifiedBatchDetail | null>(null);
   const [batchAction, setBatchAction] = useState<{ batch: GroupedClassifiedBatch; mode: 'edit' | 'delete' } | null>(null);
 
   const load = async (keepBatchId?: string) => {
@@ -174,18 +176,6 @@ export default function ManualBatching() {
     } finally { setSaving(false); }
   };
 
-  const finalize = async () => {
-    if (!selectedBatch) return;
-    setSaving(true);
-    try {
-      await classificationService.finalizeManualBatch(selectedBatch.id);
-      toast.success('Batch đã sẵn sàng để xếp vào khu vực đồ đã phân loại.');
-      await load(selectedBatch.id);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể hoàn tất gom batch.');
-    } finally { setSaving(false); }
-  };
-
   const field = (label: string, key: keyof typeof form, options: { id: string; name: string }[]) => (
     <div className="ops-field">
       <label>{label}</label>
@@ -246,6 +236,11 @@ export default function ManualBatching() {
       </section>
 
       <div className="classification-manual-grid">
+        {finalizing && <FinalizeBatchDialog batch={finalizing} onClose={() => setFinalizing(null)} onSaved={async () => {
+          setSelectedItems([]);
+          toast.success('Đã lưu khối lượng và hoàn tất gom nhóm.');
+          await load(finalizing.id);
+        }} />}
         {placing && <BatchPlacementDialog batch={placing} onClose={() => setPlacing(null)} onSaved={async () => {
           setSelectedItems([]);
           await load();
@@ -268,11 +263,14 @@ export default function ManualBatching() {
                 <div className="ops-card-top"><strong>{batch.batchCode}</strong><span className="ops-badge pending">{batch.status === 'Draft' ? 'Đang tạo' : 'Chờ xếp khu'}</span></div>
                 <h3>{batch.garmentGroup} · {batch.targetUser} · {batch.gender}</h3>
                 <p>Nhãn {batch.conditionGrade}</p>
+                {batch.status === 'ReadyForPlacement' && <p><strong>Khối lượng: {batch.totalWeight} kg</strong></p>}
                 </button>
                 <div className="ops-actions">
                   {batch.status === 'ReadyForPlacement' && <button type="button" className="ops-btn ops-btn-primary" disabled={saving} onClick={() => setPlacing(batch)}><Boxes size={15} /> Xếp vào khu đồ đã phân loại</button>}
-                  <button type="button" className="ops-btn ops-btn-secondary" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'edit' })}><Pencil size={15} /> Sửa</button>
-                  <button type="button" className="ops-btn ops-btn-danger" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'delete' })}><Trash2 size={15} /> Xóa</button>
+                  {batch.status === 'Draft' && <>
+                    <button type="button" className="ops-btn ops-btn-secondary" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'edit' })}><Pencil size={15} /> Sửa</button>
+                    <button type="button" className="ops-btn ops-btn-danger" disabled={saving} onClick={() => setBatchAction({ batch, mode: 'delete' })}><Trash2 size={15} /> Xóa</button>
+                  </>}
                 </div>
               </article>
             ))}
@@ -293,7 +291,7 @@ export default function ManualBatching() {
               {selectedBatch.status === 'Draft' && !compatibleItems.length && <div className="ops-empty"><p>Không có item chờ gom phù hợp với bộ thuộc tính này.</p></div>}
               <div className="ops-actions">
                 {selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-secondary" disabled={saving || !selectedItems.length} onClick={() => void assignItems()}><Plus size={15} /> Thêm đồ</button>}
-                {selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-primary" disabled={saving || !selectedBatch.items.length} onClick={() => void finalize()}><CheckCircle2 size={15} /> Hoàn tất gom nhóm</button>}
+                {selectedBatch.status === 'Draft' && <button className="ops-btn ops-btn-primary" disabled={saving || !selectedBatch.items.length} onClick={() => setFinalizing(selectedBatch)}><CheckCircle2 size={15} /> Hoàn tất gom nhóm</button>}
               </div>
               <div className="ops-list">
                 {selectedBatch.items.map((item) => <div key={item.id} className="classification-manual-item assigned">
