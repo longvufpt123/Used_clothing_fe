@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, CheckCircle, ImagePlus, Pencil, Save, Sparkles, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
@@ -16,6 +16,7 @@ import {
   getProcessingDirectionLabel,
 } from '@/utils/processingDirection';
 import '@/styles/ops-shared.css';
+import './ClassifyBatch.css';
 
 const empty = {
   fabricTypeId: '',
@@ -36,7 +37,20 @@ export default function ClassifyBatch() {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [aiResult, setAiResult] = useState<{ confidence: number; summary: string } | null>(null);
+  const analysisVersion = useRef(0);
+  const invalidateAnalysis = () => {
+    analysisVersion.current += 1;
+    setAnalyzing(false);
+    setAiResult(null);
+    setAiError('');
+  };
+  const resetImageSelections = () => {
+    invalidateAnalysis();
+    setForm((current) => ({ ...empty, notes: current.notes, answers: {} }));
+  };
+  useEffect(() => () => { analysisVersion.current += 1; }, [batchId]);
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -75,15 +89,18 @@ export default function ClassifyBatch() {
       .slice(0, 1)
       .map((file) => ({ file, preview: URL.createObjectURL(file) }));
     if (!selected.length) return;
+    resetImageSelections();
     images.forEach((image) => URL.revokeObjectURL(image.preview));
     setExistingImages([]);
     setImages(selected);
   };
-  const removeImage = (index: number) =>
+  const removeImage = (index: number) => {
+    resetImageSelections();
     setImages((p) => {
       URL.revokeObjectURL(p[index].preview);
       return p.filter((_, i) => i !== index);
     });
+  };
   const fileToDataUrl = async (file: File) => {
     const maxDimension = 1600;
     const image = await createImageBitmap(file);
@@ -113,10 +130,13 @@ export default function ClassifyBatch() {
     }
     setAnalyzing(true);
     setAiResult(null);
+    setAiError('');
+    const version = ++analysisVersion.current;
     try {
-      const result = await classificationService.analyzeImages(
-        await Promise.all(images.map((image) => fileToDataUrl(image.file))),
-      );
+      const dataUrls = await Promise.all(images.map((image) => fileToDataUrl(image.file)));
+      if (version !== analysisVersion.current) return;
+      const result = await classificationService.analyzeImages(dataUrls);
+      if (version !== analysisVersion.current) return;
       if (!result.isClothing) {
         setForm((current) => ({ ...empty, notes: current.notes }));
         setAiResult({ confidence: result.confidence, summary: result.summary });
@@ -136,9 +156,15 @@ export default function ClassifyBatch() {
       setAiResult({ confidence: result.confidence, summary: result.summary });
       toast.success('AI đã điền gợi ý. Vui lòng kiểm tra trước khi lưu.');
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || 'Không thể phân tích ảnh bằng AI.');
+      if (version !== analysisVersion.current) return;
+      const message = error?.response?.data?.code === 'GEMINI_OVERLOADED'
+        ? 'Gemini đang quá tải, vui lòng thử lại sau. Bạn vẫn có thể tiếp tục phân loại thủ công.'
+        : error?.response?.data?.message || (error?.code === 'ECONNABORTED'
+          ? 'Gemini phản hồi quá lâu, vui lòng thử lại sau.' : 'Không thể phân tích ảnh bằng AI. Vui lòng thử lại sau.');
+      setAiError(message);
+      toast.error(message);
     } finally {
-      setAnalyzing(false);
+      if (version === analysisVersion.current) setAnalyzing(false);
     }
   };
   const save = async () => {
@@ -186,7 +212,7 @@ export default function ClassifyBatch() {
       setImages([]);
       setExistingImages([]);
       setEditingItemId(null);
-      setAiResult(null);
+      invalidateAnalysis();
       setForm(empty);
       await load();
     } catch (e: any) {
@@ -197,7 +223,7 @@ export default function ClassifyBatch() {
   };
   const editItem = (item: ClassifiedItem) => {
     setEditingItemId(item.id);
-    setAiResult(null);
+    invalidateAnalysis();
     setExistingImages((item.imageUrls ?? []).slice(0, 1));
     setImages([]);
     setForm({
@@ -217,7 +243,7 @@ export default function ClassifyBatch() {
     setImages([]);
     setExistingImages([]);
     setEditingItemId(null);
-    setAiResult(null);
+    invalidateAnalysis();
     setForm(empty);
   };
   const deleteItem = async () => {
@@ -338,7 +364,7 @@ export default function ClassifyBatch() {
                 {images.map((image, index) => (
                   <div className="ops-image-preview" key={image.preview}>
                     <img src={image.preview} alt={`Item ${index + 1}`} />
-                    <button type="button" aria-label="Xóa ảnh" onClick={() => removeImage(index)}>
+                    <button type="button" aria-label="Xóa ảnh" disabled={saving} onClick={() => removeImage(index)}>
                       <X size={14} />
                     </button>
                   </div>
@@ -353,7 +379,11 @@ export default function ClassifyBatch() {
                     <button
                       type="button"
                       aria-label="Xóa ảnh"
-                      onClick={() => setExistingImages((current) => current.filter((x) => x !== url))}
+                      disabled={saving}
+                      onClick={() => {
+                        resetImageSelections();
+                        setExistingImages((current) => current.filter((x) => x !== url));
+                      }}
                     >
                       <X size={14} />
                     </button>
@@ -373,6 +403,7 @@ export default function ClassifyBatch() {
             <small className="ops-ai-hint">
               AI sẽ tự điền các thuộc tính và nhãn đánh giá; bạn vẫn có thể chỉnh sửa trước khi lưu.
             </small>
+            {aiError && <p role="alert" style={{ color: 'var(--color-danger)', marginTop: 12 }}>{aiError}</p>}
             {aiResult && (
               <div className="ops-ai-result" role="status">
                 <strong>Gợi ý AI · Độ tin cậy {Math.round(aiResult.confidence * 100)}%</strong>
@@ -395,7 +426,19 @@ export default function ClassifyBatch() {
               const grade = q.options.find((option) => option.id === form.answers[q.id])?.grade;
               return sum + (q.weight ?? 1) * (grade === 'A' ? 100 : grade === 'B' ? 50 : 0);
             }, 0) / total + Number.EPSILON) * 100) / 100;
-            return <p><strong>Điểm dự kiến: {score.toFixed(2)} / 100 · Nhãn {score >= (catalog.scoringRules?.gradeAMinimum ?? 85) ? 'A' : score >= (catalog.scoringRules?.gradeBMinimum ?? 50) ? 'B' : 'C'}</strong></p>;
+            const grade = score >= (catalog.scoringRules?.gradeAMinimum ?? 85) ? 'A' : score >= (catalog.scoringRules?.gradeBMinimum ?? 50) ? 'B' : 'C';
+            return <div className={`classification-score classification-score--${grade.toLowerCase()}`} role="status" aria-live="polite" aria-atomic="true">
+              <div className="classification-score-summary">
+                <div>
+                  <span className="classification-score-label">Điểm dự kiến</span>
+                  <div className="classification-score-value"><strong>{score.toFixed(2)}</strong><span>/ 100</span></div>
+                </div>
+                <span className="classification-score-grade">Nhãn <strong>{grade}</strong></span>
+              </div>
+              <div className="classification-score-track" aria-hidden="true">
+                <div style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+              </div>
+            </div>;
           })()}
           {catalog.conditionQuestions.map((q) => (
             <div className="ops-field" key={q.id}>
