@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Modal } from '@/components/common/Modal';
 import { AlertTriangle, Check, ChevronLeft, ImageOff, Scale } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { warehouseService, type WarehouseBatch } from '@/services/warehouseService';
 import '@/styles/ops-shared.css';
+import './ReceiveBatch.css';
 import { getClassifiedBatchGroupLabel } from '@/utils/classifiedBatch';
 
 export default function ReceiveBatch() {
@@ -15,6 +18,9 @@ export default function ReceiveBatch() {
   const [seal, setSeal] = useState(true);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ actualItemCount: number; actualWeightKg: number; sealIntact: boolean; discrepancyNotes: string } | null>(null);
+  const [saveError, setSaveError] = useState('');
+  const submitting = useRef(false);
   useEffect(() => {
     if (!batchId) return;
     warehouseService
@@ -28,8 +34,9 @@ export default function ReceiveBatch() {
         nav('/warehouse');
       });
   }, [batchId]);
-  const confirm = async () => {
-    if (!batchId || !batch || weight <= 0)
+  const confirm = () => {
+    if (submitting.current) return;
+    if (!batchId || !batch || !Number.isFinite(weight) || weight <= 0)
       return toast.error('Nhập khối lượng thực nhận.');
     const handedOffWeight = Number(batch.expectedWeightKg.toFixed(2));
     const receivedWeight = Number(weight.toFixed(2));
@@ -37,19 +44,24 @@ export default function ReceiveBatch() {
       return toast.error(`Khối lượng thực nhận phải đúng bằng ${handedOffWeight} kg do Classification Staff bàn giao.`);
     if (!seal && !notes.trim())
       return toast.error('Cần ghi nhận sai lệch khi niêm phong không nguyên vẹn.');
+    setSaveError('');
+    setConfirmation({ actualItemCount: batch.expectedItemCount || 0, actualWeightKg: weight,
+      sealIntact: seal, discrepancyNotes: notes });
+  };
+  const submitReceipt = async () => {
+    if (!batchId || !confirmation || submitting.current) return;
+    submitting.current = true;
+    setSaveError('');
     setSaving(true);
     try {
-      await warehouseService.confirmReceipt(batchId, {
-        actualItemCount: batch?.expectedItemCount || 0,
-        actualWeightKg: weight,
-        sealIntact: seal,
-        discrepancyNotes: notes,
-      });
+      await warehouseService.confirmReceipt(batchId, confirmation);
+      setConfirmation(null);
       toast.success('Đã lập phiếu nhận kho và ghi transaction RECEIPT.');
       nav(`/warehouse/storage/${batchId}`);
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Không xác nhận được batch.');
+      setSaveError(e?.response?.data?.message || 'Không xác nhận được batch. Vui lòng thử lại.');
     } finally {
+      submitting.current = false;
       setSaving(false);
     }
   };
@@ -105,7 +117,7 @@ export default function ReceiveBatch() {
             )}
           </div>
         </section>
-        <section className="ops-panel glass">
+        <section className="ops-panel glass warehouse-receipt-form">
           <span className="ops-panel-label">Biên bản thực nhận</span>
           <div className="ops-field">
             <label>Khối lượng thực nhận (kg)</label>
@@ -153,6 +165,24 @@ export default function ReceiveBatch() {
           </button>
         </section>
       </div>
+      {confirmation && createPortal(<Modal isOpen title="Xác nhận nhận hàng vật lý"
+        className="warehouse-receipt-confirmation"
+        onClose={() => { if (!submitting.current) setConfirmation(null); }}
+        footer={<>
+          <button type="button" className="ops-btn ops-btn-secondary" disabled={saving} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</button>
+          <button type="button" className="ops-btn ops-btn-primary" autoFocus disabled={saving} onClick={() => void submitReceipt()}>{saving ? 'Đang ghi nhận...' : 'Xác nhận nhận hàng'}</button>
+        </>}>
+        <div className="warehouse-receipt-summary">
+          <p className="warehouse-receipt-wide">Vui lòng kiểm tra thông tin trước khi ghi nhận hàng vào kho.</p>
+          <div className="ops-kv warehouse-receipt-wide"><span>Mã batch</span><strong>{batch.batchCode}</strong></div>
+          <div className="ops-kv"><span>Khối lượng bàn giao</span><strong>{batch.expectedWeightKg} kg</strong></div>
+          <div className="ops-kv"><span>Khối lượng thực nhận</span><strong>{confirmation.actualWeightKg} kg</strong></div>
+          <div className="ops-kv"><span>Số lượng item theo bàn giao</span><strong>{confirmation.actualItemCount}</strong></div>
+          <div className="ops-kv"><span>Niêm phong</span><strong>{confirmation.sealIntact ? 'Nguyên vẹn' : 'Có bất thường'}</strong></div>
+          <div className="ops-kv warehouse-receipt-wide"><span>Sai lệch / ghi chú nhận hàng</span><strong style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmation.discrepancyNotes.trim() || 'Không có'}</strong></div>
+          {saveError && <p className="warehouse-receipt-wide" role="alert" style={{ color: 'var(--color-danger)' }}>{saveError}</p>}
+        </div>
+      </Modal>, document.body)}
     </div>
   );
 }

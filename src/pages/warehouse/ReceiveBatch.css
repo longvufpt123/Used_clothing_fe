@@ -1,0 +1,25 @@
+.warehouse-receipt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.warehouse-receipt-form > .ops-panel-label,
+.warehouse-receipt-form > .ops-item-row { margin: 0; }
+.warehouse-receipt-form .ops-field { gap: 8px; }
+.warehouse-receipt-form textarea { min-height: 112px; }
+.warehouse-receipt-form > .ops-btn { margin-top: 4px; }
+
+.warehouse-receipt-confirmation { max-width: 620px; }
+.warehouse-receipt-confirmation .modal-header,
+.warehouse-receipt-confirmation .modal-footer { flex-shrink: 0; gap: 12px; }
+.warehouse-receipt-confirmation .modal-body { min-height: 0; }
+.warehouse-receipt-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.warehouse-receipt-summary > p { margin: 0; }
+.warehouse-receipt-summary .ops-kv { padding: 14px 16px; gap: 8px; }
+.warehouse-receipt-summary strong { overflow-wrap: anywhere; }
+.warehouse-receipt-wide { grid-column: 1 / -1; }
+
+@media (max-width: 480px) {
+  .warehouse-receipt-summary { grid-template-columns: 1fr; }
+}
