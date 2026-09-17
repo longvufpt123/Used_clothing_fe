@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Boxes,
@@ -49,6 +49,8 @@ export default function GroupedBatches({
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
   const [placeAreaId, setPlaceAreaId] = useState("");
   const [placeGroupId, setPlaceGroupId] = useState("");
+  const [placeLocationId, setPlaceLocationId] = useState("");
+  const placementLock = useRef(false);
   const [savingPlace, setSavingPlace] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null,
@@ -148,29 +150,37 @@ export default function GroupedBatches({
     setPlacing(batch);
     setPlaceAreaId("");
     setPlaceGroupId("");
+    setPlaceLocationId("");
   };
+  const placementArea = layout?.areas.find((area) => area.id === placeAreaId);
+  const placementGroup = placementArea?.groups.find((group) => group.id === placeGroupId);
+  const placementLocation = placementGroup?.locations.find((location) => location.id === placeLocationId);
+  const placementAvailable = placementArea && placementGroup && placementLocation
+    ? Math.max(0, Math.min(placementArea.capacityKg - placementArea.currentKg,
+        placementGroup.capacityKg - placementGroup.currentKg,
+        placementLocation.capacityKg - placementLocation.currentWeightKg)) : 0;
+  const canPlace = !!placing && !!placementLocation && placementLocation.status === 'Available'
+    && Number.isFinite(placing.totalWeight) && placing.totalWeight > 0 && placing.totalWeight <= placementAvailable;
   const savePlacement = async () => {
-    const locationId = layout?.areas
-      .flatMap((area) => area.groups)
-      .find((group) => group.id === placeGroupId)
-      ?.locations.find((location) => location.status !== "Full")?.id;
     const weight = placing?.totalWeight ?? 0;
-    if (!placing || !placeAreaId || !placeGroupId || !locationId || !Number.isFinite(weight) || weight <= 0) return;
+    if (!placing || !canPlace || placementLock.current) return;
+    placementLock.current = true;
     setSavingPlace(true);
     try {
       await classificationService.placeGroupedBatch(
         placing.id,
         placeAreaId,
         placeGroupId,
-        locationId,
+        placeLocationId,
         weight,
       );
-      toast.success(`Đã xếp ${placing.batchCode} vào khu và dãy đã chọn.`);
+      toast.success(`Đã xếp ${placing.batchCode} vào vị trí ${placementLocation!.locationCode}.`);
       setPlacing(null);
       await loadGroups();
     } catch (e: any) {
       toast.error(e?.response?.data?.message || "Không thể xếp batch vào dãy.");
     } finally {
+      placementLock.current = false;
       setSavingPlace(false);
     }
   };
@@ -536,14 +546,17 @@ export default function GroupedBatches({
                 <X />
               </button>
             </div>
-            <div className="ops-modal-details">
+            <div className="ops-modal-details" style={{ display: 'grid', gap: 16 }}>
               <div className="ops-field">
-                <label>Khu vực</label>
+                <label htmlFor="group-placement-area">Khu vực</label>
                 <select
+                  id="group-placement-area"
+                  disabled={savingPlace}
                   value={placeAreaId}
                   onChange={(e) => {
                     setPlaceAreaId(e.target.value);
                     setPlaceGroupId("");
+                    setPlaceLocationId("");
                   }}
                 >
                   <option value="">Chọn khu vực</option>
@@ -555,11 +568,12 @@ export default function GroupedBatches({
                 </select>
               </div>
               <div className="ops-field">
-                <label>Dãy</label>
+                <label htmlFor="group-placement-aisle">Dãy</label>
                 <select
+                  id="group-placement-aisle"
                   value={placeGroupId}
-                  onChange={(e) => setPlaceGroupId(e.target.value)}
-                  disabled={!placeAreaId}
+                  onChange={(e) => { setPlaceGroupId(e.target.value); setPlaceLocationId(''); }}
+                  disabled={!placeAreaId || savingPlace}
                 >
                   <option value="">Chọn dãy</option>
                   {layout.areas
@@ -571,6 +585,23 @@ export default function GroupedBatches({
                       </option>
                     ))}
                 </select>
+              </div>
+              <div className="ops-field">
+                <label htmlFor="group-placement-location">Vị trí trong dãy</label>
+                <select id="group-placement-location" value={placeLocationId} disabled={!placementGroup || savingPlace}
+                  onChange={(e) => setPlaceLocationId(e.target.value)}>
+                  <option value="">Chọn vị trí</option>
+                  {placementGroup?.locations.map((location) => {
+                    const remaining = Math.max(0, location.capacityKg - location.currentWeightKg);
+                    const unavailable = location.status !== 'Available';
+                    return <option key={location.id} value={location.id} disabled={unavailable || remaining < placing.totalWeight}>
+                      {location.locationCode} · còn {remaining} kg{unavailable ? ' · Không khả dụng' : remaining < placing.totalWeight ? ' · Không đủ sức chứa' : ''}
+                    </option>;
+                  })}
+                </select>
+                {placementGroup && !placementGroup.locations.length && <small>Dãy này chưa có vị trí lưu trữ.</small>}
+                {placementLocation && <small>Sức chứa còn lại của vị trí/dãy/khu: {placementAvailable} kg.</small>}
+                {placementLocation && placing.totalWeight > placementAvailable && <small role="alert" style={{ color: 'var(--color-danger)' }}>Không đủ sức chứa cho batch. Vui lòng chọn vị trí hoặc dãy khác.</small>}
               </div>
               <div className="ops-field">
                 <div className="ops-kv"><span>Khối lượng đã xác nhận</span><strong>{Number.isFinite(placing.totalWeight) && placing.totalWeight > 0 ? `${placing.totalWeight} kg` : 'Chưa có khối lượng'}</strong></div>
@@ -587,7 +618,7 @@ export default function GroupedBatches({
                 <button
                   className="ops-btn ops-btn-primary"
                   onClick={() => void savePlacement()}
-                  disabled={savingPlace || !placeAreaId || !placeGroupId || !Number.isFinite(placing.totalWeight) || !(placing.totalWeight > 0)}
+                  disabled={savingPlace || !canPlace}
                 >
                   <MapPin size={15} />
                   {savingPlace ? "Đang xếp..." : "Xác nhận vị trí"}
