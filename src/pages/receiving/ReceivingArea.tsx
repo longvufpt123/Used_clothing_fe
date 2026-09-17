@@ -65,6 +65,8 @@ export const ReceivingArea: React.FC = () => {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<ReceivingBatch[]>([]);
+  const [receivingGroups, setReceivingGroups] = useState<ReceivingBatch['receivingGroups']>([]);
+  const [groupsError, setGroupsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [sendingBatchId, setSendingBatchId] = useState<string | null>(null);
@@ -87,8 +89,19 @@ export const ReceivingArea: React.FC = () => {
 
   const load = async (fresh = false) => {
     setLoading(true);
+    setGroupsError('');
     try {
-      const data = await receivingService.getMyBatches(fresh);
+      const [batchResult, groupResult] = await Promise.allSettled([
+        receivingService.getMyBatches(fresh), receivingService.getMyReceivingGroups(fresh),
+      ]);
+      if (groupResult.status === 'fulfilled') {
+        setReceivingGroups([...groupResult.value].sort((a, b) => a.groupName.localeCompare(b.groupName, 'vi')));
+      } else {
+        setReceivingGroups([]);
+        setGroupsError(groupResult.reason?.response?.data?.message || 'Không thể tải các dãy của Khu nhận đồ.');
+      }
+      if (batchResult.status === 'rejected') throw batchResult.reason;
+      const data = batchResult.value;
       setBatches(data);
       const requestedId = searchParams.get('batchId');
       const requested = data.find(
@@ -137,14 +150,6 @@ export const ReceivingArea: React.FC = () => {
       return matchesStage && matchesShift && matchesSearch;
     });
   }, [batches, search, shift, stage]);
-
-  const receivingGroups = useMemo(() => {
-    const unique = new Map<string, ReceivingBatch['receivingGroups'][number]>();
-    batches.forEach((batch) => {
-      batch.receivingGroups.forEach((group) => unique.set(group.id, group));
-    });
-    return [...unique.values()].sort((a, b) => a.groupName.localeCompare(b.groupName, 'vi'));
-  }, [batches]);
 
   useEffect(() => {
     if (receivingGroups.length > 0 && openGroups.size === 0) {
@@ -450,7 +455,13 @@ export const ReceivingArea: React.FC = () => {
         </div>
       ) : stage === 'stored' ? (
         <section className="receiving-storage-map">
-          {receivingGroups.length === 0 ? (
+          {groupsError ? (
+            <div className="ops-empty" role="alert">
+              <h3>Không thể tải Khu nhận đồ</h3>
+              <p>{groupsError}</p>
+              <button className="ops-btn ops-btn-secondary" onClick={() => void load(true)}>Thử lại</button>
+            </div>
+          ) : receivingGroups.length === 0 ? (
             <div className="ops-empty">
               <Warehouse size={38} />
               <h3>Kho chưa có cấu trúc Khu nhận đồ</h3>

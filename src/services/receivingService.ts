@@ -369,6 +369,9 @@ export const receivingService = {
     apiClient.get<unknown, ReceivingLocationBatch[]>(
       `/receiving-operations/receiving-locations/${locationId}/batches`,
     ),
+  getMyReceivingGroups: (fresh = false) =>
+    shareReceivingRead('my-receiving-groups', () =>
+      apiClient.get<unknown, ReceivingStagingGroup[]>('/receiving-operations/my-receiving-groups'), fresh),
   async getMyBatch(id: string) {
     const data = await apiClient.get<unknown, ApiBatch>(`/receiving-operations/my-batches/${id}`);
     return mapBatch(data);
