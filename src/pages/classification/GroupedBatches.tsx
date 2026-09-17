@@ -49,7 +49,6 @@ export default function GroupedBatches({
   const [placing, setPlacing] = useState<GroupedClassifiedBatch | null>(null);
   const [placeAreaId, setPlaceAreaId] = useState("");
   const [placeGroupId, setPlaceGroupId] = useState("");
-  const [actualWeightKg, setActualWeightKg] = useState("");
   const [savingPlace, setSavingPlace] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null,
@@ -149,14 +148,13 @@ export default function GroupedBatches({
     setPlacing(batch);
     setPlaceAreaId("");
     setPlaceGroupId("");
-    setActualWeightKg("");
   };
   const savePlacement = async () => {
     const locationId = layout?.areas
       .flatMap((area) => area.groups)
       .find((group) => group.id === placeGroupId)
       ?.locations.find((location) => location.status !== "Full")?.id;
-    const weight = Number(actualWeightKg);
+    const weight = placing?.totalWeight ?? 0;
     if (!placing || !placeAreaId || !placeGroupId || !locationId || !Number.isFinite(weight) || weight <= 0) return;
     setSavingPlace(true);
     try {
@@ -575,15 +573,8 @@ export default function GroupedBatches({
                 </select>
               </div>
               <div className="ops-field">
-                <label>Khối lượng thực tế của batch (kg)</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={actualWeightKg}
-                  onChange={(event) => setActualWeightKg(event.target.value)}
-                  placeholder="Nhập khối lượng sau khi cân"
-                />
+                <div className="ops-kv"><span>Khối lượng đã xác nhận</span><strong>{Number.isFinite(placing.totalWeight) && placing.totalWeight > 0 ? `${placing.totalWeight} kg` : 'Chưa có khối lượng'}</strong></div>
+                {!(Number.isFinite(placing.totalWeight) && placing.totalWeight > 0) && <small role="alert">Batch chưa có khối lượng đã xác nhận. Vui lòng kiểm tra lại bước hoàn tất gom nhóm.</small>}
               </div>
               <div className="ops-actions">
                 <button
@@ -596,7 +587,7 @@ export default function GroupedBatches({
                 <button
                   className="ops-btn ops-btn-primary"
                   onClick={() => void savePlacement()}
-                  disabled={savingPlace || !placeAreaId || !placeGroupId || !(Number(actualWeightKg) > 0)}
+                  disabled={savingPlace || !placeAreaId || !placeGroupId || !Number.isFinite(placing.totalWeight) || !(placing.totalWeight > 0)}
                 >
                   <MapPin size={15} />
                   {savingPlace ? "Đang xếp..." : "Xác nhận vị trí"}

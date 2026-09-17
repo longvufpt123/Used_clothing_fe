@@ -20,8 +20,8 @@ export default function BatchPlacementDialog({
   const [areaId, setAreaId] = useState('');
   const [groupId, setGroupId] = useState('');
   const [locationId, setLocationId] = useState('');
-  const hasConfirmedWeight = batch.status === 'ReadyForPlacement' && batch.totalWeight > 0;
-  const [weight, setWeight] = useState(hasConfirmedWeight ? String(batch.totalWeight) : '');
+  const weight = batch.totalWeight;
+  const hasConfirmedWeight = Number.isFinite(weight) && weight > 0;
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,7 +68,7 @@ export default function BatchPlacementDialog({
         )
       : 0;
   async function submit() {
-    if (submitting.current || !location || !area || !group) return;
+    if (submitting.current || !location || !area || !group || !hasConfirmedWeight || weight > available) return;
     submitting.current = true;
     setBusy(true);
     setError('');
@@ -78,7 +78,7 @@ export default function BatchPlacementDialog({
         area.id,
         group.id,
         location.id,
-        Number(weight),
+        weight,
       );
       await onSaved();
       onClose();
@@ -105,7 +105,7 @@ export default function BatchPlacementDialog({
         }}
       >
         <strong>{batch.batchCode}</strong>
-        <p>{hasConfirmedWeight ? 'Chọn vị trí phù hợp với khối lượng đã xác nhận khi hoàn tất gom nhóm.' : 'Chọn vị trí và nhập khối lượng cân thực tế của batch.'}</p>
+        <p>Chọn vị trí phù hợp với khối lượng đã xác nhận khi hoàn tất gom nhóm.</p>
         {error && (
           <div role="alert">
             {error}
@@ -188,21 +188,10 @@ export default function BatchPlacementDialog({
           </select>
         </div>
         <div className="ops-field">
-          <label htmlFor="placement-weight">Khối lượng thực tế (kg) *</label>
-          <input
-            id="placement-weight"
-            readOnly={hasConfirmedWeight}
-            type="number"
-            min="0.01"
-            step="0.01"
-            max={available || undefined}
-            required
-            disabled={busy}
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-          />
-          {hasConfirmedWeight && <small>Khối lượng đã xác nhận khi hoàn tất gom nhóm.</small>}
+          <div className="ops-kv"><span>Khối lượng đã xác nhận</span><strong>{hasConfirmedWeight ? `${weight} kg` : 'Chưa có khối lượng'}</strong></div>
+          {!hasConfirmedWeight && <small role="alert">Batch chưa có khối lượng đã xác nhận. Vui lòng kiểm tra lại bước hoàn tất gom nhóm.</small>}
           {location && <small>Sức chứa còn lại của vị trí/dãy/khu: {available} kg.</small>}
+          {location && hasConfirmedWeight && weight > available && <small role="alert">Vị trí này không đủ sức chứa cho batch. Vui lòng chọn vị trí khác.</small>}
         </div>
         <div className="ops-actions">
           <button
@@ -217,7 +206,7 @@ export default function BatchPlacementDialog({
             type="submit"
             className="ops-btn ops-btn-primary"
             disabled={
-              busy || loading || !location || !(Number(weight) > 0) || Number(weight) > available
+              busy || loading || !location || !hasConfirmedWeight || weight > available
             }
           >
             {busy ? 'Đang xếp...' : 'Xác nhận vị trí'}
