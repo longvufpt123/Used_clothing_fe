@@ -135,6 +135,12 @@
   width: 100%;
   overflow-x: auto;
 }
+.processing-list-pagination { margin-top: 24px; }
+.processing-list-pagination .pagination-nav,
+.processing-list-pagination .pagination-numbers { gap: 8px; }
+.processing-list-pagination .pagination-btn { border-radius: 8px; }
+.processing-filters .ops-field { gap: 8px; }
+.processing-filters label { display: flex; align-items: center; gap: 6px; }
 .processing-table {
   width: 100%;
   min-width: 640px;

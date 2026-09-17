@@ -643,11 +643,13 @@ export default function ProcessingPortal({ mode }: { mode: Mode }) {
                     </tbody>
                   </table>
                 </div>
-                <Pagination
-                  currentPage={activePage}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
-                />
+                <div className="processing-list-pagination">
+                  <Pagination
+                    currentPage={activePage}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+                </div>
               </>
             )}
           </section>

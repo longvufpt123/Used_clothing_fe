@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Modal } from '@/components/common/Modal';
+import { Button } from '@/components/common/Button';
 import {
   Check,
   ChevronLeft,
@@ -43,6 +46,15 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   >([]);
   const [warehouseId, setWarehouseId] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
+  const [requestConfirmation, setRequestConfirmation] = useState<{
+    payload: { warehouseId: string; recipientName: string; recipientPhone: string; toAddress: string; notes: string; items: { inventoryId: string }[] };
+    editingId: string | null;
+    warehouseName: string;
+    batches: { id: string; code: string; label: string; weight: number }[];
+  } | null>(null);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState('');
+  const requestBusy = useRef(false);
   const [activeBatch, setActiveBatch] = useState<CatalogItem | null>(null);
   const [productPage, setProductPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -217,7 +229,8 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       return next;
     });
   };
-  const create = async () => {
+  const create = () => {
+    if (requestBusy.current) return;
     if (
       !form.recipientName.trim() ||
       !form.recipientPhone.trim() ||
@@ -229,16 +242,26 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       return toast.warning('Số điện thoại nhận hàng không hợp lệ.');
     if (!warehouseId || !Object.values(selected).some((x) => x > 0))
       return toast.warning('Chọn kho và ít nhất một batch.');
+    const batches = Object.entries(selected).filter(([, weight]) => weight > 0).map(([id, weight]) => {
+      const item = catalog.find((entry) => entry.inventoryId === id);
+      const previous = requests.find((request) => request.id === editingRequestId)?.items.find((entry) => entry.inventoryId === id);
+      return { id, code: item?.batchCode || previous?.batchCode || 'Batch đã chọn', label: item?.clothingType || previous?.clothingType || '', weight };
+    });
+    setRequestError('');
+    setRequestConfirmation({ editingId: editingRequestId,
+      warehouseName: warehouses.find((warehouse) => warehouse.id === warehouseId)?.warehouseName || '', batches,
+      payload: { warehouseId, ...form, items: batches.map((batch) => ({ inventoryId: batch.id })) } });
+  };
+  const submitRequest = async () => {
+    if (!requestConfirmation || requestBusy.current) return;
+    requestBusy.current = true;
+    setRequestSubmitting(true);
+    setRequestError('');
     try {
-      const payload = {
-        warehouseId,
-        ...form,
-        items: Object.entries(selected)
-          .filter(([, q]) => q > 0)
-          .map(([inventoryId]) => ({ inventoryId })),
-      };
-      if (editingRequestId) await distributionService.update(editingRequestId, payload);
+      const { payload, editingId } = requestConfirmation;
+      if (editingId) await distributionService.update(editingId, payload);
       else await distributionService.create(payload);
+      setRequestConfirmation(null);
       setEditingRequestId(null);
       setForm({
         recipientName: '',
@@ -250,7 +273,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       toast.success('Đã gửi yêu cầu đến Manager.');
       load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể tạo yêu cầu.');
+      setRequestError(error?.response?.data?.message || 'Không thể gửi yêu cầu. Vui lòng thử lại.');
+    } finally {
+      requestBusy.current = false;
+      setRequestSubmitting(false);
     }
   };
   const startEdit = (request: DistributionRequest) => {
@@ -512,6 +538,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Tìm batch, loại đồ, size"
                 placeholder="Tìm batch, loại đồ, size..."
               />
             </label>
@@ -648,14 +675,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <X /> Hủy chỉnh sửa
               </button>
             )}
-            <button onClick={create}>
+            <button onClick={create} disabled={requestSubmitting}>
               <Send /> Gửi yêu cầu ({Object.values(selected).reduce((a, b) => a + b, 0)} kg)
             </button>
           </section>
         </>
       )}
       {(mode !== 'organization' || organizationView !== 'catalog') && (
-        <section className="distribution-requests">
+        <section className={`distribution-requests${mode === 'warehouse' ? ' distribution-requests--table' : ''}`}>
           <h2>{mode === 'organization' ? 'Yêu cầu của tổ chức' : 'Danh sách yêu cầu'}</h2>
           <div className="distribution-request-filters">
             <label>
@@ -716,7 +743,49 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               Không tìm thấy yêu cầu phù hợp bộ lọc.
             </div>
           )}
-          {pagedRequests.map((r) => (
+          {mode === 'warehouse' && pagedRequests.length > 0 && (
+            <div className="distribution-request-table-scroll" role="region" aria-label="Danh sách yêu cầu xuất kho từ thiện" tabIndex={0}>
+              <table className="distribution-request-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Yêu cầu</th>
+                    <th scope="col">Tổ chức / Kho</th>
+                    <th scope="col">Người nhận</th>
+                    <th scope="col">Khối lượng yêu cầu</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col" aria-label="Thao tác" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedRequests.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <button type="button" className="distribution-request-code" onClick={() => setDetailRequest(r)}>{r.code}</button>
+                        <small>{new Date(r.requestedAt).toLocaleString('vi-VN')}</small>
+                      </td>
+                      <td><strong>{r.organizationName}</strong><small>{r.warehouseName}</small></td>
+                      <td className="distribution-request-recipient">
+                        <strong>{r.recipientName}</strong>
+                        <small>{r.recipientPhone}</small>
+                        <small>{r.toAddress}</small>
+                      </td>
+                      <td>
+                        <span className="distribution-request-weight">{r.items.reduce((total, item) => total + item.requestedWeight, 0).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} kg</span>
+                        <small>{r.items.length} batch</small>
+                      </td>
+                      <td>
+                        <span className={`distribution-request-status distribution-request-status--${r.status}`}>{getStatusLabel(r.status)}</span>
+                        {r.issueSlipCode && <small>Đã lập phiếu xuất</small>}
+                        {r.ghnOrderCode && <small>GHN: {getStatusLabel(r.ghnStatus)}</small>}
+                      </td>
+                      <td><button type="button" className="distribution-request-detail" onClick={() => setDetailRequest(r)}>Chi tiết</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {mode !== 'warehouse' && pagedRequests.map((r) => (
             <article
               key={r.id}
               className="distribution-request-summary"
@@ -787,6 +856,29 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
           )}
         </section>
       )}
+      {requestConfirmation && createPortal(<Modal isOpen
+        title={requestConfirmation.editingId ? 'Xác nhận cập nhật yêu cầu' : 'Xác nhận gửi yêu cầu'}
+        className="distribution-request-confirmation"
+        onClose={() => { if (!requestBusy.current) setRequestConfirmation(null); }}
+        footer={<>
+          <Button variant="outline" disabled={requestSubmitting} onClick={() => setRequestConfirmation(null)}>Quay lại chỉnh sửa</Button>
+          <Button autoFocus isLoading={requestSubmitting} onClick={() => void submitRequest()}>{requestConfirmation.editingId ? 'Xác nhận cập nhật' : 'Xác nhận gửi'}</Button>
+        </>}>
+        <p>Vui lòng kiểm tra thông tin trước khi gửi yêu cầu đến Manager.</p>
+        <dl className="distribution-request-summary">
+          <div><dt>Người/tổ chức nhận</dt><dd>{requestConfirmation.payload.recipientName}</dd></div>
+          <div><dt>Số điện thoại</dt><dd>{requestConfirmation.payload.recipientPhone}</dd></div>
+          <div className="full"><dt>Địa chỉ nhận hàng</dt><dd>{requestConfirmation.payload.toAddress}</dd></div>
+          <div className="full"><dt>Kho xuất hàng</dt><dd>{requestConfirmation.warehouseName}</dd></div>
+          <div className="full"><dt>Mục đích sử dụng / ghi chú</dt><dd>{requestConfirmation.payload.notes}</dd></div>
+        </dl>
+        <h4>Hàng đã chọn · {requestConfirmation.batches.length} batch</h4>
+        <ul className="distribution-confirmed-batches">{requestConfirmation.batches.map((batch) => <li key={batch.id}>
+          <div><strong>{batch.code}</strong><small>{batch.label}</small></div><b>{batch.weight} kg</b>
+        </li>)}</ul>
+        <p><strong>Tổng khối lượng: {Number(requestConfirmation.batches.reduce((sum, batch) => sum + batch.weight, 0).toFixed(2))} kg</strong></p>
+        {requestError && <p role="alert" className="distribution-request-error">{requestError}</p>}
+      </Modal>, document.body)}
       {receiptTarget && (
         <div className="product-modal-backdrop" onMouseDown={() => { if (!receiptBusy.current) setReceiptTarget(null); }}>
           <section className="distribution-detail-modal" role="dialog" aria-modal="true"
