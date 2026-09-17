@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import { receivingService } from '@/services/receivingService';
+import { receivingService, MIN_CLASSIFICATION_WEIGHT_KG, CLASSIFICATION_WEIGHT_NOTICE } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingLocationBatch } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
 import './ReceivingArea.css';
@@ -241,6 +241,7 @@ export const ReceivingArea: React.FC = () => {
 
   const sendToClassification = async (batch: ReceivingBatch) => {
     if (sendingBatchId) return;
+    if (batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG) return toast.warning(CLASSIFICATION_WEIGHT_NOTICE);
     setSendingBatchId(batch.id);
     try {
       await receivingService.sendToClassification(batch.id);
@@ -363,13 +364,13 @@ export const ReceivingArea: React.FC = () => {
       {batch.status === 'ReceivedAtWarehouse' && (
         <button
           className="receiving-area-primary"
-          disabled={sendingBatchId === batch.id}
+          disabled={sendingBatchId === batch.id || batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG} title={CLASSIFICATION_WEIGHT_NOTICE}
           onClick={(event) => {
             event.stopPropagation();
             void sendToClassification(batch);
           }}
         >
-          <Send size={16} /> {sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
+          <Send size={16} /> {batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG ? 'C\u1ea7n t\u1ed1i thi\u1ec3u 10 kg th\u1ef1c nh\u1eadn' : sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
         </button>
       )}
     </article>
@@ -606,13 +607,13 @@ export const ReceivingArea: React.FC = () => {
                       {batch.canManage && batch.status === 'ReceivedAtWarehouse' && (
                         <button
                           className="send"
-                          disabled={sendingBatchId === batch.id}
+                          disabled={sendingBatchId === batch.id || batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG} title={CLASSIFICATION_WEIGHT_NOTICE}
                           onClick={() => {
                             const myBatch = batches.find((item) => item.id === batch.id);
                             if (myBatch) void sendToClassification(myBatch);
                           }}
                         >
-                          <Send size={14} /> {sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
+                          <Send size={14} /> {batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG ? 'C\u1ea7n t\u1ed1i thi\u1ec3u 10 kg th\u1ef1c nh\u1eadn' : sendingBatchId === batch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
                         </button>
                       )}
                     </div>
@@ -694,10 +695,10 @@ export const ReceivingArea: React.FC = () => {
               {detailBatch.status === 'ReceivedAtWarehouse' && (
                 <button
                   className="primary"
-                  disabled={sendingBatchId === detailBatch.id}
+                  disabled={sendingBatchId === detailBatch.id || detailBatch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG} title={CLASSIFICATION_WEIGHT_NOTICE}
                   onClick={() => void sendToClassification(detailBatch)}
                 >
-                  <Send size={16} /> {sendingBatchId === detailBatch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
+                  <Send size={16} /> {detailBatch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG ? 'C\u1ea7n t\u1ed1i thi\u1ec3u 10 kg th\u1ef1c nh\u1eadn' : sendingBatchId === detailBatch.id ? 'Đang gửi...' : 'Gửi đi phân loại'}
                 </button>
               )}
             </footer>

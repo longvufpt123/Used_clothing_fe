@@ -1,6 +1,8 @@
 import apiClient from './api';
 
 export type ReceivingStatus = 'Pending' | 'Received' | 'Rescheduled' | 'Canceled';
+export const MIN_CLASSIFICATION_WEIGHT_KG = 10;
+export const CLASSIFICATION_WEIGHT_NOTICE = 'Lô hàng phải có khối lượng thực nhận từ 10 kg trở lên mới được gửi sang phân loại.';
 export interface TeamMember {
   id: string;
   fullName: string;
