@@ -134,8 +134,8 @@ export default function GroupedBatchDetail() {
           {sending
             ? 'Đang bàn giao...'
             : canSend
-              ? 'Bàn giao sang Kho'
-              : 'Đã bàn giao sang Kho'}
+              ? 'Bàn giao sang Khu vực lưu trữ'
+              : 'Đã bàn giao sang Khu vực lưu trữ'}
         </button>
       </div>}
 
