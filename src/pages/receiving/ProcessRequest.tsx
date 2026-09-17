@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Modal } from '@/components/common/Modal';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -23,12 +25,27 @@ import type { ReceivingRequest } from '@/services/receivingService';
 import { uploadImages } from '@/utils/uploadImages';
 import '@/styles/ops-shared.css';
 import './Dashboard.css';
+import './ProcessRequest.css';
 import DonationChatDialog from '@/components/chat/DonationChatDialog';
 
 type ReceiptImage = {
   file: File;
   previewUrl: string;
 };
+type ReceiptConfirmation = { weight: number; category: string; condition: string; notes: string; images: ReceiptImage[] };
+
+  const categoryOptions = [
+    { value: 'Áo khoác / Đồ ấm mùa đông', label: 'Áo khoác / Đồ ấm mùa đông' },
+    { value: 'Áo thun / Áo sơ mi dệt kim', label: 'Áo thun / Áo sơ mi dệt kim' },
+    { value: 'Quần denim / Quần dài / kaki', label: 'Quần denim / Quần dài / kaki' },
+    { value: 'Quần áo trẻ em', label: 'Quần áo trẻ em' },
+    { value: 'Hỗn hợp / Khác', label: 'Hỗn hợp / Khác' },
+  ];
+
+  const conditionOptions = [
+    { value: 'good', label: 'Tốt (Dành cho Từ thiện)' },
+    { value: 'recycle', label: 'Cũ hỏng (Dành cho Tái chế dệt sợi)' },
+  ];
 
 export const ProcessRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +61,15 @@ export const ProcessRequest: React.FC = () => {
   const [actualCondition, setActualCondition] = useState('good');
   const [actualNotes, setActualNotes] = useState('');
   const [receiptImages, setReceiptImages] = useState<ReceiptImage[]>([]);
+  const [weightTouched, setWeightTouched] = useState(false);
+  const [confirmation, setConfirmation] = useState<ReceiptConfirmation | null>(null);
+  const [confirmationError, setConfirmationError] = useState('');
+  const submittingReceipt = useRef(false);
+  const uploadedReceiptUrls = useRef<string[] | undefined>(undefined);
+  const weightError = actualWeight === '' ? (weightTouched ? 'Vui lòng nhập cân nặng thực tế.' : undefined)
+    : Number(actualWeight) <= 0 ? 'Khối lượng phải lớn hơn 0 kg.'
+    : Number(actualWeight) > 50 ? 'Mỗi đơn tiếp nhận tối đa 50 kg.'
+    : !/^\d+(?:\.\d{1,2})?$/.test(actualWeight) ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.' : undefined;
 
   // Reschedule overlay states
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -66,7 +92,7 @@ export const ProcessRequest: React.FC = () => {
       .then((currentRequest) => {
         if (!currentRequest) throw new Error('Không tìm thấy yêu cầu');
         setRequest(currentRequest);
-        setActualCategory(currentRequest.category);
+        setActualCategory(categoryOptions.some(option => option.value === currentRequest.category) ? currentRequest.category : 'Hỗn hợp / Khác');
       })
       .catch(() => {
         toast.error('Đơn quyên góp không tồn tại.');
@@ -75,19 +101,6 @@ export const ProcessRequest: React.FC = () => {
   }, [id, navigate]);
 
   if (!request) return null;
-
-  const categoryOptions = [
-    { value: 'Áo khoác / Đồ ấm mùa đông', label: 'Áo khoác / Đồ ấm mùa đông' },
-    { value: 'Áo thun / Áo sơ mi dệt kim', label: 'Áo thun / Áo sơ mi dệt kim' },
-    { value: 'Quần denim / Quần dài / kaki', label: 'Quần denim / Quần dài / kaki' },
-    { value: 'Quần áo trẻ em', label: 'Quần áo trẻ em' },
-    { value: 'Hỗn hợp / Khác', label: 'Hỗn hợp / Khác' },
-  ];
-
-  const conditionOptions = [
-    { value: 'good', label: 'Tốt (Dành cho Từ thiện)' },
-    { value: 'recycle', label: 'Cũ hỏng (Dành cho Tái chế dệt sợi)' },
-  ];
 
   const handleSelectImages = (files: FileList | null) => {
     if (!files) return;
@@ -124,44 +137,44 @@ export const ProcessRequest: React.FC = () => {
     });
   };
 
-  // 1. Success Collection Submission
-  const handleConfirmReceived = async (e: React.FormEvent) => {
+  const handleConfirmReceived = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!actualWeight || parseFloat(actualWeight) <= 0) {
-      toast.error('Vui lòng nhập cân nặng thực tế hợp lệ (lớn hơn 0).');
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const imageUrls = receiptImages.length
-        ? await uploadImages(
-            receiptImages.map((image) => image.file),
-            `receiving-confirmations/${request.id}`,
-          )
-        : request.imageUrls;
+    setWeightTouched(true);
+    if (!actualWeight || weightError || submittingReceipt.current) return;
+    uploadedReceiptUrls.current = undefined;
+    setConfirmationError('');
+    setConfirmation({ weight: Number(actualWeight), category: actualCategory, condition: actualCondition, notes: actualNotes.trim(), images: [...receiptImages] });
+  };
 
+  const submitReceipt = async () => {
+    if (!confirmation || submittingReceipt.current) return;
+    submittingReceipt.current = true;
+    setIsSubmitting(true);
+    setConfirmationError('');
+    try {
+      const imageUrls = confirmation.images.length
+        ? uploadedReceiptUrls.current ?? await uploadImages(confirmation.images.map(image => image.file), `receiving-confirmations/${request.id}`)
+        : request.imageUrls;
+      uploadedReceiptUrls.current = imageUrls;
       await receivingService.confirmPickup(request.batchId, request.id, {
-        actualWeight: parseFloat(actualWeight),
-        notes: `[${actualCategory} - ${actualCondition}] ${actualNotes}`,
+        actualWeight: confirmation.weight,
+        notes: `[${confirmation.category} - ${confirmation.condition}] ${confirmation.notes}`,
         imageUrls,
       });
-      const refreshedBatch = await receivingService.getMyBatch(request.batchId);
-      receiptImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      setConfirmation(null);
+      receiptImages.forEach(image => URL.revokeObjectURL(image.previewUrl));
       setReceiptImages([]);
-      toast.success('Tiếp nhận đơn quyên góp thành công!');
-
-      if (refreshedBatch.status === 'Completed') {
-        setIsSubmitting(false);
-        navigate('/receiving?tab=completed', { replace: true });
-        return;
-      }
-
       setSubmittedStatus('Received');
       setIsSubmitted(true);
-      setIsSubmitting(false);
+      toast.success('Tiếp nhận đơn quyên góp thành công!');
+      // Receipt is already saved: a refresh failure must not invite a duplicate submission.
+      const refreshedBatch = await receivingService.getMyBatch(request.batchId).catch(() => null);
+      if (refreshedBatch?.status === 'Completed') navigate('/receiving?tab=completed', { replace: true });
     } catch (error: any) {
+      setConfirmationError(error?.response?.data?.message || 'Không thể xác nhận thu nhận. Vui lòng thử lại.');
+    } finally {
+      submittingReceipt.current = false;
       setIsSubmitting(false);
-      toast.error(error?.response?.data?.message || 'Không thể xác nhận thu nhận.');
     }
   };
 
@@ -214,6 +227,29 @@ export const ProcessRequest: React.FC = () => {
 
   return (
     <div className="ops-page">
+      {confirmation && createPortal(<Modal isOpen title="Xác nhận thông tin thu nhận"
+        className="receipt-confirmation-modal"
+        onClose={() => { if (!submittingReceipt.current) setConfirmation(null); }}
+        footer={<>
+          <Button type="button" variant="secondary" disabled={isSubmitting} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</Button>
+          <Button type="button" isLoading={isSubmitting} onClick={submitReceipt}>Xác nhận thu nhận</Button>
+        </>}>
+        <p>Vui lòng kiểm tra thông tin trước khi xác nhận tiếp nhận đơn.</p>
+        <dl className="receipt-confirmation-details">
+          <dt>Mã đơn</dt><dd>{request.code}</dd>
+          <dt>Người quyên góp</dt><dd>{request.donorName}</dd>
+          <dt>Số điện thoại</dt><dd>{request.phoneNumber}</dd>
+          <dt>Địa chỉ lấy hàng</dt><dd>{request.pickupAddress}</dd>
+          <dt>Cân nặng thực tế</dt><dd><strong>{confirmation.weight} kg</strong></dd>
+          <dt>Chất liệu chính</dt><dd>{confirmation.category}</dd>
+          <dt>Chất lượng phân bổ</dt><dd>{conditionOptions.find(option => option.value === confirmation.condition)?.label}</dd>
+          <dt>Ghi chú tiếp nhận</dt><dd>{confirmation.notes || 'Không có'}</dd>
+        </dl>
+        {confirmation.images.length > 0 && <div className="receipt-confirmation-images">
+          {confirmation.images.map((image, index) => <img key={image.previewUrl} src={image.previewUrl} alt={`Ảnh thực nhận ${index + 1}`} />)}
+        </div>}
+        {confirmationError && <p className="receipt-confirmation-error" role="alert">{confirmationError}</p>}
+      </Modal>, document.body)}
       {!isSubmitted && (
         <div className="ops-nav">
           <button
@@ -271,7 +307,7 @@ export const ProcessRequest: React.FC = () => {
           </div>
 
           {/* Right: receipt form */}
-          <form className="ops-panel glass" onSubmit={handleConfirmReceived}>
+          <form className="ops-panel glass" onSubmit={handleConfirmReceived} noValidate>
             <span className="ops-panel-label">Cập nhật số liệu thực tế</span>
             <h2 style={{ marginBottom: 16 }}>Biên nhận thực tế</h2>
 
@@ -283,17 +319,13 @@ export const ProcessRequest: React.FC = () => {
                 required
                 placeholder="Nhập số cân nặng thực đo được..."
                 value={actualWeight}
+                error={weightError}
+                helperText="Tối đa 50 kg mỗi đơn, có thể nhập số lẻ."
+                onBlur={() => setWeightTouched(true)}
                 onChange={(e) => {
-                  const value = e.target.value.replace(',', '.');
-                  if (!/^\d*(?:\.\d{0,2})?$/.test(value)) return;
-                  if (value !== '' && value !== '0.' && Number(value) <= 0) {
-                    setActualWeight('');
-                    return;
-                  }
-                  setActualWeight(value);
-                }}
-                onKeyDown={(e) => {
-                  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                  const value = e.target.value.replace(/,/g, '.');
+                  if (/^\d*(?:\.\d{0,2})?$/.test(value)) setActualWeight(value);
+                  else e.currentTarget.value = actualWeight;
                 }}
                 icon={<Scale size={16} />}
               />
