@@ -58,8 +58,8 @@ export default function GroupedBatchDetail() {
     ReadyForPlacement: 'Chờ xếp khu',
     PlacedInClassifiedArea: 'Đã xếp khu',
     Open: isPlaced ? 'Đã xếp khu' : 'Chờ xếp khu',
-    PendingWarehouseReceipt: 'Chờ kho tiếp nhận',
-    WarehouseReceived: 'Kho đã tiếp nhận',
+    PendingWarehouseReceipt: 'Chờ tiếp nhận lưu trữ',
+    WarehouseReceived: 'Khu vực lưu trữ đã tiếp nhận',
     Stored: 'Đã nhập kho',
   } as Record<string, string>)[group.status] || group.status;
   const backPath = isHandedOff ? '/classification/warehouse-handoffs'
@@ -76,9 +76,9 @@ export default function GroupedBatchDetail() {
         current ? { ...current, status: 'PendingWarehouseReceipt' } : current,
       );
       window.dispatchEvent(new Event('classification-data-changed'));
-      toast.success(`Đã bàn giao ${group.batchCode} sang bộ phận Kho.`);
+      toast.success(`Đã bàn giao ${group.batchCode} sang khu vực lưu trữ.`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể bàn giao batch sang kho.');
+      toast.error(error?.response?.data?.message || 'Không thể bàn giao batch sang khu vực lưu trữ.');
     } finally {
       setSending(false);
     }
