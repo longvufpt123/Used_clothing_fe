@@ -626,7 +626,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <Pencil /> Đang chỉnh sửa yêu cầu chờ Manager duyệt
               </div>
             )}
-            <h2>Tạo Distribution Request</h2>
+            <h2>Tạo Yêu Cầu</h2>
             <label className="distribution-field">
               <span>
                 Tên người/tổ chức nhận <b>*</b>

@@ -126,10 +126,6 @@ export default function WarehouseTransactions() {
       <div className="ops-list ops-transaction-list">
         {shown.map((tx) => {
           const Icon = transactionIcons[tx.transactionType] || ClipboardList;
-          const totalQuantity = tx.items.reduce(
-            (sum, item) => sum + Math.abs(item.quantity || 0),
-            0,
-          );
           const totalWeight = tx.items.reduce((sum, item) => sum + Math.abs(item.weightKg || 0), 0);
           return (
             <article
@@ -161,11 +157,6 @@ export default function WarehouseTransactions() {
                   <Package size={18} />
                   <span>Dòng hàng</span>
                   <strong>{tx.items.length}</strong>
-                </div>
-                <div>
-                  <ClipboardList size={18} />
-                  <span>Số lượng</span>
-                  <strong>{totalQuantity}</strong>
                 </div>
                 <div>
                   <Weight size={18} />

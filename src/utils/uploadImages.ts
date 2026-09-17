@@ -1,7 +1,8 @@
 export async function uploadImages(files: File[], folder: string): Promise<string[]> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const bucket = import.meta.env.VITE_SUPABASE_BUCKET || 'donation-images';
+  // Environment values may include a trailing slash or whitespace after deployment.
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim().replace(/\/+$/, '');
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+  const bucket = import.meta.env.VITE_SUPABASE_BUCKET?.trim() || 'donation-images';
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Thiếu cấu hình Supabase để tải hình ảnh.');
