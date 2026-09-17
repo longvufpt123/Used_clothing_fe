@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ClipboardCheck, Package, Recycle, Scale, Send, Trash2 } from 'lucide-react';
+import { ChevronLeft, ClipboardCheck, ImageOff, Package, Recycle, Scale, Send, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -7,6 +7,18 @@ import {
   type ClassificationBatchDetail,
 } from '@/services/classificationService';
 import '@/styles/ops-shared.css';
+import './ClassifiedBatchDetail.css';
+
+function ItemImage({ src, label }: { src?: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  return <div className="classified-item-image">
+    {src && !failed ? <img src={src} alt={label} loading="lazy" decoding="async" onError={() => setFailed(true)} />
+      : <div className="classified-item-image-placeholder">
+          <ImageOff size={28} aria-hidden="true" />
+          <span>{src ? 'Không tải được hình ảnh' : 'Chưa có hình ảnh'}</span>
+        </div>}
+  </div>;
+}
 
 const directionLabel: Record<string, string> = {
   Charity: 'Từ thiện',
@@ -142,6 +154,8 @@ export default function ClassifiedBatchDetail() {
                 </span>
               </div>
               <h3>{item.clothingType}</h3>
+              <ItemImage key={item.imageUrls?.[0] || 'no-image'} src={item.imageUrls?.[0]}
+                label={`${item.clothingType} · ${item.itemCode}`} />
               <div className="ops-kv-grid">
                 <div className="ops-kv">
                   <span>Loại vải</span>
