@@ -222,12 +222,14 @@ export const ConfirmBatch: React.FC = () => {
                   </strong>
                 </div>
               </div>
-              <div className="ops-kv" style={{ padding: '12px 16px', borderRadius: 14 }}>
-                <span>Donation Request trong lô</span>
-                <strong>
-                  <Package size={14} color="var(--color-primary)" /> {batch.donationRequests} đơn
-                </strong>
-              </div>
+              {!batch.batchCode.startsWith('RC-') && (
+                <div className="ops-kv" style={{ padding: '12px 16px', borderRadius: 14 }}>
+                  <span>Donation Request trong lô</span>
+                  <strong>
+                    <Package size={14} color="var(--color-primary)" /> {batch.donationRequests} đơn
+                  </strong>
+                </div>
+              )}
             </div>
             <div
               style={{
