@@ -46,11 +46,32 @@ export function ReceivingPlanDialog({ initial, onClose, onApplied }: { initial: 
   </section></div>, document.body);
 }
 
-export default function ReceivingCapacityPanel({ warehouseId, date, refreshVersion, onChanged }: { warehouseId?: string; date?: string; refreshVersion: number; onChanged: () => void | Promise<void> }) {
+export default function ReceivingCapacityPanel({ warehouseId, date, refreshVersion, onChanged, onClose }: { warehouseId?: string; date?: string; refreshVersion: number; onChanged: () => void | Promise<void>; onClose: () => void }) {
   const [board, setBoard] = useState<CapacityBoard>({ warehouses: [], teams: [] }), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<{ kind: 'team' | 'warehouse'; id: string; title: string; requests: string; kg: string } | null>(null);
   const [plan, setPlan] = useState<PlanPreview | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   const version = useRef(0), lock = useRef(false);
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      // The preview is a separate dialog above this one; it handles its own Escape.
+      if (document.querySelector('.receiving-plan-overlay')) return;
+      if (event.key === 'Escape' && !lock.current) { event.preventDefault(); closeRef.current(); }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]') || []).filter(el => el.getClientRects().length);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', handleKey); previousFocus?.focus(); };
+  }, []);
   const load = useCallback(async () => { const run = ++version.current; try { const next = await receivingCapacity.board(warehouseId, date); if (run === version.current) { setBoard(next); setError(''); } } catch (e) { if (run === version.current) setError(message(e)); } }, [warehouseId, date]);
   useEffect(() => { setEditing(null); setPlan(null); void load(); return () => { version.current++; }; }, [load, refreshVersion]);
   const run = async (action: () => Promise<unknown>) => { if (lock.current) return; lock.current = true; setBusy(true); setError(''); try { await action(); } catch (e) { setError(message(e)); } finally { lock.current = false; setBusy(false); } };
@@ -60,7 +81,7 @@ export default function ReceivingCapacityPanel({ warehouseId, date, refreshVersi
     if (!/^\d+$/.test(editing.requests) || limits.maxRequests < 1 || limits.maxRequests > 1000 || !/^\d+(?:[.,]\d{1,2})?$/.test(editing.kg) || limits.maxWeightKg <= 0 || limits.maxWeightKg > 100000) throw new Error('Nhập 1–1000 đơn và kg lớn hơn 0, tối đa 100000, tối đa 2 số lẻ.');
     await receivingCapacity[editing.kind](editing.id, limits); setEditing(null); await load(); await onChanged();
   });
-  return <section className="receiving-capacity-panel"><header><div><h2>Tải tiếp nhận theo team / ca</h2><p>Dùng kg dự kiến khi phân công. Khi cân thực tế cao hơn khai báo, ghi nhận đúng số cân và báo Manager.</p></div><button className="ops-btn" disabled={busy} onClick={() => void load()}>Tải lại</button></header>
+  return createPortal(<div className="receiving-capacity-overlay" onClick={e => { if (e.target === e.currentTarget && !lock.current && !plan) onClose(); }}><section ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="receiving-capacity-title" className="receiving-capacity-panel receiving-capacity-dialog"><header><div><h2 id="receiving-capacity-title">Tải tiếp nhận theo team / ca</h2><p>Dùng kg dự kiến khi phân công. Khi cân thực tế cao hơn khai báo, ghi nhận đúng số cân và báo Manager.</p><p className="receiving-capacity-date">Ngày: {date?.split('-').reverse().join('/')}</p></div><div className="receiving-capacity-actions"><button className="ops-btn" disabled={busy} onClick={() => void load()}>Tải lại</button><button className="ops-btn" disabled={busy} onClick={onClose} aria-label="Đóng quản lý tải tiếp nhận">Đóng</button></div></header>
     {error && <p role="alert" className="receiving-capacity-error">{error}</p>}
     <div className="receiving-capacity-defaults">{board.warehouses.map(w => <div key={w.id}><b>{w.name}</b><span>Mặc định: {w.maxRequests} đơn / {fmt(w.maxWeightKg)} kg</span><button className="ops-btn" disabled={busy} onClick={() => setEditing({ kind: 'warehouse', id: w.id, title: w.name, requests: String(w.maxRequests), kg: String(w.maxWeightKg) })}>Chỉnh mặc định</button></div>)}</div>
     {editing && <form className="receiving-capacity-editor" onSubmit={e => { e.preventDefault(); void save(); }}><h3>Giới hạn: {editing.title}</h3><label>Số đơn tối đa<input type="number" min="1" max="1000" step="1" required value={editing.requests} onChange={e => setEditing({ ...editing, requests: e.target.value })} /></label><label>Kg dự kiến tối đa<input type="number" min="0.01" max="100000" step="0.01" required value={editing.kg} onChange={e => setEditing({ ...editing, kg: e.target.value })} /></label><div><button type="button" className="ops-btn" disabled={busy} onClick={() => setEditing(null)}>Hủy</button><button className="ops-btn ops-btn-primary" disabled={busy}>Lưu giới hạn</button></div></form>}
@@ -68,5 +89,5 @@ export default function ReceivingCapacityPanel({ warehouseId, date, refreshVersi
     {!board.teams.length && <p>Không có receiving team trong ngày đã chọn.</p>}
     <div className="receiving-capacity-actions">{[...new Map(board.teams.filter(t => t.status === 'Scheduled').map(t => [t.shiftId, t])).values()].map(t => <button key={t.shiftId} className="ops-btn ops-btn-primary" disabled={busy} onClick={() => run(async () => setPlan(await receivingCapacity.preview(t.shiftId)))}>Gợi ý chia đơn · {t.shiftName} · {board.warehouses.find(w => w.id === t.warehouseId)?.name}</button>)}</div>
     {plan && <ReceivingPlanDialog initial={plan} onClose={() => setPlan(null)} onApplied={async () => { await load(); await onChanged(); }} />}
-  </section>;
+  </section></div>, document.body);
 }

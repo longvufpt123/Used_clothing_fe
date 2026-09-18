@@ -71,6 +71,7 @@ const isPickupTeam = (team: ManagerTeamOverview) =>
   team.teamType === 'Receiving' || team.teamType === 'ReceivingPickup';
 
 export default function DispatchOperations() {
+  const [capacityOpen, setCapacityOpen] = useState(false);
   const [capacityPlan, setCapacityPlan] = useState<PlanPreview | null>(null);
   const today = useMemo(
     () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date()),
@@ -421,9 +422,14 @@ export default function DispatchOperations() {
             <h1>Điều phối tiếp nhận</h1>
             <p>Quản lý ca, nhiều nhóm, tuyến thu gom, lô hàng và phân bổ đơn cân bằng.</p>
           </div>
-          <button className="ops-btn ops-btn-secondary" onClick={() => load()} disabled={loading}>
-            <RefreshCw size={16} /> Làm mới
-          </button>
+          <div className="receiving-dispatch-actions">
+            <button className="ops-btn ops-btn-primary" onClick={() => setCapacityOpen(true)} aria-haspopup="dialog">
+              <Users size={16} /> Quản lý tải tiếp nhận
+            </button>
+            <button className="ops-btn ops-btn-secondary" onClick={() => load()} disabled={loading}>
+              <RefreshCw size={16} /> Làm mới
+            </button>
+          </div>
         </header>
         <div className="ops-stats">
           <div className="ops-stat-card">
@@ -638,7 +644,7 @@ export default function DispatchOperations() {
         </section>
 
         {capacityPlan && <ReceivingPlanDialog initial={capacityPlan} onClose={() => setCapacityPlan(null)} onApplied={async () => { await load(detailShift?.id); }} />}
-        <ReceivingCapacityPanel warehouseId={warehouseFilter} date={dateFilter || today} refreshVersion={dispatchRefreshVersion} onChanged={async () => { await load(detailShift?.id); }} />
+        {capacityOpen && <ReceivingCapacityPanel warehouseId={warehouseFilter} date={dateFilter || today} refreshVersion={dispatchRefreshVersion} onChanged={async () => { await load(detailShift?.id); }} onClose={() => setCapacityOpen(false)} />}
         <DispatchPanel
           refreshVersion={dispatchRefreshVersion}
           warehouseId={warehouseFilter}
