@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { useToast } from '@/context/ToastContext';
-import { receivingService, MIN_CLASSIFICATION_WEIGHT_KG, CLASSIFICATION_WEIGHT_NOTICE } from '@/services/receivingService';
+import { receivingService } from '@/services/receivingService';
 import { getReceivingBatchPresentation } from '@/services/receivingService';
 import type { ReceivingBatch, ReceivingRequest } from '@/services/receivingService';
 import '@/styles/ops-shared.css';
@@ -73,7 +73,6 @@ export const BatchDetail: React.FC = () => {
 
   const sendToClassification = async () => {
     if (!id || !batch || handoffBusy) return;
-    if (batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG) return toast.warning(CLASSIFICATION_WEIGHT_NOTICE);
     setHandoffBusy(true);
     try {
       await receivingService.sendToClassification(id);
@@ -206,8 +205,8 @@ export const BatchDetail: React.FC = () => {
           </div>
         )}
         {batch.status === 'ReceivedAtWarehouse' && (
-          <button className="btn btn-primary" disabled={handoffBusy || batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG} title={CLASSIFICATION_WEIGHT_NOTICE} onClick={sendToClassification}>
-            <Send size={17} /> {batch.totalWeight < MIN_CLASSIFICATION_WEIGHT_KG ? 'Cần tối thiểu 10 kg thực nhận để gửi phân loại' : 'Gửi Manager điều phối phân loại'}
+          <button className="btn btn-primary" disabled={handoffBusy} onClick={sendToClassification}>
+            <Send size={17} /> {'Gửi Manager điều phối phân loại'}
           </button>
         )}
         {batch.status === 'AwaitingClassificationAssignment' && (

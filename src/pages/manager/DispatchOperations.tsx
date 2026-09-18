@@ -30,6 +30,9 @@ import type {
 } from '@/services/receivingService';
 import { useToast } from '@/context/ToastContext';
 import DispatchPanel from './DispatchPanel';
+import ReceivingCapacityPanel, { ReceivingPlanDialog, ReceivingLoad } from './ReceivingCapacityPanel';
+import { receivingCapacity } from '@/services/receivingCapacity';
+import type { PlanPreview } from '@/services/receivingCapacity';
 import RouteMap from '@/pages/receiving/RouteMap';
 import { getStatusLabel } from '@/utils/statusLabels';
 import '@/styles/ops-shared.css';
@@ -68,6 +71,7 @@ const isPickupTeam = (team: ManagerTeamOverview) =>
   team.teamType === 'Receiving' || team.teamType === 'ReceivingPickup';
 
 export default function DispatchOperations() {
+  const [capacityPlan, setCapacityPlan] = useState<PlanPreview | null>(null);
   const today = useMemo(
     () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date()),
     [],
@@ -326,11 +330,7 @@ export default function DispatchOperations() {
   const autoBalance = async (shift: ManagerShiftOverview) => {
     setBalancingId(shift.id);
     try {
-      const result = await receivingService.autoBalanceShift(shift.id);
-      toast.success(
-        `Đã điều phối ${result.requestCount} đơn trong ngày cho ${result.teamCount} team ca sáng và chiều.`,
-      );
-      await load(detailShift?.id === shift.id ? shift.id : undefined);
+      setCapacityPlan(await receivingCapacity.preview(shift.id));
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không thể tự động cân bằng đơn.');
     } finally {
@@ -597,7 +597,7 @@ export default function DispatchOperations() {
                         disabled={!!balancingId}
                       >
                         <Truck size={15} />
-                        {balancingId ? 'Đang chia...' : 'Điều phối'}
+                        {balancingId ? 'Đang tạo gợi ý...' : `Gợi ý chia đơn · ${dispatchableShift.shiftName}`}
                       </button>
                     </div>
                   )}
@@ -637,6 +637,8 @@ export default function DispatchOperations() {
           )}
         </section>
 
+        {capacityPlan && <ReceivingPlanDialog initial={capacityPlan} onClose={() => setCapacityPlan(null)} onApplied={async () => { await load(detailShift?.id); }} />}
+        <ReceivingCapacityPanel warehouseId={warehouseFilter} date={dateFilter || today} refreshVersion={dispatchRefreshVersion} onChanged={async () => { await load(detailShift?.id); }} />
         <DispatchPanel
           refreshVersion={dispatchRefreshVersion}
           warehouseId={warehouseFilter}
@@ -778,7 +780,7 @@ export default function DispatchOperations() {
                       <Truck size={15} />
                       {balancingId === detailShift.id
                         ? 'Đang tối ưu...'
-                        : 'Điều phối ca sáng & chiều'}
+                        : 'Gợi ý chia đơn trong ca'}
                     </button>
                   </div>
                   <div className="manager-multi-team-list">
@@ -849,6 +851,7 @@ export default function DispatchOperations() {
                               </button>
                             </div>
                           </div>
+                          {team.load && <div style={{ padding: '16px 0' }}><ReceivingLoad team={team.load} /></div>}
                           {!collapsedTeamIds.has(team.id) &&
                             (editingTeamId === team.id ? (
                               <div className="manager-edit-team">
@@ -995,7 +998,7 @@ export default function DispatchOperations() {
                                           onChange={(e) => moveRequest(request.id, e.target.value)}
                                         >
                                           {transferTeams.map((target) => (
-                                            <option value={target.id} key={target.id}>
+                                            <option value={target.id} key={target.id} disabled={target.id !== team.id && (!target.load || target.load.assignedRequests + 1 > target.load.maxRequests || target.load.estimatedWeightKg + request.estimateWeight > target.load.maxWeightKg + 0.00001 || !request.pickupDate || request.pickupDate.slice(11, 16) < target.startTime.slice(0, 5) || request.pickupDate.slice(11, 16) >= target.endTime.slice(0, 5))}>
                                               Chuyển đến {target.teamName} · {target.shiftName} (
                                               {target.startTime.slice(0, 5)}–
                                               {target.endTime.slice(0, 5)})

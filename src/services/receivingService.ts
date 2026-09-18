@@ -1,8 +1,6 @@
 import apiClient from './api';
 
 export type ReceivingStatus = 'Pending' | 'Received' | 'Rescheduled' | 'Canceled';
-export const MIN_CLASSIFICATION_WEIGHT_KG = 10;
-export const CLASSIFICATION_WEIGHT_NOTICE = 'Lô hàng phải có khối lượng thực nhận từ 10 kg trở lên mới được gửi sang phân loại.';
 export interface TeamMember {
   id: string;
   fullName: string;
@@ -146,6 +144,7 @@ interface ApiBatch {
   requests: ApiRequest[];
 }
 export interface DispatchRequest {
+  estimateWeight: number;
   id: string;
   code: string;
   contactName: string;
@@ -171,6 +170,7 @@ export interface DispatchTeam {
   members: TeamMember[];
 }
 export interface DispatchBoard {
+  loads?: import('./receivingCapacity').TeamLoad[];
   requests: DispatchRequest[];
   teams: DispatchTeam[];
 }
@@ -223,6 +223,7 @@ export interface ManagerStaffOption {
   warehouseId?: string | null;
 }
 export interface ManagerAssignedRequest {
+  estimateWeight: number;
   id: string;
   code: string;
   contactName: string;
@@ -234,6 +235,7 @@ export interface ManagerAssignedRequest {
   routeOrder: number;
 }
 export interface ManagerTeamOverview {
+  load?: import('./receivingCapacity').TeamLoad;
   id: string;
   teamName: string;
   teamType: string;
