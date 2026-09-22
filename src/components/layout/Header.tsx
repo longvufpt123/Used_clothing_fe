@@ -35,6 +35,7 @@ export const Header: React.FC = () => {
         </button>
 
         <nav id="primary-navigation" className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
+          {user?.role === 'Donor' && <NavLink to="/fund" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}>Quỹ ReThreads</NavLink>}
           <NavLink
             to="/vouchers"
             onClick={closeMenu}

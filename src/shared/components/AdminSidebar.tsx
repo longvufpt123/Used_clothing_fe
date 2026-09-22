@@ -54,6 +54,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const getMenu = (): SidebarItem[] => {
     if (isManager) {
       return [
+        { label: 'Quỹ vận hành', path: `${basePath}/fund`, icon: <Coins size={18} /> },
         { label: 'Bảng tổng quan', path: basePath, icon: <LayoutDashboard size={18} /> },
         { label: 'Ca làm việc', path: `${basePath}/shifts`, icon: <Truck size={18} /> },
         { label: 'Điều phối tiếp nhận', path: `${basePath}/dispatch`, icon: <Users size={18} /> },

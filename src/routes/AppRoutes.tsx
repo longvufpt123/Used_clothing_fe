@@ -1,4 +1,5 @@
 import React from 'react';
+import OperatingFund from '@/pages/OperatingFund';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '@/layouts/MainLayout';
 import Home from '@/pages/Home';
@@ -71,6 +72,7 @@ import ProcessingPortal from '@/pages/processing/ProcessingPortal';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {['/fund', '/organization/fund', '/manager/fund'].map(path => <Route key={path} path={path} element={<RoleRoute role={['Donor', 'CharityOrganization', 'RecyclingOrganization', 'DisposalOrganization', 'Manager']}><OperatingFund /></RoleRoute>} />)}
       {['/manager/processing-operations', '/manager/processing-operations/:operationId'].map(path =>
         <Route key={path} path={path} element={<RoleRoute role="Manager"><AdminLayout><ProcessingPortal mode="manager" /></AdminLayout></RoleRoute>} />)}
       {['/warehouse/processing-operations', '/warehouse/processing-operations/:operationId'].map(path =>
