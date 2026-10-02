@@ -12,6 +12,8 @@ const assert=require('node:assert/strict');
    const url=new URL(route.request().url());if(url.pathname.includes('/api/')){
     const path=url.pathname.split('/api/')[1];let data=[];
     if(path==='operating-fund/summary')data={totalReceived:100000,totalSpent:10000,balance:90000,contributions:2,paymentEnabled:true};
+    else if(path==='operating-fund/statements')data={items:[],total:0,page:1,pageSize:12};
+    else if(path==='operating-fund/statements/status')data={startMonth:'2026-09',latestClosedMonth:'2026-08',missingMonths:[]};
     else if(path==='operating-fund/expenses'&&route.request().method()==='GET')data={items:[{id:'expense',amount:10000,title:'Vận chuyển quần áo',description:'Chi phí xe giao đồ đến tổ chức từ thiện.',spentOn:'2026-09-22',publishedAt:'2026-09-22T10:00:00Z',publishedBy:'Manager'}],total:1,page:1,pageSize:20};
     else if(['operating-fund/mine','operating-fund/contributions'].includes(path))data={items:[],total:0,page:1,pageSize:20};
     else if(path==='operating-fund/checkout'){posts.push(path);bodies.push(route.request().postDataJSON());data={id:'test',status:'Paid'};}
