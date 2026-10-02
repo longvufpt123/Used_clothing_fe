@@ -175,7 +175,16 @@ export default function ProcessingPortal({ mode }: { mode: Mode }) {
           { path: 'organization/approve', label: 'Đồng ý tiếp nhận' },
           { path: 'organization/reject', label: 'Từ chối', danger: true },
         );
-      if (['Issued', 'ReadyForGhn', 'GhnBooked', 'InTransit', 'Delivered', 'DeliveryException'].includes(detail.status))
+      if (
+        [
+          'Issued',
+          'ReadyForGhn',
+          'GhnBooked',
+          'InTransit',
+          'Delivered',
+          'DeliveryException',
+        ].includes(detail.status)
+      )
         actions.push({
           path: 'organization/receive',
           label: 'Xác nhận đã nhận hàng',
@@ -339,7 +348,12 @@ export default function ProcessingPortal({ mode }: { mode: Mode }) {
               )}
             </section>
             <ProcessingGhnPanel key={detail.id} detail={detail} mode={mode} onChanged={reload} />
-            <RecyclingReturnPanel key={`return-${detail.id}`} detail={detail} mode={mode} onChanged={reload} />
+            <RecyclingReturnPanel
+              key={`return-${detail.id}`}
+              detail={detail}
+              mode={mode}
+              onChanged={reload}
+            />
             <section className="ops-panel">
               <h2>Tiến trình xử lý</h2>
               <ol className="processing-timeline">
@@ -357,12 +371,17 @@ export default function ProcessingPortal({ mode }: { mode: Mode }) {
                   ],
                   ['Xuất kho', detail.issuedAt],
                   ['Tổ chức nhận hàng', detail.organizationReceivedAt],
-                  [detail.operationType === 'Recycling' ? 'Tái chế xong' : 'Hoàn tất', detail.processingCompletedAt],
-                  ...(detail.operationType === 'Recycling' ? [
-                    ['Ngày trả dự kiến', detail.recyclingReturn?.expectedReturnDate],
-                    ['Gửi hàng về kho', detail.recyclingReturn?.dispatchedAt],
-                    ['Kho đã nhận lại', detail.recyclingReturn?.receivedAt],
-                  ] : []),
+                  [
+                    detail.operationType === 'Recycling' ? 'Tái chế xong' : 'Hoàn tất',
+                    detail.processingCompletedAt,
+                  ],
+                  ...(detail.operationType === 'Recycling'
+                    ? [
+                        ['Ngày trả dự kiến', detail.recyclingReturn?.expectedReturnDate],
+                        ['Gửi hàng về kho', detail.recyclingReturn?.dispatchedAt],
+                        ['Kho đã nhận lại', detail.recyclingReturn?.receivedAt],
+                      ]
+                    : []),
                 ].map(([label, time]) => (
                   <li key={label} className={time ? 'done' : ''}>
                     <CheckCircle2 size={18} />
@@ -436,68 +455,82 @@ export default function ProcessingPortal({ mode }: { mode: Mode }) {
                   >
                     <header>
                       <div>
-                        <h2 id="processing-action-title">{actions.find((x) => x.path === action)?.label}</h2>
-                        <p>{detail.operationCode} · {detail.warehouseName} → {detail.organizationName}</p>
+                        <h2 id="processing-action-title">
+                          {actions.find((x) => x.path === action)?.label}
+                        </h2>
+                        <p>
+                          {detail.operationCode} · {detail.warehouseName} →{' '}
+                          {detail.organizationName}
+                        </p>
                       </div>
-                      <button type="button" aria-label="Đóng popup" disabled={busy} onClick={() => setAction('')}>
-                        <X />
-                      </button>
-                    </header>
-                  <form
-                    className="processing-confirm"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void submitAction();
-                    }}
-                  >
-                    {error && <div className="processing-alert" role="alert">{error}</div>}
-                    <p>
-                      {action === 'issue'
-                        ? 'Lập phiếu xuất và trừ tồn cho các batch trên. Tiếp theo, tạo vận đơn GHN để hẹn lấy hàng tại kho.'
-                        : action === 'organization/receive'
-                          ? 'Chỉ xác nhận khi tổ chức đã thực tế nhận hàng từ kho. Trạng thái tiếp nhận sẽ được ghi nhận ngay, không cần chờ GHN cập nhật.'
-                        : action.endsWith('complete')
-                          ? 'Ghi rõ kết quả tái chế hoặc tiêu hủy thực tế trước khi kết thúc yêu cầu.'
-                          : 'Vui lòng xác nhận thao tác cho tổ chức, kho và các batch trong yêu cầu này.'}
-                    </p>
-                    {(needsNotes || action === 'issue') && (
-                      <div className="ops-field">
-                        <label htmlFor="processing-action-notes">
-                          {action.endsWith('complete')
-                            ? 'Kết quả xử lý'
-                            : needsNotes
-                              ? 'Lý do'
-                              : 'Ghi chú bàn giao'}
-                          {needsNotes && ' *'}
-                        </label>
-                        <textarea
-                          id="processing-action-notes"
-                          required={needsNotes}
-                          maxLength={2000}
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-                    )}
-                    <div className="processing-actions">
-                      <button
-                        type="submit"
-                        className="processing-button primary"
-                        disabled={busy || (needsNotes && !notes.trim())}
-                      >
-                        {busy ? 'Đang xử lý...' : 'Xác nhận'}
-                      </button>
                       <button
                         type="button"
-                        className="processing-button"
+                        aria-label="Đóng popup"
                         disabled={busy}
                         onClick={() => setAction('')}
                       >
-                        Đóng
+                        <X />
                       </button>
-                    </div>
-                  </form>
+                    </header>
+                    <form
+                      className="processing-confirm"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void submitAction();
+                      }}
+                    >
+                      {error && (
+                        <div className="processing-alert" role="alert">
+                          {error}
+                        </div>
+                      )}
+                      <p>
+                        {action === 'issue'
+                          ? 'Lập phiếu xuất và trừ tồn cho các batch trên. Tiếp theo, tạo vận đơn GHN để hẹn lấy hàng tại kho.'
+                          : action === 'organization/receive'
+                            ? 'Chỉ xác nhận khi tổ chức đã thực tế nhận hàng từ kho. Trạng thái tiếp nhận sẽ được ghi nhận ngay, không cần chờ GHN cập nhật.'
+                            : action.endsWith('complete')
+                              ? 'Ghi rõ kết quả tái chế hoặc tiêu hủy thực tế trước khi kết thúc yêu cầu.'
+                              : 'Vui lòng xác nhận thao tác cho tổ chức, kho và các batch trong yêu cầu này.'}
+                      </p>
+                      {(needsNotes || action === 'issue') && (
+                        <div className="ops-field">
+                          <label htmlFor="processing-action-notes">
+                            {action.endsWith('complete')
+                              ? 'Kết quả xử lý'
+                              : needsNotes
+                                ? 'Lý do'
+                                : 'Ghi chú bàn giao'}
+                            {needsNotes && ' *'}
+                          </label>
+                          <textarea
+                            id="processing-action-notes"
+                            required={needsNotes}
+                            maxLength={2000}
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                      )}
+                      <div className="processing-actions">
+                        <button
+                          type="submit"
+                          className="processing-button primary"
+                          disabled={busy || (needsNotes && !notes.trim())}
+                        >
+                          {busy ? 'Đang xử lý...' : 'Xác nhận'}
+                        </button>
+                        <button
+                          type="button"
+                          className="processing-button"
+                          disabled={busy}
+                          onClick={() => setAction('')}
+                        >
+                          Đóng
+                        </button>
+                      </div>
+                    </form>
                   </dialog>
                 )}
               </section>

@@ -32,20 +32,26 @@ type ReceiptImage = {
   file: File;
   previewUrl: string;
 };
-type ReceiptConfirmation = { weight: number; category: string; condition: string; notes: string; images: ReceiptImage[] };
+type ReceiptConfirmation = {
+  weight: number;
+  category: string;
+  condition: string;
+  notes: string;
+  images: ReceiptImage[];
+};
 
-  const categoryOptions = [
-    { value: 'Áo khoác / Đồ ấm mùa đông', label: 'Áo khoác / Đồ ấm mùa đông' },
-    { value: 'Áo thun / Áo sơ mi dệt kim', label: 'Áo thun / Áo sơ mi dệt kim' },
-    { value: 'Quần denim / Quần dài / kaki', label: 'Quần denim / Quần dài / kaki' },
-    { value: 'Quần áo trẻ em', label: 'Quần áo trẻ em' },
-    { value: 'Hỗn hợp / Khác', label: 'Hỗn hợp / Khác' },
-  ];
+const categoryOptions = [
+  { value: 'Áo khoác / Đồ ấm mùa đông', label: 'Áo khoác / Đồ ấm mùa đông' },
+  { value: 'Áo thun / Áo sơ mi dệt kim', label: 'Áo thun / Áo sơ mi dệt kim' },
+  { value: 'Quần denim / Quần dài / kaki', label: 'Quần denim / Quần dài / kaki' },
+  { value: 'Quần áo trẻ em', label: 'Quần áo trẻ em' },
+  { value: 'Hỗn hợp / Khác', label: 'Hỗn hợp / Khác' },
+];
 
-  const conditionOptions = [
-    { value: 'good', label: 'Tốt (Dành cho Từ thiện)' },
-    { value: 'recycle', label: 'Cũ hỏng (Dành cho Tái chế dệt sợi)' },
-  ];
+const conditionOptions = [
+  { value: 'good', label: 'Tốt (Dành cho Từ thiện)' },
+  { value: 'recycle', label: 'Cũ hỏng (Dành cho Tái chế dệt sợi)' },
+];
 
 export const ProcessRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -66,10 +72,18 @@ export const ProcessRequest: React.FC = () => {
   const [confirmationError, setConfirmationError] = useState('');
   const submittingReceipt = useRef(false);
   const uploadedReceiptUrls = useRef<string[] | undefined>(undefined);
-  const weightError = actualWeight === '' ? (weightTouched ? 'Vui lòng nhập cân nặng thực tế.' : undefined)
-    : Number(actualWeight) <= 0 ? 'Khối lượng phải lớn hơn 0 kg.'
-    : Number(actualWeight) > 50 ? 'Mỗi đơn tiếp nhận tối đa 50 kg.'
-    : !/^\d+(?:\.\d{1,2})?$/.test(actualWeight) ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.' : undefined;
+  const weightError =
+    actualWeight === ''
+      ? weightTouched
+        ? 'Vui lòng nhập cân nặng thực tế.'
+        : undefined
+      : Number(actualWeight) <= 0
+        ? 'Khối lượng phải lớn hơn 0 kg.'
+        : Number(actualWeight) > 50
+          ? 'Mỗi đơn tiếp nhận tối đa 50 kg.'
+          : !/^\d+(?:\.\d{1,2})?$/.test(actualWeight)
+            ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.'
+            : undefined;
 
   // Reschedule overlay states
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -92,7 +106,11 @@ export const ProcessRequest: React.FC = () => {
       .then((currentRequest) => {
         if (!currentRequest) throw new Error('Không tìm thấy yêu cầu');
         setRequest(currentRequest);
-        setActualCategory(categoryOptions.some(option => option.value === currentRequest.category) ? currentRequest.category : 'Hỗn hợp / Khác');
+        setActualCategory(
+          categoryOptions.some((option) => option.value === currentRequest.category)
+            ? currentRequest.category
+            : 'Hỗn hợp / Khác',
+        );
       })
       .catch(() => {
         toast.error('Đơn quyên góp không tồn tại.');
@@ -143,7 +161,13 @@ export const ProcessRequest: React.FC = () => {
     if (!actualWeight || weightError || submittingReceipt.current) return;
     uploadedReceiptUrls.current = undefined;
     setConfirmationError('');
-    setConfirmation({ weight: Number(actualWeight), category: actualCategory, condition: actualCondition, notes: actualNotes.trim(), images: [...receiptImages] });
+    setConfirmation({
+      weight: Number(actualWeight),
+      category: actualCategory,
+      condition: actualCondition,
+      notes: actualNotes.trim(),
+      images: [...receiptImages],
+    });
   };
 
   const submitReceipt = async () => {
@@ -153,7 +177,11 @@ export const ProcessRequest: React.FC = () => {
     setConfirmationError('');
     try {
       const imageUrls = confirmation.images.length
-        ? uploadedReceiptUrls.current ?? await uploadImages(confirmation.images.map(image => image.file), `receiving-confirmations/${request.id}`)
+        ? (uploadedReceiptUrls.current ??
+          (await uploadImages(
+            confirmation.images.map((image) => image.file),
+            `receiving-confirmations/${request.id}`,
+          )))
         : request.imageUrls;
       uploadedReceiptUrls.current = imageUrls;
       await receivingService.confirmPickup(request.batchId, request.id, {
@@ -162,16 +190,19 @@ export const ProcessRequest: React.FC = () => {
         imageUrls,
       });
       setConfirmation(null);
-      receiptImages.forEach(image => URL.revokeObjectURL(image.previewUrl));
+      receiptImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       setReceiptImages([]);
       setSubmittedStatus('Received');
       setIsSubmitted(true);
       toast.success('Tiếp nhận đơn quyên góp thành công!');
       // Receipt is already saved: a refresh failure must not invite a duplicate submission.
       const refreshedBatch = await receivingService.getMyBatch(request.batchId).catch(() => null);
-      if (refreshedBatch?.status === 'Completed') navigate('/receiving?tab=completed', { replace: true });
+      if (refreshedBatch?.status === 'Completed')
+        navigate('/receiving?tab=completed', { replace: true });
     } catch (error: any) {
-      setConfirmationError(error?.response?.data?.message || 'Không thể xác nhận thu nhận. Vui lòng thử lại.');
+      setConfirmationError(
+        error?.response?.data?.message || 'Không thể xác nhận thu nhận. Vui lòng thử lại.',
+      );
     } finally {
       submittingReceipt.current = false;
       setIsSubmitting(false);
@@ -227,29 +258,73 @@ export const ProcessRequest: React.FC = () => {
 
   return (
     <div className="ops-page">
-      {confirmation && createPortal(<Modal isOpen title="Xác nhận thông tin thu nhận"
-        className="receipt-confirmation-modal"
-        onClose={() => { if (!submittingReceipt.current) setConfirmation(null); }}
-        footer={<>
-          <Button type="button" variant="secondary" disabled={isSubmitting} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</Button>
-          <Button type="button" isLoading={isSubmitting} onClick={submitReceipt}>Xác nhận thu nhận</Button>
-        </>}>
-        <p>Vui lòng kiểm tra thông tin trước khi xác nhận tiếp nhận đơn.</p>
-        <dl className="receipt-confirmation-details">
-          <dt>Mã đơn</dt><dd>{request.code}</dd>
-          <dt>Người quyên góp</dt><dd>{request.donorName}</dd>
-          <dt>Số điện thoại</dt><dd>{request.phoneNumber}</dd>
-          <dt>Địa chỉ lấy hàng</dt><dd>{request.pickupAddress}</dd>
-          <dt>Cân nặng thực tế</dt><dd><strong>{confirmation.weight} kg</strong></dd>
-          <dt>Chất liệu chính</dt><dd>{confirmation.category}</dd>
-          <dt>Chất lượng phân bổ</dt><dd>{conditionOptions.find(option => option.value === confirmation.condition)?.label}</dd>
-          <dt>Ghi chú tiếp nhận</dt><dd>{confirmation.notes || 'Không có'}</dd>
-        </dl>
-        {confirmation.images.length > 0 && <div className="receipt-confirmation-images">
-          {confirmation.images.map((image, index) => <img key={image.previewUrl} src={image.previewUrl} alt={`Ảnh thực nhận ${index + 1}`} />)}
-        </div>}
-        {confirmationError && <p className="receipt-confirmation-error" role="alert">{confirmationError}</p>}
-      </Modal>, document.body)}
+      {confirmation &&
+        createPortal(
+          <Modal
+            isOpen
+            title="Xác nhận thông tin thu nhận"
+            className="receipt-confirmation-modal"
+            onClose={() => {
+              if (!submittingReceipt.current) setConfirmation(null);
+            }}
+            footer={
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isSubmitting}
+                  onClick={() => setConfirmation(null)}
+                >
+                  Quay lại chỉnh sửa
+                </Button>
+                <Button type="button" isLoading={isSubmitting} onClick={submitReceipt}>
+                  Xác nhận thu nhận
+                </Button>
+              </>
+            }
+          >
+            <p>Vui lòng kiểm tra thông tin trước khi xác nhận tiếp nhận đơn.</p>
+            <dl className="receipt-confirmation-details">
+              <dt>Mã đơn</dt>
+              <dd>{request.code}</dd>
+              <dt>Người quyên góp</dt>
+              <dd>{request.donorName}</dd>
+              <dt>Số điện thoại</dt>
+              <dd>{request.phoneNumber}</dd>
+              <dt>Địa chỉ lấy hàng</dt>
+              <dd>{request.pickupAddress}</dd>
+              <dt>Cân nặng thực tế</dt>
+              <dd>
+                <strong>{confirmation.weight} kg</strong>
+              </dd>
+              <dt>Chất liệu chính</dt>
+              <dd>{confirmation.category}</dd>
+              <dt>Chất lượng phân bổ</dt>
+              <dd>
+                {conditionOptions.find((option) => option.value === confirmation.condition)?.label}
+              </dd>
+              <dt>Ghi chú tiếp nhận</dt>
+              <dd>{confirmation.notes || 'Không có'}</dd>
+            </dl>
+            {confirmation.images.length > 0 && (
+              <div className="receipt-confirmation-images">
+                {confirmation.images.map((image, index) => (
+                  <img
+                    key={image.previewUrl}
+                    src={image.previewUrl}
+                    alt={`Ảnh thực nhận ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+            {confirmationError && (
+              <p className="receipt-confirmation-error" role="alert">
+                {confirmationError}
+              </p>
+            )}
+          </Modal>,
+          document.body,
+        )}
       {!isSubmitted && (
         <div className="ops-nav">
           <button
@@ -262,14 +337,24 @@ export const ProcessRequest: React.FC = () => {
           <div className="ops-title-row">
             <h1>Xử lý đơn {request.code}</h1>
             <span className="ops-badge pending">Chờ xử lý</span>
-            <button type="button" className="ops-btn ops-btn-secondary" onClick={() => setShowChat(true)}>
+            <button
+              type="button"
+              className="ops-btn ops-btn-secondary"
+              onClick={() => setShowChat(true)}
+            >
               <MessageCircle size={16} /> Chat với donor
             </button>
           </div>
         </div>
       )}
-      {showChat && <DonationChatDialog requestId={request.id} requestCode={request.code}
-        participantLabel={request.donorName} onClose={() => setShowChat(false)} />}
+      {showChat && (
+        <DonationChatDialog
+          requestId={request.id}
+          requestCode={request.code}
+          participantLabel={request.donorName}
+          onClose={() => setShowChat(false)}
+        />
+      )}
 
       {!isSubmitted ? (
         <div className="ops-form-grid two-col">

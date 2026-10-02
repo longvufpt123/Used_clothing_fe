@@ -42,19 +42,38 @@ export const Modal: React.FC<ModalProps> = ({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Tab') return;
-    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
-      'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
-    )).filter((element) => element.getClientRects().length > 0);
-    const first = controls[0], last = controls[controls.length - 1];
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    const controls = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
+      ),
+    ).filter((element) => element.getClientRects().length > 0);
+    const first = controls[0],
+      last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className={`modal-container glass ${className}`} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} onKeyDown={handleKeyDown} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-container glass ${className}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        onKeyDown={handleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          {title && <h3 id={titleId} className="modal-title">{title}</h3>}
+          {title && (
+            <h3 id={titleId} className="modal-title">
+              {title}
+            </h3>
+          )}
           <button className="modal-close-btn" onClick={onClose} aria-label="Đóng hộp thoại">
             <X size={20} />
           </button>

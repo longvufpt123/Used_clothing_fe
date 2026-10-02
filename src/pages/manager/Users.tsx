@@ -311,7 +311,11 @@ export default function ManagerUsers() {
                     <span>@{user.userName}</span>
                     {user.representativeName && <span>Đại diện: {user.representativeName}</span>}
                     {user.taxCode && <span>Mã số: {user.taxCode}</span>}
-                    {user.certificateImageUrl && <a href={user.certificateImageUrl} target="_blank" rel="noopener noreferrer">Xem giấy chứng nhận</a>}
+                    {user.certificateImageUrl && (
+                      <a href={user.certificateImageUrl} target="_blank" rel="noopener noreferrer">
+                        Xem giấy chứng nhận
+                      </a>
+                    )}
                   </div>
                 </div>
                 <div className="account-contact">
@@ -332,25 +336,41 @@ export default function ManagerUsers() {
                   <span
                     className={`account-status ${user.userStatus === 'PendingApproval' ? 'pending' : user.userStatus === 'Active' ? 'active' : 'inactive'}`}
                   >
-                    {user.userStatus === 'PendingApproval' ? 'Chờ phê duyệt' : user.userStatus === 'Active' ? 'Đang hoạt động' : 'Tạm ngưng'}
+                    {user.userStatus === 'PendingApproval'
+                      ? 'Chờ phê duyệt'
+                      : user.userStatus === 'Active'
+                        ? 'Đang hoạt động'
+                        : 'Tạm ngưng'}
                   </span>
                 </div>
                 <div className="account-actions">
                   {user.userStatus === 'PendingApproval' ? (
-                    <button type="button" className="approve" onClick={() => setApproving(user)} title="Duyệt tài khoản" aria-label={`Duyệt tài khoản ${user.fullName}`}><Check size={16} /> Duyệt</button>
-                  ) : <>
-                  <button type="button" onClick={() => openEdit(user)} title="Chỉnh sửa">
-                    <Edit3 size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={user.userStatus === 'Active' ? 'lock' : 'unlock'}
-                    onClick={() => void toggleLock(user)}
-                    title={user.userStatus === 'Active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                  >
-                    {user.userStatus === 'Active' ? <Lock size={16} /> : <Unlock size={16} />}
-                  </button>
-                  </>}
+                    <button
+                      type="button"
+                      className="approve"
+                      onClick={() => setApproving(user)}
+                      title="Duyệt tài khoản"
+                      aria-label={`Duyệt tài khoản ${user.fullName}`}
+                    >
+                      <Check size={16} /> Duyệt
+                    </button>
+                  ) : (
+                    <>
+                      <button type="button" onClick={() => openEdit(user)} title="Chỉnh sửa">
+                        <Edit3 size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className={user.userStatus === 'Active' ? 'lock' : 'unlock'}
+                        onClick={() => void toggleLock(user)}
+                        title={
+                          user.userStatus === 'Active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'
+                        }
+                      >
+                        {user.userStatus === 'Active' ? <Lock size={16} /> : <Unlock size={16} />}
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="delete"
@@ -562,12 +582,24 @@ export default function ManagerUsers() {
 
         {approving && (
           <div className="manager-account-modal compact">
-            <div className="delete-account-dialog" role="dialog" aria-modal="true" aria-labelledby="approve-account-title">
+            <div
+              className="delete-account-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="approve-account-title"
+            >
               <h2 id="approve-account-title">Duyệt tài khoản tổ chức?</h2>
-              <p><strong>{approving.fullName}</strong> sẽ được phép đăng nhập. Email thông báo phê duyệt sẽ được gửi tới <strong>{approving.email}</strong>.</p>
+              <p>
+                <strong>{approving.fullName}</strong> sẽ được phép đăng nhập. Email thông báo phê
+                duyệt sẽ được gửi tới <strong>{approving.email}</strong>.
+              </p>
               <footer>
-                <button disabled={approvalBusy} onClick={() => setApproving(null)}>Hủy</button>
-                <button disabled={approvalBusy} onClick={() => void approve()}>{approvalBusy ? 'Đang duyệt và gửi email...' : 'Xác nhận duyệt'}</button>
+                <button disabled={approvalBusy} onClick={() => setApproving(null)}>
+                  Hủy
+                </button>
+                <button disabled={approvalBusy} onClick={() => void approve()}>
+                  {approvalBusy ? 'Đang duyệt và gửi email...' : 'Xác nhận duyệt'}
+                </button>
               </footer>
             </div>
           </div>

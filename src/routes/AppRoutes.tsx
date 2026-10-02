@@ -72,18 +72,91 @@ import ProcessingPortal from '@/pages/processing/ProcessingPortal';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {['/fund', '/organization/fund', '/manager/fund'].map(path => <Route key={path} path={path} element={<RoleRoute role={['Donor', 'CharityOrganization', 'RecyclingOrganization', 'DisposalOrganization', 'Manager']}><OperatingFund /></RoleRoute>} />)}
-      {['/manager/processing-operations', '/manager/processing-operations/:operationId'].map(path =>
-        <Route key={path} path={path} element={<RoleRoute role="Manager"><AdminLayout><ProcessingPortal mode="manager" /></AdminLayout></RoleRoute>} />)}
-      {['/warehouse/processing-operations', '/warehouse/processing-operations/:operationId'].map(path =>
-        <Route key={path} path={path} element={<RoleRoute role="WarehouseStaff"><WarehouseShell><ProcessingPortal mode="warehouse" /></WarehouseShell></RoleRoute>} />)}
-      {['/organization/processing-operations', '/organization/processing-operations/:operationId'].map(path =>
-        <Route key={path} path={path} element={<RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}><OrganizationShell><ProcessingPortal mode="organization" /></OrganizationShell></RoleRoute>} />)}
-      <Route path="/organization/processing-operations/profile" element={<RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}><OrganizationShell><StaffProfile /></OrganizationShell></RoleRoute>} />
+      {['/fund', '/organization/fund', '/manager/fund'].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <RoleRoute
+              role={[
+                'Donor',
+                'CharityOrganization',
+                'RecyclingOrganization',
+                'DisposalOrganization',
+                'Manager',
+              ]}
+            >
+              <OperatingFund />
+            </RoleRoute>
+          }
+        />
+      ))}
+      {['/manager/processing-operations', '/manager/processing-operations/:operationId'].map(
+        (path) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <RoleRoute role="Manager">
+                <AdminLayout>
+                  <ProcessingPortal mode="manager" />
+                </AdminLayout>
+              </RoleRoute>
+            }
+          />
+        ),
+      )}
+      {['/warehouse/processing-operations', '/warehouse/processing-operations/:operationId'].map(
+        (path) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <RoleRoute role="WarehouseStaff">
+                <WarehouseShell>
+                  <ProcessingPortal mode="warehouse" />
+                </WarehouseShell>
+              </RoleRoute>
+            }
+          />
+        ),
+      )}
+      {[
+        '/organization/processing-operations',
+        '/organization/processing-operations/:operationId',
+      ].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}>
+              <OrganizationShell>
+                <ProcessingPortal mode="organization" />
+              </OrganizationShell>
+            </RoleRoute>
+          }
+        />
+      ))}
+      <Route
+        path="/organization/processing-operations/profile"
+        element={
+          <RoleRoute role={['RecyclingOrganization', 'DisposalOrganization']}>
+            <OrganizationShell>
+              <StaffProfile />
+            </OrganizationShell>
+          </RoleRoute>
+        }
+      />
       {/* Front-office pages wrapped in MainLayout */}
       <Route
         path="/vouchers"
-        element={<RoleRoute role="Donor"><MainLayout><Vouchers /></MainLayout></RoleRoute>}
+        element={
+          <RoleRoute role="Donor">
+            <MainLayout>
+              <Vouchers />
+            </MainLayout>
+          </RoleRoute>
+        }
       />
       <Route
         path="/"
@@ -95,15 +168,33 @@ export const AppRoutes: React.FC = () => {
       />
       <Route
         path="/manager/vouchers"
-        element={<RoleRoute role="Manager"><AdminLayout><ManagerVouchers /></AdminLayout></RoleRoute>}
+        element={
+          <RoleRoute role="Manager">
+            <AdminLayout>
+              <ManagerVouchers />
+            </AdminLayout>
+          </RoleRoute>
+        }
       />
       <Route
         path="/manager/ai-prompts"
-        element={<RoleRoute role="Manager"><AdminLayout><ManagerAiPromptManagement /></AdminLayout></RoleRoute>}
+        element={
+          <RoleRoute role="Manager">
+            <AdminLayout>
+              <ManagerAiPromptManagement />
+            </AdminLayout>
+          </RoleRoute>
+        }
       />
       <Route
         path="/manager/point-rules"
-        element={<RoleRoute role="Manager"><AdminLayout><ManagerDonationPointRules /></AdminLayout></RoleRoute>}
+        element={
+          <RoleRoute role="Manager">
+            <AdminLayout>
+              <ManagerDonationPointRules />
+            </AdminLayout>
+          </RoleRoute>
+        }
       />
       <Route
         path="/products"

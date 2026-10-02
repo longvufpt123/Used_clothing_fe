@@ -1050,17 +1050,98 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
-.receiving-putaway__header { display: flex; justify-content: space-between; gap: 1rem; }
-.receiving-putaway__header h3 { margin: .25rem 0 0; }
-.receiving-putaway__groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .75rem; margin: 1rem 0; }
-.receiving-putaway__group { display: grid; gap: .45rem; padding: .9rem; text-align: left; color: inherit; border: 1px solid var(--border-color); border-radius: 12px; background: var(--card-bg); cursor: pointer; }
-.receiving-putaway__group.selected { border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent); }
-.receiving-putaway__group:disabled { opacity: .5; cursor: not-allowed; }
-.receiving-putaway__group em { font-size: .75rem; font-style: normal; opacity: .75; }
-.receiving-receipt { margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; padding: 1rem; border-radius: 14px; background: color-mix(in srgb, var(--color-primary) 8%, var(--card-bg)); }
-.receiving-receipt div { display: grid; gap: .3rem; }
-.receiving-receipt span { font-size: .75rem; opacity: .65; text-transform: uppercase; }
-.rcv-batch-filter-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.rcv-shift-filter { display: flex; min-height: 42px; align-items: center; gap: 8px; padding: 5px 8px 5px 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg-secondary); color: var(--color-text-secondary); font-size: .75rem; font-weight: 750; white-space: nowrap; }
-.rcv-shift-filter select { min-width: 120px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 7px; outline: none; background: var(--color-bg-primary); color: var(--color-text-primary); }
-@media (max-width: 760px) { .rcv-batch-filter-row { align-items: stretch; flex-direction: column; } .rcv-shift-filter { width: fit-content; } }
+.receiving-putaway__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.receiving-putaway__header h3 {
+  margin: 0.25rem 0 0;
+}
+.receiving-putaway__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.receiving-putaway__group {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  text-align: left;
+  color: inherit;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+.receiving-putaway__group.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.receiving-putaway__group:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.receiving-putaway__group em {
+  font-size: 0.75rem;
+  font-style: normal;
+  opacity: 0.75;
+}
+.receiving-receipt {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--card-bg));
+}
+.receiving-receipt div {
+  display: grid;
+  gap: 0.3rem;
+}
+.receiving-receipt span {
+  font-size: 0.75rem;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+.rcv-batch-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.rcv-shift-filter {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.rcv-shift-filter select {
+  min-width: 120px;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  outline: none;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+@media (max-width: 760px) {
+  .rcv-batch-filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .rcv-shift-filter {
+    width: fit-content;
+  }
+}

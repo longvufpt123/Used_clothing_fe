@@ -140,9 +140,15 @@ const getAvailablePickupTimes = (pickupDate: string, windows: PickupWindow[]) =>
   windows.forEach((window) => {
     const [startHour, startMinute] = window.startTime.split(':').map(Number);
     const [endHour, endMinute] = window.endTime.split(':').map(Number);
-    for (let minute = startHour * 60 + startMinute; minute < endHour * 60 + endMinute; minute += 30) {
+    for (
+      let minute = startHour * 60 + startMinute;
+      minute < endHour * 60 + endMinute;
+      minute += 30
+    ) {
       if (pickupDate === today && minute <= currentMinutes) continue;
-      values.add(`${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`);
+      values.add(
+        `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`,
+      );
     }
   });
   return [...values].sort().map((value) => ({ value, label: value }));
@@ -251,7 +257,9 @@ export const Products: React.FC = () => {
   );
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
-  const [dropOffMethod, setDropOffMethod] = useState<'' | 'SelfDelivery' | 'ThirdPartyDelivery'>('');
+  const [dropOffMethod, setDropOffMethod] = useState<'' | 'SelfDelivery' | 'ThirdPartyDelivery'>(
+    '',
+  );
   const [carrierName, setCarrierName] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
   const [pickupDate, setPickupDate] = useState(getDefaultPickupDate);
@@ -270,7 +278,9 @@ export const Products: React.FC = () => {
   const [warehouseAvailabilityError, setWarehouseAvailabilityError] = useState('');
   const [nearestWarehouse, setNearestWarehouse] = useState<WarehouseOption | null>(null);
   const [loadingNearestWarehouse, setLoadingNearestWarehouse] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() => `${getDefaultPickupDate().slice(0, 7)}-01`);
+  const [calendarMonth, setCalendarMonth] = useState(
+    () => `${getDefaultPickupDate().slice(0, 7)}-01`,
+  );
   const availablePickupTimes = useMemo(
     () => getAvailablePickupTimes(pickupDate, pickupWindows),
     [pickupDate, pickupWindows],
@@ -283,7 +293,9 @@ export const Products: React.FC = () => {
     }
     apiClient
       .get<unknown, WarehouseOption[]>('/warehouses')
-      .then((data) => setWarehouses((data || []).filter((warehouse: any) => warehouse.isActive !== false)))
+      .then((data) =>
+        setWarehouses((data || []).filter((warehouse: any) => warehouse.isActive !== false)),
+      )
       .catch(() => toast.error('Không thể tải danh sách kho tiếp nhận.'));
   }, [toast]);
 
@@ -296,18 +308,33 @@ export const Products: React.FC = () => {
       return;
     }
     setLoadingNearestWarehouse(true);
-    const params = new URLSearchParams({ latitude: String(pickupLocation.lat), longitude: String(pickupLocation.lon) });
-    apiClient.get<unknown, WarehouseOption>(`/donor-requests/nearest-warehouse?${params}`)
-      .then((warehouse) => { if (!cancelled) setNearestWarehouse(warehouse); })
-      .catch((error: any) => {
-        if (!cancelled) setWarehouseAvailabilityError(error?.response?.data?.message || 'Chưa thể xác định kho tiếp nhận. Vui lòng chọn lại địa chỉ.');
+    const params = new URLSearchParams({
+      latitude: String(pickupLocation.lat),
+      longitude: String(pickupLocation.lon),
+    });
+    apiClient
+      .get<unknown, WarehouseOption>(`/donor-requests/nearest-warehouse?${params}`)
+      .then((warehouse) => {
+        if (!cancelled) setNearestWarehouse(warehouse);
       })
-      .finally(() => { if (!cancelled) setLoadingNearestWarehouse(false); });
-    return () => { cancelled = true; };
+      .catch((error: any) => {
+        if (!cancelled)
+          setWarehouseAvailabilityError(
+            error?.response?.data?.message ||
+              'Chưa thể xác định kho tiếp nhận. Vui lòng chọn lại địa chỉ.',
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingNearestWarehouse(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [deliveryMethod, pickupLocation]);
 
   useEffect(() => {
-    const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
+    const hasTarget =
+      deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
     if (!pickupDate || !hasTarget) {
       setPickupWindows([]);
       setLoadingPickupWindows(false);
@@ -322,7 +349,8 @@ export const Products: React.FC = () => {
     }
     let cancelled = false;
     setLoadingPickupWindows(true);
-    apiClient.get<unknown, PickupAvailability>(`/donor-requests/pickup-windows?${params}`)
+    apiClient
+      .get<unknown, PickupAvailability>(`/donor-requests/pickup-windows?${params}`)
       .then((result) => {
         if (!cancelled) setPickupWindows(result.windows || []);
       })
@@ -332,7 +360,9 @@ export const Products: React.FC = () => {
       .finally(() => {
         if (!cancelled) setLoadingPickupWindows(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [deliveryMethod, dropOffMethod, pickupDate, pickupLocation, warehouseId]);
 
   useEffect(() => {
@@ -341,7 +371,8 @@ export const Products: React.FC = () => {
       setLoadingPickupDates(false);
       return;
     }
-    const hasTarget = deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
+    const hasTarget =
+      deliveryMethod === 'StaffPickup' ? Boolean(pickupLocation) : Boolean(warehouseId);
     if (!hasTarget) {
       setAvailablePickupDates(undefined);
       setLoadingPickupDates(false);
@@ -356,12 +387,16 @@ export const Products: React.FC = () => {
     }
     let cancelled = false;
     setLoadingPickupDates(true);
-    apiClient.get<unknown, string[]>(`/donor-requests/pickup-dates?${params}`)
+    apiClient
+      .get<unknown, string[]>(`/donor-requests/pickup-dates?${params}`)
       .then((dates) => {
         if (cancelled) return;
         const normalizedDates = (dates || []).map((date) => date.slice(0, 10));
         setAvailablePickupDates(normalizedDates);
-        if (pickupDate.startsWith(calendarMonth.slice(0, 7)) && !normalizedDates.includes(pickupDate)) {
+        if (
+          pickupDate.startsWith(calendarMonth.slice(0, 7)) &&
+          !normalizedDates.includes(pickupDate)
+        ) {
           setPickupDate(normalizedDates[0] || '');
         }
       })
@@ -373,7 +408,9 @@ export const Products: React.FC = () => {
       .finally(() => {
         if (!cancelled) setLoadingPickupDates(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [calendarMonth, deliveryMethod, dropOffMethod, pickupLocation, warehouseId]);
 
   useEffect(() => {
@@ -498,7 +535,11 @@ export const Products: React.FC = () => {
       toast.error('Mỗi đơn quyên góp nhận tối đa 50 kg. Vui lòng điều chỉnh khối lượng.');
       return;
     }
-    if (!Number.isFinite(estimatedWeight) || estimatedWeight <= 0 || !/^\d+(?:\.\d{1,2})?$/.test(weight)) {
+    if (
+      !Number.isFinite(estimatedWeight) ||
+      estimatedWeight <= 0 ||
+      !/^\d+(?:\.\d{1,2})?$/.test(weight)
+    ) {
       toast.error('Nhập khối lượng lớn hơn 0 kg, tối đa 2 chữ số thập phân.');
       return;
     }
@@ -513,55 +554,62 @@ export const Products: React.FC = () => {
       return;
     }
 
-    const targetWarehouse = deliveryMethod === 'StaffPickup'
-      ? nearestWarehouse : warehouses.find((warehouse) => warehouse.id === warehouseId);
+    const targetWarehouse =
+      deliveryMethod === 'StaffPickup'
+        ? nearestWarehouse
+        : warehouses.find((warehouse) => warehouse.id === warehouseId);
     if (!targetWarehouse || (deliveryMethod === 'StaffPickup' && loadingNearestWarehouse)) {
       toast.error('Vui lòng chờ xác định kho tiếp nhận hoặc chọn lại địa chỉ.');
       return;
     }
-      const selectedCategoryLabel =
-        categoryOptions.find((o) => o.value === category)?.label || 'Hỗn hợp';
-      const selectedWeightLabel = `${estimatedWeight} kg`;
-      const selectedConditionLabel =
-        conditionOptions.find((o) => o.value === condition)?.label || 'Còn tốt';
+    const selectedCategoryLabel =
+      categoryOptions.find((o) => o.value === category)?.label || 'Hỗn hợp';
+    const selectedWeightLabel = `${estimatedWeight} kg`;
+    const selectedConditionLabel =
+      conditionOptions.find((o) => o.value === condition)?.label || 'Còn tốt';
 
-      const payload: CreateDonationPayload = {
-        pickupDate: dropOffMethod === 'ThirdPartyDelivery'
-          ? null
-          : `${pickupDate}T${selectedPickupTime}:00`,
-        description: [
-          `Nguoi quyen gop: ${name}`,
-          `So dien thoai: ${phone}`,
-          `Loai quan ao: ${selectedCategoryLabel}`,
-          `Khoi luong uoc luong: ${selectedWeightLabel}`,
-          `Tinh trang: ${selectedConditionLabel}`,
-          deliveryMethod === 'DonorDropOff'
-            ? `Cach gui den kho: ${dropOffMethod === 'SelfDelivery' ? 'Tu mang den kho' : 'Gui qua dich vu van chuyen khac'}`
-            : '',
-          notes.trim() ? `Ghi chu: ${notes.trim()}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n'),
-        imageUrls: [],
-        estimateWeight: estimatedWeight,
-        pickupAddress:
-          deliveryMethod === 'DonorDropOff'
-            ? warehouses.find((warehouse) => warehouse.id === warehouseId)?.address || ''
-            : address,
-        pickupLatitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lat : 0,
-        pickupLongitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lon : 0,
-        contactName: name.trim(),
-        contactPhoneNumber: phone.trim(),
-        deliveryMethod,
-        warehouseId: deliveryMethod === 'DonorDropOff' ? warehouseId : undefined,
-        dropOffMethod: deliveryMethod === 'DonorDropOff' ? dropOffMethod || undefined : undefined,
-        carrierName: dropOffMethod === 'ThirdPartyDelivery' ? carrierName.trim() : undefined,
-        trackingCode: dropOffMethod === 'ThirdPartyDelivery' ? trackingCode.trim() : undefined,
-      };
+    const payload: CreateDonationPayload = {
+      pickupDate:
+        dropOffMethod === 'ThirdPartyDelivery' ? null : `${pickupDate}T${selectedPickupTime}:00`,
+      description: [
+        `Nguoi quyen gop: ${name}`,
+        `So dien thoai: ${phone}`,
+        `Loai quan ao: ${selectedCategoryLabel}`,
+        `Khoi luong uoc luong: ${selectedWeightLabel}`,
+        `Tinh trang: ${selectedConditionLabel}`,
+        deliveryMethod === 'DonorDropOff'
+          ? `Cach gui den kho: ${dropOffMethod === 'SelfDelivery' ? 'Tu mang den kho' : 'Gui qua dich vu van chuyen khac'}`
+          : '',
+        notes.trim() ? `Ghi chu: ${notes.trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      imageUrls: [],
+      estimateWeight: estimatedWeight,
+      pickupAddress:
+        deliveryMethod === 'DonorDropOff'
+          ? warehouses.find((warehouse) => warehouse.id === warehouseId)?.address || ''
+          : address,
+      pickupLatitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lat : 0,
+      pickupLongitude: deliveryMethod === 'StaffPickup' ? pickupLocation!.lon : 0,
+      contactName: name.trim(),
+      contactPhoneNumber: phone.trim(),
+      deliveryMethod,
+      warehouseId: deliveryMethod === 'DonorDropOff' ? warehouseId : undefined,
+      dropOffMethod: deliveryMethod === 'DonorDropOff' ? dropOffMethod || undefined : undefined,
+      carrierName: dropOffMethod === 'ThirdPartyDelivery' ? carrierName.trim() : undefined,
+      trackingCode: dropOffMethod === 'ThirdPartyDelivery' ? trackingCode.trim() : undefined,
+    };
 
-      setSubmissionError('');
-      setConfirmation({ payload, categoryLabel: selectedCategoryLabel, conditionLabel: selectedConditionLabel,
-        warehouse: { ...targetWarehouse }, notes: notes.trim(), images: [...images] });
+    setSubmissionError('');
+    setConfirmation({
+      payload,
+      categoryLabel: selectedCategoryLabel,
+      conditionLabel: selectedConditionLabel,
+      warehouse: { ...targetWarehouse },
+      notes: notes.trim(),
+      images: [...images],
+    });
   };
 
   const submitConfirmedDonation = async () => {
@@ -573,10 +621,10 @@ export const Products: React.FC = () => {
       const { payload, categoryLabel, conditionLabel } = confirmation;
       const imageUrls = await uploadDonationImages(confirmation.images);
       const code = `RT-2026-${Math.floor(100 + Math.random() * 900)}`;
-      const response = await apiClient.post<unknown, CreateDonationResponse>(
-        '/donor-requests',
-        { ...payload, imageUrls },
-      );
+      const response = await apiClient.post<unknown, CreateDonationResponse>('/donor-requests', {
+        ...payload,
+        imageUrls,
+      });
 
       const newRequest: DonationRequest = {
         code,
@@ -625,7 +673,10 @@ export const Products: React.FC = () => {
       const createdRequestId = response.requestId || response.RequestId;
       navigate(createdRequestId ? `/my-orders?created=${createdRequestId}` : '/my-orders');
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || 'Không thể gửi đơn quyên góp. Vui lòng thử lại.';
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Không thể gửi đơn quyên góp. Vui lòng thử lại.';
       setSubmissionError(message);
       toast.error(message);
     } finally {
@@ -681,39 +732,129 @@ export const Products: React.FC = () => {
 
   return (
     <div className="donation-portal-page container">
-      {confirmation && createPortal(
-        <Modal isOpen title="Xác nhận thông tin quyên góp" className="donation-confirmation-modal"
-          onClose={() => { if (!submittingDonation.current) setConfirmation(null); }}
-          footer={<>
-            <Button type="button" variant="outline" autoFocus disabled={loading} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</Button>
-            <Button type="button" isLoading={loading} onClick={() => void submitConfirmedDonation()}>Xác nhận và gửi đơn</Button>
-          </>}>
-          <p className="donation-confirmation-intro">Vui lòng kiểm tra lại thông tin trước khi gửi yêu cầu quyên góp.</p>
-          <dl className="donation-confirmation-details">
-            <div><dt>Người quyên góp</dt><dd>{confirmation.payload.contactName}</dd></div>
-            <div><dt>Số điện thoại</dt><dd>{confirmation.payload.contactPhoneNumber}</dd></div>
-            <div><dt>Loại quần áo</dt><dd>{confirmation.categoryLabel}</dd></div>
-            <div><dt>Khối lượng ước tính</dt><dd>{confirmation.payload.estimateWeight} kg</dd></div>
-            <div><dt>Tình trạng</dt><dd>{confirmation.conditionLabel}</dd></div>
-            <div><dt>Phương thức giao</dt><dd>{confirmation.payload.deliveryMethod === 'StaffPickup' ? 'Nhân viên đến lấy tại địa chỉ của tôi' : confirmation.payload.dropOffMethod === 'SelfDelivery' ? 'Tự mang đến kho' : 'Gửi qua dịch vụ vận chuyển khác'}</dd></div>
-            {confirmation.payload.deliveryMethod === 'StaffPickup' && <div><dt>Địa chỉ lấy hàng</dt><dd>{confirmation.payload.pickupAddress}</dd></div>}
-            <div><dt>Kho tiếp nhận</dt><dd><strong>{confirmation.warehouse.warehouseName}</strong><br />{confirmation.warehouse.address}</dd></div>
-            <div><dt>{confirmation.payload.deliveryMethod === 'StaffPickup' ? 'Ngày, giờ lấy hàng' : 'Ngày, giờ giao đến kho'}</dt><dd>{confirmation.payload.pickupDate
-              ? `${confirmation.payload.pickupDate.slice(0, 10).split('-').reverse().join('/')} · ${confirmation.payload.pickupDate.slice(11, 16)}`
-              : 'Cập nhật sau khi đặt dịch vụ vận chuyển'}</dd></div>
-            {confirmation.notes && <div><dt>Ghi chú</dt><dd>{confirmation.notes}</dd></div>}
-          </dl>
-          {confirmation.images.length > 0 && <div className="donation-confirmation-images" aria-label="Ảnh quần áo">
-            {confirmation.images.map((image, index) => <img key={image.previewUrl} src={image.previewUrl} alt={`Ảnh quần áo ${index + 1}`} />)}
-          </div>}
-          {submissionError && <p className="donation-confirmation-error" role="alert">{submissionError}</p>}
-        </Modal>, document.body)}
+      {confirmation &&
+        createPortal(
+          <Modal
+            isOpen
+            title="Xác nhận thông tin quyên góp"
+            className="donation-confirmation-modal"
+            onClose={() => {
+              if (!submittingDonation.current) setConfirmation(null);
+            }}
+            footer={
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  autoFocus
+                  disabled={loading}
+                  onClick={() => setConfirmation(null)}
+                >
+                  Quay lại chỉnh sửa
+                </Button>
+                <Button
+                  type="button"
+                  isLoading={loading}
+                  onClick={() => void submitConfirmedDonation()}
+                >
+                  Xác nhận và gửi đơn
+                </Button>
+              </>
+            }
+          >
+            <p className="donation-confirmation-intro">
+              Vui lòng kiểm tra lại thông tin trước khi gửi yêu cầu quyên góp.
+            </p>
+            <dl className="donation-confirmation-details">
+              <div>
+                <dt>Người quyên góp</dt>
+                <dd>{confirmation.payload.contactName}</dd>
+              </div>
+              <div>
+                <dt>Số điện thoại</dt>
+                <dd>{confirmation.payload.contactPhoneNumber}</dd>
+              </div>
+              <div>
+                <dt>Loại quần áo</dt>
+                <dd>{confirmation.categoryLabel}</dd>
+              </div>
+              <div>
+                <dt>Khối lượng ước tính</dt>
+                <dd>{confirmation.payload.estimateWeight} kg</dd>
+              </div>
+              <div>
+                <dt>Tình trạng</dt>
+                <dd>{confirmation.conditionLabel}</dd>
+              </div>
+              <div>
+                <dt>Phương thức giao</dt>
+                <dd>
+                  {confirmation.payload.deliveryMethod === 'StaffPickup'
+                    ? 'Nhân viên đến lấy tại địa chỉ của tôi'
+                    : confirmation.payload.dropOffMethod === 'SelfDelivery'
+                      ? 'Tự mang đến kho'
+                      : 'Gửi qua dịch vụ vận chuyển khác'}
+                </dd>
+              </div>
+              {confirmation.payload.deliveryMethod === 'StaffPickup' && (
+                <div>
+                  <dt>Địa chỉ lấy hàng</dt>
+                  <dd>{confirmation.payload.pickupAddress}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Kho tiếp nhận</dt>
+                <dd>
+                  <strong>{confirmation.warehouse.warehouseName}</strong>
+                  <br />
+                  {confirmation.warehouse.address}
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  {confirmation.payload.deliveryMethod === 'StaffPickup'
+                    ? 'Ngày, giờ lấy hàng'
+                    : 'Ngày, giờ giao đến kho'}
+                </dt>
+                <dd>
+                  {confirmation.payload.pickupDate
+                    ? `${confirmation.payload.pickupDate.slice(0, 10).split('-').reverse().join('/')} · ${confirmation.payload.pickupDate.slice(11, 16)}`
+                    : 'Cập nhật sau khi đặt dịch vụ vận chuyển'}
+                </dd>
+              </div>
+              {confirmation.notes && (
+                <div>
+                  <dt>Ghi chú</dt>
+                  <dd>{confirmation.notes}</dd>
+                </div>
+              )}
+            </dl>
+            {confirmation.images.length > 0 && (
+              <div className="donation-confirmation-images" aria-label="Ảnh quần áo">
+                {confirmation.images.map((image, index) => (
+                  <img
+                    key={image.previewUrl}
+                    src={image.previewUrl}
+                    alt={`Ảnh quần áo ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+            {submissionError && (
+              <p className="donation-confirmation-error" role="alert">
+                {submissionError}
+              </p>
+            )}
+          </Modal>,
+          document.body,
+        )}
       {/* Title Header */}
       <div className="portal-header text-center">
         <span className="section-subtitle">Vì một tương lai xanh</span>
         <h1 className="text-gradient">Cổng Tiếp Nhận Quyên Góp</h1>
         <p className="portal-desc">
-          Gửi gắm những bộ quần áo không còn sử dụng để trao đi yêu thương hoặc tái chế để thân thiện với môi trường.
+          Gửi gắm những bộ quần áo không còn sử dụng để trao đi yêu thương hoặc tái chế để thân
+          thiện với môi trường.
         </p>
       </div>
 
@@ -777,13 +918,15 @@ export const Products: React.FC = () => {
                   placeholder="Ví dụ: 7.5"
                   pattern="[0-9]+([.][0-9]{1,2})?"
                   helperText="Tối đa 50 kg mỗi đơn, có thể nhập số lẻ."
-                  error={weight !== '' && !/^\d+(?:\.\d{1,2})?$/.test(weight)
-                    ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.'
-                    : weight !== '' && Number(weight) <= 0
-                    ? 'Khối lượng phải lớn hơn 0 kg.'
-                    : Number(weight) > MAX_DONATION_WEIGHT_KG
-                      ? 'Mỗi đơn quyên góp nhận tối đa 50 kg.'
-                      : undefined}
+                  error={
+                    weight !== '' && !/^\d+(?:\.\d{1,2})?$/.test(weight)
+                      ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.'
+                      : weight !== '' && Number(weight) <= 0
+                        ? 'Khối lượng phải lớn hơn 0 kg.'
+                        : Number(weight) > MAX_DONATION_WEIGHT_KG
+                          ? 'Mỗi đơn quyên góp nhận tối đa 50 kg.'
+                          : undefined
+                  }
                   required
                   value={weight}
                   onChange={(e) => {
@@ -823,8 +966,7 @@ export const Products: React.FC = () => {
                     setDropOffMethod('');
                     setCarrierName('');
                     setTrackingCode('');
-                  }
-                  else {
+                  } else {
                     setAddress('');
                     setPickupLocation(null);
                   }
@@ -836,12 +978,15 @@ export const Products: React.FC = () => {
                   <div>
                     <strong>Chưa xác định được kho tiếp nhận</strong>
                     <span>{warehouseAvailabilityError}</span>
-                    <button type="button" onClick={() => {
-                      setDeliveryMethod('DonorDropOff');
-                      setWarehouseAvailabilityError('');
-                      setAddress('');
-                      setPickupLocation(null);
-                    }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeliveryMethod('DonorDropOff');
+                        setWarehouseAvailabilityError('');
+                        setAddress('');
+                        setPickupLocation(null);
+                      }}
+                    >
                       Chuyển sang tự mang đến kho
                     </button>
                   </div>
@@ -850,27 +995,33 @@ export const Products: React.FC = () => {
 
               {deliveryMethod === 'StaffPickup' ? (
                 <>
-                <AddressSearchMap
-                  value={address}
-                  onChange={setAddress}
-                  onLocationChange={(location) => {
-                    setPickupLocation(location);
-                    setWarehouseAvailabilityError('');
-                  }}
-                  required
-                />
-                {pickupLocation && (loadingNearestWarehouse || nearestWarehouse) && (
-                  <div className="nearest-warehouse-info" role="status" aria-live="polite">
-                    {loadingNearestWarehouse ? <span>Đang tìm kho gần nhất...</span> : nearestWarehouse && <>
-                      <MapPin size={20} aria-hidden="true" />
-                      <div>
-                        <span>Kho tiếp nhận gần nhất</span>
-                        <strong>{nearestWarehouse.warehouseName}</strong>
-                        <p>{nearestWarehouse.address}</p>
-                      </div>
-                    </>}
-                  </div>
-                )}
+                  <AddressSearchMap
+                    value={address}
+                    onChange={setAddress}
+                    onLocationChange={(location) => {
+                      setPickupLocation(location);
+                      setWarehouseAvailabilityError('');
+                    }}
+                    required
+                  />
+                  {pickupLocation && (loadingNearestWarehouse || nearestWarehouse) && (
+                    <div className="nearest-warehouse-info" role="status" aria-live="polite">
+                      {loadingNearestWarehouse ? (
+                        <span>Đang tìm kho gần nhất...</span>
+                      ) : (
+                        nearestWarehouse && (
+                          <>
+                            <MapPin size={20} aria-hidden="true" />
+                            <div>
+                              <span>Kho tiếp nhận gần nhất</span>
+                              <strong>{nearestWarehouse.warehouseName}</strong>
+                              <p>{nearestWarehouse.address}</p>
+                            </div>
+                          </>
+                        )
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="input-wrapper">
@@ -904,9 +1055,11 @@ export const Products: React.FC = () => {
                     id="dropoff-method"
                     className="custom-input"
                     value={dropOffMethod}
-                    onChange={(event) => setDropOffMethod(
-                      event.target.value as '' | 'SelfDelivery' | 'ThirdPartyDelivery',
-                    )}
+                    onChange={(event) =>
+                      setDropOffMethod(
+                        event.target.value as '' | 'SelfDelivery' | 'ThirdPartyDelivery',
+                      )
+                    }
                     required
                   >
                     <option value="">Chọn cách bạn sẽ gửi quần áo</option>
@@ -926,50 +1079,56 @@ export const Products: React.FC = () => {
                 </div>
               )}
 
-              {dropOffMethod !== 'ThirdPartyDelivery' && <div className="form-row">
-                <WorkdayDatePicker
-                  label={
-                    deliveryMethod === 'StaffPickup'
-                      ? 'Ngày lấy hàng *'
-                      : 'Ngày dự kiến mang đến kho'
-                  }
-                  value={pickupDate}
-                  min={getEarliestPickupDate()}
-                  onChange={setPickupDate}
-                  availableDates={availablePickupDates}
-                  availabilityLoading={loadingPickupDates}
-                  onMonthChange={(month) => setCalendarMonth(toLocalDateInputValue(new Date(month.getFullYear(), month.getMonth(), 1)))}
-                  footer="Chọn ngày có ca tiếp nhận tại kho. Cuối tuần vẫn khả dụng nếu kho có ca."
-                  required
-                />
-                <div className="input-wrapper">
-                  <label className="input-label" htmlFor="pickup-time">
-                    Giờ tiếp nhận *
-                  </label>
-                  <select
-                    id="pickup-time"
-                    className="custom-input"
-                    value={selectedPickupTime}
-                    onChange={(event) => setSelectedPickupTime(event.target.value)}
-                    disabled={loadingPickupWindows || availablePickupTimes.length === 0}
+              {dropOffMethod !== 'ThirdPartyDelivery' && (
+                <div className="form-row">
+                  <WorkdayDatePicker
+                    label={
+                      deliveryMethod === 'StaffPickup'
+                        ? 'Ngày lấy hàng *'
+                        : 'Ngày dự kiến mang đến kho'
+                    }
+                    value={pickupDate}
+                    min={getEarliestPickupDate()}
+                    onChange={setPickupDate}
+                    availableDates={availablePickupDates}
+                    availabilityLoading={loadingPickupDates}
+                    onMonthChange={(month) =>
+                      setCalendarMonth(
+                        toLocalDateInputValue(new Date(month.getFullYear(), month.getMonth(), 1)),
+                      )
+                    }
+                    footer="Chọn ngày có ca tiếp nhận tại kho. Cuối tuần vẫn khả dụng nếu kho có ca."
                     required
-                  >
-                    <option value="">Chọn giờ tiếp nhận</option>
-                    {availablePickupTimes.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <small className="input-helper-text">
-                    {loadingPickupWindows
-                      ? 'Đang kiểm tra ca làm việc của kho...'
-                      : availablePickupTimes.length > 0
-                        ? `Các giờ khả dụng theo ${pickupWindows.length} ca làm việc của kho.`
-                        : 'Ngày này không có ca tiếp nhận còn khả dụng tại kho'}
-                  </small>
+                  />
+                  <div className="input-wrapper">
+                    <label className="input-label" htmlFor="pickup-time">
+                      Giờ tiếp nhận *
+                    </label>
+                    <select
+                      id="pickup-time"
+                      className="custom-input"
+                      value={selectedPickupTime}
+                      onChange={(event) => setSelectedPickupTime(event.target.value)}
+                      disabled={loadingPickupWindows || availablePickupTimes.length === 0}
+                      required
+                    >
+                      <option value="">Chọn giờ tiếp nhận</option>
+                      {availablePickupTimes.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="input-helper-text">
+                      {loadingPickupWindows
+                        ? 'Đang kiểm tra ca làm việc của kho...'
+                        : availablePickupTimes.length > 0
+                          ? `Các giờ khả dụng theo ${pickupWindows.length} ca làm việc của kho.`
+                          : 'Ngày này không có ca tiếp nhận còn khả dụng tại kho'}
+                    </small>
+                  </div>
                 </div>
-              </div>}
+              )}
 
               <div className="input-wrapper">
                 <label className="input-label">Ghi chú thêm (không bắt buộc)</label>
@@ -1020,11 +1179,7 @@ export const Products: React.FC = () => {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                isLoading={loading}
-                className="submit-donation-btn"
-              >
+              <Button type="submit" isLoading={loading} className="submit-donation-btn">
                 Xác nhận Quyên góp <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </Button>
             </form>

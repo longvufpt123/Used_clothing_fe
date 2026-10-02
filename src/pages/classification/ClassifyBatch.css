@@ -5,11 +5,19 @@
   border: 1px solid color-mix(in srgb, var(--score-accent) 40%, transparent);
   border-left: 4px solid var(--score-accent);
   border-radius: 14px;
-  background: linear-gradient(120deg, color-mix(in srgb, var(--score-accent) 12%, transparent), color-mix(in srgb, var(--score-accent) 3%, transparent));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--score-accent) 12%, transparent),
+    color-mix(in srgb, var(--score-accent) 3%, transparent)
+  );
 }
 
-.classification-score--b { --score-accent: var(--color-warning); }
-.classification-score--c { --score-accent: var(--color-danger); }
+.classification-score--b {
+  --score-accent: var(--color-warning);
+}
+.classification-score--c {
+  --score-accent: var(--color-danger);
+}
 
 .classification-score-summary {
   display: flex;
@@ -22,20 +30,27 @@
 .classification-score-label {
   display: block;
   color: var(--color-text-primary);
-  font-size: .85rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
-.classification-score-value { display: flex; align-items: baseline; gap: 8px; }
+.classification-score-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
 .classification-score-value strong {
   color: var(--score-accent);
   font-size: clamp(2rem, 4vw, 2.5rem);
   font-weight: 800;
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
-.classification-score-value > span { color: var(--color-text-secondary); font-size: .9rem; }
+.classification-score-value > span {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
 
 .classification-score-grade {
   display: inline-flex;
@@ -46,10 +61,14 @@
   border: 1px solid color-mix(in srgb, var(--score-accent) 30%, transparent);
   background: color-mix(in srgb, var(--score-accent) 12%, transparent);
   color: var(--color-text-primary);
-  font-size: .85rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
-.classification-score-grade strong { color: var(--score-accent); font-size: 1.6rem; line-height: 1; }
+.classification-score-grade strong {
+  color: var(--score-accent);
+  font-size: 1.6rem;
+  line-height: 1;
+}
 .classification-score-track {
   height: 6px;
   margin-top: 14px;
@@ -57,4 +76,8 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--score-accent) 14%, transparent);
 }
-.classification-score-track > div { height: 100%; background: var(--score-accent); border-radius: inherit; }
+.classification-score-track > div {
+  height: 100%;
+  background: var(--score-accent);
+  border-radius: inherit;
+}

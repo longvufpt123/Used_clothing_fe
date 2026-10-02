@@ -64,7 +64,8 @@ export interface DistributionRequest {
   shipmentHistory: { status: string; description?: string; source: string; occurredAt: string }[];
 }
 export const distributionService = {
-  confirmReceipt: (id: string) => apiClient.post(`/distribution-operations/${id}/organization/receive`),
+  confirmReceipt: (id: string) =>
+    apiClient.post(`/distribution-operations/${id}/organization/receive`),
   catalog: (warehouseId?: string) =>
     apiClient.get<
       unknown,

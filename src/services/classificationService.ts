@@ -159,12 +159,27 @@ export interface ClassificationAreaLayout {
   warehouseId: string;
   warehouseName: string;
   areas: {
-    id: string; areaName: string; description?: string; capacityKg: number; currentKg: number;
+    id: string;
+    areaName: string;
+    description?: string;
+    capacityKg: number;
+    currentKg: number;
     groups: {
-      id: string; groupName: string; description?: string; capacityKg: number; currentKg: number;
+      id: string;
+      groupName: string;
+      description?: string;
+      capacityKg: number;
+      currentKg: number;
       locations: {
-        id: string; locationCode: string; aisleCode: string; rackCode: string;
-        shelfCode: string; binCode: string; capacityKg: number; currentWeightKg: number; status: string;
+        id: string;
+        locationCode: string;
+        aisleCode: string;
+        rackCode: string;
+        shelfCode: string;
+        binCode: string;
+        capacityKg: number;
+        currentWeightKg: number;
+        status: string;
       }[];
       batches: GroupedClassifiedBatch[];
     }[];
@@ -223,10 +238,23 @@ export interface ClassificationAutoBalanceResult {
 }
 
 export const classificationService = {
-  getCurrentTeams: () => apiClient.get<unknown, CurrentClassificationTeam[]>('/classification-operations/my-current-teams'),
-  resumeBatch: (id: string, teamId: string) => apiClient.post(`/classification-operations/batches/${id}/resume`, { teamId }),
-  updateManualBatch: (id: string, payload: { garmentGroupId: string; genderId: string; targetUserId: string; conditionGradeId: string }) => apiClient.put(`/classification-operations/grouped-batches/${id}`, payload),
-  deleteManualBatch: (id: string) => apiClient.delete(`/classification-operations/grouped-batches/${id}`),
+  getCurrentTeams: () =>
+    apiClient.get<unknown, CurrentClassificationTeam[]>(
+      '/classification-operations/my-current-teams',
+    ),
+  resumeBatch: (id: string, teamId: string) =>
+    apiClient.post(`/classification-operations/batches/${id}/resume`, { teamId }),
+  updateManualBatch: (
+    id: string,
+    payload: {
+      garmentGroupId: string;
+      genderId: string;
+      targetUserId: string;
+      conditionGradeId: string;
+    },
+  ) => apiClient.put(`/classification-operations/grouped-batches/${id}`, payload),
+  deleteManualBatch: (id: string) =>
+    apiClient.delete(`/classification-operations/grouped-batches/${id}`),
   getBatches: () =>
     apiClient.get<unknown, ClassificationBatchSummary[]>('/classification-operations/batches'),
   getBatch: (id: string) =>
@@ -276,27 +304,40 @@ export const classificationService = {
     }),
   getClassifiedAreaLayout: (date?: string) =>
     apiClient.get<unknown, ClassificationAreaLayout>(
-      '/classification-operations/classified-area-layout', { params: { date } },
+      '/classification-operations/classified-area-layout',
+      { params: { date } },
     ),
   getGroupedBatch: (id: string) =>
     apiClient.get<unknown, GroupedClassifiedBatchDetail>(
       `/classification-operations/grouped-batches/${id}`,
     ),
   getUnassignedItems: () =>
-    apiClient.get<unknown, UnassignedClassifiedItem[]>('/classification-operations/unassigned-items'),
+    apiClient.get<unknown, UnassignedClassifiedItem[]>(
+      '/classification-operations/unassigned-items',
+    ),
   createManualBatch: (payload: {
-    garmentGroupId: string; genderId: string;
-    targetUserId: string; conditionGradeId: string;
-  }) => apiClient.post<unknown, GroupedClassifiedBatchDetail>(
-    '/classification-operations/grouped-batches/manual', payload,
-  ),
+    garmentGroupId: string;
+    genderId: string;
+    targetUserId: string;
+    conditionGradeId: string;
+  }) =>
+    apiClient.post<unknown, GroupedClassifiedBatchDetail>(
+      '/classification-operations/grouped-batches/manual',
+      payload,
+    ),
   assignItemsToBatch: (id: string, itemIds: string[]) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/items`, { itemIds }),
   removeItemFromBatch: (id: string, itemId: string) =>
     apiClient.delete(`/classification-operations/grouped-batches/${id}/items/${itemId}`),
   finalizeManualBatch: (id: string, actualWeightKg: number) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/finalize`, { actualWeightKg }),
-  placeGroupedBatch: (id: string, areaId: string, groupId: string, storageLocationId: string, actualWeightKg: number) =>
+  placeGroupedBatch: (
+    id: string,
+    areaId: string,
+    groupId: string,
+    storageLocationId: string,
+    actualWeightKg: number,
+  ) =>
     apiClient.post(`/classification-operations/grouped-batches/${id}/place`, {
       areaId,
       groupId,
@@ -312,4 +353,11 @@ export const classificationService = {
     ),
 };
 
-export interface CurrentClassificationTeam { id: string; teamName: string; status: string; shiftDate: string; startTime: string; endTime: string; }
+export interface CurrentClassificationTeam {
+  id: string;
+  teamName: string;
+  status: string;
+  shiftDate: string;
+  startTime: string;
+  endTime: string;
+}

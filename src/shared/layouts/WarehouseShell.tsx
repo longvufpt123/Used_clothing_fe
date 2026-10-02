@@ -24,19 +24,26 @@ export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({ childr
       void warehouseService
         .dashboard()
         .then((x) => {
-          if (!disposed) setCounts({
-            inbound: x.pendingReceipt,
-            putaway: x.awaitingPutaway,
-            inventory: x.inventorySkuCount,
-          });
+          if (!disposed)
+            setCounts({
+              inbound: x.pendingReceipt,
+              putaway: x.awaitingPutaway,
+              inventory: x.inventorySkuCount,
+            });
         })
         .catch(() => {})
-        .finally(() => { busy = false; });
+        .finally(() => {
+          busy = false;
+        });
     };
     refresh();
     const id = window.setInterval(refresh, 10000);
     document.addEventListener('visibilitychange', refresh);
-    return () => { disposed = true; window.clearInterval(id); document.removeEventListener('visibilitychange', refresh); };
+    return () => {
+      disposed = true;
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [location.pathname]);
   const nav: OpsNavItem[] = [
     { to: '/warehouse', label: 'Tổng quan', icon: LayoutDashboard },
@@ -80,7 +87,12 @@ export const WarehouseShell: React.FC<{ children: React.ReactNode }> = ({ childr
       icon: HandHeart,
       matchPrefixes: ['/warehouse/distributions', '/warehouse/tracking'],
     },
-    { to: '/warehouse/processing-operations', label: 'Xuất tái chế / tiêu hủy', icon: Archive, matchPrefixes: ['/warehouse/processing-operations'] },
+    {
+      to: '/warehouse/processing-operations',
+      label: 'Xuất tái chế / tiêu hủy',
+      icon: Archive,
+      matchPrefixes: ['/warehouse/processing-operations'],
+    },
   ];
   return (
     <OpsLayout homePath="/warehouse" roleLabel="Chuyên viên xuất nhập kho" nav={nav}>

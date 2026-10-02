@@ -5,7 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function OrganizationShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const processing = ['RecyclingOrganization', 'DisposalOrganization'].includes(user?.role.trim() || '');
+  const processing = ['RecyclingOrganization', 'DisposalOrganization'].includes(
+    user?.role.trim() || '',
+  );
   const nav: OpsNavItem[] = [
     {
       to: '/organization/distributions',
@@ -25,9 +27,29 @@ export default function OrganizationShell({ children }: { children: React.ReactN
     },
   ];
   return (
-    <OpsLayout homePath={processing ? '/organization/processing-operations' : '/organization/distributions'}
-      roleLabel={processing ? user?.role.trim() === 'RecyclingOrganization' ? 'Tổ chức tái chế' : 'Tổ chức tiêu hủy' : 'Tổ chức từ thiện'}
-      nav={[...(processing ? [{ to: '/organization/processing-operations', label: 'Yêu cầu xử lý', icon: ClipboardList, matchPrefixes: ['/organization/processing-operations'] }] : nav), { to: '/organization/fund', label: 'Quỹ ReThreads', icon: HeartHandshake }]}>
+    <OpsLayout
+      homePath={processing ? '/organization/processing-operations' : '/organization/distributions'}
+      roleLabel={
+        processing
+          ? user?.role.trim() === 'RecyclingOrganization'
+            ? 'Tổ chức tái chế'
+            : 'Tổ chức tiêu hủy'
+          : 'Tổ chức từ thiện'
+      }
+      nav={[
+        ...(processing
+          ? [
+              {
+                to: '/organization/processing-operations',
+                label: 'Yêu cầu xử lý',
+                icon: ClipboardList,
+                matchPrefixes: ['/organization/processing-operations'],
+              },
+            ]
+          : nav),
+        { to: '/organization/fund', label: 'Quỹ ReThreads', icon: HeartHandshake },
+      ]}
+    >
       {children}
     </OpsLayout>
   );

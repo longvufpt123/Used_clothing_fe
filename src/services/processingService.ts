@@ -36,10 +36,11 @@ export interface ProcessingOperation {
   totalRequestedQuantity: number;
   totalRequestedWeight: number;
 }
-export interface ProcessingDetail extends Omit<
-  ProcessingOperation,
-  'inputCount' | 'totalRequestedQuantity' | 'totalRequestedWeight'
-> {
+export interface ProcessingDetail
+  extends Omit<
+    ProcessingOperation,
+    'inputCount' | 'totalRequestedQuantity' | 'totalRequestedWeight'
+  > {
   recyclingReturn?: {
     expectedReturnDate?: string;
     dispatchedAt?: string;

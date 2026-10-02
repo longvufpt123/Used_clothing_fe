@@ -84,17 +84,24 @@ export default function DispatchPanel({
       const nextBoard = await receivingService.getDispatchBoard();
       if (request !== latestLoad.current) return;
       setBoard(nextBoard);
-      setSelectedTeams((current) => Object.fromEntries(Object.entries(current).filter(
-        ([requestId, teamId]) => nextBoard.requests.some((item) => item.id === requestId)
-          && nextBoard.teams.some((team) => team.id === teamId),
-      )));
+      setSelectedTeams((current) =>
+        Object.fromEntries(
+          Object.entries(current).filter(
+            ([requestId, teamId]) =>
+              nextBoard.requests.some((item) => item.id === requestId) &&
+              nextBoard.teams.some((team) => team.id === teamId),
+          ),
+        ),
+      );
     } catch {
       if (request === latestLoad.current) showLoadError('Không thể tải dữ liệu điều phối.');
     }
   }, [showLoadError]);
   useEffect(() => {
     void load();
-    return () => { latestLoad.current++; };
+    return () => {
+      latestLoad.current++;
+    };
   }, [load, refreshVersion]);
 
   useEffect(() => {
@@ -139,13 +146,22 @@ export default function DispatchPanel({
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
   const hasCapacity = (teamId: string, requestId: string) => {
-    const load = board.loads?.find(t => t.id === teamId), request = board.requests.find(r => r.id === requestId);
-    return !!load && !!request && load.assignedRequests + 1 <= load.maxRequests && load.estimatedWeightKg + request.estimateWeight <= load.maxWeightKg + 0.00001;
+    const load = board.loads?.find((t) => t.id === teamId),
+      request = board.requests.find((r) => r.id === requestId);
+    return (
+      !!load &&
+      !!request &&
+      load.assignedRequests + 1 <= load.maxRequests &&
+      load.estimatedWeightKg + request.estimateWeight <= load.maxWeightKg + 0.00001
+    );
   };
   const assign = async (requestId: string) => {
     const teamId = selectedTeams[requestId];
     if (!teamId) return toast.warning('Vui lòng chọn receiving team.');
-    if (!hasCapacity(teamId, requestId)) return toast.warning('Team không còn đủ khả năng nhận đơn/kg. Chọn team khác hoặc chỉnh giới hạn.');
+    if (!hasCapacity(teamId, requestId))
+      return toast.warning(
+        'Team không còn đủ khả năng nhận đơn/kg. Chọn team khác hoặc chỉnh giới hạn.',
+      );
     setLoadingId(requestId);
     try {
       await receivingService.assignRequest(requestId, teamId);
@@ -286,47 +302,52 @@ export default function DispatchPanel({
                     <strong>{request.warehouseName}</strong>
                   </div>
                   <small>
-                    {request.estimateWeight} kg dự kiến ·{' '}
-                    <CalendarDays size={13} /> Ngày giờ hẹn: {formatAppointment(request.scheduledDate)}
+                    {request.estimateWeight} kg dự kiến · <CalendarDays size={13} /> Ngày giờ hẹn:{' '}
+                    {formatAppointment(request.scheduledDate)}
                   </small>
                   <>
-                      <select
-                        value={selectedTeams[request.id] || ''}
-                        onChange={(e) =>
-                          setSelectedTeams((v) => ({ ...v, [request.id]: e.target.value }))
-                        }
-                      >
-                        <option value="">
-                          {request.deliveryMethod === 'DonorDropOff'
-                            ? 'Chọn team trực kho'
-                            : 'Chọn receiving team cùng kho'}
+                    <select
+                      value={selectedTeams[request.id] || ''}
+                      onChange={(e) =>
+                        setSelectedTeams((v) => ({ ...v, [request.id]: e.target.value }))
+                      }
+                    >
+                      <option value="">
+                        {request.deliveryMethod === 'DonorDropOff'
+                          ? 'Chọn team trực kho'
+                          : 'Chọn receiving team cùng kho'}
+                      </option>
+                      {teams.map((team) => (
+                        <option
+                          value={team.id}
+                          key={team.id}
+                          disabled={!hasCapacity(team.id, request.id)}
+                        >
+                          {team.teamName} · {team.shiftName} ·{' '}
+                          {new Date(team.shiftDate).toLocaleDateString('vi-VN')}{' '}
+                          {board.loads?.find((t) => t.id === team.id) &&
+                            ` [${board.loads.find((t) => t.id === team.id)!.assignedRequests}/${board.loads.find((t) => t.id === team.id)!.maxRequests}; ${board.loads.find((t) => t.id === team.id)!.estimatedWeightKg}/${board.loads.find((t) => t.id === team.id)!.maxWeightKg} kg]`}
                         </option>
-                        {teams.map((team) => (
-                          <option value={team.id} key={team.id} disabled={!hasCapacity(team.id, request.id)}>
-                            {team.teamName} · {team.shiftName} ·{' '}
-                            {new Date(team.shiftDate).toLocaleDateString('vi-VN')} {board.loads?.find(t => t.id === team.id) && ` [${board.loads.find(t => t.id === team.id)!.assignedRequests}/${board.loads.find(t => t.id === team.id)!.maxRequests}; ${board.loads.find(t => t.id === team.id)!.estimatedWeightKg}/${board.loads.find(t => t.id === team.id)!.maxWeightKg} kg]`}
-                          </option>
-                        ))}
-                      </select>
-                      <small
-                        className={`dispatch-team-summary${selected ? '' : ' empty'}`}
-                        aria-hidden={!selected}
-                      >
-                        {selected && (
-                          <>
-                            <Users size={13} />{' '}
-                            {selected.members.map((x) => x.fullName).join(' & ')} ·{' '}
-                            {selected.shiftTime}
-                          </>
-                        )}
-                      </small>
-                      <button
-                        onClick={() => assign(request.id)}
-                        disabled={!!loadingId || !hasCapacity(selectedTeams[request.id], request.id)}
-                      >
-                        <Truck size={15} />
-                        {loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
-                      </button>
+                      ))}
+                    </select>
+                    <small
+                      className={`dispatch-team-summary${selected ? '' : ' empty'}`}
+                      aria-hidden={!selected}
+                    >
+                      {selected && (
+                        <>
+                          <Users size={13} /> {selected.members.map((x) => x.fullName).join(' & ')}{' '}
+                          · {selected.shiftTime}
+                        </>
+                      )}
+                    </small>
+                    <button
+                      onClick={() => assign(request.id)}
+                      disabled={!!loadingId || !hasCapacity(selectedTeams[request.id], request.id)}
+                    >
+                      <Truck size={15} />
+                      {loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
+                    </button>
                   </>
                 </article>
               );

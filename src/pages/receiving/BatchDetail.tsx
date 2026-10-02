@@ -37,19 +37,31 @@ export const BatchDetail: React.FC = () => {
   const [routeStops, setRouteStops] = useState<RouteStopPoint[]>([]);
   const [selectedStop, setSelectedStop] = useState<number | null>(null);
   const routeSidebarRef = useRef<HTMLElement>(null);
-  useEffect(() => { setRouteStops([]); setSelectedStop(null); }, [id]);
+  useEffect(() => {
+    setRouteStops([]);
+    setSelectedStop(null);
+  }, [id]);
   const selectRouteStop = (index: number) => {
     setSelectedStop(index);
     // Wait for the selected card's layout before measuring its scroll position.
     window.requestAnimationFrame(() => {
-    const sidebar = routeSidebarRef.current;
-    const stop = sidebar?.querySelector<HTMLElement>(`[data-route-stop="${index}"]`);
-    if (!sidebar || !stop) return;
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
-    sidebar.scrollTo({ top: sidebar.scrollTop + stop.getBoundingClientRect().top - sidebar.getBoundingClientRect().top - 12, behavior });
-    if (window.matchMedia('(max-width: 1200px)').matches) {
-      sidebar.scrollIntoView({ behavior, block: 'nearest' });
-    }
+      const sidebar = routeSidebarRef.current;
+      const stop = sidebar?.querySelector<HTMLElement>(`[data-route-stop="${index}"]`);
+      if (!sidebar || !stop) return;
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth';
+      sidebar.scrollTo({
+        top:
+          sidebar.scrollTop +
+          stop.getBoundingClientRect().top -
+          sidebar.getBoundingClientRect().top -
+          12,
+        behavior,
+      });
+      if (window.matchMedia('(max-width: 1200px)').matches) {
+        sidebar.scrollIntoView({ behavior, block: 'nearest' });
+      }
     });
   };
   const [requests, setRequests] = useState<ReceivingRequest[]>([]);
@@ -162,274 +174,376 @@ export const BatchDetail: React.FC = () => {
         </div>
       </div>
 
-    <div className="ops-page">
-      <div className="ops-panel glass">
-        <span className="ops-panel-label">Tuyến đường thu nhận</span>
-        <h2>{batch.route}</h2>
-        <div className="ops-card-meta" style={{ marginTop: 6 }}>
-          <span>
-            <Calendar size={12} strokeWidth={2} /> Ngày gom: {batch.date}
-          </span>
-        </div>
+      <div className="ops-page">
+        <div className="ops-panel glass">
+          <span className="ops-panel-label">Tuyến đường thu nhận</span>
+          <h2>{batch.route}</h2>
+          <div className="ops-card-meta" style={{ marginTop: 6 }}>
+            <span>
+              <Calendar size={12} strokeWidth={2} /> Ngày gom: {batch.date}
+            </span>
+          </div>
 
-        <div className="rcv-progress" style={{ margin: '18px 0 0' }}>
-          <div className="rcv-progress-labels">
-            <span>Tiến độ xử lý đơn</span>
-            <strong>
-              {processedCount}/{totalCount} đơn · {progressPercent}%
-            </strong>
-          </div>
-          <div className="ops-cap-track">
-            <div className="ops-cap-fill" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
-        {batch.status === 'Completed' && (
-          <div className="receiving-putaway">
-            <div className="receiving-putaway__header">
-              <div><span className="ops-panel-label">Bàn giao vào kho</span><h3>Chọn dãy trong Khu nhận đồ</h3></div>
-              <strong>{batch.totalWeight.toFixed(1)} kg</strong>
+          <div className="rcv-progress" style={{ margin: '18px 0 0' }}>
+            <div className="rcv-progress-labels">
+              <span>Tiến độ xử lý đơn</span>
+              <strong>
+                {processedCount}/{totalCount} đơn · {progressPercent}%
+              </strong>
             </div>
-            <p>Chọn đầy đủ khu vực, dãy và vị trí cụ thể tại màn hình vận hành Khu nhận đồ.</p>
-            <button className="btn btn-primary" onClick={receiveAtWarehouse}>
-              <Warehouse size={17} /> Mở màn hình Khu nhận đồ
-            </button>
+            <div className="ops-cap-track">
+              <div className="ops-cap-fill" style={{ width: `${progressPercent}%` }} />
+            </div>
           </div>
-        )}
-        {batch.status !== 'Completed' && batch.warehouseReceivedAt && (
-          <div className="receiving-receipt">
-            <div><span>Mã Intake Batch</span><strong>{batch.code}</strong></div>
-            <div><span>Vị trí nhập</span><strong>{batch.currentAreaName} · {batch.currentGroupName} · {batch.currentLocationCode}</strong></div>
-            <div><span>Ngày nhập kho</span><strong>{new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</strong></div>
-            <div><span>Tổng khối lượng</span><strong>{batch.totalWeight.toFixed(1)} kg</strong></div>
-            <div><span>Người thực hiện</span><strong>{batch.warehouseReceivedBy || 'Receiving Staff'}</strong></div>
-          </div>
-        )}
-        {batch.status === 'ReceivedAtWarehouse' && (
-          <button className="btn btn-primary" disabled={handoffBusy} onClick={sendToClassification}>
-            <Send size={17} /> {'Gửi Manager điều phối phân loại'}
-          </button>
-        )}
-        {batch.status === 'AwaitingClassificationAssignment' && (
-          <div className="ops-notice">Lô đang ở Khu nhận đồ và chờ Manager phân công team phân loại.</div>
-        )}
-      </div>
-
-      {requiresPickupRoute && <section className="ops-panel glass">
-        <div className="ops-section-head">
-          <div>
-            <h2>Bản đồ tuyến thu nhận</h2>
-            <span>Xuất phát từ kho và sắp xếp các điểm nhận gần nhất</span>
-          </div>
-        </div>
-        <div className="rcv-team-summary" style={{ marginBottom: 14 }}>
-          <Users size={16} />
-          <strong>{batch.teamName || 'Receiving team'}</strong>
-          <span>
-            {batch.teamMembers
-              .map((member) => `${member.fullName} (${member.phoneNumber})`)
-              .join(' · ')}
-          </span>
-        </div>
-        <RouteMap key={batch.id} batch={batch} onStopsChange={setRouteStops} onStopSelect={selectRouteStop} />
-      </section>}
-
-      <section className="rcv-batch-requests">
-        <div className="ops-section-head">
-          <h2>Đơn quyên góp trong lô</h2>
-          <span>Tìm kiếm và lọc theo trạng thái xử lý</span>
-        </div>
-
-        <div style={{ maxWidth: 420, marginBottom: 'var(--spacing-md)' }}>
-          <Input
-            placeholder="Tìm tên, SĐT, địa chỉ hoặc mã đơn..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={<Search size={16} />}
-          />
-        </div>
-
-        <div className="ops-tabs" role="tablist">
-          {filters.map((f) => (
+          {batch.status === 'Completed' && (
+            <div className="receiving-putaway">
+              <div className="receiving-putaway__header">
+                <div>
+                  <span className="ops-panel-label">Bàn giao vào kho</span>
+                  <h3>Chọn dãy trong Khu nhận đồ</h3>
+                </div>
+                <strong>{batch.totalWeight.toFixed(1)} kg</strong>
+              </div>
+              <p>Chọn đầy đủ khu vực, dãy và vị trí cụ thể tại màn hình vận hành Khu nhận đồ.</p>
+              <button className="btn btn-primary" onClick={receiveAtWarehouse}>
+                <Warehouse size={17} /> Mở màn hình Khu nhận đồ
+              </button>
+            </div>
+          )}
+          {batch.status !== 'Completed' && batch.warehouseReceivedAt && (
+            <div className="receiving-receipt">
+              <div>
+                <span>Mã Intake Batch</span>
+                <strong>{batch.code}</strong>
+              </div>
+              <div>
+                <span>Vị trí nhập</span>
+                <strong>
+                  {batch.currentAreaName} · {batch.currentGroupName} · {batch.currentLocationCode}
+                </strong>
+              </div>
+              <div>
+                <span>Ngày nhập kho</span>
+                <strong>{new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</strong>
+              </div>
+              <div>
+                <span>Tổng khối lượng</span>
+                <strong>{batch.totalWeight.toFixed(1)} kg</strong>
+              </div>
+              <div>
+                <span>Người thực hiện</span>
+                <strong>{batch.warehouseReceivedBy || 'Receiving Staff'}</strong>
+              </div>
+            </div>
+          )}
+          {batch.status === 'ReceivedAtWarehouse' && (
             <button
-              key={f.key}
-              type="button"
-              role="tab"
-              aria-selected={statusFilter === f.key}
-              className={`ops-tab ${statusFilter === f.key ? 'active' : ''}`}
-              onClick={() => setStatusFilter(f.key)}
+              className="btn btn-primary"
+              disabled={handoffBusy}
+              onClick={sendToClassification}
             >
-              {f.label}
-              <span className="ops-tab-count">{f.count}</span>
+              <Send size={17} /> {'Gửi Manager điều phối phân loại'}
             </button>
-          ))}
-        </div>
-
-        <div className="ops-list">
-          {filteredRequests.length === 0 ? (
-            <div className="ops-empty">
-              <ClipboardList size={36} strokeWidth={1.5} />
-              <h4>Không tìm thấy đơn quyên góp nào</h4>
-              <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+          )}
+          {batch.status === 'AwaitingClassificationAssignment' && (
+            <div className="ops-notice">
+              Lô đang ở Khu nhận đồ và chờ Manager phân công team phân loại.
             </div>
-          ) : (
-            pagedRequests.map((req) => {
-              const isPending = req.status === 'Pending';
-              const isReceived = req.status === 'Received';
-              const isRescheduled = req.status === 'Rescheduled';
-              const badge = isPending
-                ? 'pending'
-                : isReceived
-                  ? 'stored'
-                  : isRescheduled
-                    ? 'classified'
-                    : 'canceled';
-              const badgeText = isPending
-                ? 'Chờ xử lý'
-                : isReceived
-                  ? 'Đã thu gom'
-                  : isRescheduled
-                    ? 'Đã hẹn lại'
-                    : 'Đã hủy';
-
-              return (
-                <article
-                  key={req.id}
-                  className={`ops-card ${isPending ? '' : 'rcv-card-disabled'}`}
-                  role={isPending ? 'button' : undefined}
-                  tabIndex={isPending ? 0 : -1}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && isPending) {
-                      if (batch.shiftStatus !== 'InProgress' || batch.teamStatus !== 'InProgress') {
-                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
-                        return;
-                      }
-                      navigate(`/receiving/request/${req.id}`);
-                    }
-                  }}
-                  onClick={() => {
-                    if (isPending) {
-                      if (batch.shiftStatus !== 'InProgress' || batch.teamStatus !== 'InProgress') {
-                        toast.warning('Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.');
-                        return;
-                      }
-                      navigate(`/receiving/request/${req.id}`);
-                    }
-                  }}
-                  style={isPending ? undefined : { cursor: 'default' }}
-                >
-                  <div className="ops-card-top">
-                    <div className="ops-card-code">{req.code}</div>
-                    <span className={`ops-badge ${badge}`}>{badgeText}</span>
-                  </div>
-
-                  <div className="rcv-donor-lines">
-                    <span>
-                      <User size={12} strokeWidth={2} /> {req.donorName}
-                    </span>
-                    <span>
-                      <Phone size={12} strokeWidth={2} /> {req.phoneNumber}
-                    </span>
-                    <span>
-                      <MapPin size={12} strokeWidth={2} /> {req.pickupAddress}
-                    </span>
-                  </div>
-
-                  <div className="rcv-material-row">
-                    <span className="rcv-material-label">Đăng ký ban đầu</span>
-                    <span className="rcv-material-tag">
-                      {req.category} · {req.weight}
-                    </span>
-                  </div>
-
-                  {isReceived && req.actualWeight && (
-                    <div className="rcv-material-row">
-                      <span className="rcv-material-label">Thực nhận</span>
-                      <span className="rcv-material-tag on">
-                        {req.actualCategory} · <strong>{req.actualWeight} kg</strong>
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="ops-card-footer">
-                    {isPending ? (
-                      <>
-                        <span>Nhấn để cập nhật số liệu</span>
-                        <span className="ops-card-action">
-                          Xử lý <ArrowRight size={14} strokeWidth={2} />
-                        </span>
-                      </>
-                    ) : isReceived ? (
-                      <span className="ops-card-action" style={{ color: 'var(--color-primary)' }}>
-                        <CheckCircle size={14} strokeWidth={2} /> Đã tiếp nhận
-                      </span>
-                    ) : isRescheduled ? (
-                      <span className="ops-card-action" style={{ color: 'var(--color-warning)' }}>
-                        <Calendar size={14} strokeWidth={2} /> Đã dời lịch
-                      </span>
-                    ) : (
-                      <span className="ops-card-action" style={{ color: 'var(--color-danger)' }}>
-                        <XCircle size={14} strokeWidth={2} /> Đã hủy đơn
-                      </span>
-                    )}
-                  </div>
-                </article>
-              );
-            })
           )}
         </div>
 
-        {filteredRequests.length > pageSize && (
-          <nav className="rcv-pagination" aria-label="Phân trang đơn quyên góp">
-            <button
-              type="button"
-              disabled={safePage === 1}
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            >
-              <ChevronLeft size={15} /> Trước
-            </button>
-            <div className="rcv-page-numbers">
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  className={page === safePage ? 'active' : ''}
-                  aria-current={page === safePage ? 'page' : undefined}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
+        {requiresPickupRoute && (
+          <section className="ops-panel glass">
+            <div className="ops-section-head">
+              <div>
+                <h2>Bản đồ tuyến thu nhận</h2>
+                <span>Xuất phát từ kho và sắp xếp các điểm nhận gần nhất</span>
+              </div>
             </div>
-            <span>
-              Trang {safePage}/{totalPages} · {filteredRequests.length} đơn
-            </span>
-            <button
-              type="button"
-              disabled={safePage === totalPages}
-              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-            >
-              Sau <ChevronRight size={15} />
-            </button>
-          </nav>
+            <div className="rcv-team-summary" style={{ marginBottom: 14 }}>
+              <Users size={16} />
+              <strong>{batch.teamName || 'Receiving team'}</strong>
+              <span>
+                {batch.teamMembers
+                  .map((member) => `${member.fullName} (${member.phoneNumber})`)
+                  .join(' · ')}
+              </span>
+            </div>
+            <RouteMap
+              key={batch.id}
+              batch={batch}
+              onStopsChange={setRouteStops}
+              onStopSelect={selectRouteStop}
+            />
+          </section>
         )}
-      </section>
-    </div>
-    {requiresPickupRoute && <aside ref={routeSidebarRef} className="rcv-route-sidebar" aria-label="Thứ tự lấy hàng và chi tiết đơn">
-      <div className="rcv-route-sidebar-head">
-        <h2>Thứ tự lấy hàng</h2>
-        <p>Theo tuyến gợi ý trên bản đồ · {requests.filter(request => request.deliveryMethod === 'StaffPickup').length} đơn</p>
+
+        <section className="rcv-batch-requests">
+          <div className="ops-section-head">
+            <h2>Đơn quyên góp trong lô</h2>
+            <span>Tìm kiếm và lọc theo trạng thái xử lý</span>
+          </div>
+
+          <div style={{ maxWidth: 420, marginBottom: 'var(--spacing-md)' }}>
+            <Input
+              placeholder="Tìm tên, SĐT, địa chỉ hoặc mã đơn..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              icon={<Search size={16} />}
+            />
+          </div>
+
+          <div className="ops-tabs" role="tablist">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === f.key}
+                className={`ops-tab ${statusFilter === f.key ? 'active' : ''}`}
+                onClick={() => setStatusFilter(f.key)}
+              >
+                {f.label}
+                <span className="ops-tab-count">{f.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="ops-list">
+            {filteredRequests.length === 0 ? (
+              <div className="ops-empty">
+                <ClipboardList size={36} strokeWidth={1.5} />
+                <h4>Không tìm thấy đơn quyên góp nào</h4>
+                <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+              </div>
+            ) : (
+              pagedRequests.map((req) => {
+                const isPending = req.status === 'Pending';
+                const isReceived = req.status === 'Received';
+                const isRescheduled = req.status === 'Rescheduled';
+                const badge = isPending
+                  ? 'pending'
+                  : isReceived
+                    ? 'stored'
+                    : isRescheduled
+                      ? 'classified'
+                      : 'canceled';
+                const badgeText = isPending
+                  ? 'Chờ xử lý'
+                  : isReceived
+                    ? 'Đã thu gom'
+                    : isRescheduled
+                      ? 'Đã hẹn lại'
+                      : 'Đã hủy';
+
+                return (
+                  <article
+                    key={req.id}
+                    className={`ops-card ${isPending ? '' : 'rcv-card-disabled'}`}
+                    role={isPending ? 'button' : undefined}
+                    tabIndex={isPending ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && isPending) {
+                        if (
+                          batch.shiftStatus !== 'InProgress' ||
+                          batch.teamStatus !== 'InProgress'
+                        ) {
+                          toast.warning(
+                            'Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.',
+                          );
+                          return;
+                        }
+                        navigate(`/receiving/request/${req.id}`);
+                      }
+                    }}
+                    onClick={() => {
+                      if (isPending) {
+                        if (
+                          batch.shiftStatus !== 'InProgress' ||
+                          batch.teamStatus !== 'InProgress'
+                        ) {
+                          toast.warning(
+                            'Bạn phải bắt đầu ca làm trước khi xử lý yêu cầu quyên góp.',
+                          );
+                          return;
+                        }
+                        navigate(`/receiving/request/${req.id}`);
+                      }
+                    }}
+                    style={isPending ? undefined : { cursor: 'default' }}
+                  >
+                    <div className="ops-card-top">
+                      <div className="ops-card-code">{req.code}</div>
+                      <span className={`ops-badge ${badge}`}>{badgeText}</span>
+                    </div>
+
+                    <div className="rcv-donor-lines">
+                      <span>
+                        <User size={12} strokeWidth={2} /> {req.donorName}
+                      </span>
+                      <span>
+                        <Phone size={12} strokeWidth={2} /> {req.phoneNumber}
+                      </span>
+                      <span>
+                        <MapPin size={12} strokeWidth={2} /> {req.pickupAddress}
+                      </span>
+                    </div>
+
+                    <div className="rcv-material-row">
+                      <span className="rcv-material-label">Đăng ký ban đầu</span>
+                      <span className="rcv-material-tag">
+                        {req.category} · {req.weight}
+                      </span>
+                    </div>
+
+                    {isReceived && req.actualWeight && (
+                      <div className="rcv-material-row">
+                        <span className="rcv-material-label">Thực nhận</span>
+                        <span className="rcv-material-tag on">
+                          {req.actualCategory} · <strong>{req.actualWeight} kg</strong>
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="ops-card-footer">
+                      {isPending ? (
+                        <>
+                          <span>Nhấn để cập nhật số liệu</span>
+                          <span className="ops-card-action">
+                            Xử lý <ArrowRight size={14} strokeWidth={2} />
+                          </span>
+                        </>
+                      ) : isReceived ? (
+                        <span className="ops-card-action" style={{ color: 'var(--color-primary)' }}>
+                          <CheckCircle size={14} strokeWidth={2} /> Đã tiếp nhận
+                        </span>
+                      ) : isRescheduled ? (
+                        <span className="ops-card-action" style={{ color: 'var(--color-warning)' }}>
+                          <Calendar size={14} strokeWidth={2} /> Đã dời lịch
+                        </span>
+                      ) : (
+                        <span className="ops-card-action" style={{ color: 'var(--color-danger)' }}>
+                          <XCircle size={14} strokeWidth={2} /> Đã hủy đơn
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+
+          {filteredRequests.length > pageSize && (
+            <nav className="rcv-pagination" aria-label="Phân trang đơn quyên góp">
+              <button
+                type="button"
+                disabled={safePage === 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                <ChevronLeft size={15} /> Trước
+              </button>
+              <div className="rcv-page-numbers">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    className={page === safePage ? 'active' : ''}
+                    aria-current={page === safePage ? 'page' : undefined}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <span>
+                Trang {safePage}/{totalPages} · {filteredRequests.length} đơn
+              </span>
+              <button
+                type="button"
+                disabled={safePage === totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
+                Sau <ChevronRight size={15} />
+              </button>
+            </nav>
+          )}
+        </section>
       </div>
-      {routeStops.length === 0 ? <p className="rcv-route-placeholder">Mở bản đồ để xem thứ tự lấy hàng và chi tiết từng đơn.</p> : <ol className="rcv-route-stop-list">
-        {routeStops.map((point, index) => <li key={`${point.lat}-${point.lon}`} data-route-stop={index} className={selectedStop === index ? 'is-selected' : undefined} aria-current={selectedStop === index ? 'step' : undefined}>
-          <span className={`rcv-route-stop-number ${index === 0 ? 'warehouse' : ''}`}>{index}</span>
-          <StopDetails point={{ ...point, requests: point.requests?.map(item => requests.find(request => request.id === item.id) || item) }} index={index} />
-        </li>)}
-      </ol>}
-      {routeStops.length > 0 && requests.filter(request => request.deliveryMethod === 'StaffPickup' && !routeStops.some(point => point.requests?.some(item => item.id === request.id))).length > 0 && <div className="rcv-route-unmapped">
-        <h3>Chưa xác định được vị trí</h3>
-        {requests.filter(request => request.deliveryMethod === 'StaffPickup' && !routeStops.some(point => point.requests?.some(item => item.id === request.id))).map(request => <StopDetails key={request.id} point={{ lat: 0, lon: 0, address: request.pickupAddress, label: '', requests: [request] }} index={-1} />)}
-      </div>}
-    </aside>}
+      {requiresPickupRoute && (
+        <aside
+          ref={routeSidebarRef}
+          className="rcv-route-sidebar"
+          aria-label="Thứ tự lấy hàng và chi tiết đơn"
+        >
+          <div className="rcv-route-sidebar-head">
+            <h2>Thứ tự lấy hàng</h2>
+            <p>
+              Theo tuyến gợi ý trên bản đồ ·{' '}
+              {requests.filter((request) => request.deliveryMethod === 'StaffPickup').length} đơn
+            </p>
+          </div>
+          {routeStops.length === 0 ? (
+            <p className="rcv-route-placeholder">
+              Mở bản đồ để xem thứ tự lấy hàng và chi tiết từng đơn.
+            </p>
+          ) : (
+            <ol className="rcv-route-stop-list">
+              {routeStops.map((point, index) => (
+                <li
+                  key={`${point.lat}-${point.lon}`}
+                  data-route-stop={index}
+                  className={selectedStop === index ? 'is-selected' : undefined}
+                  aria-current={selectedStop === index ? 'step' : undefined}
+                >
+                  <span className={`rcv-route-stop-number ${index === 0 ? 'warehouse' : ''}`}>
+                    {index}
+                  </span>
+                  <StopDetails
+                    point={{
+                      ...point,
+                      requests: point.requests?.map(
+                        (item) => requests.find((request) => request.id === item.id) || item,
+                      ),
+                    }}
+                    index={index}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
+          {routeStops.length > 0 &&
+            requests.filter(
+              (request) =>
+                request.deliveryMethod === 'StaffPickup' &&
+                !routeStops.some((point) => point.requests?.some((item) => item.id === request.id)),
+            ).length > 0 && (
+              <div className="rcv-route-unmapped">
+                <h3>Chưa xác định được vị trí</h3>
+                {requests
+                  .filter(
+                    (request) =>
+                      request.deliveryMethod === 'StaffPickup' &&
+                      !routeStops.some((point) =>
+                        point.requests?.some((item) => item.id === request.id),
+                      ),
+                  )
+                  .map((request) => (
+                    <StopDetails
+                      key={request.id}
+                      point={{
+                        lat: 0,
+                        lon: 0,
+                        address: request.pickupAddress,
+                        label: '',
+                        requests: [request],
+                      }}
+                      index={-1}
+                    />
+                  ))}
+              </div>
+            )}
+        </aside>
+      )}
     </div>
   );
 };

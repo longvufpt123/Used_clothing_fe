@@ -57,8 +57,21 @@
   margin-top: 10px;
   padding-top: 10px;
 }
-.route-stop-order > strong { color: #047857; }
-.route-stop-order dl { margin: 8px 0 0; }
-.route-stop-order dt { color: #64748b; font-size: 11px; margin-top: 6px; }
-.route-stop-order dd { margin: 2px 0 0; }
-.route-stop-order a { color: #047857; font-weight: 600; }
+.route-stop-order > strong {
+  color: #047857;
+}
+.route-stop-order dl {
+  margin: 8px 0 0;
+}
+.route-stop-order dt {
+  color: #64748b;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.route-stop-order dd {
+  margin: 2px 0 0;
+}
+.route-stop-order a {
+  color: #047857;
+  font-weight: 600;
+}

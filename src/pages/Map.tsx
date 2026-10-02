@@ -9,16 +9,218 @@ import { geoapifyTileUrl, geoapifyUrl } from '@/services/geoapify';
 import './Map.css';
 
 const CENTER: [number, number] = [10.8231, 106.6297];
-interface Warehouse { id: string; address: string; totalCapacityKg: number; currentWeight: number; latitude?: number | null; longitude?: number | null }
-interface Location extends Warehouse { lat: number; lon: number; hours: string; fillPercent: number; isFull: boolean }
-const pin = L.divIcon({ className: 'drop-off-marker-icon', html: '<span>●</span>', iconSize: [34, 34], iconAnchor: [17, 30] });
-async function geocode(address: string) { const key = `geoapify:${address.toLowerCase()}`, cached = localStorage.getItem(key); if (cached) return JSON.parse(cached); try { const response = await fetch(geoapifyUrl('/v1/geocode/search', { text: address, filter: 'countrycode:vn', bias: 'proximity:106.6297,10.8231', format: 'json', lang: 'vi', limit: 1 })); const data = await response.json(), result = data.results?.[0]; if (!result) return null; const point = { lat: result.lat, lon: result.lon }; localStorage.setItem(key, JSON.stringify(point)); return point; } catch { return null; } }
+interface Warehouse {
+  id: string;
+  address: string;
+  totalCapacityKg: number;
+  currentWeight: number;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+interface Location extends Warehouse {
+  lat: number;
+  lon: number;
+  hours: string;
+  fillPercent: number;
+  isFull: boolean;
+}
+const pin = L.divIcon({
+  className: 'drop-off-marker-icon',
+  html: '<span>●</span>',
+  iconSize: [34, 34],
+  iconAnchor: [17, 30],
+});
+async function geocode(address: string) {
+  const key = `geoapify:${address.toLowerCase()}`,
+    cached = localStorage.getItem(key);
+  if (cached) return JSON.parse(cached);
+  try {
+    const response = await fetch(
+      geoapifyUrl('/v1/geocode/search', {
+        text: address,
+        filter: 'countrycode:vn',
+        bias: 'proximity:106.6297,10.8231',
+        format: 'json',
+        lang: 'vi',
+        limit: 1,
+      }),
+    );
+    const data = await response.json(),
+      result = data.results?.[0];
+    if (!result) return null;
+    const point = { lat: result.lat, lon: result.lon };
+    localStorage.setItem(key, JSON.stringify(point));
+    return point;
+  } catch {
+    return null;
+  }
+}
 
 export const Map: React.FC = () => {
-  const [locations, setLocations] = useState<Location[]>([]), [search, setSearch] = useState(''), [selected, setSelected] = useState<Location | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
-  const filtered = locations.filter((item) => item.address.toLowerCase().includes(search.toLowerCase()));
-  useEffect(() => { let mounted = true; void (async () => { try { const warehouses = await apiClient.get<unknown, Warehouse[]>('/warehouses'), values: Location[] = []; for (const warehouse of warehouses || []) { const point = warehouse.latitude != null && warehouse.longitude != null ? { lat: warehouse.latitude, lon: warehouse.longitude } : await geocode(warehouse.address); if (!point) continue; const total = warehouse.totalCapacityKg || 0, current = warehouse.currentWeight || 0, fillPercent = total > 0 ? Math.min(100, Math.round(current / total * 100)) : 0; values.push({ ...warehouse, ...point, hours: 'Theo lịch ca tiếp nhận của kho', fillPercent, isFull: fillPercent >= 100 }); } if (mounted) { setLocations(values); setSelected(values[0] || null); if (!values.length) setError('Không thể xác định vị trí bản đồ cho các kho.'); } } catch { if (mounted) setError('Không thể tải danh sách điểm tiếp nhận.'); } finally { if (mounted) setLoading(false); } })(); return () => { mounted = false; }; }, []);
-  return <div className="map-page container"><div className="map-header text-center"><span className="section-subtitle">Đóng góp trực tiếp</span><h1 className="text-gradient">Điểm Tiếp Nhận Quần Áo</h1><p className="map-desc">Tìm kiếm các kho tiếp nhận ReThreads gần bạn nhất.</p></div><div className="map-container-grid"><div className="locations-sidebar glass"><div className="search-box-wrapper"><Input placeholder="Tìm kiếm theo địa chỉ" value={search} onChange={(event) => setSearch(event.target.value)} icon={<Search size={18} />} /></div><div className="locations-list">{loading && <div className="empty-locations-search text-center"><Loader2 className="map-loading-spinner" size={18} />Đang tải...</div>}{!loading && filtered.map((location) => <div key={location.id} className={`location-item ${selected?.id === location.id ? 'active' : ''}`} onClick={() => setSelected(location)}><div className="location-item-header"><h4>Kho tiếp nhận</h4><span className={`fill-indicator ${location.isFull ? 'full' : ''}`}>{location.isFull ? 'Đã đầy' : `${location.fillPercent}%`}</span></div><p className="location-item-address"><MapPin size={14} />{location.address}</p></div>)}{!loading && !filtered.length && <div className="empty-locations-search text-center">{error || 'Không tìm thấy điểm phù hợp.'}</div>}</div></div>
-    <div className="map-display-wrapper"><div className="map-canvas glass"><MapContainer key={selected ? `${selected.lat}-${selected.lon}` : 'map'} center={selected ? [selected.lat, selected.lon] : CENTER} zoom={selected ? 15 : 11} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}><TileLayer attribution='&copy; OpenStreetMap contributors &copy; Geoapify' url={geoapifyTileUrl()} />{filtered.map((location) => <Marker key={location.id} position={[location.lat, location.lon]} icon={pin} eventHandlers={{ click: () => setSelected(location) }} />)}</MapContainer><div className="map-overlay-tip"><Info size={14} />Chọn ghim để xem chi tiết kho.</div></div>{selected && <div className="location-detail-card glass card-hover"><div className="detail-card-header"><Leaf size={24} /><div><h3>Kho tiếp nhận</h3><span className={`status-badge-inline ${selected.isFull ? 'full' : 'available'}`}>{selected.isFull ? 'Đã đầy' : 'Đang hoạt động'}</span></div></div><div className="detail-card-body"><p className="detail-info"><strong>Địa chỉ:</strong> {selected.address}</p><p className="detail-info"><Clock size={16} /><strong>Thời gian:</strong> {selected.hours}</p><div className="fill-level-progress-wrapper"><div className="fill-level-header"><span>Sức chứa</span><span>{selected.fillPercent}%</span></div><div className="progress-bar-bg"><div className={`progress-bar-fill ${selected.isFull ? 'danger' : ''}`} style={{ width: `${selected.fillPercent}%` }} /></div><p className="fill-desc">{selected.currentWeight.toLocaleString('vi-VN')} kg / {selected.totalCapacityKg.toLocaleString('vi-VN')} kg</p></div></div></div>}</div></div></div>;
+  const [locations, setLocations] = useState<Location[]>([]),
+    [search, setSearch] = useState(''),
+    [selected, setSelected] = useState<Location | null>(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState('');
+  const filtered = locations.filter((item) =>
+    item.address.toLowerCase().includes(search.toLowerCase()),
+  );
+  useEffect(() => {
+    let mounted = true;
+    void (async () => {
+      try {
+        const warehouses = await apiClient.get<unknown, Warehouse[]>('/warehouses'),
+          values: Location[] = [];
+        for (const warehouse of warehouses || []) {
+          const point =
+            warehouse.latitude != null && warehouse.longitude != null
+              ? { lat: warehouse.latitude, lon: warehouse.longitude }
+              : await geocode(warehouse.address);
+          if (!point) continue;
+          const total = warehouse.totalCapacityKg || 0,
+            current = warehouse.currentWeight || 0,
+            fillPercent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+          values.push({
+            ...warehouse,
+            ...point,
+            hours: 'Theo lịch ca tiếp nhận của kho',
+            fillPercent,
+            isFull: fillPercent >= 100,
+          });
+        }
+        if (mounted) {
+          setLocations(values);
+          setSelected(values[0] || null);
+          if (!values.length) setError('Không thể xác định vị trí bản đồ cho các kho.');
+        }
+      } catch {
+        if (mounted) setError('Không thể tải danh sách điểm tiếp nhận.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  return (
+    <div className="map-page container">
+      <div className="map-header text-center">
+        <span className="section-subtitle">Đóng góp trực tiếp</span>
+        <h1 className="text-gradient">Điểm Tiếp Nhận Quần Áo</h1>
+        <p className="map-desc">Tìm kiếm các kho tiếp nhận ReThreads gần bạn nhất.</p>
+      </div>
+      <div className="map-container-grid">
+        <div className="locations-sidebar glass">
+          <div className="search-box-wrapper">
+            <Input
+              placeholder="Tìm kiếm theo địa chỉ"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              icon={<Search size={18} />}
+            />
+          </div>
+          <div className="locations-list">
+            {loading && (
+              <div className="empty-locations-search text-center">
+                <Loader2 className="map-loading-spinner" size={18} />
+                Đang tải...
+              </div>
+            )}
+            {!loading &&
+              filtered.map((location) => (
+                <div
+                  key={location.id}
+                  className={`location-item ${selected?.id === location.id ? 'active' : ''}`}
+                  onClick={() => setSelected(location)}
+                >
+                  <div className="location-item-header">
+                    <h4>Kho tiếp nhận</h4>
+                    <span className={`fill-indicator ${location.isFull ? 'full' : ''}`}>
+                      {location.isFull ? 'Đã đầy' : `${location.fillPercent}%`}
+                    </span>
+                  </div>
+                  <p className="location-item-address">
+                    <MapPin size={14} />
+                    {location.address}
+                  </p>
+                </div>
+              ))}
+            {!loading && !filtered.length && (
+              <div className="empty-locations-search text-center">
+                {error || 'Không tìm thấy điểm phù hợp.'}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="map-display-wrapper">
+          <div className="map-canvas glass">
+            <MapContainer
+              key={selected ? `${selected.lat}-${selected.lon}` : 'map'}
+              center={selected ? [selected.lat, selected.lon] : CENTER}
+              zoom={selected ? 15 : 11}
+              scrollWheelZoom={false}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors &copy; Geoapify"
+                url={geoapifyTileUrl()}
+              />
+              {filtered.map((location) => (
+                <Marker
+                  key={location.id}
+                  position={[location.lat, location.lon]}
+                  icon={pin}
+                  eventHandlers={{ click: () => setSelected(location) }}
+                />
+              ))}
+            </MapContainer>
+            <div className="map-overlay-tip">
+              <Info size={14} />
+              Chọn ghim để xem chi tiết kho.
+            </div>
+          </div>
+          {selected && (
+            <div className="location-detail-card glass card-hover">
+              <div className="detail-card-header">
+                <Leaf size={24} />
+                <div>
+                  <h3>Kho tiếp nhận</h3>
+                  <span className={`status-badge-inline ${selected.isFull ? 'full' : 'available'}`}>
+                    {selected.isFull ? 'Đã đầy' : 'Đang hoạt động'}
+                  </span>
+                </div>
+              </div>
+              <div className="detail-card-body">
+                <p className="detail-info">
+                  <strong>Địa chỉ:</strong> {selected.address}
+                </p>
+                <p className="detail-info">
+                  <Clock size={16} />
+                  <strong>Thời gian:</strong> {selected.hours}
+                </p>
+                <div className="fill-level-progress-wrapper">
+                  <div className="fill-level-header">
+                    <span>Sức chứa</span>
+                    <span>{selected.fillPercent}%</span>
+                  </div>
+                  <div className="progress-bar-bg">
+                    <div
+                      className={`progress-bar-fill ${selected.isFull ? 'danger' : ''}`}
+                      style={{ width: `${selected.fillPercent}%` }}
+                    />
+                  </div>
+                  <p className="fill-desc">
+                    {selected.currentWeight.toLocaleString('vi-VN')} kg /{' '}
+                    {selected.totalCapacityKg.toLocaleString('vi-VN')} kg
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 export default Map;

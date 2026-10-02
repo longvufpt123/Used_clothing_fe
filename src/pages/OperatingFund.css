@@ -1,12 +1,283 @@
-.fund-page{max-width:1160px;margin:0 auto;padding:28px 20px;display:grid;gap:24px;color:var(--color-text-primary)}
-.fund-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}.fund-heading h1,.fund-page h2,.fund-page h3{margin:0;overflow-wrap:anywhere}.fund-heading span{color:var(--color-primary);font-size:12px;font-weight:800;letter-spacing:.08em}.fund-page p{line-height:1.65;margin:8px 0}.fund-page small{color:var(--color-text-secondary);line-height:1.6}
-.fund-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.fund-stats article,.fund-card{padding:24px;border:1px solid var(--color-border);border-radius:18px;background:var(--color-bg-secondary);min-width:0}.fund-stats article{display:grid;gap:12px}.fund-stats strong{font-size:clamp(22px,3vw,32px);color:var(--color-primary);overflow-wrap:anywhere}.fund-card{display:grid;gap:18px}.fund-card form,.fund-confirm{display:grid;gap:18px}.fund-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.fund-page label,.fund-confirm label{display:grid;gap:8px;font-weight:600;min-width:0}.fund-page input,.fund-page textarea,.fund-confirm textarea{box-sizing:border-box;min-width:0;width:100%;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-primary);color:var(--color-text-primary);font:inherit}.fund-page input[type=file]{font-size:13px}.fund-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.fund-page button,.fund-confirm button,.fund-page a{min-height:42px;padding:10px 16px;border-radius:9px;border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-primary);cursor:pointer;font:inherit;font-weight:600;text-decoration:none}.fund-page button:disabled,.fund-confirm button:disabled{opacity:.5;cursor:not-allowed}.fund-page .fund-primary,.fund-confirm .fund-primary{background:var(--color-primary);color:white;border-color:var(--color-primary)}.fund-error,.fund-notice{padding:14px 18px;border-radius:12px;background:#fff3e0;color:#824500}.fund-error{background:#fff0f0;color:#ab2323}.fund-expenses,.fund-history{display:grid;gap:16px}.fund-expenses article,.fund-history article{padding:20px;border:1px solid var(--color-border);border-radius:12px;display:grid;gap:14px;min-width:0}.fund-description{white-space:pre-wrap;overflow-wrap:anywhere}.fund-history article{grid-template-columns:1fr auto}.fund-confirm strong{font-size:24px;color:var(--color-primary)}.fund-confirm p{overflow-wrap:anywhere}
-@media(max-width:650px){.fund-page{padding:20px 12px;gap:18px}.fund-stats,.fund-grid{grid-template-columns:1fr}.fund-card,.fund-stats article{padding:18px}.fund-history article{grid-template-columns:1fr}.fund-heading>button{width:100%}}
-@media(max-width:900px){.admin-content-area .fund-page{padding-top:64px}}
-.fund-statements{scroll-margin-top:90px}.fund-statements select{width:100%;min-width:0;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-primary);color:var(--color-text-primary);font:inherit}.fund-statements strong{overflow-wrap:anywhere}
-.fund-page [role=tabpanel][hidden]{display:none}
-.fund-tabs{display:flex;flex-wrap:wrap;gap:10px;padding:10px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-secondary)}
-.fund-tabs [role=tab]{flex:1 1 180px;min-height:46px;white-space:normal}
-.fund-tabs [role=tab][aria-selected=true]{color:white;background:var(--color-primary);border-color:var(--color-primary)}
-.fund-tabs [role=tab]:focus-visible{outline:3px solid var(--color-primary);outline-offset:3px}
-@media(max-width:650px){.fund-tabs{gap:8px}.fund-tabs [role=tab]{flex-basis:calc(50% - 8px);padding:10px 8px;font-size:14px}}
+.fund-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  color: var(--color-text-primary);
+}
+
+.fund-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.fund-heading h1,
+.fund-page h2,
+.fund-page h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.fund-heading span {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.fund-page p {
+  line-height: 1.65;
+  margin: 8px 0;
+}
+
+.fund-page small {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.fund-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fund-stats article,
+.fund-card {
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-bg-secondary);
+  min-width: 0;
+}
+
+.fund-stats article {
+  display: grid;
+  gap: 12px;
+}
+
+.fund-stats strong {
+  font-size: clamp(22px, 3vw, 32px);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.fund-card {
+  display: grid;
+  gap: 18px;
+}
+
+.fund-card form,
+.fund-confirm {
+  display: grid;
+  gap: 18px;
+}
+
+.fund-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.fund-page label,
+.fund-confirm label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.fund-page input,
+.fund-page textarea,
+.fund-confirm textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.fund-page input[type='file'] {
+  font-size: 13px;
+}
+
+.fund-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fund-page button,
+.fund-confirm button,
+.fund-page a {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fund-page button:disabled,
+.fund-confirm button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fund-page .fund-primary,
+.fund-confirm .fund-primary {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.fund-error,
+.fund-notice {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #fff3e0;
+  color: #824500;
+}
+
+.fund-error {
+  background: #fff0f0;
+  color: #ab2323;
+}
+
+.fund-expenses,
+.fund-history {
+  display: grid;
+  gap: 16px;
+}
+
+.fund-expenses article,
+.fund-history article {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.fund-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fund-history article {
+  grid-template-columns: 1fr auto;
+}
+
+.fund-confirm strong {
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.fund-confirm p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 650px) {
+  .fund-page {
+    padding: 20px 12px;
+    gap: 18px;
+  }
+  .fund-stats,
+  .fund-grid {
+    grid-template-columns: 1fr;
+  }
+  .fund-card,
+  .fund-stats article {
+    padding: 18px;
+  }
+  .fund-history article {
+    grid-template-columns: 1fr;
+  }
+  .fund-heading > button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-content-area .fund-page {
+    padding-top: 64px;
+  }
+}
+
+.fund-statements {
+  scroll-margin-top: 90px;
+}
+
+.fund-statements select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.fund-statements strong {
+  overflow-wrap: anywhere;
+}
+
+.fund-page [role='tabpanel'][hidden] {
+  display: none;
+}
+
+.fund-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-secondary);
+}
+
+.fund-tabs [role='tab'] {
+  min-width: 0;
+  min-height: 46px;
+  white-space: normal;
+}
+
+.fund-tabs [role='tab'][aria-selected='true'] {
+  color: white;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.fund-tabs [role='tab']:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .fund-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .fund-tabs [role='tab'] {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+}

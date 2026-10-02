@@ -112,12 +112,22 @@
 }
 
 @media (max-width: 900px) {
-  .point-rule-layout { grid-template-columns: 1fr; }
+  .point-rule-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
   .point-rule-editor,
-  .point-rule-preview { padding: 20px; }
-  .point-rule-input-wrap { flex-direction: column; }
-  .point-rule-input-wrap span { padding: 12px 14px; border-top: 1px solid var(--color-border); border-left: 0; }
+  .point-rule-preview {
+    padding: 20px;
+  }
+  .point-rule-input-wrap {
+    flex-direction: column;
+  }
+  .point-rule-input-wrap span {
+    padding: 12px 14px;
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
 }

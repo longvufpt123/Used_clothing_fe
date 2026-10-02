@@ -74,8 +74,12 @@
   gap: 24px;
   align-items: start;
 }
-.rcv-batch-layout > .ops-page { min-width: 0; }
-.rcv-batch-layout > .ops-nav { grid-column: 1 / -1; }
+.rcv-batch-layout > .ops-page {
+  min-width: 0;
+}
+.rcv-batch-layout > .ops-nav {
+  grid-column: 1 / -1;
+}
 .rcv-route-sidebar {
   position: sticky;
   top: 24px;
@@ -89,15 +93,24 @@
   background: var(--color-bg-secondary);
   padding: 20px;
 }
-.rcv-route-sidebar-head h2 { font-size: 1rem; margin: 0 0 8px; }
+.rcv-route-sidebar-head h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
 .rcv-route-sidebar-head p,
 .rcv-route-placeholder {
-  font-size: .8rem;
+  font-size: 0.8rem;
   line-height: 1.5;
   color: var(--color-text-muted);
 }
-.rcv-route-placeholder { margin-top: 20px; }
-.rcv-route-stop-list { list-style: none; margin: 20px 0 0; padding: 0; }
+.rcv-route-placeholder {
+  margin-top: 20px;
+}
+.rcv-route-stop-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
 .rcv-route-stop-list > li {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
@@ -113,7 +126,7 @@
   border-radius: 50%;
   background: #059669;
   color: white;
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 .rcv-route-stop-list > li.is-selected {
@@ -125,13 +138,33 @@
   outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
   outline-offset: 2px;
 }
-.rcv-route-stop-number.warehouse { background: #0f172a; }
-.rcv-route-sidebar .route-stop-details { line-height: 1.5; }
-.rcv-route-sidebar .route-stop-details > strong { display: block; padding-top: 3px; }
-.rcv-route-sidebar .route-stop-order { padding: 12px 0; }
-.rcv-route-unmapped { border-top: 1px solid var(--color-border); padding-top: 16px; }
-.rcv-route-unmapped h3 { font-size: .9rem; margin-bottom: 12px; }
+.rcv-route-stop-number.warehouse {
+  background: #0f172a;
+}
+.rcv-route-sidebar .route-stop-details {
+  line-height: 1.5;
+}
+.rcv-route-sidebar .route-stop-details > strong {
+  display: block;
+  padding-top: 3px;
+}
+.rcv-route-sidebar .route-stop-order {
+  padding: 12px 0;
+}
+.rcv-route-unmapped {
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+.rcv-route-unmapped h3 {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
 @media (max-width: 1200px) {
-  .rcv-batch-layout { grid-template-columns: minmax(0, 1fr); }
-  .rcv-route-sidebar { position: static; max-height: 650px; }
+  .rcv-batch-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rcv-route-sidebar {
+    position: static;
+    max-height: 650px;
+  }
 }

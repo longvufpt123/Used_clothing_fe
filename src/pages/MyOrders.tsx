@@ -213,7 +213,11 @@ export const MyOrders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<DonorRequestSearchApiResponse | null>(null);
   const [chatOrder, setChatOrder] = useState<DonorRequestSearchApiResponse | null>(null);
   const [shippingOrder, setShippingOrder] = useState<DonorRequestSearchApiResponse | null>(null);
-  const [shippingForm, setShippingForm] = useState({ carrierName: '', trackingCode: '', expectedArrivalAt: '' });
+  const [shippingForm, setShippingForm] = useState({
+    carrierName: '',
+    trackingCode: '',
+    expectedArrivalAt: '',
+  });
   const [savingShipping, setSavingShipping] = useState(false);
   const [searchCode, setSearchCode] = useState('');
   const [filterDate, setFilterDate] = useState('');
@@ -303,8 +307,12 @@ export const MyOrders: React.FC = () => {
   };
 
   const saveShippingInfo = async () => {
-    if (!shippingOrder || !shippingForm.carrierName.trim() || !shippingForm.trackingCode.trim()
-        || !shippingForm.expectedArrivalAt) {
+    if (
+      !shippingOrder ||
+      !shippingForm.carrierName.trim() ||
+      !shippingForm.trackingCode.trim() ||
+      !shippingForm.expectedArrivalAt
+    ) {
       toast.warning('Vui lòng nhập đầy đủ thông tin vận chuyển.');
       return;
     }
@@ -648,16 +656,24 @@ export const MyOrders: React.FC = () => {
                     </div>
                     <div className="order-header-actions">
                       <span className={`order-status ${getStatusToneClass(order.status)}`}>
-                        {order.dropOffMethod === 'ThirdPartyDelivery' && !order.pickupDate
-                          && canModifyOrder(order.status)
+                        {order.dropOffMethod === 'ThirdPartyDelivery' &&
+                        !order.pickupDate &&
+                        canModifyOrder(order.status)
                           ? 'Cần cập nhật thông tin vận chuyển'
                           : getStatusLabel(order.status)}
                       </span>
                       {isModifiable && !isEditing && (
                         <div className="order-actions">
                           {order.dropOffMethod === 'ThirdPartyDelivery' && (
-                            <Button className="shipping-action-btn" type="button" variant="outline" size="sm" onClick={() => openShippingForm(order)}>
-                              <Truck size={15} /> {order.trackingCode ? 'Sửa vận chuyển' : 'Cập nhật vận chuyển'}
+                            <Button
+                              className="shipping-action-btn"
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openShippingForm(order)}
+                            >
+                              <Truck size={15} />{' '}
+                              {order.trackingCode ? 'Sửa vận chuyển' : 'Cập nhật vận chuyển'}
                             </Button>
                           )}
                           <Button
@@ -896,8 +912,12 @@ export const MyOrders: React.FC = () => {
         </section>
       )}
       {chatOrder && (
-        <DonationChatDialog requestId={chatOrder.id} requestCode={chatOrder.code}
-          participantLabel={chatOrder.receivingTeamName || 'Đội tiếp nhận'} onClose={() => setChatOrder(null)} />
+        <DonationChatDialog
+          requestId={chatOrder.id}
+          requestCode={chatOrder.code}
+          participantLabel={chatOrder.receivingTeamName || 'Đội tiếp nhận'}
+          onClose={() => setChatOrder(null)}
+        />
       )}
       {filteredOrders.length > pageSize && (
         <div className="orders-pagination">
@@ -981,17 +1001,36 @@ export const MyOrders: React.FC = () => {
                 <strong>{selectedOrder.pickupAddress}</strong>
               </div>
             </div>
-            {selectedOrder.status === 'ReceivingStaffAssigned' && selectedOrder.receivingStaff && selectedOrder.receivingStaff.length > 0 && (
-              <section className="assigned-receiving-card">
-                <div>
-                  <span>Nhân viên tiếp nhận</span>
-                  <strong>{selectedOrder.receivingTeamName || 'Đội tiếp nhận'}</strong>
-                  <p>{selectedOrder.receivingStaff.map((staff) => `${staff.fullName} · ${staff.phoneNumber}`).join(' • ')}</p>
-                  <small>Giờ dự kiến đến lấy: {selectedOrder.estimatedPickupAt ? new Date(selectedOrder.estimatedPickupAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Đang cập nhật'}</small>
-                </div>
-                <Button type="button" onClick={() => setChatOrder(selectedOrder)}><MessageCircle size={17} /> Chat với nhân viên</Button>
-              </section>
-            )}
+            {selectedOrder.status === 'ReceivingStaffAssigned' &&
+              selectedOrder.receivingStaff &&
+              selectedOrder.receivingStaff.length > 0 && (
+                <section className="assigned-receiving-card">
+                  <div>
+                    <span>Nhân viên tiếp nhận</span>
+                    <strong>{selectedOrder.receivingTeamName || 'Đội tiếp nhận'}</strong>
+                    <p>
+                      {selectedOrder.receivingStaff
+                        .map((staff) => `${staff.fullName} · ${staff.phoneNumber}`)
+                        .join(' • ')}
+                    </p>
+                    <small>
+                      Giờ dự kiến đến lấy:{' '}
+                      {selectedOrder.estimatedPickupAt
+                        ? new Date(selectedOrder.estimatedPickupAt).toLocaleString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })
+                        : 'Đang cập nhật'}
+                    </small>
+                  </div>
+                  <Button type="button" onClick={() => setChatOrder(selectedOrder)}>
+                    <MessageCircle size={17} /> Chat với nhân viên
+                  </Button>
+                </section>
+              )}
             {selectedOrder.imageUrls && selectedOrder.imageUrls.length > 0 && (
               <div className="order-detail-images">
                 <h3>
@@ -1045,34 +1084,78 @@ export const MyOrders: React.FC = () => {
         </div>
       )}
 
-      {shippingOrder && createPortal(
-        <div className="edit-order-overlay" onMouseDown={(event) => {
-          if (event.target === event.currentTarget && !savingShipping) setShippingOrder(null);
-        }}>
-          <section className="edit-order-form shipping-info-modal" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="edit-order-modal-header">
-              <div><span>THÔNG TIN VẬN CHUYỂN</span><h2>{shippingOrder.code}</h2></div>
-              <button type="button" onClick={() => setShippingOrder(null)}><X size={20} /></button>
-            </header>
-            <div className="shipping-info-fields">
-              <label>Đơn vị vận chuyển *<input className="custom-input" value={shippingForm.carrierName}
-                onChange={(e) => setShippingForm({ ...shippingForm, carrierName: e.target.value })}
-                placeholder="VD: GHN, GHTK, Viettel Post..." /></label>
-              <label>Mã vận đơn *<input className="custom-input" value={shippingForm.trackingCode}
-                onChange={(e) => setShippingForm({ ...shippingForm, trackingCode: e.target.value.toUpperCase() })}
-                placeholder="Mã để Receiving Team đối chiếu" /></label>
-              <label>Thời gian dự kiến đến kho *<input className="custom-input" type="datetime-local"
-                value={shippingForm.expectedArrivalAt}
-                onChange={(e) => setShippingForm({ ...shippingForm, expectedArrivalAt: e.target.value })} /></label>
-              <small>Thời gian phải nằm trong một ca tiếp nhận đang mở của kho.</small>
-            </div>
-            <footer className="edit-form-actions">
-              <Button type="button" variant="outline" onClick={() => setShippingOrder(null)}>Hủy</Button>
-              <Button type="button" isLoading={savingShipping} onClick={saveShippingInfo}><Save size={16} /> Lưu vận chuyển</Button>
-            </footer>
-          </section>
-        </div>, document.body,
-      )}
+      {shippingOrder &&
+        createPortal(
+          <div
+            className="edit-order-overlay"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !savingShipping) setShippingOrder(null);
+            }}
+          >
+            <section
+              className="edit-order-form shipping-info-modal"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <header className="edit-order-modal-header">
+                <div>
+                  <span>THÔNG TIN VẬN CHUYỂN</span>
+                  <h2>{shippingOrder.code}</h2>
+                </div>
+                <button type="button" onClick={() => setShippingOrder(null)}>
+                  <X size={20} />
+                </button>
+              </header>
+              <div className="shipping-info-fields">
+                <label>
+                  Đơn vị vận chuyển *
+                  <input
+                    className="custom-input"
+                    value={shippingForm.carrierName}
+                    onChange={(e) =>
+                      setShippingForm({ ...shippingForm, carrierName: e.target.value })
+                    }
+                    placeholder="VD: GHN, GHTK, Viettel Post..."
+                  />
+                </label>
+                <label>
+                  Mã vận đơn *
+                  <input
+                    className="custom-input"
+                    value={shippingForm.trackingCode}
+                    onChange={(e) =>
+                      setShippingForm({
+                        ...shippingForm,
+                        trackingCode: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="Mã để Receiving Team đối chiếu"
+                  />
+                </label>
+                <label>
+                  Thời gian dự kiến đến kho *
+                  <input
+                    className="custom-input"
+                    type="datetime-local"
+                    value={shippingForm.expectedArrivalAt}
+                    onChange={(e) =>
+                      setShippingForm({ ...shippingForm, expectedArrivalAt: e.target.value })
+                    }
+                  />
+                </label>
+                <small>Thời gian phải nằm trong một ca tiếp nhận đang mở của kho.</small>
+              </div>
+              <footer className="edit-form-actions">
+                <Button type="button" variant="outline" onClick={() => setShippingOrder(null)}>
+                  Hủy
+                </Button>
+                <Button type="button" isLoading={savingShipping} onClick={saveShippingInfo}>
+                  <Save size={16} /> Lưu vận chuyển
+                </Button>
+              </footer>
+            </section>
+          </div>,
+          document.body,
+        )}
 
       <ConfirmDialog
         isOpen={Boolean(pendingCancelOrder)}

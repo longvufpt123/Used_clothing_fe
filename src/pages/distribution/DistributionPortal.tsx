@@ -47,7 +47,14 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   const [warehouseId, setWarehouseId] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [requestConfirmation, setRequestConfirmation] = useState<{
-    payload: { warehouseId: string; recipientName: string; recipientPhone: string; toAddress: string; notes: string; items: { inventoryId: string }[] };
+    payload: {
+      warehouseId: string;
+      recipientName: string;
+      recipientPhone: string;
+      toAddress: string;
+      notes: string;
+      items: { inventoryId: string }[];
+    };
     editingId: string | null;
     warehouseName: string;
     batches: { id: string; code: string; label: string; weight: number }[];
@@ -77,14 +84,20 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     try {
       await distributionService.confirmReceipt(receiptTarget.id);
       const receivedId = receiptTarget.id;
-      setRequests((current) => current.map((request) => request.id === receivedId
-        ? { ...request, status: 'OrganizationReceived' } : request));
+      setRequests((current) =>
+        current.map((request) =>
+          request.id === receivedId ? { ...request, status: 'OrganizationReceived' } : request,
+        ),
+      );
       setDetailRequest(null);
       setReceiptTarget(null);
       toast.success('Đã xác nhận nhận được hàng.');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Không thể xác nhận nhận hàng.');
-    } finally { receiptBusy.current = false; setReceiptSubmitting(false); }
+    } finally {
+      receiptBusy.current = false;
+      setReceiptSubmitting(false);
+    }
   };
   const [issueSlipRequest, setIssueSlipRequest] = useState<DistributionRequest | null>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
@@ -242,15 +255,28 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       return toast.warning('Số điện thoại nhận hàng không hợp lệ.');
     if (!warehouseId || !Object.values(selected).some((x) => x > 0))
       return toast.warning('Chọn kho và ít nhất một batch.');
-    const batches = Object.entries(selected).filter(([, weight]) => weight > 0).map(([id, weight]) => {
-      const item = catalog.find((entry) => entry.inventoryId === id);
-      const previous = requests.find((request) => request.id === editingRequestId)?.items.find((entry) => entry.inventoryId === id);
-      return { id, code: item?.batchCode || previous?.batchCode || 'Batch đã chọn', label: item?.clothingType || previous?.clothingType || '', weight };
-    });
+    const batches = Object.entries(selected)
+      .filter(([, weight]) => weight > 0)
+      .map(([id, weight]) => {
+        const item = catalog.find((entry) => entry.inventoryId === id);
+        const previous = requests
+          .find((request) => request.id === editingRequestId)
+          ?.items.find((entry) => entry.inventoryId === id);
+        return {
+          id,
+          code: item?.batchCode || previous?.batchCode || 'Batch đã chọn',
+          label: item?.clothingType || previous?.clothingType || '',
+          weight,
+        };
+      });
     setRequestError('');
-    setRequestConfirmation({ editingId: editingRequestId,
-      warehouseName: warehouses.find((warehouse) => warehouse.id === warehouseId)?.warehouseName || '', batches,
-      payload: { warehouseId, ...form, items: batches.map((batch) => ({ inventoryId: batch.id })) } });
+    setRequestConfirmation({
+      editingId: editingRequestId,
+      warehouseName:
+        warehouses.find((warehouse) => warehouse.id === warehouseId)?.warehouseName || '',
+      batches,
+      payload: { warehouseId, ...form, items: batches.map((batch) => ({ inventoryId: batch.id })) },
+    });
   };
   const submitRequest = async () => {
     if (!requestConfirmation || requestBusy.current) return;
@@ -362,10 +388,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
     setPdfExporting(true);
     try {
       await document.fonts.ready;
-      const [{ toPng }, { jsPDF }] = await Promise.all([
-        import('html-to-image'),
-        import('jspdf'),
-      ]);
+      const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')]);
       const element = issueSlipRef.current;
       const image = await toPng(element, {
         pixelRatio: 2,
@@ -384,7 +407,8 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
       });
       const imageSize = await new Promise<{ width: number; height: number }>((resolve, reject) => {
         const preview = new Image();
-        preview.onload = () => resolve({ width: preview.naturalWidth, height: preview.naturalHeight });
+        preview.onload = () =>
+          resolve({ width: preview.naturalWidth, height: preview.naturalHeight });
         preview.onerror = () => reject(new Error('Không thể đọc ảnh phiếu xuất.'));
         preview.src = image;
       });
@@ -453,9 +477,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
   );
   const ghnPickupWards = useMemo(
     () =>
-      ghnAdministrative.wards.filter(
-        (ward) => String(ward.districtId) === ghnForm.fromDistrictId,
-      ),
+      ghnAdministrative.wards.filter((ward) => String(ward.districtId) === ghnForm.fromDistrictId),
     [ghnForm.fromDistrictId],
   );
   const ghnWards = useMemo(
@@ -564,9 +586,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <p>
                   {batch.gender} · {batch.targetUser} · Size {batch.size}
                 </p>
-                <strong>
-                  {batch.availableWeight} kg khả dụng
-                </strong>
+                <strong>{batch.availableWeight} kg khả dụng</strong>
                 {batch.isLocked && <span className="batch-lock-label">Đang được giữ chỗ</span>}
                 <button className="product-preview" onClick={() => setActiveBatch(batch)}>
                   <Eye size={18} /> Xem {batch.items.length} sản phẩm
@@ -580,8 +600,8 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                     {batch.isLocked
                       ? 'Batch tạm thời không khả dụng'
                       : selected[batch.inventoryId] > 0
-                      ? `Đã chọn toàn bộ ${batch.availableWeight} kg`
-                      : `Chọn toàn bộ ${batch.availableWeight} kg`}
+                        ? `Đã chọn toàn bộ ${batch.availableWeight} kg`
+                        : `Chọn toàn bộ ${batch.availableWeight} kg`}
                   </button>
                 </div>
               </article>
@@ -682,7 +702,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
         </>
       )}
       {(mode !== 'organization' || organizationView !== 'catalog') && (
-        <section className={`distribution-requests${mode === 'warehouse' ? ' distribution-requests--table' : ''}`}>
+        <section
+          className={`distribution-requests${mode === 'warehouse' ? ' distribution-requests--table' : ''}`}
+        >
           <h2>{mode === 'organization' ? 'Yêu cầu của tổ chức' : 'Danh sách yêu cầu'}</h2>
           <div className="distribution-request-filters">
             <label>
@@ -744,7 +766,12 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             </div>
           )}
           {mode === 'warehouse' && pagedRequests.length > 0 && (
-            <div className="distribution-request-table-scroll" role="region" aria-label="Danh sách yêu cầu xuất kho từ thiện" tabIndex={0}>
+            <div
+              className="distribution-request-table-scroll"
+              role="region"
+              aria-label="Danh sách yêu cầu xuất kho từ thiện"
+              tabIndex={0}
+            >
               <table className="distribution-request-table">
                 <thead>
                   <tr>
@@ -760,65 +787,92 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   {pagedRequests.map((r) => (
                     <tr key={r.id}>
                       <td>
-                        <button type="button" className="distribution-request-code" onClick={() => setDetailRequest(r)}>{r.code}</button>
+                        <button
+                          type="button"
+                          className="distribution-request-code"
+                          onClick={() => setDetailRequest(r)}
+                        >
+                          {r.code}
+                        </button>
                         <small>{new Date(r.requestedAt).toLocaleString('vi-VN')}</small>
                       </td>
-                      <td><strong>{r.organizationName}</strong><small>{r.warehouseName}</small></td>
+                      <td>
+                        <strong>{r.organizationName}</strong>
+                        <small>{r.warehouseName}</small>
+                      </td>
                       <td className="distribution-request-recipient">
                         <strong>{r.recipientName}</strong>
                         <small>{r.recipientPhone}</small>
                         <small>{r.toAddress}</small>
                       </td>
                       <td>
-                        <span className="distribution-request-weight">{r.items.reduce((total, item) => total + item.requestedWeight, 0).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} kg</span>
+                        <span className="distribution-request-weight">
+                          {r.items
+                            .reduce((total, item) => total + item.requestedWeight, 0)
+                            .toLocaleString('vi-VN', { maximumFractionDigits: 2 })}{' '}
+                          kg
+                        </span>
                         <small>{r.items.length} batch</small>
                       </td>
                       <td>
-                        <span className={`distribution-request-status distribution-request-status--${r.status}`}>{getStatusLabel(r.status)}</span>
+                        <span
+                          className={`distribution-request-status distribution-request-status--${r.status}`}
+                        >
+                          {getStatusLabel(r.status)}
+                        </span>
                         {r.issueSlipCode && <small>Đã lập phiếu xuất</small>}
                         {r.ghnOrderCode && <small>GHN: {getStatusLabel(r.ghnStatus)}</small>}
                       </td>
-                      <td><button type="button" className="distribution-request-detail" onClick={() => setDetailRequest(r)}>Chi tiết</button></td>
+                      <td>
+                        <button
+                          type="button"
+                          className="distribution-request-detail"
+                          onClick={() => setDetailRequest(r)}
+                        >
+                          Chi tiết
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-          {mode !== 'warehouse' && pagedRequests.map((r) => (
-            <article
-              key={r.id}
-              className="distribution-request-summary"
-              onClick={() => setDetailRequest(r)}
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') setDetailRequest(r);
-              }}
-            >
-              <div className="request-title">
-                <div>
-                  <b>{r.code}</b>
-                  <h3>
-                    {r.organizationName} → {r.warehouseName}
-                  </h3>
+          {mode !== 'warehouse' &&
+            pagedRequests.map((r) => (
+              <article
+                key={r.id}
+                className="distribution-request-summary"
+                onClick={() => setDetailRequest(r)}
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') setDetailRequest(r);
+                }}
+              >
+                <div className="request-title">
+                  <div>
+                    <b>{r.code}</b>
+                    <h3>
+                      {r.organizationName} → {r.warehouseName}
+                    </h3>
+                  </div>
+                  <span
+                    className={`distribution-request-status distribution-request-status--${r.status}`}
+                  >
+                    {getStatusLabel(r.status)}
+                  </span>
                 </div>
-                <span
-                  className={`distribution-request-status distribution-request-status--${r.status}`}
-                >
-                  {getStatusLabel(r.status)}
-                </span>
-              </div>
-              <p>
-                {r.recipientName} · {r.recipientPhone} · {r.toAddress}
-              </p>
-              <div className="request-summary-meta">
-                <span>{r.items.length} batch</span>
-                {r.issueSlipCode && <span>Đã lập phiếu xuất</span>}
-                {r.ghnOrderCode && <span>GHN: {getStatusLabel(r.ghnStatus)}</span>}
-              </div>
-              <b className="request-summary-link">Xem chi tiết →</b>
-            </article>
-          ))}
+                <p>
+                  {r.recipientName} · {r.recipientPhone} · {r.toAddress}
+                </p>
+                <div className="request-summary-meta">
+                  <span>{r.items.length} batch</span>
+                  {r.issueSlipCode && <span>Đã lập phiếu xuất</span>}
+                  {r.ghnOrderCode && <span>GHN: {getStatusLabel(r.ghnStatus)}</span>}
+                </div>
+                <b className="request-summary-link">Xem chi tiết →</b>
+              </article>
+            ))}
           {requestPageCount > 1 && (
             <nav
               className="catalog-pagination distribution-request-pagination"
@@ -856,41 +910,133 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
           )}
         </section>
       )}
-      {requestConfirmation && createPortal(<Modal isOpen
-        title={requestConfirmation.editingId ? 'Xác nhận cập nhật yêu cầu' : 'Xác nhận gửi yêu cầu'}
-        className="distribution-request-confirmation"
-        onClose={() => { if (!requestBusy.current) setRequestConfirmation(null); }}
-        footer={<>
-          <Button variant="outline" disabled={requestSubmitting} onClick={() => setRequestConfirmation(null)}>Quay lại chỉnh sửa</Button>
-          <Button autoFocus isLoading={requestSubmitting} onClick={() => void submitRequest()}>{requestConfirmation.editingId ? 'Xác nhận cập nhật' : 'Xác nhận gửi'}</Button>
-        </>}>
-        <p>Vui lòng kiểm tra thông tin trước khi gửi yêu cầu đến Manager.</p>
-        <dl className="distribution-request-summary">
-          <div><dt>Người/tổ chức nhận</dt><dd>{requestConfirmation.payload.recipientName}</dd></div>
-          <div><dt>Số điện thoại</dt><dd>{requestConfirmation.payload.recipientPhone}</dd></div>
-          <div className="full"><dt>Địa chỉ nhận hàng</dt><dd>{requestConfirmation.payload.toAddress}</dd></div>
-          <div className="full"><dt>Kho xuất hàng</dt><dd>{requestConfirmation.warehouseName}</dd></div>
-          <div className="full"><dt>Mục đích sử dụng / ghi chú</dt><dd>{requestConfirmation.payload.notes}</dd></div>
-        </dl>
-        <h4>Hàng đã chọn · {requestConfirmation.batches.length} batch</h4>
-        <ul className="distribution-confirmed-batches">{requestConfirmation.batches.map((batch) => <li key={batch.id}>
-          <div><strong>{batch.code}</strong><small>{batch.label}</small></div><b>{batch.weight} kg</b>
-        </li>)}</ul>
-        <p><strong>Tổng khối lượng: {Number(requestConfirmation.batches.reduce((sum, batch) => sum + batch.weight, 0).toFixed(2))} kg</strong></p>
-        {requestError && <p role="alert" className="distribution-request-error">{requestError}</p>}
-      </Modal>, document.body)}
+      {requestConfirmation &&
+        createPortal(
+          <Modal
+            isOpen
+            title={
+              requestConfirmation.editingId ? 'Xác nhận cập nhật yêu cầu' : 'Xác nhận gửi yêu cầu'
+            }
+            className="distribution-request-confirmation"
+            onClose={() => {
+              if (!requestBusy.current) setRequestConfirmation(null);
+            }}
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  disabled={requestSubmitting}
+                  onClick={() => setRequestConfirmation(null)}
+                >
+                  Quay lại chỉnh sửa
+                </Button>
+                <Button
+                  autoFocus
+                  isLoading={requestSubmitting}
+                  onClick={() => void submitRequest()}
+                >
+                  {requestConfirmation.editingId ? 'Xác nhận cập nhật' : 'Xác nhận gửi'}
+                </Button>
+              </>
+            }
+          >
+            <p>Vui lòng kiểm tra thông tin trước khi gửi yêu cầu đến Manager.</p>
+            <dl className="distribution-request-summary">
+              <div>
+                <dt>Người/tổ chức nhận</dt>
+                <dd>{requestConfirmation.payload.recipientName}</dd>
+              </div>
+              <div>
+                <dt>Số điện thoại</dt>
+                <dd>{requestConfirmation.payload.recipientPhone}</dd>
+              </div>
+              <div className="full">
+                <dt>Địa chỉ nhận hàng</dt>
+                <dd>{requestConfirmation.payload.toAddress}</dd>
+              </div>
+              <div className="full">
+                <dt>Kho xuất hàng</dt>
+                <dd>{requestConfirmation.warehouseName}</dd>
+              </div>
+              <div className="full">
+                <dt>Mục đích sử dụng / ghi chú</dt>
+                <dd>{requestConfirmation.payload.notes}</dd>
+              </div>
+            </dl>
+            <h4>Hàng đã chọn · {requestConfirmation.batches.length} batch</h4>
+            <ul className="distribution-confirmed-batches">
+              {requestConfirmation.batches.map((batch) => (
+                <li key={batch.id}>
+                  <div>
+                    <strong>{batch.code}</strong>
+                    <small>{batch.label}</small>
+                  </div>
+                  <b>{batch.weight} kg</b>
+                </li>
+              ))}
+            </ul>
+            <p>
+              <strong>
+                Tổng khối lượng:{' '}
+                {Number(
+                  requestConfirmation.batches
+                    .reduce((sum, batch) => sum + batch.weight, 0)
+                    .toFixed(2),
+                )}{' '}
+                kg
+              </strong>
+            </p>
+            {requestError && (
+              <p role="alert" className="distribution-request-error">
+                {requestError}
+              </p>
+            )}
+          </Modal>,
+          document.body,
+        )}
       {receiptTarget && (
-        <div className="product-modal-backdrop" onMouseDown={() => { if (!receiptBusy.current) setReceiptTarget(null); }}>
-          <section className="distribution-detail-modal" role="dialog" aria-modal="true"
-            aria-labelledby="charity-receipt-title" onMouseDown={(event) => event.stopPropagation()}>
-            <header><h2 id="charity-receipt-title">Xác nhận đã nhận hàng</h2>
-              <button type="button" aria-label="Đóng" disabled={receiptSubmitting} onClick={() => setReceiptTarget(null)}><X /></button>
+        <div
+          className="product-modal-backdrop"
+          onMouseDown={() => {
+            if (!receiptBusy.current) setReceiptTarget(null);
+          }}
+        >
+          <section
+            className="distribution-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="charity-receipt-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h2 id="charity-receipt-title">Xác nhận đã nhận hàng</h2>
+              <button
+                type="button"
+                aria-label="Đóng"
+                disabled={receiptSubmitting}
+                onClick={() => setReceiptTarget(null)}
+              >
+                <X />
+              </button>
             </header>
-            <p>Bạn xác nhận tổ chức đã thực nhận hàng của yêu cầu <strong>{receiptTarget.code}</strong>?</p>
+            <p>
+              Bạn xác nhận tổ chức đã thực nhận hàng của yêu cầu{' '}
+              <strong>{receiptTarget.code}</strong>?
+            </p>
             <p>Kiểm tra hàng thực tế trước khi xác nhận. Trạng thái GHN có thể chưa cập nhật.</p>
             <div className="request-actions">
-              <button type="button" disabled={receiptSubmitting} onClick={() => setReceiptTarget(null)}>Hủy</button>
-              <button type="button" disabled={receiptSubmitting} onClick={() => void confirmReceipt()}>
+              <button
+                type="button"
+                disabled={receiptSubmitting}
+                onClick={() => setReceiptTarget(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={receiptSubmitting}
+                onClick={() => void confirmReceipt()}
+              >
                 {receiptSubmitting ? 'Đang xác nhận...' : 'Xác nhận đã nhận hàng'}
               </button>
             </div>
@@ -920,7 +1066,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <X />
               </button>
             </header>
-            <span className="distribution-detail-status">{getStatusLabel(detailRequest.status)}</span>
+            <span className="distribution-detail-status">
+              {getStatusLabel(detailRequest.status)}
+            </span>
             <div className="request-lines">
               {detailRequest.items.map((item) => (
                 <div key={item.id}>
@@ -931,9 +1079,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                       {item.clothingType} · {item.gender} · Size {item.size}
                     </small>
                   </span>
-                  <strong>
-                    {item.issuedWeight || item.requestedWeight} kg
-                  </strong>
+                  <strong>{item.issuedWeight || item.requestedWeight} kg</strong>
                 </div>
               ))}
             </div>
@@ -975,12 +1121,21 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               </div>
             )}
             <div className="request-actions">
-              {mode === 'organization' && detailRequest.warehouseIssuedAt
-                && ['ReadyForGhn', 'GhnBooked', 'InTransit', 'Delivered', 'DeliveryFailed'].includes(detailRequest.status) && (
-                <button type="button" onClick={() => { setReceiptTarget(detailRequest); setDetailRequest(null); }}>
-                  <PackageCheck /> Đã nhận được hàng
-                </button>
-              )}
+              {mode === 'organization' &&
+                detailRequest.warehouseIssuedAt &&
+                ['ReadyForGhn', 'GhnBooked', 'InTransit', 'Delivered', 'DeliveryFailed'].includes(
+                  detailRequest.status,
+                ) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReceiptTarget(detailRequest);
+                      setDetailRequest(null);
+                    }}
+                  >
+                    <PackageCheck /> Đã nhận được hàng
+                  </button>
+                )}
               {mode === 'organization' && detailRequest.status === 'PendingManagerApproval' && (
                 <>
                   <button
@@ -1110,9 +1265,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                       {item.batchCode} · {item.clothingType} · {item.fabricType} · Size {item.size}
                     </small>
                   </span>
-                  <strong>
-                    {item.issuedWeight || item.requestedWeight} kg
-                  </strong>
+                  <strong>{item.issuedWeight || item.requestedWeight} kg</strong>
                 </div>
               ))}
             </div>
@@ -1120,10 +1273,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <span>Tổng cộng</span>
               <strong>
                 {issueSlipRequest.items
-                  .reduce(
-                    (total, item) => total + (item.issuedWeight || item.requestedWeight),
-                    0,
-                  )
+                  .reduce((total, item) => total + (item.issuedWeight || item.requestedWeight), 0)
                   .toFixed(2)}{' '}
                 kg
               </strong>
@@ -1163,9 +1313,7 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
               <X />
             </span>
             <h2 id="reject-request-title">Xác nhận từ chối {rejectTarget.code}?</h2>
-            <p>
-              Yêu cầu sẽ bị từ chối và tổ chức sẽ không thể tiếp tục quy trình phân phối này.
-            </p>
+            <p>Yêu cầu sẽ bị từ chối và tổ chức sẽ không thể tiếp tục quy trình phân phối này.</p>
             <div>
               <button disabled={decisionSubmitting} onClick={() => setRejectTarget(null)}>
                 Quay lại
@@ -1256,70 +1404,106 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <b>Điểm GHN đến lấy hàng</b>
               </div>
               <label className={ghnErrors.fromName ? 'invalid' : ''}>
-                <span>Tên điểm lấy hàng <b>*</b></span>
+                <span>
+                  Tên điểm lấy hàng <b>*</b>
+                </span>
                 <input
                   value={ghnForm.fromName}
-                  onChange={(event) => setGhnForm((current) => ({ ...current, fromName: event.target.value }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({ ...current, fromName: event.target.value }))
+                  }
                 />
                 {ghnErrors.fromName && <small>{ghnErrors.fromName}</small>}
               </label>
               <label className={ghnErrors.fromPhone ? 'invalid' : ''}>
-                <span>Số điện thoại điểm lấy <b>*</b></span>
+                <span>
+                  Số điện thoại điểm lấy <b>*</b>
+                </span>
                 <input
                   value={ghnForm.fromPhone}
-                  onChange={(event) => setGhnForm((current) => ({ ...current, fromPhone: event.target.value }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({ ...current, fromPhone: event.target.value }))
+                  }
                 />
                 {ghnErrors.fromPhone && <small>{ghnErrors.fromPhone}</small>}
               </label>
               <label className={`wide ${ghnErrors.fromAddress ? 'invalid' : ''}`}>
-                <span>Địa chỉ chi tiết điểm lấy <b>*</b></span>
+                <span>
+                  Địa chỉ chi tiết điểm lấy <b>*</b>
+                </span>
                 <input
                   value={ghnForm.fromAddress}
-                  onChange={(event) => setGhnForm((current) => ({ ...current, fromAddress: event.target.value }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({ ...current, fromAddress: event.target.value }))
+                  }
                 />
                 {ghnErrors.fromAddress && <small>{ghnErrors.fromAddress}</small>}
               </label>
               <label className={ghnErrors.fromProvinceId ? 'invalid' : ''}>
-                <span>Tỉnh/thành điểm lấy <b>*</b></span>
+                <span>
+                  Tỉnh/thành điểm lấy <b>*</b>
+                </span>
                 <select
                   value={ghnForm.fromProvinceId}
-                  onChange={(event) => setGhnForm((current) => ({
-                    ...current,
-                    fromProvinceId: event.target.value,
-                    fromDistrictId: '',
-                    fromWardCode: '',
-                  }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({
+                      ...current,
+                      fromProvinceId: event.target.value,
+                      fromDistrictId: '',
+                      fromWardCode: '',
+                    }))
+                  }
                 >
                   <option value="">Chọn tỉnh/thành phố</option>
-                  {ghnAdministrative.provinces.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  {ghnAdministrative.provinces.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
                 {ghnErrors.fromProvinceId && <small>{ghnErrors.fromProvinceId}</small>}
               </label>
               <label className={ghnErrors.fromDistrictId ? 'invalid' : ''}>
-                <span>Quận/huyện điểm lấy <b>*</b></span>
+                <span>
+                  Quận/huyện điểm lấy <b>*</b>
+                </span>
                 <select
                   disabled={!ghnForm.fromProvinceId}
                   value={ghnForm.fromDistrictId}
-                  onChange={(event) => setGhnForm((current) => ({
-                    ...current,
-                    fromDistrictId: event.target.value,
-                    fromWardCode: '',
-                  }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({
+                      ...current,
+                      fromDistrictId: event.target.value,
+                      fromWardCode: '',
+                    }))
+                  }
                 >
                   <option value="">Chọn quận/huyện</option>
-                  {ghnPickupDistricts.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  {ghnPickupDistricts.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
                 {ghnErrors.fromDistrictId && <small>{ghnErrors.fromDistrictId}</small>}
               </label>
               <label className={ghnErrors.fromWardCode ? 'invalid' : ''}>
-                <span>Phường/xã điểm lấy <b>*</b></span>
+                <span>
+                  Phường/xã điểm lấy <b>*</b>
+                </span>
                 <select
                   disabled={!ghnForm.fromDistrictId}
                   value={ghnForm.fromWardCode}
-                  onChange={(event) => setGhnForm((current) => ({ ...current, fromWardCode: event.target.value }))}
+                  onChange={(event) =>
+                    setGhnForm((current) => ({ ...current, fromWardCode: event.target.value }))
+                  }
                 >
                   <option value="">Chọn phường/xã</option>
-                  {ghnPickupWards.map((item) => <option key={`${item.districtId}-${item.code}`} value={item.code}>{item.name}</option>)}
+                  {ghnPickupWards.map((item) => (
+                    <option key={`${item.districtId}-${item.code}`} value={item.code}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
                 {ghnErrors.fromWardCode && <small>{ghnErrors.fromWardCode}</small>}
               </label>
@@ -1327,7 +1511,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 <b>Địa chỉ giao đến</b>
                 <span>Địa chỉ đầy đủ của Organization:</span>
                 <strong>{ghnTarget.toAddress}</strong>
-                <small>Hệ thống đã tự động đối chiếu tỉnh/thành, quận/huyện và phường/xã. Vui lòng kiểm tra lại trước khi tạo vận đơn.</small>
+                <small>
+                  Hệ thống đã tự động đối chiếu tỉnh/thành, quận/huyện và phường/xã. Vui lòng kiểm
+                  tra lại trước khi tạo vận đơn.
+                </small>
               </div>
               <label className={ghnErrors.provinceId ? 'invalid' : ''}>
                 <span>
@@ -1337,7 +1524,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   value={ghnForm.provinceId}
                   onChange={(event) => {
                     const value = event.target.value;
-                    const province = ghnAdministrative.provinces.find((item) => String(item.id) === value);
+                    const province = ghnAdministrative.provinces.find(
+                      (item) => String(item.id) === value,
+                    );
                     setGhnForm((current) => ({
                       ...current,
                       provinceId: value,
@@ -1347,12 +1536,19 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                       toWardCode: '',
                       wardName: '',
                     }));
-                    setGhnErrors((current) => ({ ...current, provinceId: '', toDistrictId: '', toWardCode: '' }));
+                    setGhnErrors((current) => ({
+                      ...current,
+                      provinceId: '',
+                      toDistrictId: '',
+                      toWardCode: '',
+                    }));
                   }}
                 >
                   <option value="">Chọn tỉnh/thành phố</option>
                   {ghnAdministrative.provinces.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
                   ))}
                 </select>
                 {ghnErrors.provinceId && <small>{ghnErrors.provinceId}</small>}
@@ -1379,7 +1575,9 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                 >
                   <option value="">Chọn quận/huyện</option>
                   {ghnDistricts.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
                   ))}
                 </select>
                 {ghnErrors.toDistrictId && <small>{ghnErrors.toDistrictId}</small>}
@@ -1394,13 +1592,19 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   onChange={(event) => {
                     const value = event.target.value;
                     const ward = ghnWards.find((item) => item.code === value);
-                    setGhnForm((current) => ({ ...current, toWardCode: value, wardName: ward?.name || '' }));
+                    setGhnForm((current) => ({
+                      ...current,
+                      toWardCode: value,
+                      wardName: ward?.name || '',
+                    }));
                     setGhnErrors((current) => ({ ...current, toWardCode: '' }));
                   }}
                 >
                   <option value="">Chọn phường/xã</option>
                   {ghnWards.map((item) => (
-                    <option key={`${item.districtId}-${item.code}`} value={item.code}>{item.name}</option>
+                    <option key={`${item.districtId}-${item.code}`} value={item.code}>
+                      {item.name}
+                    </option>
                   ))}
                 </select>
                 {ghnErrors.toWardCode && <small>{ghnErrors.toWardCode}</small>}
@@ -1494,36 +1698,30 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
             </div>
             <div className="product-grid">
               {pagedProducts.map((item) => (
-                  <article
-                    key={item.itemCode}
-                    className="product-tile"
-                  >
-                    <div className="product-image">
-                      {item.imageUrls[0] ? (
-                        <img
-                          src={item.imageUrls[0]}
-                          alt={`${item.clothingType} ${item.itemCode}`}
-                        />
-                      ) : (
-                        <div>
-                          <ImageOff />
-                          <span>Chưa có ảnh</span>
-                        </div>
-                      )}
-                      <span className="product-grade">Nhãn {activeBatch.grade}</span>
-                    </div>
-                    <div className="product-info">
-                      <small>{item.itemCode}</small>
-                      <h3>{item.clothingType}</h3>
-                      <p>{item.fabricType}</p>
+                <article key={item.itemCode} className="product-tile">
+                  <div className="product-image">
+                    {item.imageUrls[0] ? (
+                      <img src={item.imageUrls[0]} alt={`${item.clothingType} ${item.itemCode}`} />
+                    ) : (
                       <div>
-                        <span>{item.gender}</span>
-                        <span>{item.targetUser}</span>
-                        <span>Size {item.size}</span>
+                        <ImageOff />
+                        <span>Chưa có ảnh</span>
                       </div>
-                      {item.notes && <em>{item.notes}</em>}
+                    )}
+                    <span className="product-grade">Nhãn {activeBatch.grade}</span>
+                  </div>
+                  <div className="product-info">
+                    <small>{item.itemCode}</small>
+                    <h3>{item.clothingType}</h3>
+                    <p>{item.fabricType}</p>
+                    <div>
+                      <span>{item.gender}</span>
+                      <span>{item.targetUser}</span>
+                      <span>Size {item.size}</span>
                     </div>
-                  </article>
+                    {item.notes && <em>{item.notes}</em>}
+                  </div>
+                </article>
               ))}
             </div>
             {activeBatch.items.length > productPageSize && (

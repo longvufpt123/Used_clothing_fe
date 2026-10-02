@@ -196,21 +196,35 @@ export default function ManagerWarehouseControl() {
     setLoading(true);
     const section = <T,>(request: () => Promise<T>, publish: (data: T) => void) =>
       independentSection(request, publish, isCurrent);
-    await loadIndependentSections([
-      section(() => warehouseService.dashboard(warehouseId), setStats),
-      section(() => warehouseService.layout(warehouseId), setLayout),
-      section(() => warehouseService.intakeTraces(warehouseId), setIntakes),
-      section(() => warehouseService.inboundBatches(warehouseId), setBatches),
-      section(() => warehouseService.inventory(undefined, warehouseId), setInventory),
-      section(() => warehouseService.transactions(undefined, warehouseId), setTransactions),
-    ], isCurrent, (e: any) => toast.error(e?.response?.data?.message || 'Không tải được một phần dữ liệu quản lý kho. Vui lòng thử làm mới.'));
+    await loadIndependentSections(
+      [
+        section(() => warehouseService.dashboard(warehouseId), setStats),
+        section(() => warehouseService.layout(warehouseId), setLayout),
+        section(() => warehouseService.intakeTraces(warehouseId), setIntakes),
+        section(() => warehouseService.inboundBatches(warehouseId), setBatches),
+        section(() => warehouseService.inventory(undefined, warehouseId), setInventory),
+        section(() => warehouseService.transactions(undefined, warehouseId), setTransactions),
+      ],
+      isCurrent,
+      (e: any) =>
+        toast.error(
+          e?.response?.data?.message ||
+            'Không tải được một phần dữ liệu quản lý kho. Vui lòng thử làm mới.',
+        ),
+    );
     if (isCurrent()) setLoading(false);
   };
   useEffect(() => {
-    setStats(null); setLayout(null);
-    setIntakes([]); setBatches([]); setInventory([]); setTransactions([]);
+    setStats(null);
+    setLayout(null);
+    setIntakes([]);
+    setBatches([]);
+    setInventory([]);
+    setTransactions([]);
     void load();
-    return () => { ++loadVersion.current; };
+    return () => {
+      ++loadVersion.current;
+    };
   }, [warehouseId]);
   useEffect(() => setPage(1), [tab, search, status, warehouseId]);
 
@@ -466,9 +480,15 @@ export default function ManagerWarehouseControl() {
   };
 
   const emptyWarehouseForm = (): WarehouseForm => ({
-    warehouseName: '', address: '', phoneNumber: '', email: '', description: '',
+    warehouseName: '',
+    address: '',
+    phoneNumber: '',
+    email: '',
+    description: '',
     totalCapacityKg: 15000,
-    latitude: null, longitude: null, serviceRadiusKm: 24,
+    latitude: null,
+    longitude: null,
+    serviceRadiusKm: 24,
   });
 
   const openCreateWarehouse = () => {
@@ -531,7 +551,9 @@ export default function ManagerWarehouseControl() {
       warehouseDetails?.currentWeightKg || 0,
     );
     if (warehouseForm.totalCapacityKg < minimumCapacity) {
-      toast.warning(`Sức chứa kho không thể thấp hơn ${minimumCapacity} kg đang phân bổ hoặc lưu trữ.`);
+      toast.warning(
+        `Sức chứa kho không thể thấp hơn ${minimumCapacity} kg đang phân bổ hoặc lưu trữ.`,
+      );
       return;
     }
     setSavingWarehouse(true);
@@ -582,15 +604,12 @@ export default function ManagerWarehouseControl() {
             <span className="ops-pagehead-kicker">Warehouse Control Center</span>
             <h1>Quản lý nhập – xuất – tồn kho</h1>
             <p>
-              Theo dõi xuyên suốt từ lô hàng, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi
-              giao dịch phát sinh.
+              Theo dõi xuyên suốt từ lô hàng, phân loại, tiếp nhận kho, vị trí lưu trữ đến mọi giao
+              dịch phát sinh.
             </p>
           </div>
           <div className="warehouse-head-actions">
-            <button
-              className="ops-btn ops-btn-primary"
-              onClick={openCreateWarehouse}
-            >
+            <button className="ops-btn ops-btn-primary" onClick={openCreateWarehouse}>
               <Plus size={16} />
               Thêm kho
             </button>
@@ -638,14 +657,14 @@ export default function ManagerWarehouseControl() {
           <div className="ops-stat-card">
             <span className="ops-stat-label">Tồn khả dụng</span>
             <strong className="ops-stat-value">{stats?.availableWeightKg ?? '…'} kg</strong>
-            <small>
-              {stats?.inventorySkuCount ?? '…'} nhóm tồn kho
-            </small>
+            <small>{stats?.inventorySkuCount ?? '…'} nhóm tồn kho</small>
           </div>
           <div className="ops-stat-card">
             <span className="ops-stat-label">Đang chứa / Tổng sức chứa kho</span>
             <strong className="ops-stat-value">
-              {layout ? `${layout.currentWeightKg.toLocaleString('vi-VN')} / ${layout.capacityKg.toLocaleString('vi-VN')} kg` : 'Đang tải…'}
+              {layout
+                ? `${layout.currentWeightKg.toLocaleString('vi-VN')} / ${layout.capacityKg.toLocaleString('vi-VN')} kg`
+                : 'Đang tải…'}
             </strong>
             <div className="warehouse-capacity">
               <i
@@ -864,12 +883,12 @@ export default function ManagerWarehouseControl() {
                   label="Địa chỉ đầy đủ"
                   required
                   value={warehouseForm.address}
-                  location={warehouseForm.latitude != null && warehouseForm.longitude != null
-                    ? { lat: warehouseForm.latitude, lon: warehouseForm.longitude }
-                    : null}
-                  onChange={(address) =>
-                    setWarehouseForm((current) => ({ ...current, address }))
+                  location={
+                    warehouseForm.latitude != null && warehouseForm.longitude != null
+                      ? { lat: warehouseForm.latitude, lon: warehouseForm.longitude }
+                      : null
                   }
+                  onChange={(address) => setWarehouseForm((current) => ({ ...current, address }))}
                   onLocationChange={(location) =>
                     setWarehouseForm((current) => ({
                       ...current,
@@ -887,12 +906,16 @@ export default function ManagerWarehouseControl() {
                     max={200}
                     step={1}
                     value={warehouseForm.serviceRadiusKm}
-                    onChange={(e) => setWarehouseForm({
-                      ...warehouseForm,
-                      serviceRadiusKm: Number(e.target.value),
-                    })}
+                    onChange={(e) =>
+                      setWarehouseForm({
+                        ...warehouseForm,
+                        serviceRadiusKm: Number(e.target.value),
+                      })
+                    }
                   />
-                  <small>Địa chỉ ngoài bán kính này sẽ không thể chọn hình thức nhân viên đến lấy.</small>
+                  <small>
+                    Địa chỉ ngoài bán kính này sẽ không thể chọn hình thức nhân viên đến lấy.
+                  </small>
                 </label>
                 <div className="warehouse-form-row">
                   <label>
@@ -1030,8 +1053,11 @@ export default function ManagerWarehouseControl() {
                   <label>
                     Mục đích khu vực
                     <select
-                      value={layoutEditor.areaType === 'Storage' && layoutEditor.processingDirection
-                        ? `Storage:${layoutEditor.processingDirection}` : layoutEditor.areaType}
+                      value={
+                        layoutEditor.areaType === 'Storage' && layoutEditor.processingDirection
+                          ? `Storage:${layoutEditor.processingDirection}`
+                          : layoutEditor.areaType
+                      }
                       disabled={Boolean(layoutEditor.id) && layoutEditor.currentKg > 0}
                       onChange={(e) =>
                         setLayoutEditor({
@@ -1048,17 +1074,26 @@ export default function ManagerWarehouseControl() {
                       <option value="Storage:Charity">Hàng từ thiện — Nhãn A</option>
                       <option value="Storage:Recycling">Hàng chờ tái chế — Nhãn B</option>
                       <option value="Storage:Disposal">Cách ly / tiêu hủy — Nhãn C</option>
-                      <option value="Storage">Khu vực lưu trữ đa mục đích — Chuyên viên xuất nhập kho</option>
+                      <option value="Storage">
+                        Khu vực lưu trữ đa mục đích — Chuyên viên xuất nhập kho
+                      </option>
                     </select>
                     <small>
-                      {layoutEditor.areaType === 'Receiving' && 'Dùng để nhận Intake Batch từ Receiving Staff.'}
-                      {layoutEditor.areaType === 'Recycled' && 'Nhận đồ tổ chức tái chế gửi về, chờ manager phân công phân loại lại.'}
-                      {layoutEditor.areaType === 'Unclassified' && 'Dùng cho các lô đang chờ Classification Staff xử lý.'}
-                      {layoutEditor.areaType === 'Classified' && 'Dùng để xếp các Classified Batch đã hoàn tất.'}
-                      {layoutEditor.areaType === 'Storage' && (layoutEditor.processingDirection
-                        ? 'Các vị trí trong khu sẽ dùng cùng hướng xử lý đã chọn.'
-                        : 'Chọn hướng xử lý riêng khi cấu hình từng vị trí lưu kho.')}
-                      {Boolean(layoutEditor.id) && layoutEditor.currentKg > 0 && ' Phải chuyển hết hàng ra ngoài trước khi đổi mục đích.'}
+                      {layoutEditor.areaType === 'Receiving' &&
+                        'Dùng để nhận Intake Batch từ Receiving Staff.'}
+                      {layoutEditor.areaType === 'Recycled' &&
+                        'Nhận đồ tổ chức tái chế gửi về, chờ manager phân công phân loại lại.'}
+                      {layoutEditor.areaType === 'Unclassified' &&
+                        'Dùng cho các lô đang chờ Classification Staff xử lý.'}
+                      {layoutEditor.areaType === 'Classified' &&
+                        'Dùng để xếp các Classified Batch đã hoàn tất.'}
+                      {layoutEditor.areaType === 'Storage' &&
+                        (layoutEditor.processingDirection
+                          ? 'Các vị trí trong khu sẽ dùng cùng hướng xử lý đã chọn.'
+                          : 'Chọn hướng xử lý riêng khi cấu hình từng vị trí lưu kho.')}
+                      {Boolean(layoutEditor.id) &&
+                        layoutEditor.currentKg > 0 &&
+                        ' Phải chuyển hết hàng ra ngoài trước khi đổi mục đích.'}
                     </small>
                   </label>
                 )}
@@ -1235,7 +1270,11 @@ export default function ManagerWarehouseControl() {
                     Hướng xử lý ưu tiên
                     <select
                       value={locationEditor.preferredProcessingDirection}
-                      disabled={Boolean(layout?.areas.find((area) => area.groups.some((group) => group.id === locationEditor.areaGroupId))?.processingDirection)}
+                      disabled={Boolean(
+                        layout?.areas.find((area) =>
+                          area.groups.some((group) => group.id === locationEditor.areaGroupId),
+                        )?.processingDirection,
+                      )}
                       onChange={(e) =>
                         setLocationEditor({
                           ...locationEditor,
@@ -1368,7 +1407,9 @@ function WarehouseDeleteConfirmModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header>
-          <span className="warehouse-confirm-icon"><AlertTriangle /></span>
+          <span className="warehouse-confirm-icon">
+            <AlertTriangle />
+          </span>
           <div>
             <small>XÁC NHẬN XÓA</small>
             <h2 id="warehouse-delete-title">{title}</h2>
@@ -1379,10 +1420,20 @@ function WarehouseDeleteConfirmModal({
         </header>
         <p>{message}</p>
         <footer>
-          <button className="ops-btn ops-btn-secondary" type="button" onClick={onCancel} disabled={pending}>
+          <button
+            className="ops-btn ops-btn-secondary"
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+          >
             Hủy
           </button>
-          <button className="ops-btn teams-danger-solid" type="button" onClick={onConfirm} disabled={pending}>
+          <button
+            className="ops-btn teams-danger-solid"
+            type="button"
+            onClick={onConfirm}
+            disabled={pending}
+          >
             <Trash2 size={16} />
             {pending ? 'Đang xóa...' : 'Xác nhận xóa'}
           </button>
@@ -1494,7 +1545,10 @@ function LayoutView({
           });
         };
         return (
-          <section className={`warehouse-area-card ${expanded ? 'expanded' : 'collapsed'}`} key={area.id}>
+          <section
+            className={`warehouse-area-card ${expanded ? 'expanded' : 'collapsed'}`}
+            key={area.id}
+          >
             <header>
               <button className="warehouse-area-summary" onClick={toggleArea} type="button">
                 <span>KHU VỰC</span>
@@ -1535,176 +1589,184 @@ function LayoutView({
             </header>
             {expanded && (
               <div className="warehouse-area-content">
-            <div className="warehouse-capacity">
-              <i style={{ width: `${Math.min(100, used)}%` }} />
-            </div>
-            {area.areaType !== 'Storage' && (
-              <div className="warehouse-group-list">
-                {(area.intakeBatches ?? []).map((batch) => (
-                  <div className="warehouse-group-row" key={batch.id}>
-                    <span>
-                      <Archive size={14} />
-                      <b>{batch.batchCode}</b>
-                      <small>
-                        {getStatusLabel(batch.status)} · {batch.totalWeight.toFixed(1)} kg ·{' '}
-                        {batch.donationRequests} đơn
-                      </small>
-                    </span>
-                    <span className="warehouse-staging-meta">
-                      {batch.groupName && <small>Vị trí: {batch.groupName}</small>}
-                      {batch.warehouseReceivedAt && <small>Nhập lúc: {new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}</small>}
-                      {batch.warehouseReceivedBy && <small>Thực hiện: {batch.warehouseReceivedBy}</small>}
-                      {batch.teamName && <small>{batch.teamName}</small>}
-                    </span>
-                  </div>
-                ))}
-                {!area.intakeBatches?.length && <small>Chưa có lô hàng trong khu này.</small>}
-              </div>
-            )}
-            <div className="warehouse-group-head">
-              <span>
-                DÃY TRONG KHU VỰC · Đã phân bổ {allocated}/{area.capacityKg} kg
-              </span>
-              <button
-                onClick={() =>
-                  onEdit({
-                    kind: 'group',
-                    areaId: area.id,
-                    name: '',
-                    description: '',
-                    capacityKg: Math.max(1, area.capacityKg - allocated),
-                    currentKg: 0,
-                    allocatedKg: allocated,
-                    areaType: area.areaType as LayoutEditor['areaType'],
-                  })
-                }
-                disabled={allocated >= area.capacityKg}
-              >
-                <Plus />
-                Thêm dãy
-              </button>
-            </div>
-            <div className="warehouse-group-list">
-              {area.groups.map((group) => {
-                const groupLocations = area.locations.filter(
-                  (location) => location.areaGroupId === group.id,
-                );
-                const locationCapacity = groupLocations.reduce(
-                  (sum, location) => sum + location.capacityKg,
-                  0,
-                );
-                return (
-                  <div className="warehouse-group-block" key={group.id}>
-                    <div className="warehouse-group-row">
-                      <span>
-                        <Archive size={14} />
-                        <b>{group.groupName}</b>
-                        <small>
-                          {isStagingArea
-                            ? `${groupLocations.reduce((sum, location) => sum + location.itemQuantity, 0)} batch · `
-                            : ''}
-                          {group.currentWeightKg}/{group.capacityKg} kg · {groupLocations.length} location
-                        </small>
-                      </span>
-                      <div>
-                        <button
-                          onClick={() =>
-                            onEditLocation({
-                              areaGroupId: group.id,
-                              locationCode: '',
-                              aisleCode: 'A01',
-                              rackCode: 'R01',
-                              shelfCode: 'S01',
-                              binCode: 'B01',
-                              preferredGarmentGroup: '',
-                              preferredProcessingDirection: area.processingDirection || '',
-                              capacityKg: Math.max(1, group.capacityKg - locationCapacity),
-                              currentWeightKg: 0,
-                              allocatedKg: locationCapacity,
-                              groupCapacityKg: group.capacityKg,
-                              status: 'Available',
-                            })
-                          }
-                          disabled={locationCapacity >= group.capacityKg}
-                        >
-                          <Plus />
-                          Vị trí
-                        </button>
-                        <button
-                          onClick={() =>
-                            onEdit({
-                              kind: 'group',
-                              id: group.id,
-                              areaId: area.id,
-                              name: group.groupName,
-                              description: group.description || '',
-                              capacityKg: group.capacityKg,
-                              currentKg: group.currentWeightKg,
-                              allocatedKg: allocated - group.capacityKg,
-                              areaType: area.areaType as LayoutEditor['areaType'],
-                            })
-                          }
-                        >
-                          <Pencil />
-                          Sửa dãy
-                        </button>
-                      </div>
-                    </div>
-                    <div className="warehouse-location-grid">
-                      {groupLocations.map((location) => (
-                        <div
-                          className={`warehouse-location-card ${location.status.toLowerCase()}`}
-                          key={location.id}
-                        >
-                          <button
-                            title={`${decodeLocationCode(location.locationCode).area} · Dãy ${location.aisleCode} · Kệ ${location.rackCode} · Tầng ${location.shelfCode} · Ô ${location.binCode}`}
-                            onClick={() => onLocation({ ...location, areaName: area.areaName })}
-                          >
-                            <MapPin size={14} />
-                            <strong>{location.locationCode}</strong>
+                <div className="warehouse-capacity">
+                  <i style={{ width: `${Math.min(100, used)}%` }} />
+                </div>
+                {area.areaType !== 'Storage' && (
+                  <div className="warehouse-group-list">
+                    {(area.intakeBatches ?? []).map((batch) => (
+                      <div className="warehouse-group-row" key={batch.id}>
+                        <span>
+                          <Archive size={14} />
+                          <b>{batch.batchCode}</b>
+                          <small>
+                            {getStatusLabel(batch.status)} · {batch.totalWeight.toFixed(1)} kg ·{' '}
+                            {batch.donationRequests} đơn
+                          </small>
+                        </span>
+                        <span className="warehouse-staging-meta">
+                          {batch.groupName && <small>Vị trí: {batch.groupName}</small>}
+                          {batch.warehouseReceivedAt && (
                             <small>
-                              {location.itemQuantity} {isStagingArea ? 'batch' : 'item'} · {location.currentWeightKg}/
-                              {location.capacityKg} kg
+                              Nhập lúc:{' '}
+                              {new Date(batch.warehouseReceivedAt).toLocaleString('vi-VN')}
                             </small>
-                          </button>
-                          <button
-                            className="warehouse-location-edit"
-                            title="Chỉnh sửa location"
-                            onClick={() =>
-                              onEditLocation({
-                                id: location.id,
-                                areaGroupId: group.id,
-                                locationCode: location.locationCode,
-                                aisleCode: location.aisleCode,
-                                rackCode: location.rackCode,
-                                shelfCode: location.shelfCode,
-                                binCode: location.binCode,
-                                preferredGarmentGroup: location.preferredGarmentGroup || '',
-                                preferredProcessingDirection:
-                                  location.preferredProcessingDirection || '',
-                                capacityKg: location.capacityKg,
-                                currentWeightKg: location.currentWeightKg,
-                                allocatedKg: locationCapacity - location.capacityKg,
-                                groupCapacityKg: group.capacityKg,
-                                status: location.status,
-                              })
-                            }
-                          >
-                            <Pencil />
-                          </button>
-                        </div>
-                      ))}
-                      {!groupLocations.length && (
-                        <small className="warehouse-no-location">
-                          Chưa có location trong dãy này.
-                        </small>
-                      )}
-                    </div>
+                          )}
+                          {batch.warehouseReceivedBy && (
+                            <small>Thực hiện: {batch.warehouseReceivedBy}</small>
+                          )}
+                          {batch.teamName && <small>{batch.teamName}</small>}
+                        </span>
+                      </div>
+                    ))}
+                    {!area.intakeBatches?.length && <small>Chưa có lô hàng trong khu này.</small>}
                   </div>
-                );
-              })}
-              {!area.groups.length && <small>Chưa có dãy trong khu vực này.</small>}
-            </div>
+                )}
+                <div className="warehouse-group-head">
+                  <span>
+                    DÃY TRONG KHU VỰC · Đã phân bổ {allocated}/{area.capacityKg} kg
+                  </span>
+                  <button
+                    onClick={() =>
+                      onEdit({
+                        kind: 'group',
+                        areaId: area.id,
+                        name: '',
+                        description: '',
+                        capacityKg: Math.max(1, area.capacityKg - allocated),
+                        currentKg: 0,
+                        allocatedKg: allocated,
+                        areaType: area.areaType as LayoutEditor['areaType'],
+                      })
+                    }
+                    disabled={allocated >= area.capacityKg}
+                  >
+                    <Plus />
+                    Thêm dãy
+                  </button>
+                </div>
+                <div className="warehouse-group-list">
+                  {area.groups.map((group) => {
+                    const groupLocations = area.locations.filter(
+                      (location) => location.areaGroupId === group.id,
+                    );
+                    const locationCapacity = groupLocations.reduce(
+                      (sum, location) => sum + location.capacityKg,
+                      0,
+                    );
+                    return (
+                      <div className="warehouse-group-block" key={group.id}>
+                        <div className="warehouse-group-row">
+                          <span>
+                            <Archive size={14} />
+                            <b>{group.groupName}</b>
+                            <small>
+                              {isStagingArea
+                                ? `${groupLocations.reduce((sum, location) => sum + location.itemQuantity, 0)} batch · `
+                                : ''}
+                              {group.currentWeightKg}/{group.capacityKg} kg ·{' '}
+                              {groupLocations.length} location
+                            </small>
+                          </span>
+                          <div>
+                            <button
+                              onClick={() =>
+                                onEditLocation({
+                                  areaGroupId: group.id,
+                                  locationCode: '',
+                                  aisleCode: 'A01',
+                                  rackCode: 'R01',
+                                  shelfCode: 'S01',
+                                  binCode: 'B01',
+                                  preferredGarmentGroup: '',
+                                  preferredProcessingDirection: area.processingDirection || '',
+                                  capacityKg: Math.max(1, group.capacityKg - locationCapacity),
+                                  currentWeightKg: 0,
+                                  allocatedKg: locationCapacity,
+                                  groupCapacityKg: group.capacityKg,
+                                  status: 'Available',
+                                })
+                              }
+                              disabled={locationCapacity >= group.capacityKg}
+                            >
+                              <Plus />
+                              Vị trí
+                            </button>
+                            <button
+                              onClick={() =>
+                                onEdit({
+                                  kind: 'group',
+                                  id: group.id,
+                                  areaId: area.id,
+                                  name: group.groupName,
+                                  description: group.description || '',
+                                  capacityKg: group.capacityKg,
+                                  currentKg: group.currentWeightKg,
+                                  allocatedKg: allocated - group.capacityKg,
+                                  areaType: area.areaType as LayoutEditor['areaType'],
+                                })
+                              }
+                            >
+                              <Pencil />
+                              Sửa dãy
+                            </button>
+                          </div>
+                        </div>
+                        <div className="warehouse-location-grid">
+                          {groupLocations.map((location) => (
+                            <div
+                              className={`warehouse-location-card ${location.status.toLowerCase()}`}
+                              key={location.id}
+                            >
+                              <button
+                                title={`${decodeLocationCode(location.locationCode).area} · Dãy ${location.aisleCode} · Kệ ${location.rackCode} · Tầng ${location.shelfCode} · Ô ${location.binCode}`}
+                                onClick={() => onLocation({ ...location, areaName: area.areaName })}
+                              >
+                                <MapPin size={14} />
+                                <strong>{location.locationCode}</strong>
+                                <small>
+                                  {location.itemQuantity} {isStagingArea ? 'batch' : 'item'} ·{' '}
+                                  {location.currentWeightKg}/{location.capacityKg} kg
+                                </small>
+                              </button>
+                              <button
+                                className="warehouse-location-edit"
+                                title="Chỉnh sửa location"
+                                onClick={() =>
+                                  onEditLocation({
+                                    id: location.id,
+                                    areaGroupId: group.id,
+                                    locationCode: location.locationCode,
+                                    aisleCode: location.aisleCode,
+                                    rackCode: location.rackCode,
+                                    shelfCode: location.shelfCode,
+                                    binCode: location.binCode,
+                                    preferredGarmentGroup: location.preferredGarmentGroup || '',
+                                    preferredProcessingDirection:
+                                      location.preferredProcessingDirection || '',
+                                    capacityKg: location.capacityKg,
+                                    currentWeightKg: location.currentWeightKg,
+                                    allocatedKg: locationCapacity - location.capacityKg,
+                                    groupCapacityKg: group.capacityKg,
+                                    status: location.status,
+                                  })
+                                }
+                              >
+                                <Pencil />
+                              </button>
+                            </div>
+                          ))}
+                          {!groupLocations.length && (
+                            <small className="warehouse-no-location">
+                              Chưa có location trong dãy này.
+                            </small>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!area.groups.length && <small>Chưa có dãy trong khu vực này.</small>}
+                </div>
               </div>
             )}
           </section>
@@ -1803,13 +1865,7 @@ function BatchCard({
     </article>
   );
 }
-function InventoryCard({
-  item,
-  onOpen,
-}: {
-  item: WarehouseInventory;
-  onOpen: () => void;
-}) {
+function InventoryCard({ item, onOpen }: { item: WarehouseInventory; onOpen: () => void }) {
   return (
     <article className="warehouse-record-card">
       <header>
@@ -2197,15 +2253,11 @@ function DetailModal({
               </span>
               <span>
                 Tổng tồn
-                <b>
-                  {d.totalWeightKg} kg
-                </b>
+                <b>{d.totalWeightKg} kg</b>
               </span>
               <span>
                 Khả dụng
-                <b>
-                  {d.availableWeightKg} kg
-                </b>
+                <b>{d.availableWeightKg} kg</b>
               </span>
             </div>
           </>

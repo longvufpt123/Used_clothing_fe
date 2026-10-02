@@ -39,9 +39,14 @@ export default function WarehouseDashboard() {
       if (busy || document.hidden) return;
       busy = true;
       const results = await Promise.allSettled([
-        warehouseService.dashboard().then((data) => { if (!disposed) setStats(data); }),
+        warehouseService.dashboard().then((data) => {
+          if (!disposed) setStats(data);
+        }),
         warehouseService.inboundBatches(undefined, false).then((data) => {
-          if (!disposed) { setBatches(data); setLoading(false); }
+          if (!disposed) {
+            setBatches(data);
+            setLoading(false);
+          }
         }),
       ]);
       if (!disposed) {
@@ -52,10 +57,16 @@ export default function WarehouseDashboard() {
       busy = false;
     };
     void load();
-    const refresh = () => { void load(); };
+    const refresh = () => {
+      void load();
+    };
     const id = window.setInterval(refresh, 10000);
     document.addEventListener('visibilitychange', refresh);
-    return () => { disposed = true; window.clearInterval(id); document.removeEventListener('visibilitychange', refresh); };
+    return () => {
+      disposed = true;
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, []);
   const normalized = search.trim().toLowerCase();
   const shown = batches.filter(
@@ -134,7 +145,9 @@ export default function WarehouseDashboard() {
           <span className="ops-stat-label">Sử dụng sức chứa</span>
           <div className="ops-stat-value">{stats ? `${stats.capacityUsedPercent}%` : '—'}</div>
           <span className="ops-stat-foot">
-            {stats ? `${stats.currentWeightKg.toFixed(1)} / ${stats.capacityKg.toFixed(1)} kg` : 'Đang tải sức chứa...'}
+            {stats
+              ? `${stats.currentWeightKg.toFixed(1)} / ${stats.capacityKg.toFixed(1)} kg`
+              : 'Đang tải sức chứa...'}
           </span>
           <div
             className="ops-capacity-progress"
@@ -178,7 +191,9 @@ export default function WarehouseDashboard() {
               placeholder="Tìm mã batch, loại đồ, loại vải, nhãn..."
             />
           </label>
-          <span className="ops-list-result">{loading ? 'Đang tải danh sách...' : `${shown.length} kết quả · 6 item/trang`}</span>
+          <span className="ops-list-result">
+            {loading ? 'Đang tải danh sách...' : `${shown.length} kết quả · 6 item/trang`}
+          </span>
         </div>
         <div className="ops-list">
           {paged.map((batch) => (

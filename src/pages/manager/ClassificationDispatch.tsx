@@ -114,15 +114,21 @@ export default function ClassificationDispatch() {
     [board, warehouseId],
   );
   const teams = useMemo(
-    () => allWarehouseTeams.filter((team) =>
-      (!yearFilter || team.shiftDate.slice(0, 4) === yearFilter) &&
-      (!dateFilter || team.shiftDate.slice(0, 10) === dateFilter)),
+    () =>
+      allWarehouseTeams.filter(
+        (team) =>
+          (!yearFilter || team.shiftDate.slice(0, 4) === yearFilter) &&
+          (!dateFilter || team.shiftDate.slice(0, 10) === dateFilter),
+      ),
     [allWarehouseTeams, dateFilter, yearFilter],
   );
   const filteredShifts = useMemo(
-    () => shifts.filter((shift) =>
-      (!yearFilter || shift.shiftDate.slice(0, 4) === yearFilter) &&
-      (!dateFilter || shift.shiftDate.slice(0, 10) === dateFilter)),
+    () =>
+      shifts.filter(
+        (shift) =>
+          (!yearFilter || shift.shiftDate.slice(0, 4) === yearFilter) &&
+          (!dateFilter || shift.shiftDate.slice(0, 10) === dateFilter),
+      ),
     [dateFilter, shifts, yearFilter],
   );
   const years = useMemo(
@@ -130,18 +136,23 @@ export default function ClassificationDispatch() {
     [shifts],
   );
   const workDays = useMemo(
-    () => Array.from(filteredShifts.reduce((groups, shift) => {
-      const key = shift.shiftDate.slice(0, 10);
-      const current = groups.get(key);
-      if (current) current.push(shift);
-      else groups.set(key, [shift]);
-      return groups;
-    }, new Map<string, ManagerShiftOverview[]>()).entries())
-      .map(([day, dayShifts]) => ({
-        day,
-        shifts: dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime)),
-      }))
-      .sort((a, b) => a.day.localeCompare(b.day)),
+    () =>
+      Array.from(
+        filteredShifts
+          .reduce((groups, shift) => {
+            const key = shift.shiftDate.slice(0, 10);
+            const current = groups.get(key);
+            if (current) current.push(shift);
+            else groups.set(key, [shift]);
+            return groups;
+          }, new Map<string, ManagerShiftOverview[]>())
+          .entries(),
+      )
+        .map(([day, dayShifts]) => ({
+          day,
+          shifts: dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime)),
+        }))
+        .sort((a, b) => a.day.localeCompare(b.day)),
     [filteredShifts],
   );
   const dayPageSize = 5;
@@ -176,9 +187,10 @@ export default function ClassificationDispatch() {
   const detailTeam = board?.teams.find((team) => team.id === detailTeamId) ?? null;
   const detailShift = shifts.find((shift) => shift.id === detailShiftId) ?? null;
   const detailShiftTeams = allWarehouseTeams.filter((team) => team.shiftId === detailShiftId);
-  const detailShiftBatches = board?.batches.filter(
-    (batch) => batch.teamId && detailShiftTeams.some((team) => team.id === batch.teamId),
-  ) ?? [];
+  const detailShiftBatches =
+    board?.batches.filter(
+      (batch) => batch.teamId && detailShiftTeams.some((team) => team.id === batch.teamId),
+    ) ?? [];
   const detailTeamBatches = useMemo(
     () => board?.batches.filter((batch) => batch.teamId === detailTeamId) ?? [],
     [board, detailTeamId],
@@ -186,7 +198,12 @@ export default function ClassificationDispatch() {
 
   const eligibleTeams = allWarehouseTeams.filter((team) => {
     const shiftEnd = new Date(`${team.shiftDate.slice(0, 10)}T${team.endTime}`).getTime();
-    return team.status === 'Scheduled' && team.members.length >= 1 && team.members.length <= 2 && shiftEnd > Date.now();
+    return (
+      team.status === 'Scheduled' &&
+      team.members.length >= 1 &&
+      team.members.length <= 2 &&
+      shiftEnd > Date.now()
+    );
   });
   const occupiedStaffIds = new Set(
     allWarehouseTeams
@@ -225,7 +242,12 @@ export default function ClassificationDispatch() {
     }
     setCreating(true);
     try {
-      await receivingService.createTeam(createShift.id, teamName.trim(), staffIds, 'Classification');
+      await receivingService.createTeam(
+        createShift.id,
+        teamName.trim(),
+        staffIds,
+        'Classification',
+      );
       toast.success('Đã tạo team phân loại cho ca làm.');
       setCreateShift(null);
       setStaffIds([]);
@@ -264,7 +286,9 @@ export default function ClassificationDispatch() {
       }
       await load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Không thể điều phối cân bằng các batch phân loại.');
+      toast.error(
+        error?.response?.data?.message || 'Không thể điều phối cân bằng các batch phân loại.',
+      );
     } finally {
       setBalancingId('');
     }
@@ -292,7 +316,11 @@ export default function ClassificationDispatch() {
             <h1>Điều phối phân loại</h1>
             <p>Quản lý ca, nhân sự phân loại và phân công lô theo đúng kho, ngày làm việc.</p>
           </div>
-          <button className="ops-btn ops-btn-secondary" onClick={() => void load()} disabled={loading}>
+          <button
+            className="ops-btn ops-btn-secondary"
+            onClick={() => void load()}
+            disabled={loading}
+          >
             <RefreshCw size={16} className={loading ? 'classification-spin' : ''} /> Làm mới
           </button>
         </header>
@@ -306,7 +334,11 @@ export default function ClassificationDispatch() {
           <div className="ops-stat-card">
             <span className="ops-stat-label">Ca chưa có nhóm</span>
             <strong className="ops-stat-value">
-              {filteredShifts.filter((shift) => !allWarehouseTeams.some((team) => team.shiftId === shift.id)).length}
+              {
+                filteredShifts.filter(
+                  (shift) => !allWarehouseTeams.some((team) => team.shiftId === shift.id),
+                ).length
+              }
             </strong>
             <small className="ops-stat-foot">Có thể thêm nhóm phân loại</small>
           </div>
@@ -328,7 +360,9 @@ export default function ClassificationDispatch() {
               <span className="ops-panel-label">QUẢN LÝ NHÓM VÀ LỊCH PHÂN LOẠI</span>
               <h2>Lịch phân loại theo ngày</h2>
             </div>
-            <span>{workDays.length} ngày · {filteredShifts.length} ca</span>
+            <span>
+              {workDays.length} ngày · {filteredShifts.length} ca
+            </span>
           </div>
 
           <div className="manager-shift-toolbar">
@@ -343,14 +377,20 @@ export default function ClassificationDispatch() {
                 }}
               >
                 {board?.warehouses.map((warehouse) => (
-                  <option value={warehouse.id} key={warehouse.id}>{warehouse.name}</option>
+                  <option value={warehouse.id} key={warehouse.id}>
+                    {warehouse.name}
+                  </option>
                 ))}
               </select>
               <CalendarDays size={16} />
               <label>Năm</label>
               <select value={yearFilter} onChange={(event) => setYearFilter(event.target.value)}>
                 <option value="">Tất cả năm</option>
-                {years.map((year) => <option value={year} key={year}>{year}</option>)}
+                {years.map((year) => (
+                  <option value={year} key={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
               <label>Ngày</label>
               <input
@@ -362,7 +402,12 @@ export default function ClassificationDispatch() {
                 }}
               />
               {(yearFilter || dateFilter) && (
-                <button onClick={() => { setYearFilter(''); setDateFilter(''); }}>
+                <button
+                  onClick={() => {
+                    setYearFilter('');
+                    setDateFilter('');
+                  }}
+                >
                   <FilterX size={16} /> Xóa ngày/năm
                 </button>
               )}
@@ -378,9 +423,10 @@ export default function ClassificationDispatch() {
               const dayTeams = allWarehouseTeams.filter(
                 (team) => team.shiftDate.slice(0, 10) === day,
               );
-              const dispatchableShift = dayShifts.find((shift) =>
-                (shift.status === 'Scheduled' || shift.status === 'InProgress')
-                  && allWarehouseTeams.some((team) => team.shiftId === shift.id),
+              const dispatchableShift = dayShifts.find(
+                (shift) =>
+                  (shift.status === 'Scheduled' || shift.status === 'InProgress') &&
+                  allWarehouseTeams.some((team) => team.shiftId === shift.id),
               );
               return (
                 <article className="manager-workday-card classification-day-card" key={day}>
@@ -393,10 +439,9 @@ export default function ClassificationDispatch() {
                       </span>
                     </div>
                     <b>
-                      {dayTeams.length} team · {dayTeams.reduce(
-                        (sum, team) => sum + team.assignedBatches,
-                        0,
-                      )} lô · {dayTeams.reduce((sum, team) => sum + team.assignedWeightKg, 0).toFixed(2)} kg
+                      {dayTeams.length} team ·{' '}
+                      {dayTeams.reduce((sum, team) => sum + team.assignedBatches, 0)} lô ·{' '}
+                      {dayTeams.reduce((sum, team) => sum + team.assignedWeightKg, 0).toFixed(2)} kg
                     </b>
                   </div>
                   <div className="manager-workday-shifts">
@@ -435,7 +480,9 @@ export default function ClassificationDispatch() {
                                 {shortTime(shift.startTime)}–{shortTime(shift.endTime)}
                               </span>
                             </div>
-                            <span className={`ops-badge ${shift.status === 'InProgress' ? 'stored' : 'pending'}`}>
+                            <span
+                              className={`ops-badge ${shift.status === 'InProgress' ? 'stored' : 'pending'}`}
+                            >
                               {getStatusLabel(shift.status)}
                             </span>
                           </div>
@@ -443,7 +490,9 @@ export default function ClassificationDispatch() {
                             <span>
                               <Users size={15} />
                               <strong>{shiftTeams.length} team</strong>
-                              <small>{assigned} lô · {assignedWeight.toFixed(2)} kg</small>
+                              <small>
+                                {assigned} lô · {assignedWeight.toFixed(2)} kg
+                              </small>
                             </span>
                             {(shift.status === 'Scheduled' || shift.status === 'InProgress') && (
                               <div className="manager-shift-team-actions">
@@ -497,7 +546,14 @@ export default function ClassificationDispatch() {
             <span>Chỉ chọn team cùng kho, đúng ngày và chưa bắt đầu ca</span>
           </div>
           <div className="classification-batch-toolbar">
-            <label><Search size={16} /><input value={batchSearch} onChange={(event) => setBatchSearch(event.target.value)} placeholder="Tìm mã lô, khu vực hoặc team..." /></label>
+            <label>
+              <Search size={16} />
+              <input
+                value={batchSearch}
+                onChange={(event) => setBatchSearch(event.target.value)}
+                placeholder="Tìm mã lô, khu vực hoặc team..."
+              />
+            </label>
             <select value={batchStatus} onChange={(event) => setBatchStatus(event.target.value)}>
               <option value="all">Tất cả trạng thái</option>
               <option value="AwaitingClassificationAssignment">Chờ phân công</option>
@@ -505,31 +561,69 @@ export default function ClassificationDispatch() {
               <option value="Classifying">Đang phân loại</option>
               <option value="InClassifiedArea">Đã phân loại</option>
             </select>
-            <span>{filteredBatches.length ? (safeBatchPage - 1) * batchPageSize + 1 : 0}–{Math.min(safeBatchPage * batchPageSize, filteredBatches.length)} / {filteredBatches.length} lô</span>
+            <span>
+              {filteredBatches.length ? (safeBatchPage - 1) * batchPageSize + 1 : 0}–
+              {Math.min(safeBatchPage * batchPageSize, filteredBatches.length)} /{' '}
+              {filteredBatches.length} lô
+            </span>
           </div>
           <div className="classification-batch-grid">
             {pagedBatches.map((batch) => (
               <article className="classification-batch-card" key={batch.id}>
-                <div className="ops-card-top"><strong className="ops-card-code">{batch.batchCode}</strong><span className="ops-badge pending">{getStatusLabel(batch.status)}</span></div>
-                <div className="classification-batch-metrics"><span><b>{batch.totalWeight.toFixed(1)} kg</b><small>Khối lượng</small></span><span><b>{batch.donationRequests}</b><small>Đơn nguồn</small></span></div>
-                <p><PackageCheck size={15} /> {batch.currentAreaName || 'Chưa ghi nhận khu vực'}</p>
+                <div className="ops-card-top">
+                  <strong className="ops-card-code">{batch.batchCode}</strong>
+                  <span className="ops-badge pending">{getStatusLabel(batch.status)}</span>
+                </div>
+                <div className="classification-batch-metrics">
+                  <span>
+                    <b>{batch.totalWeight.toFixed(1)} kg</b>
+                    <small>Khối lượng</small>
+                  </span>
+                  <span>
+                    <b>{batch.donationRequests}</b>
+                    <small>Đơn nguồn</small>
+                  </span>
+                </div>
+                <p>
+                  <PackageCheck size={15} /> {batch.currentAreaName || 'Chưa ghi nhận khu vực'}
+                </p>
                 {batch.status === 'AwaitingClassificationAssignment' ? (
                   <div className="classification-card-action">
                     <label>Team phụ trách</label>
-                    <select disabled={assigningId === batch.id} defaultValue="" onChange={(event) => void assignBatch(batch.id, event.target.value)}>
+                    <select
+                      disabled={assigningId === batch.id}
+                      defaultValue=""
+                      onChange={(event) => void assignBatch(batch.id, event.target.value)}
+                    >
                       <option value="">Chọn team cùng kho và ca</option>
-                      {eligibleTeams.map((team) => <option value={team.id} key={team.id}>{team.teamName} · {shortTime(team.startTime)}–{shortTime(team.endTime)} · {team.assignedBatches} lô</option>)}
+                      {eligibleTeams.map((team) => (
+                        <option value={team.id} key={team.id}>
+                          {team.teamName} · {shortTime(team.startTime)}–{shortTime(team.endTime)} ·{' '}
+                          {team.assignedBatches} lô
+                        </option>
+                      ))}
                     </select>
                     {!eligibleTeams.length && <small>Chưa có team đủ điều kiện để nhận lô.</small>}
                   </div>
                 ) : (
-                  <div className="classification-assigned-team"><span>Team phụ trách</span><strong>{batch.teamName || 'Chưa xác định'}</strong></div>
+                  <div className="classification-assigned-team">
+                    <span>Team phụ trách</span>
+                    <strong>{batch.teamName || 'Chưa xác định'}</strong>
+                  </div>
                 )}
               </article>
             ))}
-            {!pagedBatches.length && <div className="ops-empty"><PackageCheck size={34} /><h4>Không có lô hàng phù hợp</h4><p>Thử đổi kho, ngày hoặc bộ lọc trạng thái.</p></div>}
+            {!pagedBatches.length && (
+              <div className="ops-empty">
+                <PackageCheck size={34} />
+                <h4>Không có lô hàng phù hợp</h4>
+                <p>Thử đổi kho, ngày hoặc bộ lọc trạng thái.</p>
+              </div>
+            )}
           </div>
-          {batchPages > 1 && <Pagination current={safeBatchPage} total={batchPages} setPage={setBatchPage} />}
+          {batchPages > 1 && (
+            <Pagination current={safeBatchPage} total={batchPages} setPage={setBatchPage} />
+          )}
         </section>
 
         {detailShift && (
@@ -645,7 +739,9 @@ export default function ClassificationDispatch() {
                       </div>
                       <div className="classification-shift-team-progress">
                         <span>Khối lượng được giao</span>
-                        <strong>{team.assignedWeightKg.toFixed(2)} kg · {team.assignedBatches} lô</strong>
+                        <strong>
+                          {team.assignedWeightKg.toFixed(2)} kg · {team.assignedBatches} lô
+                        </strong>
                       </div>
                       <small className="classification-shift-team-link">Xem chi tiết team →</small>
                     </button>
@@ -672,15 +768,45 @@ export default function ClassificationDispatch() {
         )}
 
         {createShift && (
-          <div className="manager-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeCreateTeam()}>
+          <div
+            className="manager-modal-backdrop"
+            onMouseDown={(event) => event.target === event.currentTarget && closeCreateTeam()}
+          >
             <section className="ops-panel manager-team-modal classification-team-modal">
               <div className="ops-section-head classification-modal-head">
-                <div><span className="ops-panel-label">TẠO TEAM PHÂN LOẠI</span><h2>{createShift.shiftName}</h2><p>{formatDate(createShift.shiftDate)} · {shortTime(createShift.startTime)}–{shortTime(createShift.endTime)}</p></div>
-                <button className="manager-close" onClick={closeCreateTeam}><X /></button>
+                <div>
+                  <span className="ops-panel-label">TẠO TEAM PHÂN LOẠI</span>
+                  <h2>{createShift.shiftName}</h2>
+                  <p>
+                    {formatDate(createShift.shiftDate)} · {shortTime(createShift.startTime)}–
+                    {shortTime(createShift.endTime)}
+                  </p>
+                </div>
+                <button className="manager-close" onClick={closeCreateTeam}>
+                  <X />
+                </button>
               </div>
-              <div className="ops-field"><label>Tên team *</label><input value={teamName} onChange={(event) => setTeamName(event.target.value)} /></div>
-              <div className="manager-staff-label"><span>Chọn từ 1 đến 2 thành viên tại {selectedWarehouse?.name}</span><strong>{staffIds.length}/2</strong></div>
-              <div className="manager-staff-search"><Search size={16} /><input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="Tìm tên, username hoặc số điện thoại..." />{staffSearch && <button onClick={() => setStaffSearch('')}><X size={14} /></button>}</div>
+              <div className="ops-field">
+                <label>Tên team *</label>
+                <input value={teamName} onChange={(event) => setTeamName(event.target.value)} />
+              </div>
+              <div className="manager-staff-label">
+                <span>Chọn từ 1 đến 2 thành viên tại {selectedWarehouse?.name}</span>
+                <strong>{staffIds.length}/2</strong>
+              </div>
+              <div className="manager-staff-search">
+                <Search size={16} />
+                <input
+                  value={staffSearch}
+                  onChange={(event) => setStaffSearch(event.target.value)}
+                  placeholder="Tìm tên, username hoặc số điện thoại..."
+                />
+                {staffSearch && (
+                  <button onClick={() => setStaffSearch('')}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
               <div className="manager-staff-list classification-modal-staff-list">
                 {availableStaff.map((staff) => {
                   const occupied = occupiedStaffIds.has(staff.id);
@@ -690,16 +816,38 @@ export default function ClassificationDispatch() {
                       key={staff.id}
                       disabled={occupied || (!selected && staffIds.length >= 2)}
                       className={`${selected ? 'selected' : ''} ${occupied ? 'assigned' : ''}`}
-                      onClick={() => setStaffIds((ids) => selected ? ids.filter((id) => id !== staff.id) : [...ids, staff.id])}
+                      onClick={() =>
+                        setStaffIds((ids) =>
+                          selected ? ids.filter((id) => id !== staff.id) : [...ids, staff.id],
+                        )
+                      }
                     >
-                      <span><b>{staff.fullName}</b><small>@{staff.userName} · {staff.phoneNumber}</small>{occupied && <em className="manager-assigned-note">Đã thuộc team trong ca này</em>}</span>
+                      <span>
+                        <b>{staff.fullName}</b>
+                        <small>
+                          @{staff.userName} · {staff.phoneNumber}
+                        </small>
+                        {occupied && (
+                          <em className="manager-assigned-note">Đã thuộc team trong ca này</em>
+                        )}
+                      </span>
                       {selected ? <CheckCircle2 size={19} /> : <i className="manager-check" />}
                     </button>
                   );
                 })}
-                {!availableStaff.length && <div className="ops-empty">Không tìm thấy nhân viên phù hợp.</div>}
+                {!availableStaff.length && (
+                  <div className="ops-empty">Không tìm thấy nhân viên phù hợp.</div>
+                )}
               </div>
-              <button className="ops-btn ops-btn-primary ops-btn-block" disabled={creating || staffIds.length < 1 || staffIds.length > 2 || !teamName.trim()} onClick={() => void createTeam()}><Users size={16} /> {creating ? 'Đang tạo...' : 'Lưu team phân loại'}</button>
+              <button
+                className="ops-btn ops-btn-primary ops-btn-block"
+                disabled={
+                  creating || staffIds.length < 1 || staffIds.length > 2 || !teamName.trim()
+                }
+                onClick={() => void createTeam()}
+              >
+                <Users size={16} /> {creating ? 'Đang tạo...' : 'Lưu team phân loại'}
+              </button>
             </section>
           </div>
         )}
@@ -793,7 +941,8 @@ export default function ClassificationDispatch() {
                     <h3>Intake Batch được phân công</h3>
                   </div>
                   <b>
-                    {detailTeam.assignedWeightKg.toFixed(2)} kg · {detailTeam.completedBatches}/{detailTeam.assignedBatches} lô hoàn thành
+                    {detailTeam.assignedWeightKg.toFixed(2)} kg · {detailTeam.completedBatches}/
+                    {detailTeam.assignedBatches} lô hoàn thành
                   </b>
                 </div>
                 <div className="classification-detail-batches">
@@ -848,12 +997,38 @@ export default function ClassificationDispatch() {
   );
 }
 
-function Pagination({ current, total, setPage }: { current: number; total: number; setPage: (page: number) => void }) {
+function Pagination({
+  current,
+  total,
+  setPage,
+}: {
+  current: number;
+  total: number;
+  setPage: (page: number) => void;
+}) {
   return (
     <nav className="manager-shift-pagination">
-      <button onClick={() => setPage(Math.max(1, current - 1))} disabled={current === 1}><ChevronLeft size={17} /> Trước</button>
-      {paginationItems(current, total).map((item) => typeof item === 'number' ? <button className={item === current ? 'active' : ''} onClick={() => setPage(item)} key={item}>{item}</button> : <span className="manager-page-gap" key={item}>…</span>)}
-      <button onClick={() => setPage(Math.min(total, current + 1))} disabled={current === total}>Sau <ChevronRight size={17} /></button>
+      <button onClick={() => setPage(Math.max(1, current - 1))} disabled={current === 1}>
+        <ChevronLeft size={17} /> Trước
+      </button>
+      {paginationItems(current, total).map((item) =>
+        typeof item === 'number' ? (
+          <button
+            className={item === current ? 'active' : ''}
+            onClick={() => setPage(item)}
+            key={item}
+          >
+            {item}
+          </button>
+        ) : (
+          <span className="manager-page-gap" key={item}>
+            …
+          </span>
+        ),
+      )}
+      <button onClick={() => setPage(Math.min(total, current + 1))} disabled={current === total}>
+        Sau <ChevronRight size={17} />
+      </button>
     </nav>
   );
 }

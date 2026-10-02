@@ -18,7 +18,12 @@ export default function ReceiveBatch() {
   const [seal, setSeal] = useState(true);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-  const [confirmation, setConfirmation] = useState<{ actualItemCount: number; actualWeightKg: number; sealIntact: boolean; discrepancyNotes: string } | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    actualItemCount: number;
+    actualWeightKg: number;
+    sealIntact: boolean;
+    discrepancyNotes: string;
+  } | null>(null);
   const [saveError, setSaveError] = useState('');
   const submitting = useRef(false);
   useEffect(() => {
@@ -41,12 +46,18 @@ export default function ReceiveBatch() {
     const handedOffWeight = Number(batch.expectedWeightKg.toFixed(2));
     const receivedWeight = Number(weight.toFixed(2));
     if (receivedWeight !== handedOffWeight)
-      return toast.error(`Khối lượng thực nhận phải đúng bằng ${handedOffWeight} kg do Classification Staff bàn giao.`);
+      return toast.error(
+        `Khối lượng thực nhận phải đúng bằng ${handedOffWeight} kg do Classification Staff bàn giao.`,
+      );
     if (!seal && !notes.trim())
       return toast.error('Cần ghi nhận sai lệch khi niêm phong không nguyên vẹn.');
     setSaveError('');
-    setConfirmation({ actualItemCount: batch.expectedItemCount || 0, actualWeightKg: weight,
-      sealIntact: seal, discrepancyNotes: notes });
+    setConfirmation({
+      actualItemCount: batch.expectedItemCount || 0,
+      actualWeightKg: weight,
+      sealIntact: seal,
+      discrepancyNotes: notes,
+    });
   };
   const submitReceipt = async () => {
     if (!batchId || !confirmation || submitting.current) return;
@@ -80,7 +91,9 @@ export default function ReceiveBatch() {
       <div className="ops-form-grid two-col">
         <section className="ops-panel glass">
           <span className="ops-panel-label">{batch.batchCode}</span>
-          <h2>{getClassifiedBatchGroupLabel(batch)} · Nhãn {batch.conditionGrade}</h2>
+          <h2>
+            {getClassifiedBatchGroupLabel(batch)} · Nhãn {batch.conditionGrade}
+          </h2>
           <div className="ops-kv-grid">
             <div className="ops-kv">
               <span>Khối lượng bàn giao</span>
@@ -131,7 +144,8 @@ export default function ReceiveBatch() {
             />
             {Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2)) && (
               <small style={{ color: 'var(--color-danger)' }}>
-                Khối lượng phải đúng bằng {batch.expectedWeightKg} kg, không được lớn hơn hoặc nhỏ hơn.
+                Khối lượng phải đúng bằng {batch.expectedWeightKg} kg, không được lớn hơn hoặc nhỏ
+                hơn.
               </small>
             )}
           </div>
@@ -156,8 +170,9 @@ export default function ReceiveBatch() {
           </div>
           <button
             className="ops-btn ops-btn-primary ops-btn-block"
-            disabled={saving
-              || Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2))}
+            disabled={
+              saving || Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2))
+            }
             onClick={confirm}
           >
             <Scale size={16} />
@@ -165,24 +180,80 @@ export default function ReceiveBatch() {
           </button>
         </section>
       </div>
-      {confirmation && createPortal(<Modal isOpen title="Xác nhận nhận hàng vật lý"
-        className="warehouse-receipt-confirmation"
-        onClose={() => { if (!submitting.current) setConfirmation(null); }}
-        footer={<>
-          <button type="button" className="ops-btn ops-btn-secondary" disabled={saving} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</button>
-          <button type="button" className="ops-btn ops-btn-primary" autoFocus disabled={saving} onClick={() => void submitReceipt()}>{saving ? 'Đang ghi nhận...' : 'Xác nhận nhận hàng'}</button>
-        </>}>
-        <div className="warehouse-receipt-summary">
-          <p className="warehouse-receipt-wide">Vui lòng kiểm tra thông tin trước khi ghi nhận hàng vào kho.</p>
-          <div className="ops-kv warehouse-receipt-wide"><span>Mã batch</span><strong>{batch.batchCode}</strong></div>
-          <div className="ops-kv"><span>Khối lượng bàn giao</span><strong>{batch.expectedWeightKg} kg</strong></div>
-          <div className="ops-kv"><span>Khối lượng thực nhận</span><strong>{confirmation.actualWeightKg} kg</strong></div>
-          <div className="ops-kv"><span>Số lượng item theo bàn giao</span><strong>{confirmation.actualItemCount}</strong></div>
-          <div className="ops-kv"><span>Niêm phong</span><strong>{confirmation.sealIntact ? 'Nguyên vẹn' : 'Có bất thường'}</strong></div>
-          <div className="ops-kv warehouse-receipt-wide"><span>Sai lệch / ghi chú nhận hàng</span><strong style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmation.discrepancyNotes.trim() || 'Không có'}</strong></div>
-          {saveError && <p className="warehouse-receipt-wide" role="alert" style={{ color: 'var(--color-danger)' }}>{saveError}</p>}
-        </div>
-      </Modal>, document.body)}
+      {confirmation &&
+        createPortal(
+          <Modal
+            isOpen
+            title="Xác nhận nhận hàng vật lý"
+            className="warehouse-receipt-confirmation"
+            onClose={() => {
+              if (!submitting.current) setConfirmation(null);
+            }}
+            footer={
+              <>
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-secondary"
+                  disabled={saving}
+                  onClick={() => setConfirmation(null)}
+                >
+                  Quay lại chỉnh sửa
+                </button>
+                <button
+                  type="button"
+                  className="ops-btn ops-btn-primary"
+                  autoFocus
+                  disabled={saving}
+                  onClick={() => void submitReceipt()}
+                >
+                  {saving ? 'Đang ghi nhận...' : 'Xác nhận nhận hàng'}
+                </button>
+              </>
+            }
+          >
+            <div className="warehouse-receipt-summary">
+              <p className="warehouse-receipt-wide">
+                Vui lòng kiểm tra thông tin trước khi ghi nhận hàng vào kho.
+              </p>
+              <div className="ops-kv warehouse-receipt-wide">
+                <span>Mã batch</span>
+                <strong>{batch.batchCode}</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Khối lượng bàn giao</span>
+                <strong>{batch.expectedWeightKg} kg</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Khối lượng thực nhận</span>
+                <strong>{confirmation.actualWeightKg} kg</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Số lượng item theo bàn giao</span>
+                <strong>{confirmation.actualItemCount}</strong>
+              </div>
+              <div className="ops-kv">
+                <span>Niêm phong</span>
+                <strong>{confirmation.sealIntact ? 'Nguyên vẹn' : 'Có bất thường'}</strong>
+              </div>
+              <div className="ops-kv warehouse-receipt-wide">
+                <span>Sai lệch / ghi chú nhận hàng</span>
+                <strong style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                  {confirmation.discrepancyNotes.trim() || 'Không có'}
+                </strong>
+              </div>
+              {saveError && (
+                <p
+                  className="warehouse-receipt-wide"
+                  role="alert"
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  {saveError}
+                </p>
+              )}
+            </div>
+          </Modal>,
+          document.body,
+        )}
     </div>
   );
 }

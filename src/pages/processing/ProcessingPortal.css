@@ -12,7 +12,11 @@
   background: rgba(2, 6, 23, 0.65);
   backdrop-filter: blur(5px);
 }
-.processing-return-row { display: grid; gap: 14px; min-width: 0; }
+.processing-return-row {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
 .processing-ghn-dialog form.processing-confirm {
   grid-template-columns: minmax(0, 1fr);
   margin: 0;
@@ -135,12 +139,24 @@
   width: 100%;
   overflow-x: auto;
 }
-.processing-list-pagination { margin-top: 24px; }
+.processing-list-pagination {
+  margin-top: 24px;
+}
 .processing-list-pagination .pagination-nav,
-.processing-list-pagination .pagination-numbers { gap: 8px; }
-.processing-list-pagination .pagination-btn { border-radius: 8px; }
-.processing-filters .ops-field { gap: 8px; }
-.processing-filters label { display: flex; align-items: center; gap: 6px; }
+.processing-list-pagination .pagination-numbers {
+  gap: 8px;
+}
+.processing-list-pagination .pagination-btn {
+  border-radius: 8px;
+}
+.processing-filters .ops-field {
+  gap: 8px;
+}
+.processing-filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .processing-table {
   width: 100%;
   min-width: 640px;
@@ -296,7 +312,14 @@
   font-size: 1rem;
   margin: 0;
 }
-.processing-ghn-fields { display: grid; gap: 18px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.processing-ghn-fields {
+  display: grid;
+  gap: 18px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
 .processing-confirm p {
   font-size: 0.85rem;
   color: var(--color-text-secondary);

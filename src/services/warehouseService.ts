@@ -7,9 +7,11 @@ function loadDashboard(warehouseId?: string) {
   const key = `${localStorage.getItem('accessToken') || ''}:${warehouseId || ''}`;
   const pending = dashboardRequests.get(key);
   if (pending) return pending;
-  const request = apiClient.get<unknown, WarehouseDashboard>('/warehouse-operations/dashboard', {
-    params: { warehouseId },
-  }).finally(() => dashboardRequests.delete(key));
+  const request = apiClient
+    .get<unknown, WarehouseDashboard>('/warehouse-operations/dashboard', {
+      params: { warehouseId },
+    })
+    .finally(() => dashboardRequests.delete(key));
   dashboardRequests.set(key, request);
   return request;
 }
