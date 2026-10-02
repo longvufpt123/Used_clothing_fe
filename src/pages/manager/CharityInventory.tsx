@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { independentSection, loadIndependentSections } from '@/utils/loadIndependentSections';
 import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
@@ -133,6 +134,7 @@ export default function ManagerWarehouseControl() {
   const [inventory, setInventory] = useState<WarehouseInventory[]>([]);
   const [transactions, setTransactions] = useState<WarehouseTransaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const loadVersion = useRef(0);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -189,31 +191,26 @@ export default function ManagerWarehouseControl() {
 
   const load = async () => {
     if (!warehouseId) return;
+    const version = ++loadVersion.current;
+    const isCurrent = () => version === loadVersion.current;
     setLoading(true);
-    try {
-      const [dashboardData, layoutData, intakeData, batchData, inventoryData, transactionData] =
-        await Promise.all([
-          warehouseService.dashboard(warehouseId),
-          warehouseService.layout(warehouseId),
-          warehouseService.intakeTraces(warehouseId),
-          warehouseService.inboundBatches(warehouseId),
-          warehouseService.inventory(undefined, warehouseId),
-          warehouseService.transactions(undefined, warehouseId),
-        ]);
-      setStats(dashboardData);
-      setLayout(layoutData);
-      setIntakes(intakeData);
-      setBatches(batchData);
-      setInventory(inventoryData);
-      setTransactions(transactionData);
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Không tải được dữ liệu quản lý kho.');
-    } finally {
-      setLoading(false);
-    }
+    const section = <T,>(request: () => Promise<T>, publish: (data: T) => void) =>
+      independentSection(request, publish, isCurrent);
+    await loadIndependentSections([
+      section(() => warehouseService.dashboard(warehouseId), setStats),
+      section(() => warehouseService.layout(warehouseId), setLayout),
+      section(() => warehouseService.intakeTraces(warehouseId), setIntakes),
+      section(() => warehouseService.inboundBatches(warehouseId), setBatches),
+      section(() => warehouseService.inventory(undefined, warehouseId), setInventory),
+      section(() => warehouseService.transactions(undefined, warehouseId), setTransactions),
+    ], isCurrent, (e: any) => toast.error(e?.response?.data?.message || 'Không tải được một phần dữ liệu quản lý kho. Vui lòng thử làm mới.'));
+    if (isCurrent()) setLoading(false);
   };
   useEffect(() => {
+    setStats(null); setLayout(null);
+    setIntakes([]); setBatches([]); setInventory([]); setTransactions([]);
     void load();
+    return () => { ++loadVersion.current; };
   }, [warehouseId]);
   useEffect(() => setPage(1), [tab, search, status, warehouseId]);
 
@@ -630,26 +627,25 @@ export default function ManagerWarehouseControl() {
         <div className="ops-stats">
           <div className="ops-stat-card">
             <span className="ops-stat-label">Chờ nhận kho</span>
-            <strong className="ops-stat-value">{stats?.pendingReceipt || 0}</strong>
+            <strong className="ops-stat-value">{stats?.pendingReceipt ?? '…'}</strong>
             <small>Classified Batch</small>
           </div>
           <div className="ops-stat-card">
             <span className="ops-stat-label">Chờ xếp vị trí</span>
-            <strong className="ops-stat-value">{stats?.awaitingPutaway || 0}</strong>
+            <strong className="ops-stat-value">{stats?.awaitingPutaway ?? '…'}</strong>
             <small>Batch đã đối chiếu</small>
           </div>
           <div className="ops-stat-card">
             <span className="ops-stat-label">Tồn khả dụng</span>
-            <strong className="ops-stat-value">{stats?.availableWeightKg || 0} kg</strong>
+            <strong className="ops-stat-value">{stats?.availableWeightKg ?? '…'} kg</strong>
             <small>
-              {stats?.inventorySkuCount || 0} nhóm tồn kho
+              {stats?.inventorySkuCount ?? '…'} nhóm tồn kho
             </small>
           </div>
           <div className="ops-stat-card">
             <span className="ops-stat-label">Đang chứa / Tổng sức chứa kho</span>
             <strong className="ops-stat-value">
-              {(layout?.currentWeightKg || 0).toLocaleString('vi-VN')} /{' '}
-              {(layout?.capacityKg || 0).toLocaleString('vi-VN')} kg
+              {layout ? `${layout.currentWeightKg.toLocaleString('vi-VN')} / ${layout.capacityKg.toLocaleString('vi-VN')} kg` : 'Đang tải…'}
             </strong>
             <div className="warehouse-capacity">
               <i

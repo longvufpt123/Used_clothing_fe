@@ -1,5 +1,5 @@
 // Run against local Vite with Playwright installed in the existing UI tools directory.
-const {chromium}=require('../.codex-build/ui-check/node_modules/playwright');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || '../.codex-build/ui-check/node_modules/playwright');
 const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
@@ -24,7 +24,9 @@ const assert=require('node:assert/strict');
    if(url.hostname==='127.0.0.1'||url.hostname==='localhost')return route.continue();return route.abort();
   });
   const path=role==='Manager'?'/manager/fund':role==='Donor'?'/fund':'/organization/fund';await page.goto('http://127.0.0.1:5183'+path);
-  await page.getByRole('heading',{name:'Quỹ vận hành minh bạch'}).waitFor();await page.getByRole('heading',{name:'Vận chuyển quần áo'}).waitFor();
+  await page.getByRole('heading',{name:'Quỹ vận hành minh bạch'}).waitFor();
+  await page.getByRole('region',{name:'Tổng quan quỹ'}).waitFor();
+  if(role!=='Manager') await page.getByRole('heading',{name:'Vận chuyển quần áo'}).waitFor();
   const amountInput=page.getByLabel('Số tiền (VND)',{exact:true});
   await amountInput.fill('200000');assert.equal(await amountInput.inputValue(),'200.000');
   assert.equal(await amountInput.evaluate(el=>el.checkValidity()),role!=='Manager');
@@ -33,11 +35,30 @@ const assert=require('node:assert/strict');
   await amountInput.fill('200.000');assert.equal(await amountInput.inputValue(),'200.000');
   if(role==='Manager'){
    await page.getByLabel('Nội dung chi',{exact:true}).fill('Chi phí vận chuyển');await page.getByLabel('Số tiền (VND)',{exact:true}).fill('10000');await page.getByLabel('Mục đích / diễn giải').fill('Giao quần áo tới tổ chức');await page.getByLabel('Chứng từ JPG').setInputFiles({name:'proof.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\nTest proof\n%%EOF')});
+   assert.equal(await page.getByRole('tabpanel').count(),1);
+   for (const label of ['Lịch sử chi','Lịch sử thu PayOS','Sao kê tháng','Ghi nhận khoản chi']) {
+    await page.getByRole('tab',{name:label,exact:true}).click();
+    await page.getByRole('tab',{name:label,exact:true,selected:true}).waitFor();
+    assert.equal(await page.getByRole('tabpanel').count(),1);
+    assert.equal(await page.getByRole('tab',{name:label,exact:true}).getAttribute('aria-selected'),'true');
+   }
+   assert.equal(await page.getByLabel('Nội dung chi',{exact:true}).inputValue(),'Chi phí vận chuyển');
+   assert.equal(await page.getByLabel('Chứng từ JPG').evaluate(el=>el.files[0].name),'proof.pdf');
+   await page.getByRole('tab',{name:'Ghi nhận khoản chi',exact:true}).press('End');
+   await page.getByRole('tab',{name:'Sao kê tháng',exact:true,selected:true}).waitFor();
+   assert.equal(await page.getByRole('tab',{name:'Sao kê tháng',exact:true}).getAttribute('aria-selected'),'true');
+   await page.getByRole('tab',{name:'Sao kê tháng',exact:true}).press('Home');
    await page.getByRole('button',{name:'Xem lại và công bố'}).click();assert.equal(posts.length,0);await page.getByRole('dialog').getByRole('button',{name:'Xác nhận',exact:true}).click();await page.getByText('Đã công bố khoản chi và chứng từ.').waitFor();assert.equal(posts.length,1);
    assert.match(bodies[0],/name="amount"\r\n\r\n10000\r\n/);
   }else{
    await page.getByRole('button',{name:'Đóng góp qua PayOS',exact:true}).click();assert.equal(posts.length,0);await page.getByRole('dialog').getByRole('button',{name:'Xác nhận',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(posts.length,1);
    assert.equal(bodies[0].amount,200000);
+  }
+  if(role==='Manager') {
+   await page.goto('http://127.0.0.1:5183/manager/fund#statements');
+   await page.getByRole('heading',{name:'Sao kê ngân hàng hàng tháng'}).waitFor();
+   assert.equal(await page.getByRole('tab',{name:'Sao kê tháng',exact:true}).getAttribute('aria-selected'),'true');
+   assert.equal(await page.getByRole('tabpanel').count(),1);
   }
   await page.screenshot({path:`.codex-build/fund-${role}-desktop.png`,fullPage:true});await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);await page.screenshot({path:`.codex-build/fund-${role}-mobile.png`,fullPage:true});
   const overflow=await page.locator('.fund-page').evaluate(el=>el.scrollWidth>el.clientWidth+1);assert.equal(overflow,false,role+' overflow');assert.deepEqual(errors,[],role+' runtime errors');console.log('PASS',role,'confirmation, responsive layout, no runtime errors');await context.close();

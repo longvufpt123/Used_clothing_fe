@@ -1,5 +1,5 @@
 // All APIs mocked. No production accounts, statements or payments are changed.
-const {chromium}=require('../.codex-build/ui-check/node_modules/playwright');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || '../.codex-build/ui-check/node_modules/playwright');
 const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});

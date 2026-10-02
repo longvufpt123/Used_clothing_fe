@@ -4,3 +4,9 @@
 @media(max-width:650px){.fund-page{padding:20px 12px;gap:18px}.fund-stats,.fund-grid{grid-template-columns:1fr}.fund-card,.fund-stats article{padding:18px}.fund-history article{grid-template-columns:1fr}.fund-heading>button{width:100%}}
 @media(max-width:900px){.admin-content-area .fund-page{padding-top:64px}}
 .fund-statements{scroll-margin-top:90px}.fund-statements select{width:100%;min-width:0;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-primary);color:var(--color-text-primary);font:inherit}.fund-statements strong{overflow-wrap:anywhere}
+.fund-page [role=tabpanel][hidden]{display:none}
+.fund-tabs{display:flex;flex-wrap:wrap;gap:10px;padding:10px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-secondary)}
+.fund-tabs [role=tab]{flex:1 1 180px;min-height:46px;white-space:normal}
+.fund-tabs [role=tab][aria-selected=true]{color:white;background:var(--color-primary);border-color:var(--color-primary)}
+.fund-tabs [role=tab]:focus-visible{outline:3px solid var(--color-primary);outline-offset:3px}
+@media(max-width:650px){.fund-tabs{gap:8px}.fund-tabs [role=tab]{flex-basis:calc(50% - 8px);padding:10px 8px;font-size:14px}}
