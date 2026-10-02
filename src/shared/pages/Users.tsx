@@ -255,7 +255,7 @@ export const Users: React.FC = () => {
           case 'admin':
             return <Badge variant="danger">Quản trị viên</Badge>;
           case 'manager':
-            return <Badge variant="warning">Điều phối viên</Badge>;
+            return <Badge variant="warning">Quản lý</Badge>;
           case 'staff':
             return <Badge variant="info">Chuyên viên xuất nhập kho</Badge>;
           default:
@@ -320,13 +320,13 @@ export const Users: React.FC = () => {
 
   const getRoleLabel = (r: typeof newRole) => {
     if (r === 'admin') return 'Quản trị viên';
-    if (r === 'manager') return 'Điều phối viên';
+    if (r === 'manager') return 'Quản lý';
     return 'Chuyên viên xuất nhập kho';
   };
 
   const getFilterRoleLabel = (filterVal: string) => {
     if (filterVal === 'admin') return 'Quản trị viên';
-    if (filterVal === 'manager') return 'Điều phối viên';
+    if (filterVal === 'manager') return 'Quản lý';
     if (filterVal === 'staff') return 'Chuyên viên xuất nhập kho';
     return 'Tất cả vai trò';
   };
@@ -374,7 +374,7 @@ export const Users: React.FC = () => {
                   },
                 },
                 {
-                  label: 'Điều phối viên',
+                  label: 'Quản lý',
                   onClick: () => {
                     setRoleFilter('manager');
                     setCurrentPage(1);
@@ -506,7 +506,7 @@ export const Users: React.FC = () => {
                       }
                       items={[
                         { label: 'Chuyên viên xuất nhập kho', onClick: () => setNewRole('staff') },
-                        { label: 'Điều phối viên', onClick: () => setNewRole('manager') },
+                        { label: 'Quản lý', onClick: () => setNewRole('manager') },
                       ]}
                     />
                   </div>

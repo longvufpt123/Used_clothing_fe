@@ -76,7 +76,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 {user?.role === 'Admin'
                   ? 'Quản trị viên'
                   : user?.role === 'Manager'
-                    ? 'Điều phối viên'
+                    ? 'Quản lý'
                     : 'Nhân viên'}
               </span>
             </div>

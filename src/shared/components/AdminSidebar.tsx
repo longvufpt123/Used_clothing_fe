@@ -179,7 +179,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </span>
           <div>
             <strong>{user?.fullName || 'Manager'}</strong>
-            <small>{isManager ? 'Điều phối viên' : 'Quản trị viên'}</small>
+            <small>{isManager ? 'Quản lý' : 'Quản trị viên'}</small>
           </div>
         </button>
       </div>

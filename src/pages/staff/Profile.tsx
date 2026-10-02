@@ -20,7 +20,7 @@ import './Profile.css';
 
 const roleLabels: Record<string, string> = {
   Admin: 'Quản trị viên',
-  Manager: 'Điều phối viên',
+  Manager: 'Quản lý',
   ReceivingStaff: 'Nhân viên tiếp nhận',
   ClassificationStaff: 'Nhân viên phân loại',
   WarehouseStaff: 'Chuyên viên xuất nhập kho',
