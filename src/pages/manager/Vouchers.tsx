@@ -3,6 +3,7 @@ import { Gift, Plus, Power, Ticket } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { voucherService, type Voucher } from '@/services/voucherService';
 import '@/styles/ops-shared.css';
+import VoucherImageUpload from '@/components/VoucherImageUpload';
 
 const today = new Date().toISOString().slice(0, 10);
 const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
@@ -10,6 +11,8 @@ export default function ManagerVouchers() {
   const toast = useToast();
   const [items, setItems] = useState<Voucher[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [codeTarget, setCodeTarget] = useState<Voucher | null>(null);
   const [codes, setCodes] = useState('');
   const [form, setForm] = useState({
@@ -33,8 +36,10 @@ export default function ManagerVouchers() {
     void load();
   }, []);
   const create = async () => {
+    if (uploading || saving) return;
     if (!form.name.trim() || !form.partnerName.trim())
       return toast.warning('Nhập tên voucher và đối tác.');
+    setSaving(true);
     try {
       await voucherService.create({
         ...form,
@@ -46,6 +51,8 @@ export default function ManagerVouchers() {
       load();
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Không tạo được voucher.');
+    } finally {
+      setSaving(false);
     }
   };
   const addCodes = async () => {
@@ -138,7 +145,6 @@ export default function ManagerVouchers() {
             {[
               ['Tên voucher', 'name'],
               ['Đối tác', 'partnerName'],
-              ['URL hình ảnh', 'imageUrl'],
               ['Liên kết voucher', 'voucherUrl'],
               ['Mô tả', 'description'],
               ['Điều kiện sử dụng', 'termsAndConditions'],
@@ -151,6 +157,12 @@ export default function ManagerVouchers() {
                 />
               </div>
             ))}
+            <VoucherImageUpload
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((current) => ({ ...current, imageUrl }))}
+              onBusyChange={setUploading}
+              disabled={saving}
+            />
             <div className="ops-form-grid two-col">
               <div className="ops-field">
                 <label>Điểm cần đổi</label>
@@ -188,10 +200,18 @@ export default function ManagerVouchers() {
               </div>
             </div>
             <div className="ops-actions">
-              <button className="ops-btn ops-btn-secondary" onClick={() => setShowForm(false)}>
+              <button
+                className="ops-btn ops-btn-secondary"
+                disabled={uploading || saving}
+                onClick={() => setShowForm(false)}
+              >
                 Hủy
               </button>
-              <button className="ops-btn ops-btn-primary" onClick={() => void create()}>
+              <button
+                className="ops-btn ops-btn-primary"
+                disabled={uploading || saving}
+                onClick={() => void create()}
+              >
                 <Gift />
                 Tạo voucher
               </button>
