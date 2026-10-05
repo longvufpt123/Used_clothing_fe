@@ -712,6 +712,12 @@
   align-self: stretch;
 }
 
+.orders-list .order-status.order-progress {
+  display: block;
+  -webkit-line-clamp: unset;
+  white-space: normal;
+}
+
 .orders-list .order-actions {
   width: 100%;
   justify-content: space-between;

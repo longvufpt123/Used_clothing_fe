@@ -45,6 +45,7 @@ interface DonorRequestSearchApiResponse {
   warehouseAddress: string;
   status: string;
   statusText: string;
+  progressNote?: string;
   deliveryMethod?: string;
   dropOffMethod?: string | null;
   carrierName?: string | null;
@@ -250,7 +251,10 @@ export const MyOrders: React.FC = () => {
     () =>
       Array.from(
         new Map(
-          (orders || []).map((order) => [order.status, getStatusLabel(order.status)]),
+          (orders || []).map((order) => {
+            const label = order.statusText || getStatusLabel(order.status);
+            return [label, label];
+          }),
         ).entries(),
       ).sort((a, b) => a[1].localeCompare(b[1], 'vi')),
     [orders],
@@ -265,7 +269,7 @@ export const MyOrders: React.FC = () => {
         (!filterDate || orderDate === filterDate) &&
         (!filterMonth || orderDate.slice(0, 7) === filterMonth) &&
         (!filterYear || orderDate.slice(0, 4) === filterYear) &&
-        (!filterStatus || order.status === filterStatus)
+        (!filterStatus || (order.statusText || getStatusLabel(order.status)) === filterStatus)
       );
     });
   }, [orders, searchCode, filterDate, filterMonth, filterYear, filterStatus]);
@@ -655,12 +659,12 @@ export const MyOrders: React.FC = () => {
                       </h2>
                     </div>
                     <div className="order-header-actions">
-                      <span className={`order-status ${getStatusToneClass(order.status)}`}>
+                      <span className={`order-status ${order.progressNote ? 'order-progress' : ''} ${getStatusToneClass(order.status)}`}>
                         {order.dropOffMethod === 'ThirdPartyDelivery' &&
                         !order.pickupDate &&
                         canModifyOrder(order.status)
                           ? 'Cần cập nhật thông tin vận chuyển'
-                          : getStatusLabel(order.status)}
+                          : order.statusText || getStatusLabel(order.status)}
                       </span>
                       {isModifiable && !isEditing && (
                         <div className="order-actions">
@@ -944,8 +948,9 @@ export const MyOrders: React.FC = () => {
               </button>
             </header>
             <span className={`order-status ${getStatusToneClass(selectedOrder.status)}`}>
-              {getStatusLabel(selectedOrder.status)}
+              {selectedOrder.statusText || getStatusLabel(selectedOrder.status)}
             </span>
+            {selectedOrder.progressNote && <p>{selectedOrder.progressNote}</p>}
             <div className="order-detail-grid">
               <div>
                 <span>Người gửi</span>
