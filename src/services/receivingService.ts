@@ -63,13 +63,20 @@ export interface ReceivingBatch {
 
 export const getReceivingBatchPresentation = (status: ReceivingBatch['status']) => {
   switch (status) {
-    case 'Planned': return { tone: 'pending', label: 'Chưa bắt đầu' };
-    case 'Receiving': return { tone: 'pending', label: 'Đang đi gom' };
-    case 'Completed': return { tone: 'classified', label: 'Đã gom xong' };
-    case 'ReceivedAtWarehouse': return { tone: 'stored', label: 'Đã nhập khu nhận đồ' };
-    case 'AwaitingClassificationAssignment': return { tone: 'pending', label: 'Chờ phân công phân loại' };
-    case 'AssignedToClassification': return { tone: 'classified', label: 'Đã phân công phân loại' };
-    case 'SentToClassification': return { tone: 'classified', label: 'Đã bàn giao phân loại' };
+    case 'Planned':
+      return { tone: 'pending', label: 'Chưa bắt đầu' };
+    case 'Receiving':
+      return { tone: 'pending', label: 'Đang đi gom' };
+    case 'Completed':
+      return { tone: 'classified', label: 'Đã gom xong' };
+    case 'ReceivedAtWarehouse':
+      return { tone: 'stored', label: 'Đã nhập khu nhận đồ' };
+    case 'AwaitingClassificationAssignment':
+      return { tone: 'pending', label: 'Chờ phân công phân loại' };
+    case 'AssignedToClassification':
+      return { tone: 'classified', label: 'Đã phân công phân loại' };
+    case 'SentToClassification':
+      return { tone: 'classified', label: 'Đã bàn giao phân loại' };
   }
 };
 export interface ReceivingStagingGroup {
@@ -357,25 +364,42 @@ export interface ReceivingOverview {
 
 export const receivingService = {
   getMyOverview(fresh = false): Promise<ReceivingOverview> {
-    return shareReceivingRead('my-overview', async () => {
-      const data = await apiClient.get<unknown, Omit<ReceivingOverview, 'batches'> & { batches: ApiBatch[] }>('/receiving-operations/my-overview');
-      return { ...data, batches: data.batches.map(mapBatch) };
-    }, fresh);
+    return shareReceivingRead(
+      'my-overview',
+      async () => {
+        const data = await apiClient.get<
+          unknown,
+          Omit<ReceivingOverview, 'batches'> & { batches: ApiBatch[] }
+        >('/receiving-operations/my-overview');
+        return { ...data, batches: data.batches.map(mapBatch) };
+      },
+      fresh,
+    );
   },
   getMyBatches(fresh = false, stage?: ReceivingStage) {
     const path = `/receiving-operations/my-batches${stage ? `?stage=${stage}` : ''}`;
-    return shareReceivingRead(path, async () => {
-      const data = await apiClient.get<unknown, ApiBatch[]>(path);
-      return data.map(mapBatch);
-    }, fresh);
+    return shareReceivingRead(
+      path,
+      async () => {
+        const data = await apiClient.get<unknown, ApiBatch[]>(path);
+        return data.map(mapBatch);
+      },
+      fresh,
+    );
   },
   getLocationBatches: (locationId: string) =>
     apiClient.get<unknown, ReceivingLocationBatch[]>(
       `/receiving-operations/receiving-locations/${locationId}/batches`,
     ),
   getMyReceivingGroups: (fresh = false) =>
-    shareReceivingRead('my-receiving-groups', () =>
-      apiClient.get<unknown, ReceivingStagingGroup[]>('/receiving-operations/my-receiving-groups'), fresh),
+    shareReceivingRead(
+      'my-receiving-groups',
+      () =>
+        apiClient.get<unknown, ReceivingStagingGroup[]>(
+          '/receiving-operations/my-receiving-groups',
+        ),
+      fresh,
+    ),
   async getMyBatch(id: string) {
     const data = await apiClient.get<unknown, ApiBatch>(`/receiving-operations/my-batches/${id}`);
     return mapBatch(data);
@@ -405,8 +429,14 @@ export const receivingService = {
       data,
     ),
   getMyWarehouseDropOffs: (fresh = false) =>
-    shareReceivingRead('my-warehouse-dropoffs', () =>
-      apiClient.get<unknown, WarehouseDropOffBoard>('/receiving-operations/my-warehouse-dropoffs'), fresh),
+    shareReceivingRead(
+      'my-warehouse-dropoffs',
+      () =>
+        apiClient.get<unknown, WarehouseDropOffBoard>(
+          '/receiving-operations/my-warehouse-dropoffs',
+        ),
+      fresh,
+    ),
   confirmWarehouseDropOff: (
     requestId: string,
     data: { actualWeight: number; notes?: string; imageUrls?: string[] },
@@ -422,6 +452,13 @@ export const receivingService = {
     }),
   getDispatchBoard: () =>
     apiClient.get<unknown, DispatchBoard>('/receiving-operations/dispatch-board'),
+  rescheduleAndAssign: (requestId: string, teamId: string, pickupDate: string) =>
+    apiClient.post('/receiving-operations/reschedule-and-assign', {
+      requestId,
+      teamId,
+      pickupDate,
+      donorConfirmed: true,
+    }),
   assignRequest: (requestId: string, teamId: string) =>
     apiClient.post('/receiving-operations/assign-request', { requestId, teamId }),
   getManagerSetup: () =>

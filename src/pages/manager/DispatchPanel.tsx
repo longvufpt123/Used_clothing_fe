@@ -64,6 +64,8 @@ export default function DispatchPanel({
   refreshVersion = 0,
 }: DispatchPanelProps = {}) {
   const toast = useToast();
+  const [newDates, setNewDates] = useState<Record<string, string>>({});
+  const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
   const [searchParams] = useSearchParams();
   const [board, setBoard] = useState<DispatchBoard>({ requests: [], teams: [] });
   const [selectedTeams, setSelectedTeams] = useState<Record<string, string>>({});
@@ -164,7 +166,15 @@ export default function DispatchPanel({
       );
     setLoadingId(requestId);
     try {
-      await receivingService.assignRequest(requestId, teamId);
+      if (newDates[requestId] !== undefined) {
+        if (!confirmed[requestId] || !newDates[requestId]) {
+          toast.warning('Chọn lịch mới và xác nhận đã thống nhất với donor.');
+          return;
+        }
+        await receivingService.rescheduleAndAssign(requestId, teamId, newDates[requestId] + ':00');
+      } else {
+        await receivingService.assignRequest(requestId, teamId);
+      }
       toast.success('Đã phân công đơn cho receiving team.');
       await load();
       await onAssigned?.();
@@ -263,12 +273,17 @@ export default function DispatchPanel({
         <>
           <div className="dispatch-grid">
             {paged.map((request) => {
+              const appointment = newDates[request.id] ?? request.scheduledDate;
+              const overdue =
+                request.deliveryMethod === 'StaffPickup' &&
+                !!request.scheduledDate &&
+                new Date(request.scheduledDate.slice(0, 19) + '+07:00').getTime() < Date.now();
               const teams = board.teams.filter(
                 (t) =>
                   t.warehouseId === request.warehouseId &&
-                  !!request.scheduledDate &&
-                  t.shiftDate.slice(0, 10) === request.scheduledDate.slice(0, 10) &&
-                  isAppointmentWithinShift(request.scheduledDate, t.startTime, t.endTime) &&
+                  !!appointment &&
+                  t.shiftDate.slice(0, 10) === appointment.slice(0, 10) &&
+                  isAppointmentWithinShift(appointment, t.startTime, t.endTime) &&
                   (request.deliveryMethod === 'DonorDropOff'
                     ? t.teamType === 'ReceivingWarehouse'
                     : t.teamType === 'Receiving' || t.teamType === 'ReceivingPickup'),
@@ -306,6 +321,59 @@ export default function DispatchPanel({
                     {formatAppointment(request.scheduledDate)}
                   </small>
                   <>
+                    {overdue && (
+                      <div style={{ display: 'grid', gap: 12, marginBlock: 12 }}>
+                        <button
+                          disabled={!!loadingId}
+                          onClick={() => {
+                            setNewDates((current) => {
+                              const next = { ...current };
+                              if (next[request.id] !== undefined) delete next[request.id];
+                              else next[request.id] = '';
+                              return next;
+                            });
+                            setConfirmed((current) => ({ ...current, [request.id]: false }));
+                            setSelectedTeams((current) => ({ ...current, [request.id]: '' }));
+                          }}
+                        >
+                          Hẹn lại & phân công
+                        </button>
+                        {newDates[request.id] !== undefined && (
+                          <>
+                            <label>
+                              Giờ hẹn mới (giờ Việt Nam)
+                              <input
+                                type="datetime-local"
+                                value={newDates[request.id]}
+                                disabled={!!loadingId}
+                                onChange={(e) => {
+                                  setNewDates((current) => ({
+                                    ...current,
+                                    [request.id]: e.target.value,
+                                  }));
+                                  setSelectedTeams((current) => ({ ...current, [request.id]: '' }));
+                                  setConfirmed((current) => ({ ...current, [request.id]: false }));
+                                }}
+                              />
+                            </label>
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={!!confirmed[request.id]}
+                                disabled={!!loadingId}
+                                onChange={(e) =>
+                                  setConfirmed((current) => ({
+                                    ...current,
+                                    [request.id]: e.target.checked,
+                                  }))
+                                }
+                              />
+                              Đã thống nhất lịch mới với donor
+                            </label>
+                          </>
+                        )}
+                      </div>
+                    )}
                     <select
                       value={selectedTeams[request.id] || ''}
                       onChange={(e) =>

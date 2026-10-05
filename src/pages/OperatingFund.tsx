@@ -429,6 +429,26 @@ export default function OperatingFund() {
             <article key={c.id}>
               <div>
                 <b>{money(c.amount)}</b>
+                {manager && c.contributor && (
+                  <div
+                    style={{ display: 'grid', gap: 6, marginBlock: 12, overflowWrap: 'anywhere' }}
+                  >
+                    <strong>{c.contributor.fullName || c.contributor.userName}</strong>
+                    <span>
+                      @{c.contributor.userName} ·{' '}
+                      {(
+                        {
+                          Donor: 'Người quyên góp',
+                          CharityOrganization: 'Tổ chức từ thiện',
+                          RecyclingOrganization: 'Tổ chức tái chế',
+                          DisposalOrganization: 'Tổ chức tiêu hủy',
+                        } as Record<string, string>
+                      )[c.contributor.role] || c.contributor.role}
+                    </span>
+                    <span>Email: {c.contributor.email || 'Chưa cập nhật'}</span>
+                    <span>Điện thoại: {c.contributor.phoneNumber || 'Chưa cập nhật'}</span>
+                  </div>
+                )}
                 <p>
                   #{c.orderCode} · {new Date(c.createdAt).toLocaleString('vi-VN')}
                 </p>

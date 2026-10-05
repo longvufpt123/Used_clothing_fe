@@ -7,6 +7,13 @@ export interface FundSummary {
   paymentEnabled: boolean;
 }
 export interface Contribution {
+  contributor?: {
+    fullName: string;
+    userName: string;
+    role: string;
+    email: string;
+    phoneNumber: string;
+  };
   id: string;
   orderCode: number;
   amount: number;
