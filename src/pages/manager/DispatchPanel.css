@@ -346,3 +346,122 @@
     box-shadow: none;
   }
 }
+.dispatch-reschedule-dialog {
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-bg-secondary, white);
+  color: var(--color-text-primary, #142234);
+  box-shadow: 0 24px 80px #0004;
+}
+.dispatch-reschedule-dialog::backdrop {
+  background: #0f172a80;
+  backdrop-filter: blur(4px);
+}
+.dispatch-reschedule-dialog header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.dispatch-reschedule-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+.dispatch-reschedule-dialog header p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dispatch-reschedule-dialog .reschedule-body {
+  display: grid;
+  gap: 18px;
+  padding-top: 20px;
+}
+.dispatch-reschedule-dialog .reschedule-hint {
+  margin: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #009e8310;
+  line-height: 1.7;
+}
+.dispatch-reschedule-dialog label {
+  display: grid;
+  gap: 10px;
+  font-weight: 600;
+}
+.dispatch-reschedule-dialog input[type='datetime-local'],
+.dispatch-reschedule-dialog select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-secondary, white);
+  color: inherit;
+  font: inherit;
+}
+.dispatch-reschedule-dialog label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.5;
+}
+.dispatch-reschedule-dialog input[type='checkbox'] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+  accent-color: var(--color-primary);
+}
+.dispatch-reschedule-dialog button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dispatch-reschedule-dialog .reschedule-body > button {
+  background: var(--color-primary, #009e83);
+  color: white;
+}
+.dispatch-reschedule-dialog button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dispatch-reschedule-dialog .reschedule-close {
+  padding: 10px;
+  flex-shrink: 0;
+}
+.dispatch-reschedule-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.dispatch-reschedule-dialog .dispatch-team-summary {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.dispatch-reschedule-dialog :focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .dispatch-reschedule-dialog {
+    padding: 18px;
+  }
+}

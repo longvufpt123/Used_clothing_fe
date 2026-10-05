@@ -1,3 +1,4 @@
+import DispatchRescheduleDialog from '@/components/DispatchRescheduleDialog';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -64,6 +65,7 @@ export default function DispatchPanel({
   refreshVersion = 0,
 }: DispatchPanelProps = {}) {
   const toast = useToast();
+  const [rescheduleId, setRescheduleId] = useState<string>();
   const [newDates, setNewDates] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
   const [searchParams] = useSearchParams();
@@ -175,6 +177,7 @@ export default function DispatchPanel({
       } else {
         await receivingService.assignRequest(requestId, teamId);
       }
+      setRescheduleId(undefined);
       toast.success('Đã phân công đơn cho receiving team.');
       await load();
       await onAssigned?.();
@@ -322,24 +325,41 @@ export default function DispatchPanel({
                   </small>
                   <>
                     {overdue && (
-                      <div style={{ display: 'grid', gap: 12, marginBlock: 12 }}>
-                        <button
-                          disabled={!!loadingId}
-                          onClick={() => {
-                            setNewDates((current) => {
-                              const next = { ...current };
-                              if (next[request.id] !== undefined) delete next[request.id];
-                              else next[request.id] = '';
-                              return next;
-                            });
-                            setConfirmed((current) => ({ ...current, [request.id]: false }));
-                            setSelectedTeams((current) => ({ ...current, [request.id]: '' }));
-                          }}
-                        >
-                          Hẹn lại & phân công
-                        </button>
-                        {newDates[request.id] !== undefined && (
+                      <button
+                        disabled={!!loadingId}
+                        onClick={() => {
+                          setNewDates((current) => ({ ...current, [request.id]: '' }));
+                          setConfirmed((current) => ({ ...current, [request.id]: false }));
+                          setSelectedTeams((current) => ({ ...current, [request.id]: '' }));
+                          setRescheduleId(request.id);
+                        }}
+                      >
+                        Hẹn lại & phân công
+                      </button>
+                    )}
+                    {(!overdue || rescheduleId === request.id) && (
+                      <DispatchRescheduleDialog
+                        enabled={overdue}
+                        busy={!!loadingId}
+                        title={`${request.code} ? ${request.contactName} ? ${request.phoneNumber}`}
+                        onClose={() => {
+                          setRescheduleId(undefined);
+                          setNewDates((current) => {
+                            const next = { ...current };
+                            delete next[request.id];
+                            return next;
+                          });
+                          setSelectedTeams((current) => ({ ...current, [request.id]: '' }));
+                        }}
+                      >
+                        {overdue && (
                           <>
+                            <p className="reschedule-hint">
+                              Lịch cũ: {formatAppointment(request.scheduledDate)} ·{' '}
+                              {request.estimateWeight} kg
+                              <br />
+                              {request.warehouseName}
+                            </p>
                             <label>
                               Giờ hẹn mới (giờ Việt Nam)
                               <input
@@ -372,50 +392,64 @@ export default function DispatchPanel({
                             </label>
                           </>
                         )}
-                      </div>
-                    )}
-                    <select
-                      value={selectedTeams[request.id] || ''}
-                      onChange={(e) =>
-                        setSelectedTeams((v) => ({ ...v, [request.id]: e.target.value }))
-                      }
-                    >
-                      <option value="">
-                        {request.deliveryMethod === 'DonorDropOff'
-                          ? 'Chọn team trực kho'
-                          : 'Chọn receiving team cùng kho'}
-                      </option>
-                      {teams.map((team) => (
-                        <option
-                          value={team.id}
-                          key={team.id}
-                          disabled={!hasCapacity(team.id, request.id)}
+                        <select
+                          aria-label="Team tiếp nhận"
+                          disabled={!!loadingId}
+                          value={selectedTeams[request.id] || ''}
+                          onChange={(e) =>
+                            setSelectedTeams((v) => ({ ...v, [request.id]: e.target.value }))
+                          }
                         >
-                          {team.teamName} · {team.shiftName} ·{' '}
-                          {new Date(team.shiftDate).toLocaleDateString('vi-VN')}{' '}
-                          {board.loads?.find((t) => t.id === team.id) &&
-                            ` [${board.loads.find((t) => t.id === team.id)!.assignedRequests}/${board.loads.find((t) => t.id === team.id)!.maxRequests}; ${board.loads.find((t) => t.id === team.id)!.estimatedWeightKg}/${board.loads.find((t) => t.id === team.id)!.maxWeightKg} kg]`}
-                        </option>
-                      ))}
-                    </select>
-                    <small
-                      className={`dispatch-team-summary${selected ? '' : ' empty'}`}
-                      aria-hidden={!selected}
-                    >
-                      {selected && (
-                        <>
-                          <Users size={13} /> {selected.members.map((x) => x.fullName).join(' & ')}{' '}
-                          · {selected.shiftTime}
-                        </>
-                      )}
-                    </small>
-                    <button
-                      onClick={() => assign(request.id)}
-                      disabled={!!loadingId || !hasCapacity(selectedTeams[request.id], request.id)}
-                    >
-                      <Truck size={15} />
-                      {loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
-                    </button>
+                          <option value="">
+                            {request.deliveryMethod === 'DonorDropOff'
+                              ? 'Chọn team trực kho'
+                              : 'Chọn receiving team cùng kho'}
+                          </option>
+                          {teams.map((team) => (
+                            <option
+                              value={team.id}
+                              key={team.id}
+                              disabled={!hasCapacity(team.id, request.id)}
+                            >
+                              {team.teamName} · {team.shiftName} ·{' '}
+                              {new Date(team.shiftDate).toLocaleDateString('vi-VN')}{' '}
+                              {board.loads?.find((t) => t.id === team.id) &&
+                                ` [${board.loads.find((t) => t.id === team.id)!.assignedRequests}/${board.loads.find((t) => t.id === team.id)!.maxRequests}; ${board.loads.find((t) => t.id === team.id)!.estimatedWeightKg}/${board.loads.find((t) => t.id === team.id)!.maxWeightKg} kg]`}
+                            </option>
+                          ))}
+                        </select>
+                        {overdue && !teams.length && (
+                          <p className="reschedule-hint">
+                            {newDates[request.id]
+                              ? 'Chưa có team cùng kho phù hợp giờ hẹn này. Hãy chọn giờ khác hoặc tạo team cho ca đó.'
+                              : 'Chọn giờ hẹn mới để xem các team phù hợp.'}
+                          </p>
+                        )}
+                        <small
+                          className={`dispatch-team-summary${selected ? '' : ' empty'}`}
+                          aria-hidden={!selected}
+                        >
+                          {selected && (
+                            <>
+                              <Users size={13} />{' '}
+                              {selected.members.map((x) => x.fullName).join(' & ')} ·{' '}
+                              {selected.shiftTime}
+                            </>
+                          )}
+                        </small>
+                        <button
+                          onClick={() => assign(request.id)}
+                          disabled={
+                            !!loadingId ||
+                            !hasCapacity(selectedTeams[request.id], request.id) ||
+                            (overdue && !confirmed[request.id])
+                          }
+                        >
+                          <Truck size={15} />
+                          {loadingId === request.id ? 'Đang phân công...' : 'Phân công đơn'}
+                        </button>
+                      </DispatchRescheduleDialog>
+                    )}
                   </>
                 </article>
               );
