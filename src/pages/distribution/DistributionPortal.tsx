@@ -578,10 +578,10 @@ export default function DistributionPortal({ mode }: { mode: Mode }) {
                   <div>
                     <b>{batch.batchCode}</b>
                     <h3>
-                      {batch.clothingType} · {batch.fabricType}
+                      {batch.clothingType}
                     </h3>
                   </div>
-                  <span>Nhãn {batch.grade}</span>
+                  <span>Từ thiện</span>
                 </div>
                 <p>
                   {batch.gender} · {batch.targetUser} · Size {batch.size}
