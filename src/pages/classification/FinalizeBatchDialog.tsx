@@ -24,8 +24,8 @@ export default function FinalizeBatchDialog({
     ? 'Vui lòng nhập khối lượng thực tế.'
     : !/^\d+(?:\.\d{1,2})?$/.test(weight) || !Number.isFinite(Number(weight))
       ? 'Nhập khối lượng hợp lệ, tối đa 2 chữ số thập phân.'
-      : Number(weight) < 10
-        ? 'Batch phải từ 10 kg trở lên để hoàn tất gom nhóm.'
+      : Number(weight) < 10 || Number(weight) > 50
+        ? 'Batch phải từ 10 đến 50 kg để hoàn tất gom nhóm.'
         : '';
   async function submit() {
     setTouched(true);
@@ -91,7 +91,7 @@ export default function FinalizeBatchDialog({
           >
             {touched && weightError
               ? weightError
-              : 'Tối thiểu 10 kg mỗi batch. Khối lượng này được dùng khi xếp vào khu.'}
+              : 'Mỗi batch từ 10 đến 50 kg. Khối lượng này được dùng khi xếp vào khu.'}
           </small>
         </div>
         {error && (
