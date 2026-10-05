@@ -1,6 +1,14 @@
 .classification-dispatch {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   max-width: 1500px;
   margin: 0 auto;
+}
+
+.classification-dispatch .manager-date-filter select:first-of-type {
+  width: 240px;
+  max-width: 100%;
 }
 
 .classification-summary {

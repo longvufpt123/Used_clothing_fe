@@ -423,7 +423,7 @@ export default function DispatchOperations() {
 
   return (
     <AdminLayout>
-      <div className="ops-page manager-ops">
+      <div className="ops-page manager-ops receiving-dispatch-page">
         <header className="ops-pagehead">
           <div className="ops-pagehead-main">
             <span className="ops-pagehead-kicker">Receiving Dispatch</span>

@@ -2,6 +2,15 @@
   max-width: 1500px;
   margin: 0 auto;
 }
+.receiving-dispatch-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.receiving-dispatch-page .manager-date-filter select:first-of-type {
+  width: 240px;
+  max-width: 100%;
+}
 .manager-create-grid {
   display: grid;
   grid-template-columns: 2fr 1fr auto;
