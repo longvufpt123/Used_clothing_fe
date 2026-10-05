@@ -43,6 +43,8 @@ export default function ReceiveBatch() {
     if (submitting.current) return;
     if (!batchId || !batch || !Number.isFinite(weight) || weight <= 0)
       return toast.error('Nhập khối lượng thực nhận.');
+    if (weight < 10 || weight > 50 || Number(weight.toFixed(2)) !== weight)
+      return toast.error('Khối lượng thực nhận phải từ 10 đến 50 kg và có tối đa 2 chữ số thập phân.');
     const handedOffWeight = Number(batch.expectedWeightKg.toFixed(2));
     const receivedWeight = Number(weight.toFixed(2));
     if (receivedWeight !== handedOffWeight)
@@ -136,12 +138,13 @@ export default function ReceiveBatch() {
             <label>Khối lượng thực nhận (kg)</label>
             <input
               type="number"
-              min={batch.expectedWeightKg}
-              max={batch.expectedWeightKg}
+              min={10}
+              max={50}
               step=".01"
               value={weight}
               onChange={(e) => setWeight(Number(e.target.value))}
             />
+            <small>Khối lượng từ 10 đến 50 kg, tối đa 2 chữ số thập phân.</small>
             {Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2)) && (
               <small style={{ color: 'var(--color-danger)' }}>
                 Khối lượng phải đúng bằng {batch.expectedWeightKg} kg, không được lớn hơn hoặc nhỏ
@@ -171,7 +174,12 @@ export default function ReceiveBatch() {
           <button
             className="ops-btn ops-btn-primary ops-btn-block"
             disabled={
-              saving || Number(weight.toFixed(2)) !== Number(batch.expectedWeightKg.toFixed(2))
+              saving ||
+              !Number.isFinite(weight) ||
+              weight < 10 ||
+              weight > 50 ||
+              Number(weight.toFixed(2)) !== weight ||
+              weight !== Number(batch.expectedWeightKg.toFixed(2))
             }
             onClick={confirm}
           >
